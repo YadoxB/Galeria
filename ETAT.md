@@ -259,15 +259,48 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 
 ---
 
-## Prochaine étape concrète
+## Prochaine étape concrète (après livraison v0.2.0 — 2026-06-16)
 
-À l'utilisateur de choisir :
+**État livré :** installateur `Galeria Setup 0.2.0.exe` (379 Mo) construit et copié dans `F:\Galerie\Automatisation\GalerieApp\dist\`. Tag `v0.2.0` poussé sur GitHub. Master à `1d7ed38`.
 
-1. **Tester à fond la version actuelle** dans un scénario réel complet (créer artiste avec œuvres, faire vente, produire certificat + facture, exporter, etc.) et revenir avec les ajustements.
-2. **Builder un installateur** (`npm run build`) avec toute la refonte UI pour livraison à la galerie ou tests sur autre machine.
-3. **Phase 3D** quand Dave aura un exemple/template de facture client ou de lettre de remerciement.
-4. **Une des demandes en attente** (par exemple, la **page d'accueil dashboard** pour laquelle Dave doit fournir un mockup, ou les **réglages d'application**, ou l'**archivage** qui est concret).
-5. **Phase 4 (Sage 50)** ou **Phase 5 (web)** — reportées mais utiles.
+### Faisable tout de suite (sans dépendance externe)
+
+| Priorité | Tâche | Note |
+|---|---|---|
+| **Reco** | **#9 Mises à jour automatiques** (electron-updater) | Décision à prendre : releases publiques (GitHub Releases) ou serveur privé. Sans ça, chaque correction nécessite une réinstallation manuelle chez les parents. |
+| | **#13 Tutoriel de première ouverture** | Overlay guidé qui présente les sections au 1er lancement. Quelques décisions de design. |
+| | **#2 Édition en batch** (vue tableau) | Gros morceau qu'on a reporté à deux reprises. Toujours là. |
+| | **Migration manuelle des 2 pseudonymes** | « LO (Laurent Torregrossa) » et « Sofia (Sophie Lebeuf) » dans les fiches artistes — 5 minutes dans l'app. |
+
+### En attente d'input externe
+
+| Tâche | Manque |
+|---|---|
+| **Phase 3D — Facture client** | Exemple ou template des parents |
+| **Phase 3D — Lettre de remerciement** | Exemple ou template des parents |
+| **#7 Nomenclature finale des numéros** | Les formules réelles des parents (factures, certificats, inventaires) |
+| **#14 Intégration Agenda** (placeholder en place) | Confirmation : Outlook ou autre ? |
+| **#5 Dimensions de fenêtre** | Résolution du moniteur de tes parents (actuellement 1600×900) |
+
+### Phases majeures reportées
+
+| Phase | Portée |
+|---|---|
+| **Phase 4 — Sage 50** | Pont comptabilité (export → CSV pour import dans Sage, lecture ODBC seule). Inclut import des historiques de ventes Sage → app (alimentation rétroactive de l'historique des clients). Lourd. |
+| **Phase 5 — Web** | Publication d'œuvres vers le site WordPress/WooCommerce. Recoupe la demande #4 « Push d'infos vers le site ». |
+| **Sécurité** | Verrou léger avec code court, verrouillage auto après inactivité, chiffrement de la base avec clé dans le coffre Windows. À programmer quand l'app sera en service réel. |
+
+### Plus tard / à valider
+
+- **#6 Autres types de produits** (encadrements, impressions) — élargir le modèle d'œuvre ou ajouter une table « produits ».
+- **Évolution ChatGPT presse-papier → API directe** si les parents trouvent le presse-papier pénible à l'usage (Anthropic Haiku recommandé).
+
+### Hygiène et test
+
+- **Retest manuel chez les parents** avec l'installateur 0.2.0 pour collecter le vrai feedback avant d'ouvrir un nouveau gros chantier.
+- **Audit Loi 25** : confirmer que la fonction ChatGPT n'envoie que les données de l'œuvre (pas de client). Déjà vérifié côté code.
+
+**Recommandation pour la prochaine session :** avant un gros chantier (Phase 4/5, batch edit), prioriser **#9 Mises à jour automatiques**. Sans ça, chaque correctif demande une réinstallation manuelle.
 
 ---
 
