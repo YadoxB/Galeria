@@ -1,12 +1,13 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
+> Date de cette sauvegarde : 2026-06-15.
 
 ---
 
 ## En une phrase
 
-L'application **Galeria** (anciennement « GalerieApp ») pour la **Galerie du Vieux Saint-Jean** est fonctionnelle pour la consultation, l'édition, la création et la suppression complète du catalogue (artistes, œuvres, clients), pour **l'enregistrement des ventes**, l'**émission des certificats d'authenticité** et l'**émission des factures artiste** avec génération automatique des **PDF** finaux. Il reste à concevoir les documents complémentaires (facture client, lettre de remerciement), puis viendront le pont Sage 50 et la publication web.
+L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est fonctionnelle de bout en bout pour le cœur du métier (catalogue, ventes, certificats, factures artiste avec PDF) et elle a reçu sa **refonte UI complète** selon le brief visuel fourni. Reste à concevoir les documents complémentaires (facture client, lettre de remerciement), traiter quelques demandes en attente, puis Phase 4 (Sage 50) et Phase 5 (web).
 
 ---
 
@@ -14,112 +15,123 @@ L'application **Galeria** (anciennement « GalerieApp ») pour la **Galerie du V
 
 ### Phase 1 — Fondations (livrée)
 
-- App Electron en français, fenêtre 1200×800.
+- App Electron en français, fenêtre **1600×900** (16:9), min 1024×576.
 - Base SQLite via **`node:sqlite` (PAS `better-sqlite3`)** — voir « Décisions importantes ».
-- Dossier de données utilisateur sur `Documents\GalerieApp\` avec sous-dossiers `Sauvegardes\`, `Photos\` (avec `Photos\artistes\originaux\`) et **`Documents\{annee}\` pour les PDFs produits**.
-- Schéma à 5 tables : `artistes`, `oeuvres`, `clients`, `ventes`, **`certificats`**. Migrations additives via `src/db/migrations.js`.
-- Écran d'accueil avec logo de la galerie et pictogrammes SVG.
-- Import CSV depuis Airtable avec deux modes (« Mettre à jour » et « Ajouter seul les nouveaux »), tolérance aux variations de noms de colonnes.
-- Sauvegardes automatiques (intervalle configurable, par défaut 60 min, rétention 50, à chaque fermeture aussi).
-- Installateur Windows NSIS (`Galeria Setup 0.1.0.exe`), one-click, per-user, avec catalogue seed embarqué.
+- Dossier de données utilisateur sur `Documents\Galeria\` (renommé depuis `GalerieApp\` au démarrage si présent). Sous-dossiers : `Sauvegardes\`, `Photos\` (avec `Photos\artistes\originaux\`), `Documents\{annee}\` pour les PDFs.
+- Schéma à 5 tables : `artistes`, `oeuvres`, `clients`, `ventes`, `certificats`. Migrations additives via `src/db/migrations.js`.
+- Écran d'accueil simple avec gros boutons (sera remplacé par une vue d'ensemble — voir wishlist).
+- Import CSV depuis Airtable (modes « Mettre à jour » et « Ajouter seul les nouveaux »), tolérance aux variations de noms de colonnes.
+- Sauvegardes automatiques configurables, à la fermeture aussi.
+- **Installateur Windows NSIS** (`Galeria Setup 0.1.0.exe`) one-click, per-user, avec catalogue ET **241 Mo de photos** seed embarquées. Copie au premier lancement via `src/db/seedPhotos.js` (marqueur `.seed-applique`).
+- Build : icône en 6 tailles ICO via pngjs (corrige bug png-to-ico v2.1.8), gabarits HTML inclus, extraResources configurés.
 
 ### Phase 2 — Catalogue (livrée intégralement)
 
-- **2A** Consultation : listes artistes/œuvres avec recherche multi-critères insensible aux accents, filtres (statuts en pastilles cochables multi-sélection, artiste, type), fiches détaillées en lecture, navigation Précédent/Suivant.
-- **2B** Édition : formulaires complets pour modifier artistes et œuvres, validation, garde-fous de quitter avec confirmation, dialogues internes.
-- **2C** Création + suppression : avec refus de suppression si dépendances (artiste avec œuvres, œuvre avec ventes, vente avec certificats). Création d'œuvre depuis la liste filtrée d'un artiste pré-remplit l'artiste.
-- **2D** Photos : flux complet sélecteur de fichier → modale de recadrage carré (avec slider de taille) → JPEG 800×800. **Préservation de l'original** en pleine résolution dans `Photos\artistes\originaux\`. Bouton « Recadrer » sur photo existante (fall-back gracieux sur les anciennes photos sans original). Visionneuse plein écran au clic.
-- **Image différée à la création d'œuvre** : la section image est visible dès le nouveau formulaire, l'image est stockée en mémoire et enregistrée immédiatement après le save.
+- **2A** Consultation : listes artistes/œuvres avec recherche multi-critères, filtres, fiches détaillées, navigation Précédent/Suivant.
+- **2B** Édition : formulaires complets, validation, garde-fous de quitter avec confirmation, dialogues internes.
+- **2C** Création + suppression avec refus si dépendances.
+- **2D** Photos : flux complet, recadrage carré 800×800 avec slider, original pleine résolution conservé.
+- **Image différée à la création d'œuvre** : section image visible dès le nouveau formulaire, stockée en dataUrl puis enregistrée après save.
 
 ### Phase 3A — Clients (livrée)
 
 - CRUD complet (liste, fiche, édition, création, suppression).
-- **Loi 25** : case consentement courriel + date, badge visible dans la liste pour ceux qui ont consenti.
-- Champs d'adresse granulaires : numéro civique, rue, appartement, ville, **pays (~190 pays en select) + subdivision contextuelle (Province/État/Région) qui s'ajuste selon le pays**, code postal.
-- **Formatage automatique du téléphone partout** au format `(xxx) xxx-xxxx` (délégation globale via app.js sur tout `input[type=tel]`, plus reformatage de la valeur héritée à l'ouverture).
-- Section « Historique d'achat » alimentée automatiquement depuis les ventes (Phase 3B).
-- Champs séparés `prenom` / `nom` (avec fallback gracieux pour les données héritées dans `nom` seul).
+- **Loi 25** : case consentement courriel + date, badge dans la liste.
+- Champs d'adresse granulaires : numéro civique, rue, appartement, ville, **pays (~190 select) + subdivision contextuelle (Province/État/Région)**, code postal.
+- **Formatage automatique du téléphone partout** via délégation globale (app.js sur tout `input[type=tel]`), reformatage des valeurs héritées à l'ouverture.
+- Section « Historique d'achat » alimentée par les vraies ventes.
+- Champs séparés `prenom` / `nom` avec fallback gracieux.
 
 ### Phase 3B — Ventes (livrée)
 
-- Liste des ventes avec recherche multi-critères (œuvre, artiste, client, numéro de facture).
-- Création de vente : sélecteur œuvre disponible avec recherche, sélecteur client avec recherche + bouton **« + Nouveau client »** qui ouvre une mini-modale (nom, prénom, courriel, téléphone), date du jour par défaut, prix pré-rempli depuis l'œuvre, TPS/TVQ pré-cochées avec taux depuis config, mode de paiement (datalist), numéro de facture auto-incrémenté (F-2026-001).
-- Recalcul du total en temps réel pendant la saisie.
-- À l'enregistrement : transaction qui insère la vente + passe l'œuvre au statut **vendu**. Si on supprime ou modifie la vente, le statut de l'œuvre est ré-évalué automatiquement.
-- Fiche de vente : blocs pliables (œuvre vendue, client, détails, documents, notes), navigation Précédent/Suivant, suppression refusée si certificats liés.
-- Bouton **« Vendre »** sur la fiche d'œuvre (dans l'entête, en or) qui ouvre la vente avec l'œuvre pré-remplie. Sur œuvre vendue, devient **« Voir la vente F-2026-xxx »**.
+- Liste avec recherche multi-critères, tri.
+- Création de vente : sélecteur œuvre disponible + sélecteur client + **bouton « + Nouveau client »** qui ouvre désormais un **formulaire complet en modale 720px** (au lieu d'un mini-formulaire) avec adresse, pays/subdivision, consentement, notes.
+- Prix pré-rempli, TPS/TVQ depuis config, mode de paiement, numéro de facture auto.
+- **Rabais artiste + rabais galerie** (colonnes ventes, formulaire avec sous-bloc « Rabais (optionnels) », récap en lecture si non-zéro, branchement dans facture artiste).
+- Recalcul du total en temps réel.
+- Transaction qui marque l'œuvre comme vendue. Suppression refusée si certificats liés.
+- Bouton **Vendre** sur fiche d'œuvre disponible, bouton **Voir la vente F-2026-xxx** sur œuvre vendue.
 - Historique d'achat des clients branché sur les vraies ventes.
 
 ### Phase 3B-bis — Certificats d'authenticité (livrée)
 
-- Table `certificats` indépendante (lien œuvre obligatoire, lien vente optionnel — un certificat peut exister sans vente).
-- Mini-formulaire overlay réutilisable (`certificat-creation.js`) accessible depuis la fiche d'œuvre **et** depuis la fiche de vente.
-- Pré-remplissage intelligent : numéro auto (`C-2026-001`...), date du jour, valeur = prix de vente (si vente) ou prix de l'œuvre (sinon), signataire depuis config, particularité optionnelle.
-- Section « Certificats d'authenticité » en bas de la fiche d'œuvre avec compteur, et « Documents » sur fiche de vente.
-- **Suppression d'un certificat ne décrémente pas le compteur** (comme un livre de factures papier — gaps acceptables).
+- Table `certificats` indépendante (lien œuvre obligatoire, lien vente optionnel — peut exister sans vente).
+- Mini-formulaire overlay réutilisable accessible depuis fiche d'œuvre ET fiche de vente.
+- Numéro auto, pré-remplissage valeur, signataire, particularité.
+- Section « Certificats d'authenticité » sur fiche d'œuvre avec compteur ; section « Documents » sur fiche de vente.
+- Suppression d'un certificat ne décrémente pas le compteur (gap acceptable).
 
 ### Phase 3C — Génération des PDF (livrée)
 
-- Nouveau module `src/pdf.js` : ouvre BrowserWindow cachée, charge le gabarit HTML, appelle `remplir(data)` via `executeJavaScript`, attend que polices et images soient prêtes, capture avec `printToPDF`.
-- **Auto-génération** à la création d'un certificat (le PDF apparaît tout de suite).
-- Bouton **« Produire la facture artiste »** sur fiche de vente, génère le PDF.
-- Sur chaque document généré : boutons **« Voir le PDF »** (ouvre dans le visionneur Windows via `shell.openPath`) et **« Re-générer »**.
-- **Photo de l'œuvre** intégrée en base64 dans le certificat (pas de file:// fragile).
-- **Mapping intelligent type d'œuvre → texte d'attestation** : Sculpture → sculpteur, Reproduction → reproduction, Photographie → photographe, Estampe → graveur, Dessin → dessinateur, autres → peintre.
-- **Taxes intelligentes** sur facture artiste : TPS/TVQ activées si l'artiste a les numéros dans sa fiche.
-- **Numérotation distincte pour les factures artistes** (A-2026-xxx) — séparée des factures client (F-2026-xxx). Le numéro est réservé et stocké sur la vente à la première génération (re-générations utilisent le même numéro).
-- Sortie : `Documents\GalerieApp\Documents\{annee}\Certificat_C-2026-001_TitreSlug.pdf` (paysage) et `FactureArtiste_A-2026-001_ArtisteSlug.pdf` (portrait).
+- Module `src/pdf.js` : BrowserWindow cachée, charge gabarit, `executeJavaScript` pour appeler `remplir(data)`, attend polices+images, `printToPDF`.
+- **Auto-génération** à la création d'un certificat.
+- Bouton **« Produire la facture artiste »** sur fiche de vente.
+- Pour chaque PDF généré, **trois actions** : **Voir le PDF** (visionneur Windows), **Ouvrir le dossier** (explorateur via `shell.showItemInFolder`), **Re-générer**.
+- Photo de l'œuvre intégrée en base64 dans le certificat.
+- Mapping intelligent type d'œuvre → texte d'attestation (peintre/sculpteur/reproduction/photographe/etc.).
+- Taxes intelligentes sur facture artiste (depuis `numeros_taxes` JSON de l'artiste).
+- **Numérotation distincte** : factures client (F-2026-xxx), factures artiste (A-2026-xxx), certificats (C-2026-xxx). Réservation du numéro stockée sur la vente.
+- Sortie : `Documents\Galeria\Documents\{annee}\Certificat_*.pdf` (paysage), `FactureArtiste_*.pdf` (portrait).
 
-### Phase 3R — Page de réglages (livrée)
+### Phase 3R — Réglages + Profil de la galerie (livrée, séparés)
 
-- Stockage JSON dans `Documents\GalerieApp\config.json`, indépendant de la base.
-- Quatre sections prévues, **trois actives** (La galerie, Les documents, Les sauvegardes), une **reportée** (La sécurité — voir « Décisions »).
-- Bloc « Les documents » organisé en sous-sections : **Factures client**, **Factures artiste**, **Certificats**, **TPS**, **TVQ**, **Facture artiste (cote galerie)**.
-- Bouton « Sauvegarder maintenant » et bouton « Importer des données CSV » dans la section sauvegardes/import.
-- Au save : le module de sauvegardes redémarre avec la nouvelle fréquence/dossier, l'entête de l'app reflète le nouveau nom de galerie.
+- **Page Réglages** : Documents (factures, certificats, taxes, cote), Sauvegardes (fréquence, rétention, dossier, import CSV). Stockage JSON dans `Documents\Galeria\config.json`.
+- **Page Profil de la galerie** (séparée) : nom, adresse, téléphone, courriel, site web, numéros TPS/TVQ, logo. **Accessible via le bloc profil en bas de la sidebar** (devenu cliquable).
+- Au save : module de sauvegardes redémarre, entête mis à jour.
+
+### Refonte UI complète (livrée — 10 étapes du brief, 8 conservée à 5 %)
+
+- **`src/theme.css`** : toutes les variables visuelles centralisées (couleurs, polices, espacements, arrondis, ombres).
+- **Polices embarquées localement** : Inter (400/500/600/700) + Cormorant Garamond (400/600 + 400 italic), sous-sets latin + latin-ext, 14 fichiers `.woff2` (703 Ko) dans `src/fonts/`. Pas de Google Fonts à l'exécution.
+- **Sidebar Deep Navy** à gauche (250px), avec :
+  - Logo Galeria PNG transparent au sommet (cliquable → accueil)
+  - Menu vertical 5 entrées (Artistes, Œuvres, Clients, Ventes, Réglages) avec icônes SVG, état actif en Gallery Navy + bordure dorée + texte doré
+  - **Bloc profil cliquable** en bas (avatar « GVSJ », nom de la galerie, sous-titre « Profil de la galerie ») → ouvre la page Profil
+- **Fond Soft Ivory** très pâle (`#FCFAF4`), cartes en blanc pur (`#FFFFFF`).
+- **En-tête de page** : titre Cormorant Garamond 32px Ink, recherche pillule centrée avec icône loupe, bouton **« + Ajouter »** primaire doré (texte blanc cassé).
+- **4 cartes statistiques** sur la vue Œuvres : Œuvres au total (tuile dorée), Artistes représentés (tuile saumon, icône corail), Ventes ce mois (tuile terracotta), Disponibles (**tuile deep navy pleine avec icône cream** — accent visuel fort). Deltas mensuels calculés via `cree_le >= start of month`.
+- **Vue grille** pour Œuvres et Artistes (toggle Grille/Liste mémorisé dans localStorage). Cartes 4 colonnes auto-fill avec image 4:3, titre Cormorant, métadonnées Inter, badge de statut, menu « ⋯ » par carte (Voir, Vendre, Supprimer).
+- **Contrôles de vue** : barre avec toggle Grille/Liste à gauche, **bouton Filtres + dropdown Tri** à droite. Le panneau Filtres s'ouvre sous le bouton avec statuts en pastilles, dropdown artiste, dropdown type (selects au même style compact que le tri).
+- **Boutons unifiés** : primaire (warm gold + texte soft-ivory + poids 600), secondaire (porcelain + bordure mist + ink), danger (outline rouge — Dave préfère outline à fond plein), bouton retour flottant (cercle porcelain en haut-gauche, visible **seulement sur les fiches détaillées**).
+- **Champs de formulaire** : porcelain + mist border, radius 10px, hauteur 40px, focus warm-gold + halo 4px, label Inter 13px slate. Erreur state prêt (`form-champ.erreur`).
+- **Modales** : porcelain radius 18px, overlay Deep Navy 45 % avec backdrop-filter blur 2px, titres Cormorant.
+- **Header redesigné** : icône maison remplacée par sidebar, navigation sections supprimée du header (déplacée vers sidebar).
+- **Grand titre des fiches** en Cormorant Garamond 32px Ink (seul élément conservé de l'étape 8 qui a été annulée à 95 %).
+- Nettoyage final : 83 références aux anciennes variables remplacées, ancien `:root` retiré, règles dépréciées du header (`btn-entete`, `btn-titre`, `logo-mini`, etc.) supprimées.
 
 ### Flux artiste enrichis
 
-- **Création d'artiste avec enchaînement** : bouton **« Créer + ajouter les œuvres »** (en or, par défaut) qui après save bascule directement sur le formulaire d'œuvre en mode chaînage. Compteur de progression dans une bannière dorée, boutons **« Terminer »** et **« Enregistrer + ajouter une autre »**. Navigation propre (la pile reste compacte).
-- **Prénom et nom de famille séparés** sur la fiche artiste, avec **auto-préfixe d'inventaire** : 2 premières lettres du prénom + 1 du nom, en majuscules sans accents (Joe Untel → JOU). L'auto-fill s'arrête dès que l'utilisateur modifie le préfixe à la main. Les fiches existantes avec nom complet dans `nom` continuent de fonctionner via `nomComplet()` qui retombe sur `nom` si pas de prénom.
-- Toutes les requêtes SQL qui joignent l'artiste retournent maintenant `prenom + ' ' + nom` comme `artiste_nom` (via `TRIM(COALESCE(a.prenom || ' ', '') || a.nom)`).
-
-### Header et navigation
-
-- **Icône maison** dans le header (à la place du logo de la galerie) pour revenir à l'accueil — plus clair fonctionnellement.
-- **Navigation rapide entre sections** : quand l'utilisateur est dans une section principale, les boutons des **autres** sections (Artistes, Œuvres, Clients, Ventes) apparaissent dans la zone droite du header avec leur pictogramme + libellé. Mis à jour automatiquement à chaque changement de vue (hook dans le router).
-- **Padding adaptatif** : le header garde son contenu sur la même bande centrale que `.vue-liste` (max 980px), donc les boutons restent stables quand la fenêtre s'agrandit.
+- **Création d'artiste avec enchaînement** : bouton « Créer + ajouter les œuvres » (doré) qui bascule sur le formulaire d'œuvre en mode chaînage. Bannière dorée avec compteur, boutons « Terminer » et « Enregistrer + ajouter une autre ».
+- **Prénom et nom de famille séparés** + auto-préfixe d'inventaire (Joe Untel → JOU). L'auto-fill s'arrête à la première modification manuelle du préfixe.
+- Toutes les requêtes SQL retournent `prenom + ' ' + nom` comme `artiste_nom` via `TRIM(COALESCE(a.prenom || ' ', '') || a.nom)`.
 
 ### Polish transverse
 
-- Système de **dialogues internes** unifié (`src/app/dialogue.js`) qui remplace toutes les boîtes Windows génériques. Types : info, warning, error, question, succes.
-- App renommée **« Galeria »** au niveau Windows (titre, installateur, raccourci). La marque interne reste « Galerie du Vieux Saint-Jean » (configurable).
-- Icône d'app : visuel fourni par Dave (`gabarits/actifs/icon-galeria.png`).
-- Pictogrammes SVG (silhouettes, cadre, dollar, etc.) sur l'accueil au lieu de simples lettres.
-- Sections **pliables** (`<details>`/`<summary>`) sur les fiches.
-- Barre Annuler/Enregistrer collée au bas du viewport avec dégradé crème (épaisseur réduite de ~35 % récemment).
-- Navigation Précédent/Suivant alphabétique sur fiches artistes, œuvres, clients, ventes.
-- Bouton « Voir toutes les œuvres de [artiste] » sur fiche œuvre.
-- Avatar artiste de 160 px sur la fiche (vs 48 px dans les listes).
-- **Multi-numéros de taxes par artiste** : liste de paires (étiquette, numéro) en JSON dans `numeros_taxes`, gère TPS/TVQ/TVH et custom.
-- Gabarits PDF (`gabarit-certificat.html`, `gabarit-facture-artiste.html`) modifiés pour lire les coordonnées de la galerie depuis `data.galerie` au lieu d'avoir les valeurs en dur. Restent utilisables en standalone avec données d'exemple.
+- Système de **dialogues internes** unifié (`src/app/dialogue.js`) — info, warning, error, question, succes.
+- App renommée **« Galeria »** au niveau Windows.
+- Icône d'app convertie correctement en ICO multi-résolution.
+- Sections **pliables** sur les fiches.
+- Barre Annuler/Enregistrer en bas de viewport, **50 % d'opacité avec backdrop-filter blur 6px** (Dave préférait voir le contenu derrière).
+- Navigation Précédent/Suivant alphabétique sur toutes les fiches.
+- **Multi-numéros de taxes par artiste** en JSON.
+- Gabarits PDF lisent `data.galerie` depuis config.
 
 ### Import en masse des photos d'œuvres
 
-- 505 photos importées depuis `F:\Galerie\Automatisation\Galerie\photos_oeuvres\`, matching parfait sur le numéro d'inventaire. Script ré-utilisable : `npm run import-photos-oeuvres`.
+- 505 photos importées depuis F:\, matching par numéro d'inventaire. Script `npm run import-photos-oeuvres`.
 
 ---
 
 ## Ce qui reste à faire
 
-### Phase 3D — Documents complémentaires (PROCHAINE ÉTAPE quand exemples disponibles)
+### Phase 3D — Documents complémentaires (en attente d'exemples)
 
-- **Facture client** (galerie → acheteur, émise au moment de la vente). À concevoir une fois que Dave aura un exemple/template de ses parents. Distincte de la facture artiste (artiste → galerie pour sa part). Numérotation F-2026-xxx déjà prête en config.
-- **Lettre de remerciement** : nom du client, mention de l'œuvre achetée, ton chaleureux, signature de la galerie. Plus simple que les autres, mais texte par défaut à définir avec la galerie.
+- **Facture client** (galerie → acheteur, émise au moment de la vente). À concevoir une fois que Dave aura un exemple/template. Distincte de la facture artiste. Numérotation F-2026-xxx déjà prête.
+- **Lettre de remerciement** : nom du client, mention de l'œuvre achetée, ton chaleureux, signature. Plus simple, mais texte par défaut à définir.
 
 ### Phase 4 — Pont Sage 50 (reportée)
 
-Voir CLAUDE.md section 8. Inclut import des historiques de ventes Sage → app (alimentera l'historique des clients pour les ventes antérieures à l'app).
+Voir CLAUDE.md section 8. Inclut import des historiques de ventes Sage → app.
 
 ### Phase 5 — Publication web (reportée)
 
@@ -127,93 +139,108 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 
 ### Sécurité (reportée comme phase dédiée)
 
-- Verrou léger d'app avec code court.
-- Verrouillage automatique après inactivité.
-- Code hashé en stockage.
+- Verrou léger d'app avec code court, verrouillage auto, code hashé.
 - Plus tard : chiffrement de la base avec clé dans le coffre Windows.
 
-### Demandes spontanées de Dave (à intégrer au planning, non encore programmées)
+### Demandes spontanées en attente
 
-1. **Splash screen** au démarrage avec logo Galeria, version, et autres infos d'identité. Dave fournira l'image.
-2. **Consultation/édition en batch** des tables (vue tableau pour modifier plusieurs lignes d'un coup).
-3. **Archiver une/des fiches** (statut archivé qui les retire des vues actives tout en gardant la trace pour la comptabilité ou l'historique).
-4. **Push d'infos vers le site web** (recoupe Phase 5 mais à confirmer comme sous-tâche).
-5. **Validation des dimensions idéales de fenêtre** pour l'écran réel des parents de Dave (besoin de connaître la résolution de leur moniteur).
-6. **Rabais artiste et rabais galerie sur les ventes** : la facture artiste a déjà les champs dans le gabarit mais l'app envoie `rabais_artiste: 0, rabais_galerie: 0`. Nécessite 2 colonnes sur ventes + 2 champs sur le formulaire de vente.
-7. **Plus tard** : intégrer d'autres types de produits que les œuvres (encadrements, impressions). Implique d'ajouter une table « produits » ou d'élargir le modèle d'œuvre.
-8. **Nomenclature finale des numéros** (factures, certificats, inventaires) : Dave doit obtenir les formules de ses parents. L'app utilise pour l'instant `F-2026-xxx`, `A-2026-xxx`, `C-2026-xxx` (modifiables dans Réglages — préfixe + compteur, aucune migration nécessaire pour changer).
+**Plus anciennes (depuis premières sessions)** :
+1. **Splash screen** au démarrage avec logo Galeria, version. Image fournie au moment voulu.
+2. **Consultation/édition en batch** des tables (vue tableau pour modifier plusieurs lignes).
+3. **Archiver une/des fiches** (statut archivé qui les retire des vues actives). Le brief UI prévoit déjà les couleurs du badge « Archivée ».
+4. **Push d'infos vers le site web** (recoupe Phase 5).
+5. **Validation des dimensions de fenêtre** pour l'écran réel des parents (actuellement 1600×900). Idéalement à voir sur place.
+6. **Plus tard** : intégrer d'autres types de produits (encadrements, impressions).
+7. **Nomenclature finale des numéros** (factures, certificats, inventaires) : Dave doit obtenir les formules de ses parents. L'app utilise des préfixes/compteurs configurables — aucune migration nécessaire.
+
+**Nouvelles demandes (cette session)** :
+8. **Réglages d'application** (taille d'affichage, autres préférences UI). Distinct des réglages galerie (qui est dans Profil) et des réglages métier (qui est dans Réglages).
+9. **Mécanisme de mise à jour automatique** (push updates) : explorer electron-updater ou équivalent pour livrer les nouvelles versions aux parents sans qu'ils aient à réinstaller manuellement.
+10. **Page d'accueil avec vue d'ensemble** : remplacer l'accueil actuel (gros boutons) par une vraie dashboard. Dave fournira un mockup quand on sera rendu là.
+11. **Descriptions d'œuvres générées par IA** : un module qui, à partir d'une liste de paramètres définie pour chaque artiste (style, démarche, thèmes…), produit une suggestion de description pour une nouvelle œuvre. Implique : champ de paramètres sur la fiche artiste, intégration API (OpenAI ? Claude ?), bouton « Suggérer une description » sur la fiche d'œuvre. Coût/quota à étudier.
 
 ---
 
 ## Décisions importantes prises pendant ces sessions
 
-1. **`node:sqlite` (built-in de Node 24/Electron 42)** plutôt que `better-sqlite3`. Évite l'installation de Visual Studio Build Tools. API très proche, sans helper `db.transaction()` : utiliser BEGIN/COMMIT/ROLLBACK explicites.
+1. **`node:sqlite` (built-in de Node 24/Electron 42)** plutôt que `better-sqlite3`. Évite l'installation de Visual Studio Build Tools. Sans helper `db.transaction()` : utiliser BEGIN/COMMIT/ROLLBACK explicites.
 
-2. **Identité du produit vs marque de la galerie séparées.** Galeria = nom du produit Windows. Galerie du Vieux Saint-Jean = marque affichée dans l'app, modifiable via réglages.
+2. **Identité du produit vs marque de la galerie séparées.** Galeria = nom du produit Windows. Galerie du Vieux Saint-Jean = marque affichée, modifiable via Profil galerie.
 
-3. **Architecture photo en deux niveaux** : copie recadrée 800×800 pour affichage + original pleine résolution conservé en parallèle (pour push web futur, re-recadrages, ou impression).
+3. **Architecture photo en deux niveaux** : crop 800×800 pour affichage + original pleine résolution conservé en parallèle.
 
-4. **Dialogues internes uniformes**, jamais de boîte Windows générique (sauf sélecteur de fichier système).
+4. **Dialogues internes uniformes**, jamais de boîte Windows générique.
 
-5. **Loi 25** : tout local, consentement courriel obligatoire avant tout envoi futur, suppression possible, sauvegardes locales chiffrées (plus tard).
+5. **Loi 25** : tout local, consentement courriel obligatoire, suppression possible.
 
-6. **Sécurité de l'app reportée à sa propre phase**, pour ne pas alourdir la livraison.
+6. **Sécurité de l'app reportée à sa propre phase**.
 
-7. **Mode d'import « mettre à jour » disponible**, pour que les re-exports d'Airtable mettent à jour les fiches existantes sans créer de doublons.
+7. **Mode d'import « mettre à jour » disponible**, anti-doublons par nom/numéro d'inventaire.
 
-8. **Champs de taxes par artiste** : liste de paires (étiquette, numéro) en JSON pour gérer TPS+TVQ (Québec), TVH (autres provinces), et cas exotiques.
+8. **Champs de taxes par artiste** : liste de paires (étiquette, numéro) en JSON.
 
-9. **Sauvegardes configurables** depuis les réglages (fréquence min 5 min, rétention min 5, dossier alternatif).
+9. **Sauvegardes configurables** depuis les réglages.
 
-10. **Gabarits PDF préparés à l'avance** : valeurs de galerie en dur retirées et remplacées par des placeholders peuplés depuis `data.galerie`. Les gabarits restent visualisables seuls grâce à `DONNEES_EXEMPLE`.
+10. **Gabarits PDF préparés à l'avance** avec placeholders `data.galerie`.
 
 11. **Signataire du certificat par défaut : « Joanne Boucher, Galeriste »**.
 
-12. **Pre-build seed** : la base SQLite avec catalogue actuel est embarquée dans l'installateur via `npm run prepare:seed` qui copie `Documents\GalerieApp\galerie.db` vers `seed/galerie.db` au moment du build.
+12. **Pre-build seed** : DB + photos copiés depuis le dossier user de Dave au moment du build via `npm run prepare:assets`.
 
-13. **Certificat indépendant de la vente** : la table `certificats` a `vente_id` nullable. Un certificat peut être produit pour authentifier une œuvre sans qu'il y ait vente. Plusieurs certificats par œuvre possibles (ré-émissions).
+13. **Certificat indépendant de la vente** : `vente_id` nullable. Plusieurs certificats par œuvre possibles.
 
-14. **Facture artiste vs facture client** — distinction conceptuelle importante :
-    - **Facture artiste** = document de l'artiste vers la galerie (l'artiste « facture » la galerie pour sa part de la vente, mais comme les artistes oublient, la galerie le produit à leur place). Numérotation **A-2026-xxx**, séparée de la facture client.
-    - **Facture client** = document de la galerie vers l'acheteur (à concevoir en Phase 3D). Numérotation **F-2026-xxx**.
-    - Les deux sont déclenchées au moment d'une vente mais représentent deux transactions distinctes.
+14. **Facture artiste vs facture client** — distinction conceptuelle stricte :
+    - Facture artiste = artiste → galerie (la galerie la produit à la place de l'artiste). Numérotation **A-2026-xxx**.
+    - Facture client = galerie → acheteur (Phase 3D). Numérotation **F-2026-xxx**.
 
-15. **PDF par défaut auto-généré à la création d'un certificat**. Bouton « Générer le PDF » sur les rares cas d'échec, bouton « Re-générer » toujours disponible.
+15. **PDF auto-généré à la création d'un certificat**.
 
-16. **Numérotation entièrement reconfigurable** : tous les compteurs (factures client/artiste, certificats) ont un préfixe et un prochain numéro dans Réglages. Quand la nomenclature finale viendra des parents de Dave, c'est juste deux champs à modifier — aucun code à toucher.
+16. **Numérotation entièrement reconfigurable** : tous les compteurs ont préfixe + prochain numéro dans Réglages. Aucune migration nécessaire pour changer la nomenclature finale.
 
-17. **Pays + subdivision dynamique** : pays = select large (~190 pays). Subdivision (Province/État/Région) s'adapte au pays choisi : Canada → 13 provinces dropdown, États-Unis → 51 états dropdown, autres → champ texte libre. Québec préselectionné par défaut.
+17. **Pays + subdivision dynamique** : Canada → 13 provinces, États-Unis → 51 états, autres → champ texte libre. Québec préselectionné.
+
+18. **Refonte UI selon brief fourni** : Deep Navy + Soft Ivory + Warm Gold + Cormorant Garamond + Inter. Variables centralisées dans `theme.css`. Étape 8 (refonte des blocs et listes descriptives) annulée à 95 % — Dave préférait l'ancien look. Seul conservé : le grand titre des fiches en Cormorant 32px Ink.
+
+19. **Dossier utilisateur renommé `GalerieApp` → `Galeria`** au démarrage. Migration automatique unique via `migrerAncienDossierSiPresent()` dans `paths.js`.
+
+20. **Bouton Filtres dans la barre des contrôles de vue** (à côté de Tri), pas dans l'en-tête de page (où il est moins à sa place).
+
+21. **Bouton Supprimer en outline rouge** (Dave préfère à fond plein, sauf le brief le voulait plein).
+
+22. **Texte des boutons dorés en soft-ivory** (Dave préfère à Deep Navy).
+
+23. **Polices embarquées localement** (pas Google Fonts à l'exécution) — fonctionne 100 % hors ligne.
+
+24. **Formulaire client complet en modale large** (720px) lors de création depuis une vente, au lieu d'un mini-formulaire à 4 champs.
 
 ---
 
 ## Prochaine étape concrète
 
-**Phase 3D — Documents complémentaires** (quand Dave aura les exemples).
+À l'utilisateur de choisir :
 
-À la reprise de la conversation :
-
-1. Demander à Dave de fournir un exemple de facture client (PDF, photo, ou description du contenu attendu).
-2. Concevoir le gabarit HTML `gabarit-facture-client.html` dans `gabarits/`, en suivant le même pattern que les deux existants (style Garamond, liseré doré, `remplir(data)` avec `data.galerie`).
-3. Ajouter `genererFactureClientPdf(venteId)` dans `src/pdf.js`, IPC, preload, et bouton sur fiche de vente. Le numéro vient de `vente.numero_facture` (qui existe déjà depuis la création de la vente).
-4. Demander à Dave un exemple ou un brouillon de lettre de remerciement.
-5. Concevoir `gabarit-lettre-remerciement.html` (plus simple), même mécanique.
-
-En attendant les exemples, alternatives possibles :
-- Attaquer une demande spontanée (#1 splash screen, #3 archivage, #2 batch editing, #6 rabais artiste/galerie).
-- Construire un installateur de test (`npm run build`) pour livrer chez les parents et collecter du feedback réel.
+1. **Tester à fond la version actuelle** dans un scénario réel complet (créer artiste avec œuvres, faire vente, produire certificat + facture, exporter, etc.) et revenir avec les ajustements.
+2. **Builder un installateur** (`npm run build`) avec toute la refonte UI pour livraison à la galerie ou tests sur autre machine.
+3. **Phase 3D** quand Dave aura un exemple/template de facture client ou de lettre de remerciement.
+4. **Une des demandes en attente** (par exemple, la **page d'accueil dashboard** pour laquelle Dave doit fournir un mockup, ou les **réglages d'application**, ou l'**archivage** qui est concret).
+5. **Phase 4 (Sage 50)** ou **Phase 5 (web)** — reportées mais utiles.
 
 ---
 
 ## Notes techniques pour l'intervenant suivant
 
 - **Aucune commande de build automatique requise** au quotidien. `npm start` lance l'app en dev.
-- Le build final = `npm run build` (génère l'icône, le seed depuis le catalogue actuel, et produit le `.exe` dans `dist/`). Demande le Mode Développeur Windows activé pour les liens symboliques d'electron-builder.
-- **Migrations DB** : ajouter dans `src/db/migrations.js` (additif uniquement). Ajouter aussi dans `src/db/schema.sql` pour les installations fraîches. La table `certificats` est créée via `CREATE TABLE IF NOT EXISTS` dans schema.sql.
-- **Config** : ajouter un champ dans `DEFAULTS` de `src/config.js` ; le merge récursif s'occupe d'ajouter le champ aux configs existantes au chargement.
-- **Dialogues** : `import { confirmer, alerter } from '../dialogue.js'` dans toute vue.
+- **Build final** = `npm run build` (génère icône via pngjs, copie DB+photos depuis `Documents\Galeria\`, package via electron-builder). Mode Développeur Windows requis (symlinks).
+- **Migrations DB** : ajouter dans `src/db/migrations.js` (additif). Modifier aussi `src/db/schema.sql` pour les installations fraîches.
+- **Config** : ajouter un champ dans `DEFAULTS` de `src/config.js`. Le merge récursif gère le hot-add.
+- **Dialogues** : `import { confirmer, alerter } from '../dialogue.js'`.
 - **Flux import** : `import { fluxImport } from '../flux-import.js'`.
-- **Photos** : URL via `urlPhoto(cheminRelatif)` qui produit `galerie://photos/...`. Protocole défini dans `main.js`.
-- **PDFs** : générés via `src/pdf.js`. Gabarits dans `gabarits/`, sortie dans `Documents\GalerieApp\Documents\{annee}\`. Ouvre dans le visionneur système via `shell.openPath`.
-- **Header dynamique** : `majActionsEntete(nomVue)` dans `src/app/marque.js`, appelée automatiquement par le router après chaque rendu. Pour ajouter une nouvelle section principale, ajouter à `SECTIONS_NAV` et à `sectionDe(nomVue)`.
-- **Pays/subdivision** : `champPays` + `champSubdivision` + `brancherChangementPays` dans `src/app/commun.js`. Pour ajouter un pays avec subdivisions listées (ex. Mexique), étendre `SUBDIVISIONS_PAYS`.
-- **Mémoires importantes** déjà enregistrées dans `C:\Users\Dave\.claude\projects\F--Galerie-Automatisation-GalerieApp\memory\` (rôle de Dave, modèle de déploiement, catalogue pré-construit, actifs de marque, choix SQLite).
+- **Photos** : URL via `urlPhoto(cheminRelatif)` qui produit `galerie://photos/...` (protocole défini dans `main.js`).
+- **PDFs** : générés via `src/pdf.js`. Sortie dans `Documents\Galeria\Documents\{annee}\`. Ouvre dans visionneur via `shell.openPath`, dossier via `shell.showItemInFolder`.
+- **Sidebar dynamique** : `majSidebarActif(nomVue)` dans `marque.js`, appelée automatiquement par le router. Ajouter à `SECTIONS_NAV` pour une nouvelle section.
+- **Pays/subdivision** : `champPays` + `champSubdivision` + `brancherChangementPays` dans `commun.js`.
+- **Variables visuelles** : toutes dans `src/theme.css`. Aucune valeur en dur dans `styles.css`.
+- **Polices** : embarquées dans `src/fonts/`. Déclarées via `@font-face` au sommet de `theme.css`.
+- **Préférences UI persistées** (vue grille/liste, tri) : `localStorage` (clés `oeuvres-vue`, `oeuvres-tri`, `artistes-vue`, `artistes-tri`).
+- **Git** : 3 commits sur master. Branche `sauvegarde-avant-ui` (`57d95b0`) comme point de retour pour annuler la refonte en cas de besoin (`git checkout sauvegarde-avant-ui`).
+- **Mémoires importantes** déjà enregistrées dans `C:\Users\Dave\.claude\projects\F--Galerie-Automatisation-GalerieApp\memory\` (rôle Dave, modèle déploiement, catalogue pré-construit, actifs de marque, choix SQLite).
