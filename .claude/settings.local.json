@@ -56,7 +56,10 @@
       "Bash(ls C:/Users/Dave/.claude/projects/F--Galerie-Automatisation-GalerieApp/memory/ 2>&1)",
       "PowerShell(try { Get-Process electron -ErrorAction Stop | Stop-Process -Force } catch {}; Start-Sleep -Seconds 1; \\(Get-Process electron -ErrorAction SilentlyContinue | Measure-Object\\).Count)",
       "Bash(ls \"/c/Users/Dave/Documents/Galeria/galerie.db\" 2>&1)",
-      "Bash(grep -v \"artiste_nom\\\\|artisteNom\\\\|nomComplet\\\\|//\\\\b\")"
+      "Bash(grep -v \"artiste_nom\\\\|artisteNom\\\\|nomComplet\\\\|//\\\\b\")",
+      "Bash(git push *)",
+      "Bash(git rebase *)",
+      "Bash(git stash *)"
     ]
   }
 }
