@@ -254,6 +254,54 @@ export function nomComplet(c) {
   return parts.length ? parts.join(' ') : (c?.nom || '');
 }
 
+// ====== Archivage ======
+
+const ETIQUETTES_ARCHIVE = {
+  artistes: { article: "cet", nom: "artiste", message: "L'artiste n'apparaîtra plus dans les listes ni les sélecteurs, mais ses œuvres et l'historique sont conservés." },
+  oeuvres:  { article: "cette", nom: "œuvre", message: "L'œuvre n'apparaîtra plus dans les listes ni dans le sélecteur d'œuvres lors d'une nouvelle vente." },
+  clients:  { article: "ce", nom: "client", message: "Le client n'apparaîtra plus dans les listes ni dans le sélecteur lors d'une nouvelle vente. Son historique de ventes reste consultable." },
+};
+
+export function badgeArchive() {
+  return '<span class="badge-archive">Archivée</span>';
+}
+
+export function boutonArchive({ archive }) {
+  const libelle = archive ? 'Désarchiver' : 'Archiver';
+  return `<button class="btn-action" id="btn-archiver">${libelle}</button>`;
+}
+
+export async function basculerArchive({ table, fiche, libelleFiche, confirmer, surFait }) {
+  const meta = ETIQUETTES_ARCHIVE[table] || { article: '', nom: 'fiche', message: '' };
+  const versArchive = !fiche.archive;
+  if (versArchive) {
+    const reponse = await confirmer({
+      type: 'question',
+      title: `Archiver ${meta.article} ${meta.nom} ?`,
+      message: `Archiver « ${libelleFiche} » ?`,
+      detail: meta.message + ' Tu pourras le retrouver en cochant « Inclure les archivés » dans les filtres.',
+      buttons: ['Archiver', 'Annuler'],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (reponse !== 0) return false;
+  }
+  try {
+    await window.api.ficheArchiver(table, fiche.id, versArchive);
+    fiche.archive = versArchive ? 1 : 0;
+    if (surFait) surFait(fiche.archive);
+    return true;
+  } catch (err) {
+    await confirmer({
+      type: 'error',
+      title: 'Action impossible',
+      message: err.message,
+      buttons: ['OK'],
+    });
+    return false;
+  }
+}
+
 export function formaterDate(s) {
   if (!s) return '—';
   const t = String(s).trim();

@@ -4,6 +4,7 @@ import {
   champTexte, champTextarea, champCheckbox, datalist,
   champPays, champSubdivision, brancherChangementPays,
   parserNumerosTaxes, urlPhoto, sansAccents, nomComplet,
+  badgeArchive, boutonArchive, basculerArchive,
 } from '../commun.js';
 import { recadrerCarre } from '../recadrage.js';
 import { visionner } from '../visionneuse.js';
@@ -24,6 +25,8 @@ const GABARIT_VIDE = {
   photo_path: null,
   photo_originale_path: null,
   notes: null,
+  instructions_ia: null,
+  lien_chatgpt: null,
   nb_oeuvres: 0,
 };
 
@@ -181,7 +184,7 @@ export async function rendreArtisteFiche(contenu, params) {
         <div class="entete-fiche">
           ${avatarHtml}
           <div class="entete-fiche-info">
-            <h2>${ech(nomCompletA)}</h2>
+            <h2>${ech(nomCompletA)} ${a.archive ? badgeArchive() : ''}</h2>
             <p class="meta">
               ${a.type ? ech(a.type) : '<em>type non précisé</em>'}
               ${a.prefixe_inventaire ? ` &middot; Préfixe ${ech(a.prefixe_inventaire)}` : ''}
@@ -190,6 +193,7 @@ export async function rendreArtisteFiche(contenu, params) {
           </div>
           <div class="entete-fiche-actions">
             <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
+            ${boutonArchive({ archive: a.archive })}
             <button class="btn-action" id="btn-modifier">Modifier</button>
           </div>
         </div>
@@ -215,6 +219,16 @@ export async function rendreArtisteFiche(contenu, params) {
 
     contenu.querySelector('#btn-modifier').addEventListener('click', entrerEdition);
     contenu.querySelector('#btn-supprimer').addEventListener('click', supprimer);
+    contenu.querySelector('#btn-archiver').addEventListener('click', async () => {
+      const fait = await basculerArchive({
+        table: 'artistes',
+        fiche: a,
+        libelleFiche: nomCompletA,
+        confirmer,
+        surFait: () => dessiner(),
+      });
+      if (!fait) return;
+    });
     const avatarVision = contenu.querySelector('#avatar-vision');
     if (avatarVision && a.photo_path) {
       avatarVision.addEventListener('click', () => {
@@ -339,6 +353,14 @@ export async function rendreArtisteFiche(contenu, params) {
           <section class="bloc">
             <h3>Notes</h3>
             ${champTextarea({ nom: 'notes', libelle: 'Notes internes', valeur: a.notes, lignes: 3 })}
+          </section>
+
+          <section class="bloc">
+            <h3>Aide à la description IA</h3>
+            ${champTextarea({ nom: 'instructions_ia', libelle: "Consignes pour ChatGPT spécifiques à cet artiste", valeur: a.instructions_ia, lignes: 6 })}
+            <p class="aide-champ">Ce texte sera inclus dans le prompt généré par le bouton « Copier pour ChatGPT » sur les fiches d'œuvres de cet artiste. Tu peux y coller le système prompt de son GPT personnalisé : style à adopter, mots-clés à privilégier, termes à éviter, longueur cible, exemples, etc.</p>
+            ${champTexte({ nom: 'lien_chatgpt', libelle: 'Lien vers le GPT personnalisé de cet artiste', valeur: a.lien_chatgpt, attributs: 'placeholder="https://chatgpt.com/g/g-xxx-mon-artiste"' })}
+            <p class="aide-champ">Si l'artiste a son propre GPT, colle l'URL ici. Le bouton « Copier pour ChatGPT » ouvrira directement ce lien plutôt que ChatGPT générique.</p>
           </section>
 
           <div class="form-actions">

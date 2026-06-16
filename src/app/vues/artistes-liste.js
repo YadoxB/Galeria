@@ -1,11 +1,12 @@
 import { naviguer } from '../router.js';
 import {
   ech, sansAccents, initiales, pluriel, urlPhoto, nomComplet,
-  gabaritEntetePage,
+  gabaritEntetePage, badgeArchive,
 } from '../commun.js';
 
 const CLE_PREF_VUE = 'artistes-vue';
 const CLE_PREF_TRI = 'artistes-tri';
+const CLE_PREF_ARCHIVES = 'artistes-inclure-archives';
 
 function lirePref(cle, defaut) {
   try { return localStorage.getItem(cle) || defaut; } catch { return defaut; }
@@ -28,7 +29,8 @@ function trier(artistes, tri) {
 }
 
 export async function rendreArtistesListe(contenu) {
-  const artistes = await window.api.artistesListe();
+  let inclureArchives = lirePref(CLE_PREF_ARCHIVES, '0') === '1';
+  let artistes = await window.api.artistesListe({ inclureArchives });
   let vueCourante = lirePref(CLE_PREF_VUE, 'grille');
   let triCourant = lirePref(CLE_PREF_TRI, 'nom-asc');
 
@@ -64,6 +66,10 @@ export async function rendreArtistesListe(contenu) {
             <option value="oeuvres-asc"   ${triCourant === 'oeuvres-asc' ? 'selected' : ''}>Moins d'œuvres</option>
           </select>
         </div>
+        <label class="case-archives">
+          <input type="checkbox" id="case-archives" ${inclureArchives ? 'checked' : ''}>
+          <span>Inclure les archivés</span>
+        </label>
       </div>
 
       <div class="barre-recherche">
@@ -103,11 +109,17 @@ export async function rendreArtistesListe(contenu) {
     ecrirePref(CLE_PREF_TRI, triCourant);
     dessiner();
   });
+  contenu.querySelector('#case-archives').addEventListener('change', async (e) => {
+    inclureArchives = e.target.checked;
+    ecrirePref(CLE_PREF_ARCHIVES, inclureArchives ? '1' : '0');
+    artistes = await window.api.artistesListe({ inclureArchives });
+    dessiner();
+  });
 
   function carteGrille(a) {
     const nom = nomComplet(a) || a.nom || '';
     return `
-      <article class="oeuvre-carte artiste-carte" data-id="${a.id}">
+      <article class="oeuvre-carte artiste-carte${a.archive ? ' carte-archivee' : ''}" data-id="${a.id}">
         <div class="oeuvre-carte-image artiste-carte-image">
           ${a.photo_path
             ? `<img src="${urlPhoto(a.photo_path)}" loading="lazy" alt="">`
@@ -115,7 +127,7 @@ export async function rendreArtistesListe(contenu) {
         </div>
         <div class="oeuvre-carte-corps">
           <div class="oeuvre-carte-ligne-titre">
-            <h3 class="oeuvre-carte-titre">${ech(nom)}</h3>
+            <h3 class="oeuvre-carte-titre">${ech(nom)} ${a.archive ? badgeArchive() : ''}</h3>
           </div>
           <p class="oeuvre-carte-artiste">${a.type ? ech(a.type) : '<em>type non précisé</em>'}</p>
           <p class="oeuvre-carte-prix">${pluriel(a.nb_oeuvres, 'œuvre')}</p>
@@ -128,12 +140,12 @@ export async function rendreArtistesListe(contenu) {
   function ligneListe(a) {
     const nom = nomComplet(a) || a.nom || '';
     return `
-      <button class="ligne-liste" data-id="${a.id}">
+      <button class="ligne-liste${a.archive ? ' ligne-archivee' : ''}" data-id="${a.id}">
         ${a.photo_path
           ? `<div class="avatar avec-photo"><img src="${urlPhoto(a.photo_path)}" loading="lazy" alt=""></div>`
           : `<div class="avatar"><span>${ech(initiales(nom))}</span></div>`}
         <div class="info">
-          <p class="ligne-titre">${ech(nom)}</p>
+          <p class="ligne-titre">${ech(nom)} ${a.archive ? badgeArchive() : ''}</p>
           <p class="ligne-meta">
             ${a.type ? ech(a.type) : '<em>type non précisé</em>'}
             &nbsp;&middot;&nbsp;

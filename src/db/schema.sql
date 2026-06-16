@@ -21,6 +21,10 @@ CREATE TABLE IF NOT EXISTS artistes (
                       CHECK (percoit_taxes IN (0, 1)),
   numeros_taxes       TEXT,
   notes               TEXT,
+  instructions_ia     TEXT,
+  lien_chatgpt        TEXT,
+  archive             INTEGER NOT NULL DEFAULT 0
+                      CHECK (archive IN (0, 1)),
   cree_le             TEXT NOT NULL DEFAULT (datetime('now')),
   modifie_le          TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -33,6 +37,9 @@ CREATE TABLE IF NOT EXISTS oeuvres (
   numero_inventaire      TEXT,
   numero_delivrance      TEXT,
   dimensions             TEXT,
+  hauteur                REAL,
+  largeur                REAL,
+  profondeur             REAL,
   medium                 TEXT,
   support                TEXT,
   annee                  INTEGER,
@@ -48,6 +55,8 @@ CREATE TABLE IF NOT EXISTS oeuvres (
   image_path             TEXT,
   emplacement            TEXT,
   exposition_actuelle    TEXT,
+  archive                INTEGER NOT NULL DEFAULT 0
+                         CHECK (archive IN (0, 1)),
   cree_le                TEXT NOT NULL DEFAULT (datetime('now')),
   modifie_le             TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -70,6 +79,8 @@ CREATE TABLE IF NOT EXISTS clients (
                         CHECK (consentement_courriel IN (0, 1)),
   consentement_date     TEXT,
   notes                 TEXT,
+  archive               INTEGER NOT NULL DEFAULT 0
+                        CHECK (archive IN (0, 1)),
   cree_le               TEXT NOT NULL DEFAULT (datetime('now')),
   modifie_le            TEXT NOT NULL DEFAULT (datetime('now'))
 );

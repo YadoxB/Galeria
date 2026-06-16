@@ -50,7 +50,13 @@
       "Read(//tmp/**)",
       "Bash(mkdir -p .tmp)",
       "Bash(curl -s -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0 Safari/537.36\" \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap\" -o .tmp/gfonts.css)",
-      "Bash(node --check src/app/vues/oeuvres-liste.js)"
+      "Bash(node --check src/app/vues/oeuvres-liste.js)",
+      "Bash(npm ci *)",
+      "Bash(grep -qE \"\\(Error|electron|^\\\\s*$\\)\" C:/Users/Dave/AppData/Local/Temp/claude/F--Galerie-Automatisation-GalerieApp--claude-worktrees-youthful-bartik-5675fa/ab6360f2-057a-4805-ac02-515680034c56/tasks/bc1p7wp2g.output)",
+      "Bash(ls C:/Users/Dave/.claude/projects/F--Galerie-Automatisation-GalerieApp/memory/ 2>&1)",
+      "PowerShell(try { Get-Process electron -ErrorAction Stop | Stop-Process -Force } catch {}; Start-Sleep -Seconds 1; \\(Get-Process electron -ErrorAction SilentlyContinue | Measure-Object\\).Count)",
+      "Bash(ls \"/c/Users/Dave/Documents/Galeria/galerie.db\" 2>&1)",
+      "Bash(grep -v \"artiste_nom\\\\|artisteNom\\\\|nomComplet\\\\|//\\\\b\")"
     ]
   }
 }

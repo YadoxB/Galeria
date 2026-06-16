@@ -11,11 +11,18 @@ const COLONNES_ATTENDUES = {
     ['photo_originale_path', 'TEXT'],
     ['pays', 'TEXT'],
     ['prenom', 'TEXT'],
+    ['archive', 'INTEGER NOT NULL DEFAULT 0'],
+    ['instructions_ia', 'TEXT'],
+    ['lien_chatgpt', 'TEXT'],
   ],
   oeuvres: [
     ['format', 'TEXT'],
     ['orientation', 'TEXT'],
     ['sujets', 'TEXT'],
+    ['archive', 'INTEGER NOT NULL DEFAULT 0'],
+    ['hauteur', 'REAL'],
+    ['largeur', 'REAL'],
+    ['profondeur', 'REAL'],
   ],
   clients: [
     ['prenom', 'TEXT'],
@@ -26,6 +33,7 @@ const COLONNES_ATTENDUES = {
     ['province', 'TEXT'],
     ['code_postal', 'TEXT'],
     ['pays', 'TEXT'],
+    ['archive', 'INTEGER NOT NULL DEFAULT 0'],
   ],
   ventes: [
     ['numero_facture_artiste', 'TEXT'],

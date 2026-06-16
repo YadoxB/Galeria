@@ -1,8 +1,18 @@
 import { naviguer } from '../router.js';
-import { ech, sansAccents, initiales, pluriel, nomComplet, gabaritEntetePage } from '../commun.js';
+import { ech, sansAccents, initiales, pluriel, nomComplet, gabaritEntetePage, badgeArchive } from '../commun.js';
+
+const CLE_PREF_ARCHIVES = 'clients-inclure-archives';
+
+function lirePref(cle, defaut) {
+  try { return localStorage.getItem(cle) || defaut; } catch { return defaut; }
+}
+function ecrirePref(cle, val) {
+  try { localStorage.setItem(cle, val); } catch {}
+}
 
 export async function rendreClientsListe(contenu) {
-  const clients = await window.api.clientsListe();
+  let inclureArchives = lirePref(CLE_PREF_ARCHIVES, '0') === '1';
+  let clients = await window.api.clientsListe({ inclureArchives });
 
   contenu.innerHTML = `
     <div class="vue-liste">
@@ -11,6 +21,12 @@ export async function rendreClientsListe(contenu) {
         placeholder: 'Rechercher un client (nom, courriel, téléphone)…',
         boutonAjouterLibelle: '+ Ajouter un client',
       })}
+      <div class="controles-vue">
+        <label class="case-archives">
+          <input type="checkbox" id="case-archives" ${inclureArchives ? 'checked' : ''}>
+          <span>Inclure les archivés</span>
+        </label>
+      </div>
       <div class="barre-recherche">
         <span class="compteur" id="compteur"></span>
       </div>
@@ -25,6 +41,13 @@ export async function rendreClientsListe(contenu) {
   const recherche = contenu.querySelector('#recherche');
   const liste = contenu.querySelector('#liste-clients');
   const compteur = contenu.querySelector('#compteur');
+
+  contenu.querySelector('#case-archives').addEventListener('change', async (e) => {
+    inclureArchives = e.target.checked;
+    ecrirePref(CLE_PREF_ARCHIVES, inclureArchives ? '1' : '0');
+    clients = await window.api.clientsListe({ inclureArchives });
+    dessiner(recherche.value);
+  });
 
   function dessiner(filtre = '') {
     const f = sansAccents(filtre);
@@ -45,10 +68,10 @@ export async function rendreClientsListe(contenu) {
       .map((c) => {
         const nom = nomComplet(c);
         return `
-      <button class="ligne-liste" data-id="${c.id}">
+      <button class="ligne-liste${c.archive ? ' ligne-archivee' : ''}" data-id="${c.id}">
         <div class="avatar"><span>${ech(initiales(nom))}</span></div>
         <div class="info">
-          <p class="ligne-titre">${ech(nom)}</p>
+          <p class="ligne-titre">${ech(nom)} ${c.archive ? badgeArchive() : ''}</p>
           <p class="ligne-meta">
             ${c.courriel ? ech(c.courriel) : '<em>aucun courriel</em>'}
             ${c.telephone ? `&nbsp;&middot;&nbsp;${ech(c.telephone)}` : ''}

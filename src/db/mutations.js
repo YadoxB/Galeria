@@ -56,6 +56,8 @@ const COLONNES_ARTISTE = [
   ['percoit_taxes', bool],
   ['numeros_taxes', normaliserNumerosTaxes],
   ['notes', vide],
+  ['instructions_ia', vide],
+  ['lien_chatgpt', vide],
 ];
 
 const COLONNES_OEUVRE = [
@@ -68,6 +70,9 @@ const COLONNES_OEUVRE = [
   ['medium', vide],
   ['support', vide],
   ['dimensions', vide],
+  ['hauteur', nombre],
+  ['largeur', nombre],
+  ['profondeur', nombre],
   ['format', vide],
   ['orientation', vide],
   ['sujets', vide],
@@ -391,6 +396,22 @@ function supprimerVente(id) {
   }
 }
 
+// ===== Archivage =====
+
+const TABLES_ARCHIVABLES = new Set(['artistes', 'oeuvres', 'clients']);
+
+function definirArchive(table, id, archive) {
+  if (!TABLES_ARCHIVABLES.has(table)) {
+    throw new Error(`Table non archivable : ${table}`);
+  }
+  const idInt = entier(id);
+  if (idInt == null) throw new Error('Identifiant invalide.');
+  const valeur = archive ? 1 : 0;
+  const db = openDatabase();
+  db.prepare(`UPDATE ${table} SET archive = ?, modifie_le = datetime('now') WHERE id = ?`).run(valeur, idInt);
+  return { archive: valeur === 1 };
+}
+
 // ===== Certificats =====
 
 const COLONNES_CERTIFICAT = [
@@ -461,4 +482,5 @@ module.exports = {
   creerCertificat, modifierCertificat, supprimerCertificat,
   apercuProchainNumeroCertificat, reserverProchainNumeroCertificat,
   formaterNumero,
+  definirArchive,
 };

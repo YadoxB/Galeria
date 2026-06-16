@@ -2,7 +2,8 @@ import { naviguer, retour, poserGardien, leverGardien, modifierParamsCourants, r
 import {
   ech, formaterPrix, badgeStatut, STATUTS,
   champTexte, champTextarea, champSelect, datalist, urlPhoto,
-  formaterDate,
+  formaterDate, nomComplet, sansAccents,
+  badgeArchive, boutonArchive, basculerArchive,
 } from '../commun.js';
 import { visionner } from '../visionneuse.js';
 import { confirmer, alerter } from '../dialogue.js';
@@ -19,12 +20,140 @@ const GABARIT_VIDE = {
   titre: '',
   type: null, numero_inventaire: null, numero_delivrance: null,
   annee: null, medium: null, support: null, dimensions: null,
+  hauteur: null, largeur: null, profondeur: null,
   format: null, orientation: null, sujets: null,
   emplacement_signature: null, particularite: null, description: null,
   prix: null, statut: 'disponible',
   emplacement: null, exposition_actuelle: null,
   image_path: null,
 };
+
+// Seuils en pouces, sur la moyenne géométrique √(H × L). Ce critère a été
+// dérivé empiriquement du catalogue existant : il classe correctement 93,7 %
+// des 476 œuvres déjà étiquetées par la galerie, contre 85,5 % pour le max
+// et 78,2 % pour le min. Intuition : la moyenne géométrique = côté équivalent
+// d'un carré ayant la même surface, ce qui colle au « ressenti » de format
+// pour les œuvres très allongées (ex. 12 × 72 → 29" → Moyen).
+// La profondeur (P) est ignorée : c'est l'épaisseur du châssis, pas la taille
+// perçue de l'œuvre.
+const SEUILS_FORMAT = [
+  { max: 16, libelle: 'Petit' },
+  { max: 30, libelle: 'Moyen' },
+  { max: 42, libelle: 'Grand' },
+  { max: Infinity, libelle: 'Très grand' },
+];
+
+function calculerFormat(h, l, _p) {
+  const H = Number(h) || 0;
+  const L = Number(l) || 0;
+  if (H <= 0 || L <= 0) return '';
+  const equivalent = Math.sqrt(H * L);
+  for (const seuil of SEUILS_FORMAT) {
+    if (equivalent <= seuil.max) return seuil.libelle;
+  }
+  return '';
+}
+
+function calculerOrientation(h, l) {
+  const H = Number(h) || 0;
+  const L = Number(l) || 0;
+  if (H <= 0 || L <= 0) return '';
+  if (L > H * 1.05) return 'Horizontale';
+  if (H > L * 1.05) return 'Verticale';
+  return 'Carrée';
+}
+
+function formaterDimensionsTexte(h, l, p) {
+  const arr = [h, l, p].map((v) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  });
+  // On garde au moins H et L si présents ; on inclut P seulement s'il y a une valeur.
+  const visibles = arr[2] != null ? arr : arr.slice(0, 2);
+  if (!visibles.some((v) => v != null)) return '';
+  return visibles.map((v) => (v != null ? String(v) : '?')).join(' × ') + ' po';
+}
+
+function ouvrirModaleEnvoyerChatGPT(r) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay-modale';
+    const aImage = !!r.image_data_url;
+    overlay.innerHTML = `
+      <div class="modale-recadrage modale-chatgpt">
+        <h3>Envoyer à ChatGPT</h3>
+        <div class="chatgpt-etapes">
+          <div class="chatgpt-etape">
+            <span class="chatgpt-etape-num">1</span>
+            <div class="chatgpt-etape-corps">
+              <p class="chatgpt-etape-titre"><strong>Texte copié</strong> <span class="check-vert">✓</span></p>
+              <p class="chatgpt-etape-aide">Colle-le directement dans la zone de saisie de ChatGPT (Ctrl+V).</p>
+            </div>
+          </div>
+          ${aImage ? `
+          <div class="chatgpt-etape">
+            <span class="chatgpt-etape-num">2</span>
+            <div class="chatgpt-etape-corps">
+              <p class="chatgpt-etape-titre"><strong>Image à joindre</strong></p>
+              <p class="chatgpt-etape-aide">Glisse l'image ci-dessous dans ChatGPT, <em>ou</em> clique sur « Copier l'image » puis colle-la (Ctrl+V) après le texte.</p>
+              <img src="${r.image_data_url}" alt="" class="modale-img-grande" draggable="true" id="modale-img">
+              <button type="button" class="btn-action btn-secondaire-action" id="btn-copier-image">
+                Copier l'image
+              </button>
+              <span id="image-statut" class="chatgpt-image-statut"></span>
+            </div>
+          </div>
+          ` : `
+          <div class="chatgpt-etape">
+            <span class="chatgpt-etape-num">2</span>
+            <div class="chatgpt-etape-corps">
+              <p class="chatgpt-etape-titre"><strong>Image</strong></p>
+              <p class="chatgpt-etape-aide">Aucune image n'est encore attachée à cette œuvre. ChatGPT travaillera uniquement à partir du texte.</p>
+            </div>
+          </div>
+          `}
+        </div>
+        <div class="form-actions" style="justify-content: flex-end;">
+          <button type="button" class="btn-action btn-secondaire-action" id="modale-fermer">Fermer</button>
+          <button type="button" class="btn-action btn-principal" id="modale-ouvrir-chatgpt">Ouvrir ChatGPT</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const fermer = () => {
+      overlay.remove();
+      resolve();
+    };
+    overlay.querySelector('#modale-fermer').addEventListener('click', fermer);
+    overlay.querySelector('#modale-ouvrir-chatgpt').addEventListener('click', async () => {
+      await window.api.ouvrirUrl(r.lien_chatgpt);
+    });
+
+    const btnCopierImage = overlay.querySelector('#btn-copier-image');
+    if (btnCopierImage && aImage) {
+      btnCopierImage.addEventListener('click', async () => {
+        btnCopierImage.disabled = true;
+        const statut = overlay.querySelector('#image-statut');
+        try {
+          const res = await window.api.iaCopierImageSeulement(r.image_data_url);
+          if (res?.ok) {
+            statut.textContent = '✓ Image copiée — colle-la (Ctrl+V) dans ChatGPT.';
+            statut.className = 'chatgpt-image-statut succes';
+          } else {
+            statut.textContent = `Échec : ${res?.erreur || 'inconnu'}`;
+            statut.className = 'chatgpt-image-statut erreur';
+          }
+        } catch (err) {
+          statut.textContent = `Échec : ${err.message}`;
+          statut.className = 'chatgpt-image-statut erreur';
+        } finally {
+          btnCopierImage.disabled = false;
+        }
+      });
+    }
+  });
+}
 
 export async function rendreOeuvreFiche(contenu, params) {
   const estNouveau = !!params.nouveau;
@@ -295,7 +424,7 @@ export async function rendreOeuvreFiche(contenu, params) {
         <div class="oeuvre-fiche-entete">
           ${imageHtml}
           <div class="oeuvre-info">
-            <h2>${ech(o.titre)}</h2>
+            <h2>${ech(o.titre)} ${o.archive ? badgeArchive() : ''}</h2>
             <p class="meta">par <button class="btn-lien" id="lien-artiste">${ech(o.artiste_nom)}</button></p>
             <div class="bloc-statut-prix">
               ${badgeStatut(o.statut)}
@@ -304,6 +433,7 @@ export async function rendreOeuvreFiche(contenu, params) {
           </div>
           <div class="entete-fiche-actions">
             <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
+            ${boutonArchive({ archive: o.archive })}
             <button class="btn-action" id="btn-modifier">Modifier</button>
             ${o.statut !== 'vendu'
               ? `<button class="btn-action btn-principal" id="btn-vendre">Vendre</button>`
@@ -341,6 +471,15 @@ export async function rendreOeuvreFiche(contenu, params) {
 
     contenu.querySelector('#btn-modifier').addEventListener('click', entrerEdition);
     contenu.querySelector('#btn-supprimer').addEventListener('click', supprimer);
+    contenu.querySelector('#btn-archiver').addEventListener('click', async () => {
+      await basculerArchive({
+        table: 'oeuvres',
+        fiche: o,
+        libelleFiche: o.titre,
+        confirmer,
+        surFait: () => dessiner(),
+      });
+    });
     contenu.querySelector('#lien-artiste').addEventListener('click', () =>
       naviguer('artiste-fiche', { id: o.artiste_id })
     );
@@ -400,7 +539,9 @@ export async function rendreOeuvreFiche(contenu, params) {
   }
 
   function dessinerEdition() {
-    const artistesOptions = artistes.map((ar) => ({ valeur: ar.id, libelle: ar.nom }));
+    const artistesOptions = artistes
+      .map((ar) => ({ valeur: ar.id, libelle: nomComplet(ar) || ar.nom || '' }))
+      .sort((a, b) => sansAccents(a.libelle).localeCompare(sansAccents(b.libelle)));
     if (nouveau && o.artiste_id == null) {
       artistesOptions.unshift({ valeur: '', libelle: '— Choisir un artiste —' });
     }
@@ -448,19 +589,43 @@ export async function rendreOeuvreFiche(contenu, params) {
             <div class="grille-form">
               ${champTexte({ nom: 'medium', libelle: 'Médium', valeur: o.medium })}
               ${champTexte({ nom: 'support', libelle: 'Support', valeur: o.support })}
-              ${champTexte({ nom: 'dimensions', libelle: 'Dimensions', valeur: o.dimensions })}
-              ${champTexte({ nom: 'format', libelle: 'Format', valeur: o.format, liste: 'formats' })}
-              ${champTexte({ nom: 'orientation', libelle: 'Orientation', valeur: o.orientation, liste: 'orientations' })}
               ${champTexte({ nom: 'emplacement_signature', libelle: 'Emplacement de la signature', valeur: o.emplacement_signature })}
             </div>
+
+            <div class="form-champ">
+              <label>Dimensions (pouces)</label>
+              <div class="dim-trio">
+                <div class="dim-champ">
+                  <input type="number" id="f-hauteur" name="hauteur" value="${o.hauteur ?? ''}" min="0" step="0.1" placeholder="0">
+                  <span class="dim-libelle">Hauteur</span>
+                </div>
+                <span class="dim-mult">×</span>
+                <div class="dim-champ">
+                  <input type="number" id="f-largeur" name="largeur" value="${o.largeur ?? ''}" min="0" step="0.1" placeholder="0">
+                  <span class="dim-libelle">Largeur</span>
+                </div>
+                <span class="dim-mult">×</span>
+                <div class="dim-champ">
+                  <input type="number" id="f-profondeur" name="profondeur" value="${o.profondeur ?? ''}" min="0" step="0.1" placeholder="0">
+                  <span class="dim-libelle">Profondeur</span>
+                </div>
+                <span class="dim-unite">pouces</span>
+              </div>
+              <p class="aide-champ" id="dim-apercu">${o.dimensions ? `Saisie héritée : <em>${ech(o.dimensions)}</em>` : 'La profondeur est facultative.'}</p>
+            </div>
+
+            <div class="grille-form">
+              ${champTexte({ nom: 'format', libelle: 'Format', valeur: o.format, liste: 'formats' })}
+              ${champTexte({ nom: 'orientation', libelle: 'Orientation', valeur: o.orientation, liste: 'orientations' })}
+            </div>
+            <p class="aide-champ">Format et orientation se calculent automatiquement à partir des dimensions. Tu peux les modifier à la main.</p>
+
             ${champTexte({ nom: 'particularite', libelle: 'Particularité', valeur: o.particularite })}
             ${champTexte({ nom: 'sujets', libelle: 'Sujets (séparés par des virgules)', valeur: o.sujets })}
           </section>
 
-          <section class="bloc">
-            <h3>Description</h3>
-            ${champTextarea({ nom: 'description', libelle: 'Description', valeur: o.description, lignes: 5 })}
-          </section>
+          <!-- dimensions texte synchronisé en coulisse -->
+          <input type="hidden" name="dimensions" id="f-dimensions" value="${ech(o.dimensions || '')}">
 
           <section class="bloc">
             <h3>Image</h3>
@@ -478,8 +643,20 @@ export async function rendreOeuvreFiche(contenu, params) {
               </div>
             </div>
             <p class="aide-champ">${nouveau
-              ? "L'image sera enregistrée dans <code>Documents\\GalerieApp\\Photos\\oeuvres\\</code> lors de la création de l'œuvre."
-              : "Le fichier est copié dans <code>Documents\\GalerieApp\\Photos\\oeuvres\\</code>. Ton original reste intact."}</p>
+              ? "L'image sera enregistrée dans <code>Documents\\Galeria\\Photos\\oeuvres\\</code> lors de la création de l'œuvre."
+              : "Le fichier est copié dans <code>Documents\\Galeria\\Photos\\oeuvres\\</code>. Ton original reste intact."}</p>
+          </section>
+
+          <section class="bloc">
+            <h3>Description</h3>
+            ${champTextarea({ nom: 'description', libelle: 'Description', valeur: o.description, lignes: 5 })}
+            <div class="actions-ia">
+              <button type="button" class="btn-action btn-secondaire-action" id="btn-copier-chatgpt">
+                <span class="ia-icone" aria-hidden="true">✦</span>
+                Copier pour ChatGPT
+              </button>
+              <p class="aide-champ">Copie le prompt assemblé (instructions galerie + instructions artiste + caractéristiques de l'œuvre) et la photo dans le presse-papier, puis ouvre ChatGPT. Tu colles, tu obtiens la suggestion, tu colles dans Description ci-dessus.</p>
+            </div>
           </section>
 
           <section class="bloc">
@@ -584,6 +761,128 @@ export async function rendreOeuvreFiche(contenu, params) {
 
     form.addEventListener('input', () => { modifie = true; });
     form.addEventListener('change', () => { modifie = true; });
+
+    async function collecterEtCopierInline() {
+      // Récupère ce que l'utilisateur a saisi dans le form (pas encore enregistré)
+      // + l'image en mémoire (imagePendingDataUrl) ou la version sauvegardée.
+      const fd = new FormData(form);
+      const lire = (k) => {
+        const v = fd.get(k);
+        return v == null ? null : String(v).trim() || null;
+      };
+      const artisteId = Number(lire('artiste_id')) || null;
+      const donneesOeuvre = {
+        titre: lire('titre'),
+        type: lire('type'),
+        numero_inventaire: lire('numero_inventaire'),
+        medium: lire('medium'),
+        support: lire('support'),
+        dimensions: lire('dimensions'),
+        annee: lire('annee'),
+        sujets: lire('sujets'),
+        particularite: lire('particularite'),
+        emplacement_signature: lire('emplacement_signature'),
+        description: lire('description'),
+      };
+
+      // En mode création, l'image vient toujours du data URL en mémoire (choix
+      // de l'utilisateur, pas encore enregistré sur disque).
+      const imageDataUrl = imagePendingDataUrl || null;
+
+      return window.api.iaCopierPourChatGPTInline({
+        donneesOeuvre,
+        artisteId,
+        imageDataUrl,
+      });
+    }
+
+    // ---- Bouton « Copier pour ChatGPT » ----
+    const btnCopierChatGPT = contenu.querySelector('#btn-copier-chatgpt');
+    if (btnCopierChatGPT) {
+      btnCopierChatGPT.addEventListener('click', async () => {
+        btnCopierChatGPT.disabled = true;
+        const libelleOrigine = btnCopierChatGPT.innerHTML;
+        try {
+          // En mode création : on assemble depuis les champs du formulaire +
+          // l'image en mémoire (data URL). Aucun enregistrement en base requis.
+          // En mode édition : on utilise l'ID existant pour aller chercher
+          // l'image sur le disque et tout assembler côté main.
+          const r = nouveau
+            ? await collecterEtCopierInline()
+            : await window.api.iaCopierPourChatGPT(o.id);
+
+          // Le presse-papier multi-format (texte + image) n'est pas toujours
+          // accepté par les navigateurs lors d'un collage dans une zone de
+          // saisie : Chrome ne garde que le texte. On ouvre donc systématiquement
+          // une modale qui permet à l'utilisateur de copier ou glisser l'image
+          // séparément, en plus de coller le texte.
+          await ouvrirModaleEnvoyerChatGPT(r);
+        } catch (err) {
+          await alerter({
+            type: 'error',
+            title: 'Préparation du presse-papier échouée',
+            message: err.message,
+          });
+        } finally {
+          btnCopierChatGPT.disabled = false;
+        }
+      });
+    }
+
+    // ---- Calcul auto format / orientation / dimensions texte ----
+    const elHauteur = form.elements.hauteur;
+    const elLargeur = form.elements.largeur;
+    const elProfondeur = form.elements.profondeur;
+    const elFormat = form.elements.format;
+    const elOrientation = form.elements.orientation;
+    const elDimensions = form.elements.dimensions;
+    const elApercu = contenu.querySelector('#dim-apercu');
+
+    // L'utilisateur peut écraser format/orientation à la main ; on cesse alors
+    // de les auto-remplir tant qu'il est dans cette session d'édition.
+    let formatAuto = !o.format
+      || o.format === calculerFormat(o.hauteur, o.largeur, o.profondeur);
+    let orientationAuto = !o.orientation
+      || o.orientation === calculerOrientation(o.hauteur, o.largeur);
+
+    elFormat.addEventListener('input', () => { formatAuto = false; });
+    elOrientation.addEventListener('input', () => { orientationAuto = false; });
+
+    const majDimensions = () => {
+      const h = elHauteur.value;
+      const l = elLargeur.value;
+      const p = elProfondeur.value;
+      const texte = formaterDimensionsTexte(h, l, p);
+      if (texte) {
+        elDimensions.value = texte;
+        if (elApercu) {
+          elApercu.innerHTML = `Dimensions enregistrées : <strong>${ech(texte)}</strong>${(elProfondeur.value ? '' : ' <span style="color:var(--stone);">(profondeur facultative)</span>')}`;
+        }
+      } else if (o.dimensions && !h && !l && !p) {
+        // Aucune nouvelle saisie : on garde l'ancienne valeur texte intacte.
+        elDimensions.value = o.dimensions;
+        if (elApercu) {
+          elApercu.innerHTML = `Saisie héritée : <em>${ech(o.dimensions)}</em>`;
+        }
+      } else {
+        elDimensions.value = '';
+        if (elApercu) elApercu.textContent = 'La profondeur est facultative.';
+      }
+
+      if (formatAuto) {
+        const f = calculerFormat(h, l, p);
+        if (f) elFormat.value = f;
+      }
+      if (orientationAuto) {
+        const ori = calculerOrientation(h, l);
+        if (ori) elOrientation.value = ori;
+      }
+    };
+
+    [elHauteur, elLargeur, elProfondeur].forEach((el) => {
+      el.addEventListener('input', majDimensions);
+    });
+    majDimensions();
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();

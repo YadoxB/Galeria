@@ -1,8 +1,9 @@
-const { app, BrowserWindow, Menu, ipcMain, dialog, protocol, net, shell } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, protocol, net, shell, clipboard, nativeImage } = require('electron');
+const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { openDatabase, closeDatabase, getStats } = require('./db/database');
-const { getPhotosDir } = require('./db/paths');
+const { getPhotosDir, getDataDir } = require('./db/paths');
 const { seedPhotosIfNeeded } = require('./db/seedPhotos');
 const { choisirPhoto, effacerPhoto, lireFichierImage, lireOriginale, lirePourRecadrage, enregistrerImageRecadree } = require('./photos');
 const { obtenirConfig, mettreAJourConfig } = require('./config');
@@ -37,6 +38,11 @@ const {
   listerCertificatsParOeuvre,
   listerCertificatsParVente,
   obtenirCertificat,
+  oeuvresRecentes,
+  ventesRecentes,
+  oeuvresReservees,
+  ventesParMois,
+  statsTableauDeBord,
 } = require('./db/requetes');
 const {
   modifierArtiste, creerArtiste, supprimerArtiste,
@@ -46,9 +52,39 @@ const {
   apercuProchainNumeroFacture, reserverProchainNumeroFacture,
   creerCertificat, modifierCertificat, supprimerCertificat,
   apercuProchainNumeroCertificat, reserverProchainNumeroCertificat,
+  definirArchive,
 } = require('./db/mutations');
 
-function createWindow() {
+function createSplashWindow() {
+  const splash = new BrowserWindow({
+    width: 600,
+    height: 338,
+    frame: false,
+    transparent: false,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    closable: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    backgroundColor: '#0d1c34',
+    icon: path.join(__dirname, '..', 'gabarits', 'actifs', 'icon-galeria.png'),
+    show: false,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  });
+  splash.loadFile(path.join(__dirname, 'splash.html'), {
+    search: `v=${encodeURIComponent(app.getVersion())}`,
+  });
+  splash.once('ready-to-show', () => splash.show());
+  return splash;
+}
+
+function createWindow(splash) {
   const win = new BrowserWindow({
     width: 1600,
     height: 900,
@@ -68,7 +104,38 @@ function createWindow() {
 
   Menu.setApplicationMenu(null);
   win.loadFile(path.join(__dirname, 'index.html'));
-  win.once('ready-to-show', () => win.show());
+  win.webContents.on('did-finish-load', () => {
+    try {
+      const cfg = require('./config').obtenirConfig();
+      const zoom = Number(cfg?.affichage?.zoom);
+      if (Number.isFinite(zoom) && zoom > 0) {
+        win.webContents.setZoomFactor(zoom);
+      }
+    } catch {}
+  });
+  const fermerSplashEtAfficher = () => {
+    if (splash && !splash.isDestroyed()) splash.destroy();
+    if (!win.isDestroyed() && !win.isVisible()) win.show();
+  };
+
+  win.once('ready-to-show', () => {
+    if (!splash) {
+      win.show();
+      return;
+    }
+    const delaiMinSplashMs = 1200;
+    const restant = delaiMinSplashMs - (Date.now() - (splash.__ouvertureMs || Date.now()));
+    if (restant > 0) setTimeout(fermerSplashEtAfficher, restant);
+    else fermerSplashEtAfficher();
+  });
+
+  // Filet de sécurité : si ready-to-show tarde (gabarit lourd, cache verrouillé,
+  // erreur dans le renderer), on force l'affichage après 8 s pour ne jamais
+  // rester coincé sur le splash.
+  setTimeout(() => {
+    if (!win.isDestroyed() && !win.isVisible()) fermerSplashEtAfficher();
+  }, 8000);
+
   return win;
 }
 
@@ -111,6 +178,160 @@ function sauvegarderEtRetourner() {
   return { path: dest, nom: path.basename(dest), dossier: path.dirname(dest) };
 }
 
+function assemblerPromptIA({ oeuvre, artiste, config, avecImage = true }) {
+  const sections = [];
+
+  const instGalerie = (config?.ia?.instructions_galerie || '').trim();
+  if (instGalerie) {
+    sections.push(`[Consignes générales de la galerie]\n${instGalerie}`);
+  }
+
+  const instArtiste = (artiste?.instructions_ia || '').trim();
+  if (instArtiste) {
+    sections.push(`[Consignes pour l'artiste ${artiste?.nom || ''}]\n${instArtiste}`);
+  }
+
+  const artisteNom = oeuvre.artiste_nom || artiste?.nom || '';
+  const champs = [
+    ['Titre', oeuvre.titre],
+    ['Artiste', artisteNom],
+    ['Type', oeuvre.type],
+    ['Médium', oeuvre.medium],
+    ['Support', oeuvre.support],
+    ['Dimensions', oeuvre.dimensions],
+    ['Année', oeuvre.annee],
+    ['Sujets', oeuvre.sujets],
+    ['Particularité', oeuvre.particularite],
+    ['Emplacement de la signature', oeuvre.emplacement_signature],
+  ];
+  const lignes = champs
+    .filter(([, v]) => v != null && String(v).trim() !== '')
+    .map(([k, v]) => `- ${k} : ${v}`);
+  sections.push(`[Œuvre à décrire]\n${lignes.join('\n')}`);
+
+  const descActuelle = (oeuvre.description || '').trim();
+  if (descActuelle) {
+    sections.push(`[Description actuelle, à retravailler]\n${descActuelle}`);
+  }
+
+  const mentionImage = avecImage
+    ? "La photo de l'œuvre est jointe à ce message."
+    : "(Aucune photo n'a encore été jointe — base-toi uniquement sur les caractéristiques ci-dessus.)";
+  sections.push(
+    `[Demande]\nRédige une description de cette œuvre en français, à insérer dans sa fiche de catalogue et dans les communications de la galerie. ${
+      descActuelle
+        ? 'Retravaille la description actuelle ci-dessus en respectant les consignes.'
+        : 'Une seule version, prête à utiliser.'
+    } ${mentionImage}`
+  );
+
+  return sections.join('\n\n');
+}
+
+function chargerImageDepuisChemin(cheminAbs) {
+  if (!fs.existsSync(cheminAbs)) return { erreur: 'Fichier image introuvable sur le disque.' };
+  const img = nativeImage.createFromPath(cheminAbs);
+  if (img.isEmpty()) return { erreur: 'Image vide ou format non reconnu.' };
+  const buf = fs.readFileSync(cheminAbs);
+  const ext = path.extname(cheminAbs).toLowerCase().replace('.', '');
+  const mime = ext === 'jpg' ? 'jpeg' : (ext || 'png');
+  return { img, dataUrl: `data:image/${mime};base64,${buf.toString('base64')}`, nom: path.basename(cheminAbs) };
+}
+
+function chargerImageDepuisDataUrl(dataUrl) {
+  const m = /^data:image\/(\w+);base64,(.+)$/.exec(dataUrl || '');
+  if (!m) return { erreur: 'Image en mémoire non reconnue.' };
+  const buf = Buffer.from(m[2], 'base64');
+  const img = nativeImage.createFromBuffer(buf);
+  if (img.isEmpty()) return { erreur: 'Image vide ou format non reconnu.' };
+  return { img, dataUrl, nom: `image.${m[1].toLowerCase() === 'jpeg' ? 'jpg' : m[1].toLowerCase()}` };
+}
+
+function ecrireDansPressePapier({ texte, image }) {
+  let imageOk = false;
+  if (image?.img) {
+    try {
+      clipboard.write({ text: texte, image: image.img });
+      imageOk = true;
+    } catch (err) {
+      imageOk = false;
+    }
+  }
+  if (!imageOk) clipboard.writeText(texte);
+  return imageOk;
+}
+
+function determinerLien({ artiste, config }) {
+  return (
+    (artiste?.lien_chatgpt && String(artiste.lien_chatgpt).trim()) ||
+    (config?.ia?.lien_chatgpt_defaut || 'https://chat.openai.com/')
+  );
+}
+
+function preparerCopiePourChatGPT(oeuvreId) {
+  const oeuvre = require('./db/requetes').obtenirOeuvre(oeuvreId);
+  if (!oeuvre) throw new Error('Œuvre introuvable.');
+  const artiste = require('./db/requetes').obtenirArtiste(oeuvre.artiste_id);
+  const config = require('./config').obtenirConfig();
+
+  let image = null;
+  let imageErreur = null;
+  if (oeuvre.image_path) {
+    const cheminAbs = path.join(getPhotosDir(), oeuvre.image_path);
+    const r = chargerImageDepuisChemin(cheminAbs);
+    if (r.erreur) imageErreur = r.erreur;
+    else image = r;
+  }
+
+  const texte = assemblerPromptIA({ oeuvre, artiste, config, avecImage: !!image });
+  const imageOk = ecrireDansPressePapier({ texte, image });
+
+  return {
+    texte,
+    image_ok: imageOk,
+    image_erreur: imageErreur,
+    image_data_url: image?.dataUrl || null,
+    image_nom: image?.nom || null,
+    lien_chatgpt: determinerLien({ artiste, config }),
+  };
+}
+
+// Variante inline : utilisée en mode création, quand l'œuvre n'existe pas encore
+// en base. Les caractéristiques viennent du formulaire et l'image vient d'un
+// data URL en mémoire (image choisie mais pas encore enregistrée sur disque).
+function preparerCopiePourChatGPTInline({ donneesOeuvre, artisteId, imageDataUrl }) {
+  if (!donneesOeuvre) throw new Error('Données de l\'œuvre manquantes.');
+  const artiste = artisteId ? require('./db/requetes').obtenirArtiste(artisteId) : null;
+  const config = require('./config').obtenirConfig();
+
+  const oeuvreVirtuelle = {
+    ...donneesOeuvre,
+    artiste_nom: artiste
+      ? [artiste.prenom, artiste.nom].filter(Boolean).join(' ')
+      : (donneesOeuvre.artiste_nom || ''),
+  };
+
+  let image = null;
+  let imageErreur = null;
+  if (imageDataUrl) {
+    const r = chargerImageDepuisDataUrl(imageDataUrl);
+    if (r.erreur) imageErreur = r.erreur;
+    else image = r;
+  }
+
+  const texte = assemblerPromptIA({ oeuvre: oeuvreVirtuelle, artiste, config, avecImage: !!image });
+  const imageOk = ecrireDansPressePapier({ texte, image });
+
+  return {
+    texte,
+    image_ok: imageOk,
+    image_erreur: imageErreur,
+    image_data_url: image?.dataUrl || null,
+    image_nom: image?.nom || null,
+    lien_chatgpt: determinerLien({ artiste, config }),
+  };
+}
+
 app.whenReady().then(() => {
   protocol.handle('galerie', async (request) => {
     const url = new URL(request.url);
@@ -135,10 +356,51 @@ app.whenReady().then(() => {
     console.error('Échec de la copie initiale des photos :', err);
   }
   ipcMain.handle('db:stats', () => getStats());
+  ipcMain.handle('accueil:donnees', () => ({
+    stats: statsTableauDeBord(),
+    oeuvresRecentes: oeuvresRecentes(6),
+    ventesRecentes: ventesRecentes(6),
+    oeuvresReservees: oeuvresReservees(8),
+    ventesParMois: ventesParMois(12),
+  }));
+  ipcMain.handle('ia:copier-pour-chatgpt', (_e, oeuvreId) => preparerCopiePourChatGPT(oeuvreId));
+  ipcMain.handle('ia:copier-pour-chatgpt-inline', (_e, params) => preparerCopiePourChatGPTInline(params || {}));
+  ipcMain.handle('ia:copier-image-seulement', (_e, imageDataUrl) => {
+    const r = chargerImageDepuisDataUrl(imageDataUrl);
+    if (r.erreur || !r.img) return { ok: false, erreur: r.erreur || 'Image non chargée' };
+    try {
+      clipboard.writeImage(r.img);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, erreur: err.message };
+    }
+  });
+  ipcMain.handle('app:ouvrir-url', (_e, url) => {
+    if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) {
+      return { ok: false, erreur: 'URL invalide' };
+    }
+    shell.openExternal(url);
+    return { ok: true };
+  });
+  ipcMain.handle('app:infos', () => ({
+    nom: app.getName(),
+    version: app.getVersion(),
+    dataDir: getDataDir(),
+    plateforme: process.platform,
+    electron: process.versions.electron,
+  }));
+  ipcMain.handle('app:zoom', (event, facteur) => {
+    const f = Number(facteur);
+    if (!Number.isFinite(f)) return { ok: false };
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) win.webContents.setZoomFactor(f);
+    return { ok: true };
+  });
   ipcMain.handle('import:choisir-fichier', (event) => importChoisirFichier(event.sender));
   ipcMain.handle('import:executer', (_e, filePath, mode) => importExecuter(filePath, mode));
   ipcMain.handle('backup:now', () => sauvegarderEtRetourner());
-  ipcMain.handle('artistes:liste', () => listerArtistes());
+  ipcMain.handle('artistes:liste', (_e, filtres) => listerArtistes(filtres));
+  ipcMain.handle('fiche:archiver', (_e, table, id, archive) => definirArchive(table, id, archive));
   ipcMain.handle('artistes:get', (_e, id) => obtenirArtiste(id));
   ipcMain.handle('artistes:voisins', (_e, id) => voisinsArtiste(id));
   ipcMain.handle('artistes:modifier', (_e, id, data) => modifierArtiste(id, data));
@@ -173,7 +435,7 @@ app.whenReady().then(() => {
   });
   ipcMain.handle('oeuvres:types', () => listerTypesOeuvre());
   ipcMain.handle('oeuvres:stats', () => statsOeuvres());
-  ipcMain.handle('clients:liste', () => listerClients());
+  ipcMain.handle('clients:liste', (_e, filtres) => listerClients(filtres));
   ipcMain.handle('clients:get', (_e, id) => obtenirClient(id));
   ipcMain.handle('clients:voisins', (_e, id) => voisinsClient(id));
   ipcMain.handle('clients:modifier', (_e, id, data) => modifierClient(id, data));
@@ -208,7 +470,9 @@ app.whenReady().then(() => {
     shell.showItemInFolder(cheminPdf);
     return { ok: true };
   });
-  createWindow();
+  const splash = createSplashWindow();
+  splash.__ouvertureMs = Date.now();
+  createWindow(splash);
   demarrerSauvegardePeriodique();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

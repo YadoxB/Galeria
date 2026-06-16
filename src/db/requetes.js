@@ -1,12 +1,14 @@
 const { openDatabase } = require('./database');
 
-function listerArtistes() {
+function listerArtistes(filtres = {}) {
   const db = openDatabase();
+  const where = filtres.inclureArchives ? '' : 'WHERE a.archive = 0';
   return db.prepare(`
     SELECT a.id, a.nom, a.prenom, a.type, a.prefixe_inventaire,
-           a.courriel, a.telephone, a.province, a.langue, a.photo_path,
+           a.courriel, a.telephone, a.province, a.langue, a.photo_path, a.archive,
            (SELECT COUNT(*) FROM oeuvres o WHERE o.artiste_id = a.id) AS nb_oeuvres
     FROM artistes a
+    ${where}
     ORDER BY a.nom COLLATE NOCASE, a.prenom COLLATE NOCASE
   `).all();
 }
@@ -52,11 +54,14 @@ function listerOeuvres(filtres = {}) {
     where.push('o.type = ?');
     params.push(filtres.type);
   }
+  if (!filtres.inclureArchives) {
+    where.push('o.archive = 0');
+  }
   const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
   return db.prepare(`
     SELECT o.id, o.titre, o.numero_inventaire, o.numero_delivrance,
            o.type, o.annee, o.medium, o.support, o.dimensions,
-           o.prix, o.statut, o.image_path,
+           o.prix, o.statut, o.image_path, o.archive,
            a.id AS artiste_id, TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom
     FROM oeuvres o
     JOIN artistes a ON a.id = o.artiste_id
@@ -90,13 +95,15 @@ function voisinsOeuvre(id) {
   };
 }
 
-function listerClients() {
+function listerClients(filtres = {}) {
   const db = openDatabase();
+  const where = filtres.inclureArchives ? '' : 'WHERE c.archive = 0';
   return db.prepare(`
     SELECT c.id, c.nom, c.prenom, c.courriel, c.telephone, c.ville,
-           c.consentement_courriel, c.consentement_date,
+           c.consentement_courriel, c.consentement_date, c.archive,
            (SELECT COUNT(*) FROM ventes v WHERE v.client_id = c.id) AS nb_ventes
     FROM clients c
+    ${where}
     ORDER BY c.nom COLLATE NOCASE, c.prenom COLLATE NOCASE
   `).all();
 }
@@ -161,19 +168,140 @@ function voisinsClient(id) {
   };
 }
 
+function oeuvresRecentes(limite = 6) {
+  const db = openDatabase();
+  return db.prepare(`
+    SELECT o.id, o.titre, o.numero_inventaire, o.annee, o.prix, o.statut,
+           o.image_path,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom
+    FROM oeuvres o
+    JOIN artistes a ON a.id = o.artiste_id
+    WHERE o.archive = 0
+    ORDER BY o.cree_le DESC, o.id DESC
+    LIMIT ?
+  `).all(limite);
+}
+
+function ventesRecentes(limite = 6) {
+  const db = openDatabase();
+  return db.prepare(`
+    SELECT v.id, v.date_vente, v.prix_vente, v.tps, v.tvq, v.numero_facture,
+           o.titre AS oeuvre_titre, o.image_path, o.numero_inventaire,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
+           c.id AS client_id,
+           TRIM(COALESCE(c.prenom || ' ', '') || c.nom) AS client_nom
+    FROM ventes v
+    JOIN oeuvres o ON o.id = v.oeuvre_id
+    JOIN artistes a ON a.id = o.artiste_id
+    JOIN clients c ON c.id = v.client_id
+    ORDER BY v.date_vente DESC, v.id DESC
+    LIMIT ?
+  `).all(limite);
+}
+
+function oeuvresReservees(limite = 8) {
+  const db = openDatabase();
+  return db.prepare(`
+    SELECT o.id, o.titre, o.numero_inventaire, o.prix, o.image_path,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
+           o.modifie_le
+    FROM oeuvres o
+    JOIN artistes a ON a.id = o.artiste_id
+    WHERE o.statut = 'reserve' AND o.archive = 0
+    ORDER BY o.modifie_le DESC, o.id DESC
+    LIMIT ?
+  `).all(limite);
+}
+
+function ventesParMois(nbMois = 12) {
+  const db = openDatabase();
+  return db.prepare(`
+    SELECT strftime('%Y-%m', date_vente) AS mois,
+           COUNT(*) AS nb,
+           COALESCE(SUM(prix_vente + tps + tvq), 0) AS montant
+    FROM ventes
+    WHERE date_vente >= date('now', '-' || ? || ' months', 'start of month')
+    GROUP BY mois
+    ORDER BY mois ASC
+  `).all(nbMois);
+}
+
+function statsTableauDeBord() {
+  const db = openDatabase();
+  const debutMois = "datetime('now', 'start of month')";
+
+  const total = db.prepare('SELECT COUNT(*) AS n FROM oeuvres WHERE archive = 0').get().n;
+  const totalDeltaMois = db
+    .prepare(`SELECT COUNT(*) AS n FROM oeuvres WHERE archive = 0 AND cree_le >= ${debutMois}`)
+    .get().n;
+
+  const artistes = db.prepare('SELECT COUNT(*) AS n FROM artistes WHERE archive = 0').get().n;
+  const artistesDeltaMois = db
+    .prepare(`SELECT COUNT(*) AS n FROM artistes WHERE archive = 0 AND cree_le >= ${debutMois}`)
+    .get().n;
+
+  // « Clients actifs » = clients non archivés avec au moins une vente
+  const clientsActifs = db.prepare(`
+    SELECT COUNT(DISTINCT c.id) AS n FROM clients c
+    JOIN ventes v ON v.client_id = c.id
+    WHERE c.archive = 0
+  `).get().n;
+  const clientsDeltaMois = db
+    .prepare(`SELECT COUNT(*) AS n FROM clients WHERE archive = 0 AND cree_le >= ${debutMois}`)
+    .get().n;
+
+  const ventesRow = db
+    .prepare(`
+      SELECT COUNT(*) AS n,
+             COALESCE(SUM(prix_vente + tps + tvq), 0) AS montant
+      FROM ventes
+      WHERE date_vente >= date('now', 'start of month')
+    `).get();
+
+  // Comparaison avec le mois précédent
+  const ventesMoisPrec = db
+    .prepare(`
+      SELECT COALESCE(SUM(prix_vente + tps + tvq), 0) AS montant
+      FROM ventes
+      WHERE date_vente >= date('now', 'start of month', '-1 month')
+        AND date_vente <  date('now', 'start of month')
+    `).get().montant;
+  const deltaPct = ventesMoisPrec > 0
+    ? Math.round(((ventesRow.montant - ventesMoisPrec) / ventesMoisPrec) * 100)
+    : null;
+
+  // Valeur du catalogue disponible (prix des œuvres disponibles non archivées)
+  const valeurCatalogue = db
+    .prepare(`SELECT COALESCE(SUM(prix), 0) AS v FROM oeuvres WHERE statut = 'disponible' AND archive = 0`)
+    .get().v;
+
+  return {
+    total,
+    totalDeltaMois,
+    artistes,
+    artistesDeltaMois,
+    clientsActifs,
+    clientsDeltaMois,
+    ventesMois: ventesRow.n,
+    ventesMoisMontant: ventesRow.montant,
+    ventesDeltaPct: deltaPct,
+    valeurCatalogue,
+  };
+}
+
 function statsOeuvres() {
   const db = openDatabase();
   // Bornes du mois courant en UTC, format ISO compatible SQLite (datetime('now'))
   const debutMois = "datetime('now', 'start of month')";
 
-  const total = db.prepare('SELECT COUNT(*) AS n FROM oeuvres').get().n;
+  const total = db.prepare('SELECT COUNT(*) AS n FROM oeuvres WHERE archive = 0').get().n;
   const totalDeltaMois = db
-    .prepare(`SELECT COUNT(*) AS n FROM oeuvres WHERE cree_le >= ${debutMois}`)
+    .prepare(`SELECT COUNT(*) AS n FROM oeuvres WHERE archive = 0 AND cree_le >= ${debutMois}`)
     .get().n;
 
-  const artistes = db.prepare('SELECT COUNT(*) AS n FROM artistes').get().n;
+  const artistes = db.prepare('SELECT COUNT(*) AS n FROM artistes WHERE archive = 0').get().n;
   const artistesDeltaMois = db
-    .prepare(`SELECT COUNT(*) AS n FROM artistes WHERE cree_le >= ${debutMois}`)
+    .prepare(`SELECT COUNT(*) AS n FROM artistes WHERE archive = 0 AND cree_le >= ${debutMois}`)
     .get().n;
 
   const ventesRow = db
@@ -185,7 +313,7 @@ function statsOeuvres() {
     `).get();
 
   const disponibles = db
-    .prepare(`SELECT COUNT(*) AS n FROM oeuvres WHERE statut = 'disponible'`)
+    .prepare(`SELECT COUNT(*) AS n FROM oeuvres WHERE statut = 'disponible' AND archive = 0`)
     .get().n;
   const disponiblesPct = total > 0 ? Math.round((disponibles / total) * 100) : 0;
 
@@ -328,4 +456,9 @@ module.exports = {
   listerCertificatsParOeuvre,
   listerCertificatsParVente,
   obtenirCertificat,
+  oeuvresRecentes,
+  ventesRecentes,
+  oeuvresReservees,
+  ventesParMois,
+  statsTableauDeBord,
 };

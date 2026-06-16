@@ -1,12 +1,13 @@
 import { naviguer, remplacerCourant } from '../router.js';
 import {
   ech, sansAccents, formaterPrix, badgeStatut, pluriel, STATUTS, urlPhoto,
-  gabaritEntetePage, gabaritBoutonFiltres,
+  gabaritEntetePage, gabaritBoutonFiltres, badgeArchive, nomComplet,
 } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
 
 const CLE_PREF_VUE = 'oeuvres-vue';
 const CLE_PREF_TRI = 'oeuvres-tri';
+const CLE_PREF_ARCHIVES = 'oeuvres-inclure-archives';
 
 function lirePref(cle, defaut) {
   try { return localStorage.getItem(cle) || defaut; } catch { return defaut; }
@@ -101,12 +102,13 @@ function trier(oeuvres, tri) {
 }
 
 export async function rendreOeuvresListe(contenu, params = {}) {
-  const filtres = {};
+  let inclureArchives = lirePref(CLE_PREF_ARCHIVES, '0') === '1';
+  const filtres = { inclureArchives };
   if (params.artiste_id != null) filtres.artiste_id = params.artiste_id;
 
-  const [oeuvres, artistes, types, stats] = await Promise.all([
+  let [oeuvres, artistes, types, stats] = await Promise.all([
     window.api.oeuvresListe(filtres),
-    window.api.artistesListe(),
+    window.api.artistesListe({ inclureArchives: true }),
     window.api.oeuvresTypes(),
     params.artiste_id == null ? window.api.oeuvresStats() : Promise.resolve(null),
   ]);
@@ -227,7 +229,10 @@ export async function rendreOeuvresListe(contenu, params = {}) {
           <h4>Artiste</h4>
           <select id="panneau-filtre-artiste">
             <option value="">Tous les artistes</option>
-            ${artistes.map((a) => `<option value="${a.id}" ${String(a.id) === artisteIdFiltre ? 'selected' : ''}>${ech(a.nom)}</option>`).join('')}
+            ${artistes
+              .map((a) => ({ id: a.id, nom: nomComplet(a) || a.nom || '' }))
+              .sort((a, b) => sansAccents(a.nom).localeCompare(sansAccents(b.nom)))
+              .map((a) => `<option value="${a.id}" ${String(a.id) === artisteIdFiltre ? 'selected' : ''}>${ech(a.nom)}</option>`).join('')}
           </select>
         </div>
       ` : ''}
@@ -237,6 +242,12 @@ export async function rendreOeuvresListe(contenu, params = {}) {
           <option value="">Tous les types</option>
           ${types.map((t) => `<option value="${ech(t)}" ${t === typeFiltre ? 'selected' : ''}>${ech(t)}</option>`).join('')}
         </select>
+      </div>
+      <div class="groupe-filtre">
+        <label class="case-archives">
+          <input type="checkbox" id="panneau-case-archives" ${inclureArchives ? 'checked' : ''}>
+          <span>Inclure les archivées</span>
+        </label>
       </div>
     `;
     contenu.querySelector('.controles-vue-droite').appendChild(panneauFiltres);
@@ -251,6 +262,15 @@ export async function rendreOeuvresListe(contenu, params = {}) {
     if (panneauArt) panneauArt.addEventListener('change', () => { artisteIdFiltre = panneauArt.value; dessiner(); });
     const panneauType = panneauFiltres.querySelector('#panneau-filtre-type');
     if (panneauType) panneauType.addEventListener('change', () => { typeFiltre = panneauType.value; dessiner(); });
+    const panneauArchives = panneauFiltres.querySelector('#panneau-case-archives');
+    if (panneauArchives) panneauArchives.addEventListener('change', async () => {
+      inclureArchives = panneauArchives.checked;
+      ecrirePref(CLE_PREF_ARCHIVES, inclureArchives ? '1' : '0');
+      const filtresMaj = { inclureArchives };
+      if (params.artiste_id != null) filtresMaj.artiste_id = params.artiste_id;
+      oeuvres = await window.api.oeuvresListe(filtresMaj);
+      dessiner();
+    });
 
     setTimeout(() => {
       document.addEventListener('mousedown', surExtClic);
@@ -347,7 +367,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
 
   function carteGrille(o) {
     return `
-      <article class="oeuvre-carte" data-id="${o.id}">
+      <article class="oeuvre-carte${o.archive ? ' carte-archivee' : ''}" data-id="${o.id}">
         <div class="oeuvre-carte-image">
           ${o.image_path
             ? `<img src="${urlPhoto(o.image_path)}" loading="lazy" alt="">`
@@ -355,7 +375,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
         </div>
         <div class="oeuvre-carte-corps">
           <div class="oeuvre-carte-ligne-titre">
-            <h3 class="oeuvre-carte-titre">${ech(o.titre)}</h3>
+            <h3 class="oeuvre-carte-titre">${ech(o.titre)} ${o.archive ? badgeArchive() : ''}</h3>
             ${o.annee ? `<span class="oeuvre-carte-annee">${o.annee}</span>` : ''}
           </div>
           <p class="oeuvre-carte-artiste">${ech(o.artiste_nom)}</p>
@@ -371,12 +391,12 @@ export async function rendreOeuvresListe(contenu, params = {}) {
 
   function ligneListe(o) {
     return `
-      <button class="ligne-liste ligne-oeuvre" data-id="${o.id}">
+      <button class="ligne-liste ligne-oeuvre${o.archive ? ' ligne-archivee' : ''}" data-id="${o.id}">
         ${o.image_path
           ? `<div class="vignette avec-photo"><img src="${urlPhoto(o.image_path)}" loading="lazy" alt=""></div>`
           : `<div class="vignette"><span>&#9635;</span></div>`}
         <div class="info">
-          <p class="ligne-titre">${ech(o.titre)}</p>
+          <p class="ligne-titre">${ech(o.titre)} ${o.archive ? badgeArchive() : ''}</p>
           <p class="ligne-meta">
             ${ech(o.artiste_nom)}
             ${o.numero_inventaire ? `&nbsp;&middot;&nbsp;${ech(o.numero_inventaire)}` : ''}

@@ -4,12 +4,31 @@ import { confirmer, alerter } from '../dialogue.js';
 import { chargerConfig, invaliderCacheConfig, rafraichirEntete } from '../marque.js';
 import { fluxImport } from '../flux-import.js';
 
+const NIVEAUX_ZOOM = [
+  { val: 0.8,  libelle: 'Très petit' },
+  { val: 0.9,  libelle: 'Petit' },
+  { val: 1.0,  libelle: 'Normal (défaut)' },
+  { val: 1.1,  libelle: 'Grand' },
+  { val: 1.25, libelle: 'Très grand' },
+  { val: 1.5,  libelle: 'Maximum' },
+];
+
+function libelleZoomCourant(z) {
+  const exact = NIVEAUX_ZOOM.find((n) => Math.abs(n.val - z) < 0.001);
+  return exact ? exact.libelle : `Personnalisé (${Math.round(z * 100)} %)`;
+}
+
 export async function rendreReglages(contenu) {
   const config = JSON.parse(JSON.stringify(await chargerConfig()));
+  const infosApp = await window.api.appInfos();
   let modifie = false;
+  const zoomInitial = Number(config?.affichage?.zoom) || 1.0;
 
   async function gardien() {
-    if (!modifie) return true;
+    if (!modifie) {
+      window.api.appZoom(zoomInitial);
+      return true;
+    }
     const r = await confirmer({
       type: 'warning',
       title: 'Modifications non sauvegardées',
@@ -17,7 +36,11 @@ export async function rendreReglages(contenu) {
       buttons: ['Abandonner', 'Rester sur la page'],
       defaultId: 1, cancelId: 1,
     });
-    return r === 0;
+    if (r === 0) {
+      window.api.appZoom(zoomInitial);
+      return true;
+    }
+    return false;
   }
   poserGardien(gardien);
 
@@ -112,6 +135,34 @@ export async function rendreReglages(contenu) {
           <button type="button" class="btn-action btn-secondaire-action" id="btn-importer">Importer un fichier CSV…</button>
         `, false)}
 
+        ${blocPliable("Intelligence artificielle (ChatGPT)", `
+          ${champTextarea({ nom: 'ia_instructions_galerie', libelle: 'Consignes générales de la galerie (toujours incluses)', valeur: config.ia?.instructions_galerie || '', lignes: 6 })}
+          <p class="aide-champ">Ces consignes s'ajoutent à toutes les générations de description, peu importe l'artiste. Sert à fixer le ton maison (ex. accessible, jamais grandiloquent), la longueur cible générale, et toute autre règle commune.</p>
+          ${champTexte({ nom: 'ia_lien_chatgpt_defaut', libelle: 'Lien ChatGPT par défaut', valeur: config.ia?.lien_chatgpt_defaut || 'https://chat.openai.com/', attributs: 'placeholder="https://chat.openai.com/"' })}
+          <p class="aide-champ">Utilisé quand l'artiste n'a pas de lien spécifique vers son propre GPT.</p>
+        `, false)}
+
+        ${blocPliable("Affichage", `
+          <div class="form-champ">
+            <label for="f-a_zoom">Taille d'affichage</label>
+            <select id="f-a_zoom" name="a_zoom">
+              ${NIVEAUX_ZOOM.map((n) => `<option value="${n.val}" ${Math.abs(n.val - zoomInitial) < 0.001 ? 'selected' : ''}>${ech(n.libelle)} — ${Math.round(n.val * 100)} %</option>`).join('')}
+            </select>
+            <p class="aide-champ">Ajuste la taille de tous les éléments de l'application. L'aperçu est appliqué immédiatement quand tu changes la valeur ; il sera enregistré quand tu cliques sur <strong>Enregistrer</strong>. Annule pour revenir à la valeur d'origine.</p>
+          </div>
+        `, false)}
+
+        ${blocPliable("À propos", `
+          <dl class="champs">
+            <div class="champ"><dt>Application</dt><dd>${ech(infosApp.nom)}</dd></div>
+            <div class="champ"><dt>Version</dt><dd>${ech(infosApp.version)}</dd></div>
+            <div class="champ"><dt>Marque affichée</dt><dd>${ech(config.galerie?.nom || '—')}</dd></div>
+            <div class="champ"><dt>Dossier des données</dt><dd><code>${ech(infosApp.dataDir)}</code></dd></div>
+            <div class="champ"><dt>Moteur</dt><dd>Electron ${ech(infosApp.electron)} sur ${ech(infosApp.plateforme)}</dd></div>
+          </dl>
+          <p class="aide-champ" style="margin-top:1rem;">© 2026 Galerie du Vieux Saint-Jean. Logiciel maison, données conservées localement (Loi 25).</p>
+        `, false)}
+
         <div class="form-actions">
           <button type="button" class="btn-action btn-secondaire-action" id="btn-annuler">Annuler</button>
           <button type="submit" class="btn-action btn-principal">Enregistrer</button>
@@ -123,6 +174,16 @@ export async function rendreReglages(contenu) {
   const form = contenu.querySelector('#formulaire');
   form.addEventListener('input', () => { modifie = true; });
   form.addEventListener('change', () => { modifie = true; });
+
+  const selZoom = contenu.querySelector('#f-a_zoom');
+  if (selZoom) {
+    selZoom.addEventListener('change', () => {
+      const v = Number(selZoom.value);
+      if (Number.isFinite(v) && v > 0) {
+        window.api.appZoom(v);
+      }
+    });
+  }
 
   contenu.querySelector('#btn-choisir-dossier').addEventListener('click', async () => {
     const r = await window.api.configChoisirDossier();
@@ -199,6 +260,16 @@ export async function rendreReglages(contenu) {
         retention: Math.max(5, Math.floor(num('s_retention') || 50)),
         dossier: v('s_dossier').trim(),
       },
+      affichage: {
+        zoom: (() => {
+          const z = num('a_zoom');
+          return Number.isFinite(z) && z > 0 ? z : 1.0;
+        })(),
+      },
+      ia: {
+        instructions_galerie: v('ia_instructions_galerie').trim(),
+        lien_chatgpt_defaut: v('ia_lien_chatgpt_defaut').trim() || 'https://chat.openai.com/',
+      },
     };
 
     try {
@@ -235,6 +306,7 @@ export async function rendreReglages(contenu) {
       });
       if (r !== 0) return;
     }
+    window.api.appZoom(zoomInitial);
     leverGardien();
     retour();
   });

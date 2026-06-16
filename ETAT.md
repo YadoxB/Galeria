@@ -73,6 +73,47 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est fonctionne
 - **Numérotation distincte** : factures client (F-2026-xxx), factures artiste (A-2026-xxx), certificats (C-2026-xxx). Réservation du numéro stockée sur la vente.
 - Sortie : `Documents\Galeria\Documents\{annee}\Certificat_*.pdf` (paysage), `FactureArtiste_*.pdf` (portrait).
 
+### Tableau de bord (v0.2.0 — refonte complète de l'accueil)
+
+- Layout 3 colonnes × 2 rangées qui tient dans le viewport sans scroll global (scroll interne par bloc).
+- En-tête : logo galerie + « Tableau de bord » + « Bienvenue. Voici un aperçu de [nom de la galerie]. »
+- 4 cartes stats : Œuvres au total, Artistes représentés, **Clients actifs** (clients non archivés ayant déjà acheté), Ventes ce mois ($ avec delta % vs mois précédent).
+- **Œuvres récemment ajoutées** : 6 vignettes cliquables (image, titre, artiste, année, badge statut, prix).
+- **Ventes récentes** : 6 dernières avec vignette, œuvre, client, total, date.
+- **Œuvres réservées** : liste actionnable (clic → fiche), libellé « À relancer ».
+- **Résumé du catalogue** : valeur totale des œuvres disponibles + sparkline 12 mois en doré.
+- **Agenda** : bloc placeholder avec icône calendrier — intégration future (les parents utilisent Outlook).
+- Bouton **« Accueil »** ajouté en haut de la sidebar.
+- Données chargées via IPC dédié `accueil:donnees` qui regroupe stats + listes en un seul appel.
+
+### Archivage des fiches (v0.2.0)
+
+- Colonne `archive` (0/1) sur artistes, œuvres, clients. Migration additive non destructive.
+- Bouton **Archiver / Désarchiver** sur les fiches (entre Supprimer et Modifier).
+- Badge gris « Archivée » dans le titre des fiches.
+- **Listes excluent par défaut** ; case **« Inclure les archivés »** dans les contrôles (panneau Filtres pour œuvres). Lignes/cartes archivées affichées en opacité réduite.
+- Sélecteurs œuvre/client lors d'une **nouvelle vente** excluent automatiquement les archivés.
+- Stats du tableau de bord ignorent les archivés.
+- Pas archivable : ventes (ce sont des transactions, pas des fiches).
+
+### Dimensions des œuvres séparées + auto-calcul (v0.2.0)
+
+- 3 nouvelles colonnes `hauteur`, `largeur`, `profondeur` (REAL nullables, en **pouces**). Le champ texte `dimensions` est conservé et régénéré automatiquement (« 24 × 36 po » ou « 24 × 36 × 2 po »).
+- Form : 3 inputs nombre côte-à-côte avec libellés Hauteur/Largeur/Profondeur.
+- Aperçu live sous le trio : « Dimensions enregistrées : **24 × 36 po** » ou, si la fiche a une saisie héritée pas encore convertie, « Saisie héritée : *texte historique* ».
+- **Auto-calcul de l'orientation** : H > L×1,05 → Verticale, L > H×1,05 → Horizontale, sinon Carrée. S'arrête dès que l'utilisateur modifie le champ à la main.
+- **Auto-calcul du format** basé sur **√(H × L)** (moyenne géométrique = côté équivalent d'un carré de même surface). Critère dérivé empiriquement de **476 œuvres déjà étiquetées** par la galerie (script `scripts/analyse-seuils-format.js`) : précision **93,7 %** vs 85,5 % pour le max et 78,2 % pour le min. Seuils : Petit ≤ 16", Moyen ≤ 30", Grand ≤ 42", Très grand > 42". Profondeur ignorée (épaisseur du châssis).
+- Catégorie historique « Mini » (2 œuvres ≤ 6") non reproduite par l'auto-calcul — l'utilisateur peut la mettre à la main (l'override désactive l'auto-calcul pour la session).
+
+### Intégration ChatGPT (v0.2.0 — mode presse-papier)
+
+- Bouton **« Copier pour ChatGPT »** sur fiche d'œuvre (création + édition, section Description). Image placée **avant** Description dans le formulaire.
+- Mode **création** (œuvre non encore persistée) : assemble depuis les champs en mémoire + image data URL. IPC dédié `ia:copier-pour-chatgpt-inline`. Mode **édition** : utilise l'ID pour charger l'image depuis le disque (IPC `ia:copier-pour-chatgpt`).
+- Prompt assemblé : consignes générales de la galerie + consignes spécifiques de l'artiste + caractéristiques de l'œuvre + description actuelle s'il y en a une.
+- **Modale en 2 étapes** s'ouvre toujours (Chrome ne préserve pas le multi-format texte+image lors d'un collage). Étape 1 : texte déjà copié, à coller dans ChatGPT. Étape 2 : image draggable + bouton « Copier l'image » + bouton « Ouvrir ChatGPT ».
+- **Nouveau champ par artiste** : section pliable « Aide à la description IA » dans la fiche, avec textarea pour les consignes spécifiques et champ URL pour son Custom GPT (ouvert directement si défini).
+- **Section IA dans Réglages** : textarea pour les consignes générales de la galerie + champ URL ChatGPT par défaut.
+
 ### Phase 3R — Réglages + Profil de la galerie (livrée, séparés)
 
 - **Page Réglages** : Documents (factures, certificats, taxes, cote), Sauvegardes (fréquence, rétention, dossier, import CSV). Stockage JSON dans `Documents\Galeria\config.json`.
@@ -145,19 +186,22 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 ### Demandes spontanées en attente
 
 **Plus anciennes (depuis premières sessions)** :
-1. **Splash screen** au démarrage avec logo Galeria, version. Image fournie au moment voulu.
+1. ~~**Splash screen** au démarrage avec logo Galeria, version.~~ **Livré en v0.2.0** : fenêtre 600×338, `gabarits/actifs/splash-galeria.png`, version en doré italique avec fade-in, durée min 1,2 s, filet de sécurité 8 s.
 2. **Consultation/édition en batch** des tables (vue tableau pour modifier plusieurs lignes).
-3. **Archiver une/des fiches** (statut archivé qui les retire des vues actives). Le brief UI prévoit déjà les couleurs du badge « Archivée ».
+3. ~~**Archiver une/des fiches**~~ **Livré en v0.2.0** : voir section « Archivage des fiches » au-dessus.
 4. **Push d'infos vers le site web** (recoupe Phase 5).
 5. **Validation des dimensions de fenêtre** pour l'écran réel des parents (actuellement 1600×900). Idéalement à voir sur place.
 6. **Plus tard** : intégrer d'autres types de produits (encadrements, impressions).
 7. **Nomenclature finale des numéros** (factures, certificats, inventaires) : Dave doit obtenir les formules de ses parents. L'app utilise des préfixes/compteurs configurables — aucune migration nécessaire.
 
-**Nouvelles demandes (cette session)** :
-8. **Réglages d'application** (taille d'affichage, autres préférences UI). Distinct des réglages galerie (qui est dans Profil) et des réglages métier (qui est dans Réglages).
+**Nouvelles demandes (sessions récentes)** :
+8. ~~**Réglages d'application** (taille d'affichage).~~ **Livré en v0.2.0** : section « Affichage » dans Réglages, sélecteur 6 niveaux (80-150 %), preview live via `webContents.setZoomFactor()`, persistance dans `config.affichage.zoom`, réappliqué à chaque démarrage.
 9. **Mécanisme de mise à jour automatique** (push updates) : explorer electron-updater ou équivalent pour livrer les nouvelles versions aux parents sans qu'ils aient à réinstaller manuellement.
-10. **Page d'accueil avec vue d'ensemble** : remplacer l'accueil actuel (gros boutons) par une vraie dashboard. Dave fournira un mockup quand on sera rendu là.
-11. **Descriptions d'œuvres générées par IA** : un module qui, à partir d'une liste de paramètres définie pour chaque artiste (style, démarche, thèmes…), produit une suggestion de description pour une nouvelle œuvre. Implique : champ de paramètres sur la fiche artiste, intégration API (OpenAI ? Claude ?), bouton « Suggérer une description » sur la fiche d'œuvre. Coût/quota à étudier.
+10. ~~**Page d'accueil avec vue d'ensemble**.~~ **Livré en v0.2.0** : voir section « Tableau de bord » au-dessus.
+11. ~~**Descriptions d'œuvres générées par IA**.~~ **Livré en v0.2.0** (mode presse-papier vers ChatGPT existant des parents) : voir section « Intégration ChatGPT » au-dessus. Évolution possible vers une intégration API directe (Anthropic ou OpenAI) si le volume le justifie.
+12. ~~**Section « À propos » dans les réglages**.~~ **Livré en v0.2.0** : nom de l'app, version (`app.getVersion()`), marque, dossier des données, moteur (Electron + plateforme), copyright Loi 25.
+13. **Tutoriel de première ouverture** : flux d'accueil guidé qui présente les sections principales et leurs actions courantes. À déclencher au premier lancement, accessible ensuite depuis Réglages ou Aide.
+14. **Intégration Agenda** : bloc placeholder en place dans le tableau de bord. Les parents utilisent probablement Outlook ; à confirmer puis explorer (lecture iCal local, sync Microsoft Graph, ou autre).
 
 ---
 

@@ -4,6 +4,7 @@ import {
   champTexte, champTextarea, champCheckbox,
   champPays, champSubdivision, brancherChangementPays,
   formaterPrix, formaterDate, formaterTelephone, nomComplet, urlPhoto,
+  badgeArchive, boutonArchive, basculerArchive,
 } from '../commun.js';
 import { confirmer } from '../dialogue.js';
 
@@ -206,13 +207,14 @@ export async function rendreClientFiche(contenu, params) {
         <div class="entete-fiche">
           <div class="avatar grand"><span>${ech(initiales(nomComplet(c)))}</span></div>
           <div class="entete-fiche-info">
-            <h2>${ech(nomComplet(c))}</h2>
+            <h2>${ech(nomComplet(c))} ${c.archive ? badgeArchive() : ''}</h2>
             <p class="meta">
               ${c.nb_ventes > 0 ? pluriel(c.nb_ventes, 'vente') + ' enregistrée(s)' : '<em>aucune vente enregistrée</em>'}
             </p>
           </div>
           <div class="entete-fiche-actions">
             <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
+            ${boutonArchive({ archive: c.archive })}
             <button class="btn-action" id="btn-modifier">Modifier</button>
           </div>
         </div>
@@ -228,6 +230,15 @@ export async function rendreClientFiche(contenu, params) {
 
     contenu.querySelector('#btn-modifier').addEventListener('click', entrerEdition);
     contenu.querySelector('#btn-supprimer').addEventListener('click', supprimer);
+    contenu.querySelector('#btn-archiver').addEventListener('click', async () => {
+      await basculerArchive({
+        table: 'clients',
+        fiche: c,
+        libelleFiche: nomComplet(c),
+        confirmer,
+        surFait: () => dessiner(),
+      });
+    });
     contenu.querySelectorAll('.ligne-vente').forEach((btn) => {
       btn.addEventListener('click', () =>
         naviguer('oeuvre-fiche', { id: Number(btn.dataset.oeuvreId) })

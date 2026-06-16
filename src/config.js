@@ -35,6 +35,13 @@ const DEFAULTS = {
     retention: 50,
     dossier: '',
   },
+  affichage: {
+    zoom: 1.0,
+  },
+  ia: {
+    instructions_galerie: '',
+    lien_chatgpt_defaut: 'https://chat.openai.com/',
+  },
 };
 
 function cheminConfig() {
