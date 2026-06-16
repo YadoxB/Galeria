@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Certificat d'authenticité — La Galerie du Vieux Saint-Jean</title>
+<style>
+/* Polices de marque (fichiers externes dans le dossier actifs) */
+@font-face{font-family:'G';font-weight:400;font-style:normal;src:url(actifs/garamond-regular.woff2) format('woff2');}
+@font-face{font-family:'G';font-weight:600;font-style:normal;src:url(actifs/garamond-semibold.woff2) format('woff2');}
+@font-face{font-family:'G';font-weight:400;font-style:italic;src:url(actifs/garamond-italic.woff2) format('woff2');}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#eceae4;display:flex;justify-content:center;padding:22px;}
+
+/* ----- LE CERTIFICAT (Lettre, paysage) ----- */
+.feuille{width:11in;height:8.5in;padding:12mm;background:#fdfcf8;color:#1c1a17;
+         font-family:'G',serif;box-shadow:0 4px 24px rgba(0,0,0,.18);}
+.cadre{height:100%;border:2px solid #b9912f;padding:3mm;}
+.cadre-int{height:100%;border:.6px solid #b9912f;padding:8mm 11mm;
+           display:flex;flex-direction:column;}
+
+.cert-top{position:relative;margin-bottom:5mm;}
+.logo{height:22mm;position:relative;z-index:1;}
+.titre-zone{position:absolute;left:0;right:0;top:0;display:flex;flex-direction:column;align-items:flex-end;pointer-events:none;}
+.titre-doc .sur{display:block;font-size:15pt;letter-spacing:7px;text-transform:uppercase;color:#b9912f;font-style:normal;text-align:right;}
+.titre-doc h1{font-size:36pt;font-weight:600;font-style:italic;white-space:nowrap;margin-top:2px;}
+
+.filet{width:70mm;height:1px;background:#b9912f;margin:4mm 0 0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+
+.corps{display:flex;gap:10mm;flex:1;min-height:0;}
+.col-photo{flex:0 0 105mm;display:flex;flex-direction:column;gap:5mm;}
+.photo-wrap{display:inline-block;}
+.photo-wrap img{max-width:105mm;max-height:68mm;width:auto;height:auto;display:block;
+               border:.5px solid #d8cfb6;padding:2mm;background:#fff;
+               box-shadow:0 1px 4px rgba(0,0,0,.10);}
+.photo-wrap .vide{width:105mm;height:68mm;border:.5px dashed #cfc6ad;
+                  display:flex;align-items:center;justify-content:center;
+                  color:#b6ac92;font-size:9.5pt;font-style:italic;}
+
+.col-info{flex:1;display:flex;flex-direction:column;}
+.o-titre{font-size:15.5pt;font-style:italic;margin-bottom:1mm;}
+.o-artiste{font-size:10.5pt;letter-spacing:.8px;color:#4a443a;margin-bottom:5mm;}
+
+table.det{width:100%;border-collapse:collapse;font-size:11pt;}
+table.det td{padding:1.5mm 2mm 1.5mm 0;border-bottom:.5px solid #e9e3d4;vertical-align:top;}
+table.det tr:last-child td{border-bottom:none;}
+table.det td.cle{width:32mm;text-transform:uppercase;letter-spacing:.6px;
+                 font-size:7.5pt;color:#8a8170;padding-top:3mm;}
+table.det td.val{font-size:10.5pt;}
+
+.deliv-ligne{display:flex;gap:10mm;margin-top:5mm;padding-top:4mm;
+             border-top:.5px solid #e9e3d4;}
+.deliv-item .et{font-size:7pt;letter-spacing:1px;text-transform:uppercase;color:#8a8170;}
+.deliv-item .v{font-size:9.5pt;margin-top:1mm;}
+.deliv-item .v.serie{font-weight:600;letter-spacing:.5px;}
+
+.attest{margin-top:4mm;font-size:9pt;line-height:1.6;color:#2a261f;}
+
+.spacer{flex:1;}
+.pied{display:flex;justify-content:space-between;align-items:flex-end;padding-top:4mm;margin-top:4mm;}
+.sceau{width:50.8mm;height:50.8mm;border:1.5px dashed #c8bfa8;border-radius:50%;flex-shrink:0;}
+.sign{width:70mm;text-align:center;}
+.sign .espace{height:10mm;}
+.sign .ligne{border-top:.8px solid #1c1a17;}
+.sign .lbl{font-style:italic;font-size:10pt;color:#2a261f;margin-top:1.5mm;}
+.bas{text-align:center;margin-top:4mm;font-size:7.5pt;letter-spacing:.4px;color:#9a8f78;}
+
+@media print{
+  @page{size:letter landscape;margin:0;}
+  body{background:#fff;padding:0;}
+  .feuille{box-shadow:none;}
+}
+</style></head><body>
+
+<!-- ====== LE DOCUMENT (rien d'autre, prêt à imprimer en PDF) ====== -->
+<div class="feuille"><div class="cadre"><div class="cadre-int">
+
+  <div class="cert-top">
+    <img class="logo" src="actifs/logo-gvsj.png" alt="La Galerie du Vieux Saint-Jean">
+    <div class="titre-zone">
+      <div class="titre-doc">
+        <span class="sur">Certificat d'authenticité</span>
+      </div>
+      <div class="filet"></div>
+    </div>
+  </div>
+
+  <div class="corps">
+    <div class="col-photo">
+      <div class="photo-wrap" id="photo_holder">
+        <div class="vide">Photo de l'œuvre</div>
+      </div>
+    </div>
+
+    <div class="col-info">
+      <div class="o-titre">« <span id="titre"></span> »</div>
+      <div class="o-artiste" id="artiste2"></div>
+
+      <table class="det">
+        <tr><td class="cle">Année</td><td class="val" id="annee"></td></tr>
+        <tr><td class="cle">Médium &amp; technique</td><td class="val" id="medium"></td></tr>
+        <tr><td class="cle">Support</td><td class="val" id="support"></td></tr>
+        <tr><td class="cle">Dimension</td><td class="val" id="dim"></td></tr>
+        <tr><td class="cle">Signature</td><td class="val" id="signature"></td></tr>
+        <tr id="row_part"><td class="cle">Particularité</td><td class="val" id="particularite"></td></tr>
+        <tr><td class="cle">Valeur</td><td class="val" id="valeur"></td></tr>
+      </table>
+
+      <div class="deliv-ligne">
+        <div class="deliv-item">
+          <div class="et">Numéro de délivrance</div>
+          <div class="v serie" id="numero"></div>
+        </div>
+        <div class="deliv-item">
+          <div class="et">Date de délivrance</div>
+          <div class="v" id="date"></div>
+        </div>
+      </div>
+
+      <div class="attest" id="attest"></div>
+    </div>
+  </div>
+
+  <div class="pied">
+    <div class="sceau"></div>
+    <div class="sign">
+      <div class="espace"></div>
+      <div class="ligne"></div>
+      <div class="lbl">Signature de la galerie</div>
+    </div>
+  </div>
+
+  <div class="bas" id="g_pied"></div>
+
+</div></div></div>
+
+<script>
+/* ===================================================================
+   CONTRAT DE DONNÉES — ce que l'application doit fournir à remplir()
+
+   {
+     // Informations de la galerie (lues depuis les réglages de l'app)
+     galerie: { nom, adresse_ligne1, adresse_ligne2 },
+
+     type:          "peintre" | "sculpteur" | "reproduction" | "autre",
+     type_autre:    "",          // utilisé seulement si type === "autre"
+     titre:         "",
+     artiste:       "",
+     annee:         "",          // ex. "2024"
+     valeur:        "",          // chaîne déjà formatée, ex. "3 160 $"
+     medium:        "",
+     support:       "",
+     dimensions:    "",          // chaîne déjà formatée, ex. "30 × 36 po"
+     signature:     "",          // emplacement de la signature
+     particularite: "",          // facultatif (ligne masquée si vide)
+     numero:        "",          // numéro de délivrance
+     date:          "2026-04-17",// format ISO AAAA-MM-JJ (affiché en français)
+     photo:         ""           // URL ou data:image ; vide = cadre "Photo de l'œuvre"
+   }
+   =================================================================== */
+
+var MOIS=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+function dateFr(iso){if(!iso)return"";var p=String(iso).split("-");if(p.length!==3)return iso;return parseInt(p[2],10)+" "+MOIS[parseInt(p[1],10)-1]+" "+p[0];}
+
+var ATT={
+  peintre:"Le présent certificat atteste que l'œuvre décrite ci-dessus est une production authentique de l'artiste peintre, et garantit l'exactitude des mentions et descriptions dûment approuvées par l'artiste.",
+  sculpteur:"Le présent certificat atteste que l'œuvre décrite ci-dessus est une production authentique de l'artiste sculpteur, et garantit l'exactitude des mentions et descriptions dûment approuvées par l'artiste.",
+  reproduction:"Le présent certificat atteste que la reproduction décrite ci-dessus est conforme à l'œuvre originale de l'artiste, et garantit l'exactitude des mentions et descriptions indiquées."
+};
+function attestation(d){
+  if(d.type==="reproduction")return ATT.reproduction;
+  if(d.type==="autre"){var m=(d.type_autre||"").trim();return "Le présent certificat atteste que l'œuvre décrite ci-dessus est une production authentique de "+(m?"l'artiste "+m:"l'artiste")+", et garantit l'exactitude des mentions et descriptions dûment approuvées par l'artiste.";}
+  return ATT[d.type]||ATT.peintre;
+}
+function set(id,t){var e=document.getElementById(id);if(e)e.textContent=t||"";}
+
+function piedGalerie(g){
+  if(!g) return "";
+  var parts = [];
+  if(g.nom) parts.push("Édité par "+g.nom);
+  var addr = [g.adresse_ligne1, g.adresse_ligne2].filter(function(x){return x && x.trim();}).join(", ");
+  if(addr) parts.push(addr);
+  return parts.join(" · ");
+}
+
+/* La seule fonction que l'app appelle : remplir(donnees) */
+function remplir(d){
+  d=d||{};
+  set("titre", d.titre);
+  set("artiste2", d.artiste);
+  set("annee", d.annee);
+  set("medium", d.medium);
+  set("support", d.support);
+  set("dim", d.dimensions);
+  set("signature", d.signature);
+  set("particularite", d.particularite);
+  set("valeur", d.valeur);
+  set("numero", d.numero);
+  set("date", dateFr(d.date));
+  set("attest", attestation(d));
+  set("g_pied", piedGalerie(d.galerie));
+  document.getElementById("row_part").style.display=(d.particularite&&d.particularite.trim())?"":"none";
+  var h=document.getElementById("photo_holder");
+  h.innerHTML=d.photo ? '<img src="'+d.photo+'" alt="">' : '<div class="vide">Photo de l\u2019œuvre</div>';
+}
+
+/* Données d'exemple pour visualiser le gabarit en l'ouvrant directement.
+   L'app remplacera cet appel par remplir(vraiesDonnees). */
+var DONNEES_EXEMPLE={
+  galerie:{
+    nom:"Galerie du Vieux Saint-Jean",
+    adresse_ligne1:"208 rue Richelieu",
+    adresse_ligne2:"Saint-Jean-sur-Richelieu (Québec) J3B 6X8"
+  },
+  type:"peintre", type_autre:"",
+  titre:"Au pied de la falaise", artiste:"Clarence Bourgoin",
+  annee:"2024", valeur:"3 160 $", medium:"Acrylique", support:"Toile",
+  dimensions:"30 × 36 po", signature:"En bas à gauche", particularite:"",
+  numero:"CLB-073-1940-999", date:"2026-04-17", photo:""
+};
+window.addEventListener("load",function(){ remplir(DONNEES_EXEMPLE); });
+</script>
+</body></html>

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+out/
+seed/
+build/icon.ico
+imports-airtable/
+*.csv
+*.log
+.DS_Store
+Thumbs.db

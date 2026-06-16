@@ -1,0 +1,65 @@
+{
+  "name": "galerie-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Logiciel de gestion pour la Galerie du Vieux Saint-Jean",
+  "author": "Galerie du Vieux Saint-Jean",
+  "license": "UNLICENSED",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "reset-db": "node scripts/reset-db.js",
+    "import-photos-oeuvres": "node scripts/import-photos-oeuvres.js",
+    "prepare:icon": "node scripts/build-icon.js",
+    "prepare:seed": "node scripts/build-seed.js",
+    "prepare:assets": "npm run prepare:icon && npm run prepare:seed",
+    "build": "npm run prepare:assets && electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^42.4.0",
+    "electron-builder": "^25.1.8",
+    "png-to-ico": "^2.1.8"
+  },
+  "dependencies": {
+    "csv-parse": "^6.2.1"
+  },
+  "build": {
+    "appId": "com.gvsj.galeria",
+    "productName": "Galeria",
+    "copyright": "Copyright © 2026 Galerie du Vieux Saint-Jean",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "gabarits/actifs/**/*",
+      "package.json",
+      "!**/*.{md,log,csv}",
+      "!imports-airtable/**",
+      "!scripts/**"
+    ],
+    "extraResources": [
+      {
+        "from": "seed",
+        "to": "seed",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "artifactName": "${productName} Setup ${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Galeria",
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}

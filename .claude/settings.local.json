@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx electron-rebuild *)",
+      "Bash(npm_config_runtime=electron npm_config_target=42.4.0 npm_config_disturl=https://electronjs.org/headers npm rebuild better-sqlite3 --update-binary)",
+      "Bash(npx electron *)",
+      "Bash(npm uninstall *)",
+      "Bash(rm -f \"/c/Users/Dave/Documents/GalerieApp/galerie.db\" \"/c/Users/Dave/Documents/GalerieApp/galerie.db-wal\" \"/c/Users/Dave/Documents/GalerieApp/galerie.db-shm\")",
+      "Read(//c/Users/Dave/Documents/GalerieApp//**)",
+      "Bash(npm run *)",
+      "Bash(rm -rf \"/c/Users/Dave/AppData/Local/electron-builder/Cache/winCodeSign\")",
+      "Bash(rm -rf dist)",
+      "Bash(ls \"/c/Users/Dave/Documents/\" | grep -i galerie)",
+      "Bash(node -e \"const os=require\\('node:os'\\),path=require\\('node:path'\\),fs=require\\('node:fs'\\); const p=path.join\\(os.homedir\\(\\),'Documents','GalerieApp','galerie.db'\\); console.log\\('Cherché:',p\\); console.log\\('Existe?:',fs.existsSync\\(p\\)\\); console.log\\('homedir:',os.homedir\\(\\)\\);\")",
+      "Bash(ls -la \"/c/Users/Dave/Downloads/\" 2>/dev/null | grep -iE \"artiste|oeuvre|œuvre\" | head -10)",
+      "Bash(ls \"F:\\\\Galerie\\\\Automatisation\\\\Galerie\\\\photos_oeuvres\" 2>&1 | head -20 && echo \"---\" && ls \"F:\\\\Galerie\\\\Automatisation\\\\Galerie\\\\photos_oeuvres\" | wc -l)",
+      "Bash(node -e \"require\\('./src/db/requetes.js'\\); require\\('./src/db/mutations.js'\\); require\\('./src/config.js'\\); console.log\\('OK: modules backend valides'\\);\")",
+      "Bash(node --check src/app/vues/vente-fiche.js)",
+      "Bash(node --check src/app/vues/ventes-liste.js)",
+      "Bash(node --check src/app/vues/oeuvre-fiche.js)",
+      "Bash(node --check src/app/commun.js)",
+      "Bash(node --check src/app/app.js)",
+      "Bash(node -e \"require\\('./src/db/requetes.js'\\); require\\('./src/db/mutations.js'\\); console.log\\('OK: tout est valide'\\);\")",
+      "Bash(node --check src/app/vues/client-fiche.js)",
+      "Bash(node --check src/app/vues/artiste-fiche.js)",
+      "Bash(node -e \"require\\('./src/db/mutations.js'\\); require\\('./src/db/migrations.js'\\); console.log\\('OK'\\)\")",
+      "Bash(node -e \"require\\('./src/db/requetes.js'\\); require\\('./src/db/mutations.js'\\); console.log\\('OK backend'\\)\")",
+      "Bash(node --check src/app/vues/certificat-creation.js)",
+      "Bash(node -e \"require\\('./src/pdf.js'\\); console.log\\('OK pdf.js'\\)\")",
+      "Bash(node --check src/pdf.js)",
+      "Bash(node -e \"require\\('./src/db/paths.js'\\); console.log\\('OK paths'\\)\")",
+      "Bash(node -e \"require\\('./src/db/mutations.js'\\); require\\('./src/pdf.js'\\); console.log\\('OK backend'\\)\")",
+      "Bash(node --check src/app/vues/reglages.js)",
+      "Bash(node --check src/app/marque.js)",
+      "Bash(node --check src/app/router.js)",
+      "Bash(node -e \"require\\('./src/db/requetes.js'\\); require\\('./src/db/mutations.js'\\); require\\('./src/db/migrations.js'\\); require\\('./src/pdf.js'\\); console.log\\('OK backend'\\)\")",
+      "Bash(node --check src/app/vues/artistes-liste.js)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}

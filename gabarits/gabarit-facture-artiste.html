@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Facture artiste — La Galerie du Vieux Saint-Jean</title>
+<style>
+  /* Polices de marque (fichiers externes dans le dossier actifs) */
+  @font-face{font-family:'Garamond';font-weight:400;font-style:normal;src:url(actifs/garamond-regular.woff2) format('woff2');}
+  @font-face{font-family:'Garamond';font-weight:600;font-style:normal;src:url(actifs/garamond-semibold.woff2) format('woff2');}
+  @font-face{font-family:'Garamond';font-weight:400;font-style:italic;src:url(actifs/garamond-italic.woff2) format('woff2');}
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:#eceae4;color:#1c1a17;display:flex;justify-content:center;padding:22px;}
+
+  /* ----- LA FACTURE (Lettre, portrait) ----- */
+  .page{width:8.5in;height:11in;padding:16mm 17mm;background:#fff;color:#1c1a17;font-family:'Garamond',serif;box-shadow:0 4px 24px rgba(0,0,0,.18);display:flex;flex-direction:column;}
+  .head{display:flex;justify-content:space-between;align-items:flex-start;}
+  .head .logo{height:21mm;}
+  .fmeta{text-align:right;}
+  .fmeta .ft{font-size:25pt;letter-spacing:3px;text-transform:uppercase;font-weight:600;}
+  .fmeta .fl{font-size:10.5pt;color:#4a443a;margin-top:3px;}
+  .rule{height:1.5px;background:#b9912f;margin:6mm 0 7mm;}
+  .parties{display:flex;gap:14mm;}
+  .part{flex:1;font-size:11pt;line-height:1.5;}
+  .ptitre{font-size:8.5pt;letter-spacing:1.5px;text-transform:uppercase;color:#b9912f;margin-bottom:3mm;}
+  .pnom{font-weight:600;font-size:12pt;}
+  .taxno{margin-top:2mm;font-size:9.5pt;color:#4a443a;}
+  .oeuvre{margin-top:9mm;padding:5mm 0 0;border-top:.5px solid #e9e3d4;}
+  .oe-label{font-size:8.5pt;letter-spacing:1.5px;text-transform:uppercase;color:#8a8170;}
+  .oe-desc{font-size:15pt;font-style:italic;margin-top:1mm;}
+  .oe-sub{font-size:10.5pt;color:#4a443a;margin-top:1mm;}
+  .calc{width:92mm;margin-left:auto;margin-top:9mm;}
+  .crow{display:flex;justify-content:space-between;padding:2mm 0;font-size:11pt;}
+  .crow .cl{color:#3a352c;}.crow .ca{font-variant-numeric:tabular-nums;}
+  .crow.sub{border-top:.5px solid #ddd5c2;font-weight:600;}
+  .crow.muted .cl,.crow.muted .ca{color:#7a715d;}
+  .crow.total{border-top:1.6px solid #b9912f;margin-top:2mm;padding-top:3mm;font-size:13.5pt;font-weight:600;}
+  .crow.total .ca{color:#1c1a17;}
+  .paiement{margin-top:9mm;font-size:10.5pt;line-height:1.7;}
+  .paiement .lab{color:#8a8170;text-transform:uppercase;font-size:8.5pt;letter-spacing:1px;margin-right:3mm;}
+  .spacer{flex:1 1 auto;}
+  .pied{text-align:center;font-size:8pt;letter-spacing:.4px;color:#9a8f78;border-top:.5px solid #e9e3d4;padding-top:4mm;}
+
+  @media print{
+    @page{size:letter;margin:0;}
+    body{background:#fff;padding:0;}
+    .page{box-shadow:none;}
+  }
+</style></head><body>
+
+<!-- ====== LE DOCUMENT (rien d'autre, prêt à imprimer en PDF) ====== -->
+<div class="page">
+  <div class="head">
+    <img class="logo" src="actifs/logo-gvsj.png" alt="La Galerie du Vieux Saint-Jean">
+    <div class="fmeta">
+      <div class="ft">Facture</div>
+      <div class="fl">N° <span id="p_num"></span></div>
+      <div class="fl" id="p_date"></div>
+    </div>
+  </div>
+  <div class="rule"></div>
+
+  <div class="parties">
+    <div class="part">
+      <div class="ptitre">Artiste</div>
+      <div class="pnom" id="p_art_nom"></div>
+      <div id="p_art_titre"></div>
+      <div id="p_art_adr"></div>
+      <div id="p_art_tel"></div>
+      <div id="p_art_courriel"></div>
+      <div class="taxno" id="p_art_taxes_no"></div>
+    </div>
+    <div class="part">
+      <div class="ptitre">Facturé à</div>
+      <div class="pnom" id="g_nom"></div>
+      <div id="g_adr1"></div>
+      <div id="g_adr2"></div>
+      <div id="g_tel"></div>
+      <div id="g_courriel"></div>
+    </div>
+  </div>
+
+  <div class="oeuvre">
+    <div class="oe-label">Œuvre</div>
+    <div class="oe-desc">« <span id="p_titre"></span> »</div>
+    <div class="oe-sub" id="p_inv_format"></div>
+  </div>
+
+  <div class="calc">
+    <div class="crow"><span class="cl">Prix régulier</span><span class="ca" id="p_prixreg"></span></div>
+    <div class="crow muted" id="r_rabart"><span class="cl">Rabais artiste</span><span class="ca" id="p_rabart"></span></div>
+    <div class="crow muted" id="r_rabgal"><span class="cl">Rabais galerie</span><span class="ca" id="p_rabgal"></span></div>
+    <div class="crow sub"><span class="cl">Prix de vente</span><span class="ca" id="p_prixvente"></span></div>
+    <div class="crow muted"><span class="cl" id="p_cote_label">Cote de la galerie</span><span class="ca" id="p_cote"></span></div>
+    <div class="crow sub"><span class="cl">Part de l'artiste</span><span class="ca" id="p_part"></span></div>
+    <div class="crow" id="r_tps"><span class="cl" id="p_tps_label">TPS</span><span class="ca" id="p_tps"></span></div>
+    <div class="crow" id="r_tvq"><span class="cl" id="p_tvq_label">TVQ</span><span class="ca" id="p_tvq"></span></div>
+    <div class="crow total"><span class="cl">Montant payé à l'artiste</span><span class="ca" id="p_total"></span></div>
+  </div>
+
+  <div class="paiement">
+    <div><span class="lab">Mode de paiement</span><span id="p_mode"></span></div>
+    <div id="r_comm"><span class="lab">Commentaire</span><span id="p_comm"></span></div>
+  </div>
+
+  <div class="spacer"></div>
+  <div class="pied" id="g_pied"></div>
+</div>
+
+<script>
+/* ===================================================================
+   CONTRAT DE DONNÉES — ce que l'application doit fournir à remplir()
+
+   {
+     // Informations de la galerie (lues depuis les réglages de l'app)
+     galerie: {
+       nom, adresse_ligne1, adresse_ligne2, telephone, courriel
+     },
+     numero: "F-2026-001",
+     date:   "2026-06-05",          // ISO AAAA-MM-JJ
+     artiste: { nom, titre, adresse, telephone, courriel },
+     oeuvre:  { titre, inventaire, format },
+     montants: {
+       prix_regulier: 2970,         // nombres, pas de chaînes
+       rabais_artiste: 0,
+       rabais_galerie: 0,
+       cote_pct: 50                 // pourcentage de commission de la galerie
+     },
+     taxes: {
+       actives: true,               // « l'artiste perçoit les taxes »
+       tps: { active: true,  taux: 5,     numero: "89211 9900 RT0001" },
+       tvq: { active: false, taux: 9.975, numero: "" }
+     },
+     paiement: { mode: "Dépôt direct", commentaire: "" }
+   }
+
+   Les totaux (prix de vente, cote, part, taxes, total) sont CALCULÉS ici.
+   Les coordonnées de la galerie viennent des réglages de l'app.
+   =================================================================== */
+
+var MOIS=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+function dateFr(iso){ if(!iso) return ""; var p=String(iso).split("-"); if(p.length!==3) return iso; return parseInt(p[2],10)+" "+MOIS[parseInt(p[1],10)-1]+" "+p[0]; }
+function n(x){ var v=parseFloat(x); return isNaN(v)?0:v; }
+function money(v){ var s=(Math.round(v*100)/100).toFixed(2).split('.'); return s[0].replace(/\B(?=(\d{3})+(?!\d))/g,' ')+','+s[1]+' $'; }
+function moneyNeg(v){ return '\u2212'+money(v); }
+function rate(v){ return (''+v).replace('.',','); }
+function set(id,t){ var e=document.getElementById(id); if(e) e.textContent=t; }
+function show(id,on){ var e=document.getElementById(id); if(e) e.style.display=on?'':'none'; }
+
+function piedGalerie(g){
+  if(!g) return "";
+  var parts = [];
+  if(g.nom) parts.push(g.nom);
+  var addr = [g.adresse_ligne1, g.adresse_ligne2].filter(function(x){return x && x.trim();}).join(", ");
+  if(addr) parts.push(addr);
+  if(g.telephone) parts.push(g.telephone);
+  if(g.courriel) parts.push(g.courriel);
+  return parts.join(" · ");
+}
+
+/* La seule fonction que l'app appelle : remplir(donnees) */
+function remplir(d){
+  d=d||{}; var a=d.artiste||{}, o=d.oeuvre||{}, m=d.montants||{}, t=d.taxes||{}, pmt=d.paiement||{};
+  var g=d.galerie||{};
+  var tps=t.tps||{}, tvq=t.tvq||{};
+  set('g_nom', g.nom||'');
+  set('g_adr1', g.adresse_ligne1||'');
+  set('g_adr2', g.adresse_ligne2||'');
+  set('g_tel', g.telephone||'');
+  set('g_courriel', g.courriel||'');
+  set('g_pied', piedGalerie(g));
+
+  set('p_num', d.numero||"");
+  set('p_date', dateFr(d.date));
+  set('p_art_nom', a.nom||"");
+  set('p_art_titre', a.titre||"");
+  set('p_art_adr', a.adresse||"");
+  set('p_art_tel', a.telephone||"");
+  set('p_art_courriel', a.courriel||"");
+  set('p_titre', o.titre||"");
+  var inv=o.inventaire||"", fmt=o.format||"";
+  set('p_inv_format', [inv?('N° '+inv):'', fmt].filter(Boolean).join('     ·     '));
+  set('p_mode', pmt.mode||"");
+  set('p_comm', pmt.commentaire||"");
+  show('r_comm', (pmt.commentaire||"").trim()!=='');
+
+  var prixReg=n(m.prix_regulier), rabArt=n(m.rabais_artiste), rabGal=n(m.rabais_galerie);
+  var prixVente=prixReg-rabArt-rabGal;
+  var cote=n(m.cote_pct);
+  var commission=prixVente*cote/100;
+  var part=prixVente-commission;
+
+  set('p_prixreg', money(prixReg));
+  show('r_rabart', rabArt>0); set('p_rabart', moneyNeg(rabArt));
+  show('r_rabgal', rabGal>0); set('p_rabgal', moneyNeg(rabGal));
+  set('p_prixvente', money(prixVente));
+  set('p_cote_label', 'Cote de la galerie ('+rate(cote)+' %)');
+  set('p_cote', moneyNeg(commission));
+  set('p_part', money(part));
+
+  var taxesOn = t.actives!==false;
+  var tpsOn = taxesOn && tps.active;
+  var tvqOn = taxesOn && tvq.active;
+  var mTps = tpsOn ? part*n(tps.taux)/100 : 0;
+  var mTvq = tvqOn ? part*n(tvq.taux)/100 : 0;
+  show('r_tps', tpsOn); set('p_tps_label','TPS ('+rate(n(tps.taux))+' %)'); set('p_tps', money(mTps));
+  show('r_tvq', tvqOn); set('p_tvq_label','TVQ ('+rate(n(tvq.taux))+' %)'); set('p_tvq', money(mTvq));
+
+  var nos=[];
+  if(tpsOn && tps.numero) nos.push('N° TPS : '+tps.numero);
+  if(tvqOn && tvq.numero) nos.push('N° TVQ : '+tvq.numero);
+  set('p_art_taxes_no', nos.join('      '));
+
+  set('p_total', money(part+mTps+mTvq));
+}
+
+/* Données d'exemple pour visualiser le gabarit en l'ouvrant directement.
+   L'app remplacera cet appel par remplir(vraiesDonnees). */
+var DONNEES_EXEMPLE={
+  galerie:{
+    nom:"Galerie du Vieux Saint-Jean",
+    adresse_ligne1:"208 rue Richelieu",
+    adresse_ligne2:"Saint-Jean-sur-Richelieu (Québec) J3B 6X8",
+    telephone:"(450) 741-3939",
+    courriel:"info@galerievieuxstjean.com"
+  },
+  numero:"F-2026-001", date:"2026-06-05",
+  artiste:{ nom:"Clarence Bourgoin", titre:"Artiste peintre",
+            adresse:"43 rue Nadeau, St-Léonard (Nouveau-Brunswick)  E7E 2E9",
+            telephone:"506 432-1811", courriel:"clarence@exemple.com" },
+  oeuvre:{ titre:"Chaleur à l'horizon", inventaire:"1399", format:"30 × 36 po" },
+  montants:{ prix_regulier:2970, rabais_artiste:0, rabais_galerie:0, cote_pct:50 },
+  taxes:{ actives:true,
+          tps:{ active:true,  taux:5,     numero:"89211 9900 RT0001" },
+          tvq:{ active:false, taux:9.975, numero:"" } },
+  paiement:{ mode:"Dépôt direct", commentaire:"" }
+};
+window.addEventListener("load",function(){ remplir(DONNEES_EXEMPLE); });
+</script>
+</body></html>
