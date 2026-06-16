@@ -2,6 +2,7 @@ import { naviguer, retour, poserGardien, leverGardien, remplacerCourant } from '
 import {
   ech, sansAccents, pluriel,
   champTexte, champTextarea, champCheckbox,
+  champPays, champSubdivision, brancherChangementPays,
   formaterPrix, formaterDate, nomComplet, urlPhoto,
 } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
@@ -156,6 +157,7 @@ export async function rendreVenteFiche(contenu, params) {
             <div class="actions-certif">
               ${c.pdf_path
                 ? `<button type="button" class="btn-action btn-secondaire-action btn-voir-pdf-vente">Voir le PDF</button>
+                   <button type="button" class="btn-action btn-secondaire-action btn-ouvrir-dossier-vente" title="Ouvrir le dossier">Ouvrir le dossier</button>
                    <button type="button" class="btn-action btn-secondaire-action btn-regen-pdf-vente">Re-générer</button>`
                 : `<button type="button" class="btn-action btn-principal btn-gen-pdf-vente">Générer le PDF</button>`}
               <button type="button" class="btn-action btn-danger btn-suppr-certif-vente">Supprimer</button>
@@ -205,6 +207,19 @@ export async function rendreVenteFiche(contenu, params) {
           await window.api.pdfOuvrir(cert.pdf_path);
         } catch (err) {
           await alerter({ type: 'error', title: 'Impossible d\'ouvrir le PDF', message: err.message });
+        }
+      });
+    });
+
+    contenu.querySelectorAll('.btn-ouvrir-dossier-vente').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        const id = idDeLigne(e);
+        const cert = certificats.find((c) => c.id === id);
+        if (!cert?.pdf_path) return;
+        try {
+          await window.api.pdfRevelerDansExplorateur(cert.pdf_path);
+        } catch (err) {
+          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le dossier', message: err.message });
         }
       });
     });
@@ -313,6 +328,7 @@ export async function rendreVenteFiche(contenu, params) {
 
     const factureArtisteHTML = v.facture_artiste_path
       ? `<button type="button" class="btn-action btn-secondaire-action" id="btn-voir-facture-artiste">Voir la facture artiste</button>
+         <button type="button" class="btn-action btn-secondaire-action" id="btn-ouvrir-dossier-facture-artiste" title="Ouvrir le dossier">Ouvrir le dossier</button>
          <button type="button" class="btn-action btn-secondaire-action" id="btn-regen-facture-artiste">Re-générer</button>`
       : `<button type="button" class="btn-action btn-principal" id="btn-gen-facture-artiste">+ Produire la facture artiste</button>`;
 
@@ -410,6 +426,16 @@ export async function rendreVenteFiche(contenu, params) {
           await window.api.pdfOuvrir(v.facture_artiste_path);
         } catch (err) {
           await alerter({ type: 'error', title: 'Impossible d\'ouvrir le PDF', message: err.message });
+        }
+      });
+    }
+    const btnOuvrirDossierFa = contenu.querySelector('#btn-ouvrir-dossier-facture-artiste');
+    if (btnOuvrirDossierFa && v.facture_artiste_path) {
+      btnOuvrirDossierFa.addEventListener('click', async () => {
+        try {
+          await window.api.pdfRevelerDansExplorateur(v.facture_artiste_path);
+        } catch (err) {
+          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le dossier', message: err.message });
         }
       });
     }
@@ -841,27 +867,66 @@ export async function rendreVenteFiche(contenu, params) {
   dessiner();
 }
 
-// ===== Overlay de création rapide de client =====
+// ===== Overlay de création complète de client (formulaire identique à la fiche client) =====
+
+function dateAujourdhuiCli() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
 
 function ouvrirCreationClient() {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
     overlay.className = 'overlay-modale overlay-dialogue';
     overlay.innerHTML = `
-      <div class="dialogue" role="dialog" aria-modal="true" style="max-width: 480px;">
+      <div class="dialogue" role="dialog" aria-modal="true" style="max-width: 720px; max-height: 90vh; overflow-y: auto;">
         <div class="dialogue-entete">
           <h3 class="dialogue-titre">Nouveau client</h3>
         </div>
-        <p class="dialogue-message">Saisis l'essentiel ; tu pourras compléter la fiche plus tard depuis la liste des clients.</p>
-        <form id="form-client-rapide" class="formulaire" novalidate>
-          <div class="grille-form">
-            ${champTexte({ nom: 'prenom', libelle: 'Prénom', valeur: '' })}
-            ${champTexte({ nom: 'nom', libelle: 'Nom de famille', valeur: '', requis: true })}
-          </div>
-          <div class="grille-form">
-            ${champTexte({ nom: 'courriel', libelle: 'Courriel', valeur: '', type: 'email' })}
-            ${champTexte({ nom: 'telephone', libelle: 'Téléphone', valeur: '', type: 'tel', attributs: 'placeholder="(xxx) xxx-xxxx"' })}
-          </div>
+        <p class="dialogue-message">Saisis les coordonnées du client. Tu pourras y revenir et compléter depuis la liste des clients.</p>
+        <form id="form-client-complet" class="formulaire" novalidate>
+          <section class="bloc">
+            <h3>Identité</h3>
+            <div class="grille-form">
+              ${champTexte({ nom: 'prenom', libelle: 'Prénom', valeur: '' })}
+              ${champTexte({ nom: 'nom', libelle: 'Nom de famille', valeur: '', requis: true })}
+            </div>
+          </section>
+
+          <section class="bloc">
+            <h3>Coordonnées</h3>
+            <div class="grille-form">
+              ${champTexte({ nom: 'courriel', libelle: 'Courriel', valeur: '', type: 'email' })}
+              ${champTexte({ nom: 'telephone', libelle: 'Téléphone', valeur: '', type: 'tel', attributs: 'inputmode="tel" placeholder="(xxx) xxx-xxxx"' })}
+            </div>
+          </section>
+
+          <section class="bloc">
+            <h3>Adresse</h3>
+            <div class="grille-form">
+              ${champTexte({ nom: 'numero_civique', libelle: 'Numéro civique', valeur: '' })}
+              ${champTexte({ nom: 'rue', libelle: 'Rue', valeur: '' })}
+              ${champTexte({ nom: 'appartement', libelle: 'Appartement / unité', valeur: '' })}
+            </div>
+            <div class="grille-form">
+              ${champTexte({ nom: 'ville', libelle: 'Ville', valeur: '' })}
+              ${champPays({ nom: 'pays', valeur: 'Canada' })}
+              <div id="zone-province-client-rapide">
+                ${champSubdivision({ nom: 'province', pays: 'Canada', valeur: '' })}
+              </div>
+              ${champTexte({ nom: 'code_postal', libelle: 'Code postal', valeur: '', attributs: 'maxlength="10" placeholder="H0H 0H0"' })}
+            </div>
+          </section>
+
+          <section class="bloc">
+            <h3>Consentement courriel (Loi 25)</h3>
+            <p class="aide-champ">Coche seulement si le client a explicitement consenti à recevoir des courriels.</p>
+            ${champCheckbox({ nom: 'consentement_courriel', libelle: 'Le client consent à recevoir des courriels', valeur: false })}
+          </section>
+
+          ${champTextarea({ nom: 'notes', libelle: 'Notes', valeur: '', lignes: 2 })}
+
           <div class="dialogue-actions">
             <button type="button" class="btn-action btn-secondaire-action" id="btn-annuler-cli">Annuler</button>
             <button type="submit" class="btn-action btn-principal">Créer le client</button>
@@ -885,10 +950,12 @@ function ouvrirCreationClient() {
     window.addEventListener('keydown', onKey);
     document.body.appendChild(overlay);
 
+    const form = overlay.querySelector('#form-client-complet');
+    brancherChangementPays(form, { paysNom: 'pays', subNom: 'province', subZoneId: 'zone-province-client-rapide' });
+
     overlay.querySelector('#btn-annuler-cli').addEventListener('click', () => fermer(null));
-    overlay.querySelector('#form-client-rapide').addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const form = e.currentTarget;
       const fd = new FormData(form);
       const val = (k) => (fd.get(k) ?? '').toString().trim();
       const data = {
@@ -896,8 +963,16 @@ function ouvrirCreationClient() {
         nom: val('nom'),
         courriel: val('courriel'),
         telephone: val('telephone'),
-        consentement_courriel: 0,
-        pays: 'Canada',
+        numero_civique: val('numero_civique'),
+        rue: val('rue'),
+        appartement: val('appartement'),
+        ville: val('ville'),
+        province: val('province'),
+        pays: val('pays') || 'Canada',
+        code_postal: val('code_postal'),
+        notes: val('notes'),
+        consentement_courriel: form.elements.consentement_courriel.checked ? 1 : 0,
+        consentement_date: form.elements.consentement_courriel.checked ? dateAujourdhuiCli() : null,
       };
       if (!data.nom) {
         await alerter({ type: 'warning', title: 'Nom requis', message: 'Le nom de famille du client est requis.' });

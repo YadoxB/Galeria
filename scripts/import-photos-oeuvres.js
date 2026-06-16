@@ -5,7 +5,11 @@ const { DatabaseSync } = require('node:sqlite');
 
 const SOURCE_DIR = process.env.PHOTOS_OEUVRES_SRC ||
   path.join('F:', 'Galerie', 'Automatisation', 'Galerie', 'photos_oeuvres');
-const DATA_DIR = path.join(os.homedir(), 'Documents', 'GalerieApp');
+const candidatsData = [
+  path.join(os.homedir(), 'Documents', 'Galeria'),
+  path.join(os.homedir(), 'Documents', 'GalerieApp'),
+];
+const DATA_DIR = candidatsData.find((p) => fs.existsSync(p)) || candidatsData[0];
 const DB_PATH = path.join(DATA_DIR, 'galerie.db');
 const CIBLE_DIR = path.join(DATA_DIR, 'Photos', 'oeuvres');
 

@@ -142,6 +142,7 @@ export async function rendreOeuvreFiche(contenu, params) {
             <div class="actions-certif">
               ${c.pdf_path
                 ? `<button type="button" class="btn-action btn-secondaire-action btn-voir-pdf-certif">Voir le PDF</button>
+                   <button type="button" class="btn-action btn-secondaire-action btn-ouvrir-dossier-certif" title="Ouvrir le dossier dans l'Explorateur">Ouvrir le dossier</button>
                    <button type="button" class="btn-action btn-secondaire-action btn-regen-pdf-certif">Re-générer</button>`
                 : `<button type="button" class="btn-action btn-principal btn-gen-pdf-certif">Générer le PDF</button>`}
               <button type="button" class="btn-action btn-danger btn-suppr-certif">Supprimer</button>
@@ -193,6 +194,19 @@ export async function rendreOeuvreFiche(contenu, params) {
           await window.api.pdfOuvrir(cert.pdf_path);
         } catch (err) {
           await alerter({ type: 'error', title: 'Impossible d\'ouvrir le PDF', message: err.message });
+        }
+      });
+    });
+
+    contenu.querySelectorAll('.btn-ouvrir-dossier-certif').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        const id = idDeLigne(e);
+        const cert = certificats.find((c) => c.id === id);
+        if (!cert?.pdf_path) return;
+        try {
+          await window.api.pdfRevelerDansExplorateur(cert.pdf_path);
+        } catch (err) {
+          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le dossier', message: err.message });
         }
       });
     });

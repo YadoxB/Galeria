@@ -1,24 +1,24 @@
 import { naviguer } from '../router.js';
-import { ech, sansAccents, initiales, pluriel, nomComplet } from '../commun.js';
+import { ech, sansAccents, initiales, pluriel, nomComplet, gabaritEntetePage } from '../commun.js';
 
 export async function rendreClientsListe(contenu) {
   const clients = await window.api.clientsListe();
 
   contenu.innerHTML = `
     <div class="vue-liste">
-      <div class="entete-liste">
-        <h2>Clients</h2>
-        <button class="btn-action btn-principal" id="btn-nouveau">+ Nouveau client</button>
-      </div>
+      ${gabaritEntetePage({
+        titre: 'Clients',
+        placeholder: 'Rechercher un client (nom, courriel, téléphone)…',
+        boutonAjouterLibelle: '+ Ajouter un client',
+      })}
       <div class="barre-recherche">
-        <input type="search" id="recherche" placeholder="Rechercher un client (nom, courriel, téléphone)..." autocomplete="off">
         <span class="compteur" id="compteur"></span>
       </div>
       <div class="liste" id="liste-clients"></div>
     </div>
   `;
 
-  contenu.querySelector('#btn-nouveau').addEventListener('click', () =>
+  contenu.querySelector('#btn-ajouter').addEventListener('click', () =>
     naviguer('client-fiche', { nouveau: true })
   );
 

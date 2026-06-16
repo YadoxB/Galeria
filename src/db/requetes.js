@@ -161,6 +161,46 @@ function voisinsClient(id) {
   };
 }
 
+function statsOeuvres() {
+  const db = openDatabase();
+  // Bornes du mois courant en UTC, format ISO compatible SQLite (datetime('now'))
+  const debutMois = "datetime('now', 'start of month')";
+
+  const total = db.prepare('SELECT COUNT(*) AS n FROM oeuvres').get().n;
+  const totalDeltaMois = db
+    .prepare(`SELECT COUNT(*) AS n FROM oeuvres WHERE cree_le >= ${debutMois}`)
+    .get().n;
+
+  const artistes = db.prepare('SELECT COUNT(*) AS n FROM artistes').get().n;
+  const artistesDeltaMois = db
+    .prepare(`SELECT COUNT(*) AS n FROM artistes WHERE cree_le >= ${debutMois}`)
+    .get().n;
+
+  const ventesRow = db
+    .prepare(`
+      SELECT COUNT(*) AS n,
+             COALESCE(SUM(prix_vente + tps + tvq), 0) AS montant
+      FROM ventes
+      WHERE date_vente >= date('now', 'start of month')
+    `).get();
+
+  const disponibles = db
+    .prepare(`SELECT COUNT(*) AS n FROM oeuvres WHERE statut = 'disponible'`)
+    .get().n;
+  const disponiblesPct = total > 0 ? Math.round((disponibles / total) * 100) : 0;
+
+  return {
+    total,
+    totalDeltaMois,
+    artistes,
+    artistesDeltaMois,
+    ventesRecentes: ventesRow.n,
+    ventesRecentesMontant: ventesRow.montant,
+    disponibles,
+    disponiblesPct,
+  };
+}
+
 function listerTypesOeuvre() {
   const db = openDatabase();
   return db
@@ -276,6 +316,7 @@ module.exports = {
   obtenirOeuvre,
   voisinsOeuvre,
   listerTypesOeuvre,
+  statsOeuvres,
   listerClients,
   obtenirClient,
   voisinsClient,

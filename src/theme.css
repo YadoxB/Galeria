@@ -1,0 +1,203 @@
+/* =====================================================================
+   Galeria — Variables visuelles centrales
+   Toutes les couleurs, polices, espacements, arrondis et ombres vivent ici.
+   Aucune valeur visuelle ne devrait être écrite en dur ailleurs.
+   ===================================================================== */
+
+/* ===== Polices embarquées localement (latin + latin-ext) =====
+   Inter pour l'UI, Cormorant Garamond pour les titres et grands nombres.
+   Téléchargées depuis Google Fonts (licence OFL), stockées sous src/fonts/.
+   Fonctionne 100 % hors ligne. */
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/cormorant-garamond-400-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/cormorant-garamond-400-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/cormorant-garamond-400-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/cormorant-garamond-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('fonts/cormorant-garamond-600-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('fonts/cormorant-garamond-600-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/inter-400-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/inter-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('fonts/inter-500-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('fonts/inter-500-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('fonts/inter-600-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('fonts/inter-600-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('fonts/inter-700-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('fonts/inter-700-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  /* ===== Couleurs principales ===== */
+  --deep-navy:     #071A2F;   /* Fond sidebar, texte sur fond clair */
+  --gallery-navy:  #10263E;   /* Élément actif sidebar, accents foncés */
+  --soft-ivory:    #FCFAF4;   /* Fond principal (très pâle, presque blanc-cassé) */
+  --porcelain:     #FFFFFF;   /* Cartes, formulaires (blanc pur pour garder le contraste) */
+  --warm-gold:     #C99A3D;   /* Action principale, état actif, accent marque */
+  --terracotta:    #B9562F;   /* Accents secondaires, illustrations */
+
+  /* ===== Couleurs neutres ===== */
+  --ink:           #111827;   /* Texte principal */
+  --slate:         #5D6875;   /* Texte secondaire, labels */
+  --stone:         #A79E91;   /* Métadonnées discrètes */
+  --mist:          #D8D2C8;   /* Bordures de cartes, séparateurs */
+  --cloud:         #EFE8DE;   /* Hover sur lignes de tableau */
+
+  /* ===== Couleurs fonctionnelles ===== */
+  --succes:        #4F8A5B;
+  --avertissement: #D49B32;
+  --erreur:        #B6423C;
+  --info:          #3D6F9F;
+
+  /* ===== États du bouton primaire (Warm Gold) ===== */
+  --warm-gold-hover:   #D9AE55;
+  --warm-gold-pressed: #B88932;
+
+  /* ===== En-têtes de tableau ===== */
+  --entete-tableau:    #F0E8DC;
+
+  /* ===== Tuiles d'icônes des cartes de statistiques (mockup) ===== */
+  --tuile-doree:           #F4E5C0;   /* Tuile or pâle */
+  --tuile-doree-icone:     #D4AC4C;   /* Icône jaune doré chaud */
+  --tuile-saumon:          #F8DCCB;   /* Tuile saumon pâle */
+  --tuile-saumon-icone:    #D6754F;   /* Icône corail */
+  --tuile-terracotta:      #FAD2C2;   /* Tuile pêche rosée */
+  --tuile-terracotta-icone:#C2552B;   /* Icône terracotta dollar */
+  /* La 4e tuile (« Disponibles ») est traitée différemment dans le mockup :
+     fond deep navy plein, icône cream. Sert d'accent pour la stat positive. */
+  --tuile-navy:            var(--deep-navy);
+  --tuile-navy-icone:      var(--soft-ivory);
+
+  /* ===== Sidebar — état actif ===== */
+  --sidebar-actif-fond:    #122B47;   /* Légèrement plus clair que deep-navy */
+  --sidebar-actif-bordure: var(--warm-gold);   /* Bande dorée à gauche */
+
+  /* ===== Badges de statut (fond + texte) — réglés sur le mockup ===== */
+  --badge-disponible-fond:  #D5E4D0;   /* vert mint léger */
+  --badge-disponible-texte: #3F6E37;
+  --badge-reservee-fond:    #F1E1B8;   /* beige doré */
+  --badge-reservee-texte:   #735718;
+  --badge-vendue-fond:      #F2D5D0;   /* rosé doux */
+  --badge-vendue-texte:     #7C2823;
+  --badge-archivee-fond:    #E7E3DD;
+  --badge-archivee-texte:   #6B6258;
+
+  /* ===== Typographie ===== */
+  --font-titre:    'Cormorant Garamond', 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-ui:       'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* ===== Espacements (grille de 8 px) ===== */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 16px;
+  --s4: 24px;
+  --s5: 32px;
+  --s6: 48px;
+
+  /* ===== Arrondis ===== */
+  --r-btn:    10px;
+  --r-carte:  14px;
+  --r-panel:  16px;
+  --r-modal:  18px;
+  --r-badge:  999px;
+
+  /* ===== Ombres (légères, teintées en navy) ===== */
+  --ombre-carte:  0 4px 14px rgba(7, 26, 47, 0.06);
+  --ombre-elevee: 0 8px 24px rgba(7, 26, 47, 0.10);
+  --ombre-modal:  0 18px 48px rgba(7, 26, 47, 0.18);
+}

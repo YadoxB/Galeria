@@ -1,4 +1,4 @@
-import { majActionsEntete } from './marque.js';
+import { majSidebarActif } from './marque.js';
 
 const vues = new Map();
 let pile = [];
@@ -84,10 +84,12 @@ async function rendre(fn, params) {
     console.error(err);
   }
   const nomCourant = pile.length > 0 ? pile[pile.length - 1].nom : '';
-  majActionsEntete(nomCourant);
+  majSidebarActif(nomCourant);
 }
 
 function majBoutonRetour() {
   const btn = document.getElementById('btn-retour');
-  btn.style.visibility = pile.length > 1 ? 'visible' : 'hidden';
+  const nomCourant = pile.length > 0 ? pile[pile.length - 1].nom : '';
+  const estFiche = nomCourant.endsWith('-fiche');
+  btn.style.visibility = (pile.length > 1 && estFiche) ? 'visible' : 'hidden';
 }

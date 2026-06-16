@@ -9,3 +9,4 @@ imports-airtable/
 *.log
 .DS_Store
 Thumbs.db
+.tmp/

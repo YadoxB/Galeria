@@ -1,24 +1,24 @@
 import { naviguer } from '../router.js';
-import { ech, sansAccents, pluriel, formaterPrix, formaterDate, nomComplet, urlPhoto } from '../commun.js';
+import { ech, sansAccents, pluriel, formaterPrix, formaterDate, nomComplet, urlPhoto, gabaritEntetePage } from '../commun.js';
 
 export async function rendreVentesListe(contenu) {
   const ventes = await window.api.ventesListe();
 
   contenu.innerHTML = `
     <div class="vue-liste">
-      <div class="entete-liste">
-        <h2>Ventes</h2>
-        <button class="btn-action btn-principal" id="btn-nouvelle">+ Nouvelle vente</button>
-      </div>
+      ${gabaritEntetePage({
+        titre: 'Ventes',
+        placeholder: 'Rechercher (œuvre, artiste, client, n° facture)…',
+        boutonAjouterLibelle: '+ Nouvelle vente',
+      })}
       <div class="barre-recherche">
-        <input type="search" id="recherche" placeholder="Rechercher (œuvre, artiste, client, n° facture)..." autocomplete="off">
         <span class="compteur" id="compteur"></span>
       </div>
       <div class="liste" id="liste-ventes"></div>
     </div>
   `;
 
-  contenu.querySelector('#btn-nouvelle').addEventListener('click', () =>
+  contenu.querySelector('#btn-ajouter').addEventListener('click', () =>
     naviguer('vente-fiche', { nouveau: true })
   );
 

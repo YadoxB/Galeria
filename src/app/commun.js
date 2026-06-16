@@ -262,3 +262,49 @@ export function formaterDate(s) {
   if (Number.isNaN(d.getTime())) return t;
   return d.toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' });
 }
+
+// En-tête de page commun aux 4 vues de listes : titre + recherche + bouton Ajouter.
+// Le bouton Filtres (s'il existe) est placé séparément dans la barre des contrôles de vue.
+export function gabaritEntetePage(options) {
+  const {
+    titre,
+    placeholder = 'Rechercher…',
+    boutonAjouterLibelle = '+ Ajouter',
+    idRecherche = 'recherche',
+    idBoutonAjouter = 'btn-ajouter',
+  } = options;
+  return `
+    <div class="entete-page">
+      <h2 class="entete-page-titre">${ech(titre)}</h2>
+      <div class="entete-page-recherche-wrap">
+        <div class="recherche-pillule">
+          <svg class="recherche-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/>
+            <line x1="21" y1="21" x2="16.5" y2="16.5"/>
+          </svg>
+          <input type="search" id="${ech(idRecherche)}" placeholder="${ech(placeholder)}" autocomplete="off">
+        </div>
+      </div>
+      <div class="entete-page-actions">
+        <button type="button" class="btn-primaire" id="${ech(idBoutonAjouter)}">${ech(boutonAjouterLibelle)}</button>
+      </div>
+    </div>
+  `;
+}
+
+// Bouton Filtres compact, à placer dans la barre des contrôles de vue à côté de Tri.
+export function gabaritBoutonFiltres(idBouton = 'btn-filtres') {
+  return `
+    <button type="button" class="btn-filtres-compact" id="${ech(idBouton)}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="4" y1="6" x2="20" y2="6"/>
+        <line x1="7" y1="12" x2="17" y2="12"/>
+        <line x1="10" y1="18" x2="14" y2="18"/>
+      </svg>
+      Filtres
+      <svg class="chevron-bas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </button>
+  `;
+}

@@ -25,6 +25,7 @@ const {
   obtenirOeuvre,
   voisinsOeuvre,
   listerTypesOeuvre,
+  statsOeuvres,
   listerClients,
   obtenirClient,
   voisinsClient,
@@ -49,10 +50,10 @@ const {
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 960,
-    minHeight: 640,
+    width: 1600,
+    height: 900,
+    minWidth: 1024,
+    minHeight: 576,
     title: 'Galeria',
     backgroundColor: '#f8f5ef',
     icon: path.join(__dirname, '..', 'gabarits', 'actifs', 'icon-galeria.png'),
@@ -171,6 +172,7 @@ app.whenReady().then(() => {
     demarrerSauvegardePeriodique();
   });
   ipcMain.handle('oeuvres:types', () => listerTypesOeuvre());
+  ipcMain.handle('oeuvres:stats', () => statsOeuvres());
   ipcMain.handle('clients:liste', () => listerClients());
   ipcMain.handle('clients:get', (_e, id) => obtenirClient(id));
   ipcMain.handle('clients:voisins', (_e, id) => voisinsClient(id));
@@ -200,6 +202,10 @@ app.whenReady().then(() => {
   ipcMain.handle('pdf:ouvrir', async (_e, cheminPdf) => {
     const erreur = await shell.openPath(cheminPdf);
     if (erreur) throw new Error(erreur);
+    return { ok: true };
+  });
+  ipcMain.handle('pdf:reveler-dans-explorateur', (_e, cheminPdf) => {
+    shell.showItemInFolder(cheminPdf);
     return { ok: true };
   });
   createWindow();

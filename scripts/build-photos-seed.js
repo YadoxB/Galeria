@@ -5,7 +5,13 @@ const os = require('node:os');
 // Copie le dossier Photos\ du dossier utilisateur courant vers seed-photos/
 // à la racine du projet, pour être embarqué dans l'installateur.
 
-const SRC = path.join(os.homedir(), 'Documents', 'GalerieApp', 'Photos');
+// Cherche d'abord Documents\Galeria\Photos\ (nouveau nom), retombe sur GalerieApp\
+// si l'ancien est encore là (dev machine pas encore migrée).
+const candidats = [
+  path.join(os.homedir(), 'Documents', 'Galeria', 'Photos'),
+  path.join(os.homedir(), 'Documents', 'GalerieApp', 'Photos'),
+];
+const SRC = candidats.find((p) => fs.existsSync(p)) || candidats[0];
 const DEST = path.join(__dirname, '..', 'seed-photos');
 
 function tailleEnMo(octets) {

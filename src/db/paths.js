@@ -2,8 +2,24 @@ const { app } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 
+const NOM_DOSSIER = 'Galeria';
+const ANCIEN_NOM_DOSSIER = 'GalerieApp';
+
 function getDataDir() {
-  return path.join(app.getPath('documents'), 'GalerieApp');
+  return path.join(app.getPath('documents'), NOM_DOSSIER);
+}
+
+// Migration unique : si l'ancien dossier existe et le nouveau pas,
+// renomme. Préserve DB, photos, sauvegardes, config et PDFs.
+function migrerAncienDossierSiPresent() {
+  const ancien = path.join(app.getPath('documents'), ANCIEN_NOM_DOSSIER);
+  const nouveau = getDataDir();
+  if (fs.existsSync(ancien) && !fs.existsSync(nouveau)) {
+    fs.renameSync(ancien, nouveau);
+    console.log(`Dossier migré : ${ANCIEN_NOM_DOSSIER} → ${NOM_DOSSIER}`);
+    return true;
+  }
+  return false;
 }
 
 function getBackupsDir() {
@@ -39,6 +55,8 @@ function getSeedPhotosPath() {
 }
 
 function ensureDirectories() {
+  // Migration de l'ancien dossier avant de créer les nouveaux (no-op si déjà migré)
+  migrerAncienDossierSiPresent();
   for (const dir of [getDataDir(), getBackupsDir(), getPhotosDir(), getDocumentsDir()]) {
     fs.mkdirSync(dir, { recursive: true });
   }

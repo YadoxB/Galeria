@@ -44,7 +44,13 @@
       "Bash(node -e \"console.log\\(require.resolve\\('pngjs'\\)\\)\")",
       "Bash(node -e \"require\\('./src/db/seedPhotos.js'\\); require\\('./src/db/paths.js'\\); require\\('./scripts/build-photos-seed.js'.replace\\('build-photos-seed', 'build-icon'\\)\\); console.log\\('OK'\\)\")",
       "Bash(node --check scripts/build-photos-seed.js)",
-      "Bash(node --check src/main.js)"
+      "Bash(node --check src/main.js)",
+      "Bash(mkdir -p src/fonts)",
+      "Bash(curl -s -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0 Safari/537.36\" \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap\" -o /tmp/gfonts.css)",
+      "Read(//tmp/**)",
+      "Bash(mkdir -p .tmp)",
+      "Bash(curl -s -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0 Safari/537.36\" \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap\" -o .tmp/gfonts.css)",
+      "Bash(node --check src/app/vues/oeuvres-liste.js)"
     ]
   }
 }
