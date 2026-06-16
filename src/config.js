@@ -6,11 +6,11 @@ const NOM_FICHIER = 'config.json';
 
 const DEFAULTS = {
   galerie: {
-    nom: 'Galerie du Vieux Saint-Jean',
-    adresse_ligne1: '208 rue Richelieu',
-    adresse_ligne2: 'Saint-Jean-sur-Richelieu (Québec) J3B 6X8',
-    telephone: '(450) 741-3939',
-    courriel: 'info@galerievieuxstjean.com',
+    nom: 'Ma galerie',
+    adresse_ligne1: '',
+    adresse_ligne2: '',
+    telephone: '',
+    courriel: '',
     site_web: '',
     numero_tps: '',
     numero_tvq: '',
@@ -28,7 +28,7 @@ const DEFAULTS = {
     tvq_actif: true,
     tvq_taux: 9.975,
     cote_galerie_pourcent: 50,
-    signataire_certificat: 'Joanne Boucher, Galeriste',
+    signataire_certificat: '',
   },
   sauvegardes: {
     frequence_minutes: 60,

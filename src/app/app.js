@@ -12,6 +12,7 @@ import { rendreReglages } from './vues/reglages.js';
 import { rendreProfilGalerie } from './vues/profil-galerie.js';
 import { rafraichirEntete } from './marque.js';
 import { formaterTelephone } from './commun.js';
+import { initialiserUpdater } from './updater.js';
 
 enregistrer('accueil', rendreAccueil);
 enregistrer('artistes-liste', rendreArtistesListe);
@@ -53,4 +54,5 @@ document.addEventListener('input', (e) => {
 (async () => {
   await rafraichirEntete();
   await remplacer('accueil');
+  initialiserUpdater();
 })();

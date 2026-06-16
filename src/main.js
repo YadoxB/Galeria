@@ -1,4 +1,5 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog, protocol, net, shell, clipboard, nativeImage } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -332,6 +333,67 @@ function preparerCopiePourChatGPTInline({ donneesOeuvre, artisteId, imageDataUrl
   };
 }
 
+// ====== Auto-update via electron-updater + GitHub Releases ======
+// Comportement : aucun téléchargement ni installation automatique. L'utilisateur
+// est notifié quand une mise à jour est disponible et décide quand télécharger
+// puis quand redémarrer.
+
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = false;
+autoUpdater.allowDowngrade = false;
+
+let etatUpdater = { phase: 'idle', info: null, erreur: null, progress: null };
+
+function envoyerEtatUpdater() {
+  etatUpdater = { ...etatUpdater };
+  for (const w of BrowserWindow.getAllWindows()) {
+    if (!w.isDestroyed()) w.webContents.send('updater:etat', etatUpdater);
+  }
+}
+
+autoUpdater.on('checking-for-update', () => {
+  etatUpdater = { phase: 'checking', info: null, erreur: null, progress: null };
+  envoyerEtatUpdater();
+});
+autoUpdater.on('update-available', (info) => {
+  etatUpdater = { phase: 'available', info, erreur: null, progress: null };
+  envoyerEtatUpdater();
+});
+autoUpdater.on('update-not-available', (info) => {
+  etatUpdater = { phase: 'up-to-date', info, erreur: null, progress: null };
+  envoyerEtatUpdater();
+});
+autoUpdater.on('download-progress', (progress) => {
+  etatUpdater = { phase: 'downloading', info: etatUpdater.info, erreur: null, progress };
+  envoyerEtatUpdater();
+});
+autoUpdater.on('update-downloaded', (info) => {
+  etatUpdater = { phase: 'downloaded', info, erreur: null, progress: null };
+  envoyerEtatUpdater();
+});
+autoUpdater.on('error', (err) => {
+  etatUpdater = { phase: 'error', info: etatUpdater.info, erreur: String(err?.message || err), progress: null };
+  envoyerEtatUpdater();
+});
+
+async function verifierMisesAJour({ silencieux = false } = {}) {
+  if (!app.isPackaged) {
+    // En dev, electron-updater n'a rien à faire ; on simule un état pour pas
+    // bloquer les tests UI.
+    etatUpdater = { phase: 'dev', info: null, erreur: null, progress: null };
+    envoyerEtatUpdater();
+    return;
+  }
+  try {
+    await autoUpdater.checkForUpdates();
+  } catch (err) {
+    if (!silencieux) {
+      etatUpdater = { phase: 'error', info: null, erreur: String(err?.message || err), progress: null };
+      envoyerEtatUpdater();
+    }
+  }
+}
+
 app.whenReady().then(() => {
   protocol.handle('galerie', async (request) => {
     const url = new URL(request.url);
@@ -356,6 +418,20 @@ app.whenReady().then(() => {
     console.error('Échec de la copie initiale des photos :', err);
   }
   ipcMain.handle('db:stats', () => getStats());
+  ipcMain.handle('updater:etat', () => etatUpdater);
+  ipcMain.handle('updater:verifier', () => verifierMisesAJour({ silencieux: false }));
+  ipcMain.handle('updater:telecharger', async () => {
+    try {
+      await autoUpdater.downloadUpdate();
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, erreur: String(err?.message || err) };
+    }
+  });
+  ipcMain.handle('updater:installer-redemarrer', () => {
+    autoUpdater.quitAndInstall(false, true);
+    return { ok: true };
+  });
   ipcMain.handle('accueil:donnees', () => ({
     stats: statsTableauDeBord(),
     oeuvresRecentes: oeuvresRecentes(6),
@@ -474,6 +550,10 @@ app.whenReady().then(() => {
   splash.__ouvertureMs = Date.now();
   createWindow(splash);
   demarrerSauvegardePeriodique();
+
+  // Vérification silencieuse des mises à jour ~5 s après le démarrage,
+  // pour laisser l'app finir de se charger.
+  setTimeout(() => { verifierMisesAJour({ silencieux: true }); }, 5000);
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

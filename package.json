@@ -2,8 +2,8 @@
   "name": "galerie-app",
   "version": "0.2.0",
   "private": true,
-  "description": "Logiciel de gestion pour la Galerie du Vieux Saint-Jean",
-  "author": "Galerie du Vieux Saint-Jean",
+  "description": "Logiciel de gestion pour galeries d'art",
+  "author": "Galeria",
   "license": "UNLICENSED",
   "main": "src/main.js",
   "scripts": {
@@ -12,9 +12,15 @@
     "import-photos-oeuvres": "node scripts/import-photos-oeuvres.js",
     "prepare:icon": "node scripts/build-icon.js",
     "prepare:seed": "node scripts/build-seed.js",
+    "prepare:seed:vide": "node scripts/build-seed-vide.js",
     "prepare:photos": "node scripts/build-photos-seed.js",
-    "prepare:assets": "npm run prepare:icon && npm run prepare:seed && npm run prepare:photos",
-    "build": "npm run prepare:assets && electron-builder --win"
+    "prepare:photos:vide": "node scripts/build-photos-seed-vide.js",
+    "prepare:assets:complet": "npm run prepare:icon && npm run prepare:seed && npm run prepare:photos",
+    "prepare:assets:public": "npm run prepare:icon && npm run prepare:seed:vide && npm run prepare:photos:vide",
+    "build:complet": "npm run prepare:assets:complet && electron-builder --win",
+    "build:public": "npm run prepare:assets:public && electron-builder --win --publish=never",
+    "release": "npm run prepare:assets:public && electron-builder --win --publish=always",
+    "build": "npm run build:complet"
   },
   "devDependencies": {
     "electron": "^42.4.0",
@@ -22,12 +28,13 @@
     "png-to-ico": "^2.1.8"
   },
   "dependencies": {
-    "csv-parse": "^6.2.1"
+    "csv-parse": "^6.2.1",
+    "electron-updater": "^6.8.9"
   },
   "build": {
     "appId": "com.gvsj.galeria",
     "productName": "Galeria",
-    "copyright": "Copyright © 2026 Galerie du Vieux Saint-Jean",
+    "copyright": "Copyright © 2026 Galeria",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -68,6 +75,13 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Galeria",
       "deleteAppDataOnUninstall": false
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "YadoxB",
+        "repo": "Galeria"
+      }
+    ]
   }
 }

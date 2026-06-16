@@ -1359,6 +1359,117 @@ footer {
   text-transform: uppercase;
 }
 
+/* ====== Mises à jour (updater) ====== */
+
+.updater-toast {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 950;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--deep-navy);
+  color: var(--soft-ivory);
+  border-radius: var(--r-carte);
+  padding: 12px 18px 12px 14px;
+  box-shadow: var(--ombre-elevee);
+  cursor: pointer;
+  max-width: 360px;
+  border: 1px solid rgba(217, 182, 107, 0.4);
+  animation: apparition 0.25s ease-out;
+}
+.updater-toast:hover {
+  background: var(--gallery-navy);
+}
+.updater-toast-icone {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--warm-gold);
+  color: var(--deep-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.updater-toast-titre {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-ui);
+}
+.updater-toast-sous {
+  margin: 2px 0 0;
+  font-size: 12px;
+  opacity: 0.8;
+  font-family: var(--font-ui);
+}
+
+.modale-updater {
+  max-width: 520px;
+  min-width: 420px;
+}
+.updater-version {
+  margin: 4px 0 var(--s2);
+  color: var(--slate);
+  font-size: 14px;
+}
+.updater-notes {
+  margin: var(--s2) 0;
+  padding: 10px 14px;
+  background: var(--cloud);
+  border-left: 3px solid var(--warm-gold);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--ink);
+  max-height: 220px;
+  overflow-y: auto;
+}
+.updater-progress-wrap {
+  margin: var(--s2) 0;
+}
+.updater-progress {
+  height: 8px;
+  background: var(--cloud);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.updater-progress-bar {
+  height: 100%;
+  width: 0;
+  background: var(--warm-gold);
+  transition: width 0.3s ease;
+}
+.updater-progress-texte {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--slate);
+  text-align: center;
+}
+.updater-erreur {
+  color: var(--erreur);
+  font-size: 13px;
+  background: rgba(182, 66, 60, 0.08);
+  border-left: 3px solid var(--erreur);
+  padding: 10px 14px;
+  border-radius: 6px;
+}
+
+.reglages-updater {
+  margin-top: var(--s3);
+  padding-top: var(--s3);
+  border-top: 1px dashed var(--mist);
+}
+.reglages-updater-statut {
+  margin: 0 0 var(--s2);
+  font-size: 13px;
+  color: var(--slate);
+  font-style: italic;
+}
+
 /* Bouton « Copier pour ChatGPT » dans la section description */
 .actions-ia {
   margin-top: var(--s2);

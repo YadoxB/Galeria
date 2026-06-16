@@ -59,7 +59,13 @@
       "Bash(grep -v \"artiste_nom\\\\|artisteNom\\\\|nomComplet\\\\|//\\\\b\")",
       "Bash(git push *)",
       "Bash(git rebase *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(git checkout *)",
+      "Bash(git fetch *)",
+      "Bash(git tag *)",
+      "Bash(node scripts/build-seed-vide.js)",
+      "Bash(node scripts/build-photos-seed-vide.js)",
+      "Bash(gh auth *)"
     ]
   }
 }

@@ -2,6 +2,15 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
   dbStats: () => ipcRenderer.invoke('db:stats'),
+  updaterEtat: () => ipcRenderer.invoke('updater:etat'),
+  updaterVerifier: () => ipcRenderer.invoke('updater:verifier'),
+  updaterTelecharger: () => ipcRenderer.invoke('updater:telecharger'),
+  updaterInstallerRedemarrer: () => ipcRenderer.invoke('updater:installer-redemarrer'),
+  onUpdaterEtat: (callback) => {
+    const handler = (_e, etat) => callback(etat);
+    ipcRenderer.on('updater:etat', handler);
+    return () => ipcRenderer.removeListener('updater:etat', handler);
+  },
   accueilDonnees: () => ipcRenderer.invoke('accueil:donnees'),
   appInfos: () => ipcRenderer.invoke('app:infos'),
   iaCopierPourChatGPT: (oeuvreId) => ipcRenderer.invoke('ia:copier-pour-chatgpt', oeuvreId),

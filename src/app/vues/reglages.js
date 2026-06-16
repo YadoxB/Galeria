@@ -3,6 +3,7 @@ import { ech, champTexte, champTextarea, champCheckbox } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
 import { chargerConfig, invaliderCacheConfig, rafraichirEntete } from '../marque.js';
 import { fluxImport } from '../flux-import.js';
+import { abonnerEtatUpdater, libelleEtat, verifierManuellement, ouvrirModale } from '../updater.js';
 
 const NIVEAUX_ZOOM = [
   { val: 0.8,  libelle: 'Très petit' },
@@ -160,7 +161,14 @@ export async function rendreReglages(contenu) {
             <div class="champ"><dt>Dossier des données</dt><dd><code>${ech(infosApp.dataDir)}</code></dd></div>
             <div class="champ"><dt>Moteur</dt><dd>Electron ${ech(infosApp.electron)} sur ${ech(infosApp.plateforme)}</dd></div>
           </dl>
-          <p class="aide-champ" style="margin-top:1rem;">© 2026 Galerie du Vieux Saint-Jean. Logiciel maison, données conservées localement (Loi 25).</p>
+          <div class="reglages-updater">
+            <p class="reglages-updater-statut" id="updater-statut">${ech(libelleEtat())}</p>
+            <div class="form-actions" style="justify-content: flex-start;">
+              <button type="button" class="btn-action btn-secondaire-action" id="btn-updater-verifier">Vérifier les mises à jour</button>
+              <button type="button" class="btn-action btn-secondaire-action" id="btn-updater-voir" hidden>Voir les détails</button>
+            </div>
+          </div>
+          <p class="aide-champ" style="margin-top:1rem;">Données conservées localement (Loi 25).</p>
         `, false)}
 
         <div class="form-actions">
@@ -174,6 +182,28 @@ export async function rendreReglages(contenu) {
   const form = contenu.querySelector('#formulaire');
   form.addEventListener('input', () => { modifie = true; });
   form.addEventListener('change', () => { modifie = true; });
+
+  const btnUpdaterVerifier = contenu.querySelector('#btn-updater-verifier');
+  const btnUpdaterVoir = contenu.querySelector('#btn-updater-voir');
+  const statutUpdater = contenu.querySelector('#updater-statut');
+  if (btnUpdaterVerifier && btnUpdaterVoir && statutUpdater) {
+    const desabonner = abonnerEtatUpdater((etat) => {
+      statutUpdater.textContent = libelleEtat(etat);
+      const phasesActives = new Set(['available', 'downloading', 'downloaded', 'error']);
+      btnUpdaterVoir.hidden = !phasesActives.has(etat.phase);
+      btnUpdaterVerifier.disabled = etat.phase === 'checking' || etat.phase === 'downloading';
+    });
+    btnUpdaterVerifier.addEventListener('click', () => verifierManuellement());
+    btnUpdaterVoir.addEventListener('click', () => ouvrirModale());
+    // Nettoyer l'abonnement quand on quitte la vue (le contenu est remplacé par le router)
+    const observer = new MutationObserver(() => {
+      if (!document.body.contains(statutUpdater)) {
+        desabonner();
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
 
   const selZoom = contenu.querySelector('#f-a_zoom');
   if (selZoom) {
