@@ -2,6 +2,7 @@ node_modules/
 dist/
 out/
 seed/
+seed-photos/
 build/icon.ico
 imports-airtable/
 *.csv

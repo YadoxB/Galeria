@@ -32,6 +32,12 @@ function getSeedPath() {
     : path.join(app.getAppPath(), 'seed', 'galerie.db');
 }
 
+function getSeedPhotosPath() {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'seed-photos')
+    : path.join(app.getAppPath(), 'seed-photos');
+}
+
 function ensureDirectories() {
   for (const dir of [getDataDir(), getBackupsDir(), getPhotosDir(), getDocumentsDir()]) {
     fs.mkdirSync(dir, { recursive: true });
@@ -46,5 +52,6 @@ module.exports = {
   getDocumentsDirAnnee,
   getDbPath,
   getSeedPath,
+  getSeedPhotosPath,
   ensureDirectories,
 };

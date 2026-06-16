@@ -3,6 +3,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { openDatabase, closeDatabase, getStats } = require('./db/database');
 const { getPhotosDir } = require('./db/paths');
+const { seedPhotosIfNeeded } = require('./db/seedPhotos');
 const { choisirPhoto, effacerPhoto, lireFichierImage, lireOriginale, lirePourRecadrage, enregistrerImageRecadree } = require('./photos');
 const { obtenirConfig, mettreAJourConfig } = require('./config');
 
@@ -123,6 +124,15 @@ app.whenReady().then(() => {
   });
 
   openDatabase();
+  try {
+    const r = seedPhotosIfNeeded();
+    if (r) {
+      const mo = (r.tailleTotale / (1024 * 1024)).toFixed(1);
+      console.log(`Photos initiales copiées : ${r.nbFichiers} fichiers, ${mo} Mo, en ${r.dureeMs} ms.`);
+    }
+  } catch (err) {
+    console.error('Échec de la copie initiale des photos :', err);
+  }
   ipcMain.handle('db:stats', () => getStats());
   ipcMain.handle('import:choisir-fichier', (event) => importChoisirFichier(event.sender));
   ipcMain.handle('import:executer', (_e, filePath, mode) => importExecuter(filePath, mode));

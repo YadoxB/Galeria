@@ -12,7 +12,8 @@
     "import-photos-oeuvres": "node scripts/import-photos-oeuvres.js",
     "prepare:icon": "node scripts/build-icon.js",
     "prepare:seed": "node scripts/build-seed.js",
-    "prepare:assets": "npm run prepare:icon && npm run prepare:seed",
+    "prepare:photos": "node scripts/build-photos-seed.js",
+    "prepare:assets": "npm run prepare:icon && npm run prepare:seed && npm run prepare:photos",
     "build": "npm run prepare:assets && electron-builder --win"
   },
   "devDependencies": {
@@ -33,7 +34,7 @@
     },
     "files": [
       "src/**/*",
-      "gabarits/actifs/**/*",
+      "gabarits/**/*",
       "package.json",
       "!**/*.{md,log,csv}",
       "!imports-airtable/**",
@@ -43,6 +44,13 @@
       {
         "from": "seed",
         "to": "seed",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "seed-photos",
+        "to": "seed-photos",
         "filter": [
           "**/*"
         ]

@@ -37,7 +37,14 @@
       "Bash(node -e \"require\\('./src/db/requetes.js'\\); require\\('./src/db/mutations.js'\\); require\\('./src/db/migrations.js'\\); require\\('./src/pdf.js'\\); console.log\\('OK backend'\\)\")",
       "Bash(node --check src/app/vues/artistes-liste.js)",
       "Bash(git init *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"console.log\\(require.resolve\\('pngjs'\\)\\)\")",
+      "Bash(node -e \"require\\('./src/db/seedPhotos.js'\\); require\\('./src/db/paths.js'\\); require\\('./scripts/build-photos-seed.js'.replace\\('build-photos-seed', 'build-icon'\\)\\); console.log\\('OK'\\)\")",
+      "Bash(node --check scripts/build-photos-seed.js)",
+      "Bash(node --check src/main.js)"
     ]
   }
 }
