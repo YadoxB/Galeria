@@ -101,6 +101,51 @@ function trier(oeuvres, tri) {
   return liste;
 }
 
+function choisirArtiste(listeArtistes) {
+  return new Promise((resolve) => {
+    const options = listeArtistes
+      .map((a) => ({ id: a.id, nom: nomComplet(a) || a.nom || '' }))
+      .sort((a, b) => sansAccents(a.nom).localeCompare(sansAccents(b.nom)));
+
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay-modale';
+    overlay.innerHTML = `
+      <div class="modale-recadrage" style="max-width: 480px; min-width: 360px;">
+        <h3>Pour quel artiste ?</h3>
+        <p class="aide-modale">Sélectionne un artiste existant, ou crée un nouvel artiste avant d'ajouter ses œuvres.</p>
+        <div class="form-champ">
+          <select id="choix-artiste" autofocus>
+            <option value="">— Sélectionner —</option>
+            <option value="__nouvel_artiste__" class="option-special">✦ Nouvel artiste…</option>
+            <option disabled>──────────</option>
+            ${options.map((a) => `<option value="${a.id}">${ech(a.nom)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-actions" style="justify-content: flex-end;">
+          <button type="button" class="btn-action btn-secondaire-action" id="choix-annuler">Annuler</button>
+          <button type="button" class="btn-action btn-principal" id="choix-ok" disabled>Continuer</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    const sel = overlay.querySelector('#choix-artiste');
+    const btnOk = overlay.querySelector('#choix-ok');
+    const btnAnnuler = overlay.querySelector('#choix-annuler');
+    sel.addEventListener('change', () => { btnOk.disabled = !sel.value; });
+    const fermer = (resultat) => { overlay.remove(); resolve(resultat); };
+    btnOk.addEventListener('click', () => {
+      if (sel.value === '__nouvel_artiste__') {
+        fermer({ id: '__nouvel_artiste__', nom: '' });
+        return;
+      }
+      const choisi = options.find((a) => String(a.id) === sel.value);
+      fermer(choisi || null);
+    });
+    btnAnnuler.addEventListener('click', () => fermer(null));
+    setTimeout(() => sel.focus(), 0);
+  });
+}
+
 export async function rendreOeuvresListe(contenu, params = {}) {
   let inclureArchives = lirePref(CLE_PREF_ARCHIVES, '0') === '1';
   const filtres = { inclureArchives };
@@ -178,6 +223,9 @@ export async function rendreOeuvresListe(contenu, params = {}) {
   let statutsActifs = [];
   let artisteIdFiltre = '';
   let typeFiltre = '';
+  let formatsActifs = [];
+
+  const FORMATS_FILTRE = ['Petit', 'Moyen', 'Grand', 'Très grand'];
 
   const recherche = contenu.querySelector('#recherche');
   const conteneur = contenu.querySelector('#conteneur-oeuvres');
@@ -244,6 +292,17 @@ export async function rendreOeuvresListe(contenu, params = {}) {
         </select>
       </div>
       <div class="groupe-filtre">
+        <h4>Format</h4>
+        <div class="groupe-formats" id="panneau-formats" style="margin:0;padding:0;">
+          ${FORMATS_FILTRE.map((f) => `
+            <label class="chip-statut">
+              <input type="checkbox" value="${ech(f)}" ${formatsActifs.includes(f) ? 'checked' : ''}>
+              <span class="chip-libelle chip-format">${ech(f)}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+      <div class="groupe-filtre">
         <label class="case-archives">
           <input type="checkbox" id="panneau-case-archives" ${inclureArchives ? 'checked' : ''}>
           <span>Inclure les archivées</span>
@@ -262,6 +321,12 @@ export async function rendreOeuvresListe(contenu, params = {}) {
     if (panneauArt) panneauArt.addEventListener('change', () => { artisteIdFiltre = panneauArt.value; dessiner(); });
     const panneauType = panneauFiltres.querySelector('#panneau-filtre-type');
     if (panneauType) panneauType.addEventListener('change', () => { typeFiltre = panneauType.value; dessiner(); });
+    panneauFiltres.querySelectorAll('#panneau-formats input[type="checkbox"]').forEach((c) => {
+      c.addEventListener('change', () => {
+        formatsActifs = Array.from(panneauFiltres.querySelectorAll('#panneau-formats input:checked')).map((x) => x.value);
+        dessiner();
+      });
+    });
     const panneauArchives = panneauFiltres.querySelector('#panneau-case-archives');
     if (panneauArchives) panneauArchives.addEventListener('change', async () => {
       inclureArchives = panneauArchives.checked;
@@ -279,10 +344,28 @@ export async function rendreOeuvresListe(contenu, params = {}) {
   }
   btnFiltres.addEventListener('click', ouvrirPanneau);
 
-  contenu.querySelector('#btn-ajouter').addEventListener('click', () => {
-    const p = { nouveau: true };
-    if (params.artiste_id != null) p.artiste_id = params.artiste_id;
-    naviguer('oeuvre-fiche', p);
+  contenu.querySelector('#btn-ajouter').addEventListener('click', async () => {
+    // Si on est déjà filtré sur un artiste, on saute la sélection.
+    if (params.artiste_id != null) {
+      naviguer('oeuvre-fiche', { nouveau: true, artiste_id: params.artiste_id });
+      return;
+    }
+    const choix = await choisirArtiste(artistes);
+    if (!choix) return;
+    if (choix.id === '__nouvel_artiste__') {
+      // L'utilisateur crée un nouvel artiste. Le formulaire artiste a déjà un
+      // bouton « Créer + ajouter les œuvres » qui enchaîne vers la création
+      // d'œuvres après le save.
+      naviguer('artiste-fiche', { nouveau: true });
+      return;
+    }
+    naviguer('oeuvre-fiche', {
+      nouveau: true,
+      artiste_id: choix.id,
+      enchainement: true,
+      enchainement_compte: 0,
+      enchainement_artiste_nom: choix.nom,
+    });
   });
 
   btnVueGrille.addEventListener('click', () => {
@@ -417,6 +500,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
       if (statutsActifs.length > 0 && !statutsActifs.includes(o.statut)) return false;
       if (artisteIdFiltre && String(o.artiste_id) !== artisteIdFiltre) return false;
       if (typeFiltre && o.type !== typeFiltre) return false;
+      if (formatsActifs.length > 0 && !formatsActifs.includes(o.format)) return false;
       if (motRecherche) {
         const cible = sansAccents(
           [o.titre, o.artiste_nom, o.numero_inventaire, o.numero_delivrance].filter(Boolean).join(' ')

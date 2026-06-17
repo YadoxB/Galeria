@@ -65,7 +65,17 @@
       "Bash(git tag *)",
       "Bash(node scripts/build-seed-vide.js)",
       "Bash(node scripts/build-photos-seed-vide.js)",
-      "Bash(gh auth *)"
+      "Bash(gh auth *)",
+      "Bash(curl -s https://api.github.com/repos/YadoxB/Galeria)",
+      "Bash(curl -s https://api.github.com/repos/YadoxB/Galeria/releases)",
+      "Bash(curl -s https://api.github.com/repos/YadoxB/Galeria/releases/latest)",
+      "Bash(curl -s https://api.github.com/repos/YadoxB/Galeria/releases/tags/v0.2.1)",
+      "Bash(git -C /f/Galerie/Automatisation/GalerieApp log --oneline -3)",
+      "Bash(grep -n \"o.format\\\\|o\\\\\\\\.prix, o\\\\\\\\.statut\" src/db/requetes.js)",
+      "Bash(ls -lh \"F:/Galerie/Automatisation/certificat_outil_GVSJ_9.html\" 2>&1 | head -3)",
+      "Bash(cp \"F:/Galerie/Automatisation/certificat_outil_GVSJ_9.html\" gabarits/gabarit-certificat.html && echo \"Copié\")",
+      "Bash(node scripts/import-urls-oeuvres.js \"F:/Galerie/Automatisation/GalerieApp/Œuvres-Grid view 3.csv\")",
+      "Bash(node scripts/import-urls-oeuvres.js \"F:/Galerie/Automatisation/GalerieApp/Œuvres-Grid view 3.csv\" --execute)"
     ]
   }
 }

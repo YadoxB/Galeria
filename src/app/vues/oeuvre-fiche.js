@@ -25,6 +25,7 @@ const GABARIT_VIDE = {
   emplacement_signature: null, particularite: null, description: null,
   prix: null, statut: 'disponible',
   emplacement: null, exposition_actuelle: null,
+  url_site: null,
   image_path: null,
 };
 
@@ -170,6 +171,10 @@ export async function rendreOeuvreFiche(contenu, params) {
       o.artiste_id = params.artiste_id;
     }
     artistes = await window.api.artistesListe();
+    // Pré-remplir le numéro d'inventaire à partir du compteur global + préfixe artiste
+    try {
+      o.numero_inventaire = await window.api.oeuvreApercuNumeroInventaire(o.artiste_id || null);
+    } catch {}
   } else {
     [o, voisins, ventes, certificats] = await Promise.all([
       window.api.oeuvreGet(params.id),
@@ -430,6 +435,7 @@ export async function rendreOeuvreFiche(contenu, params) {
               ${badgeStatut(o.statut)}
               ${o.prix != null ? `<span class="prix-grand">${formaterPrix(o.prix)}</span>` : ''}
             </div>
+            ${o.url_site ? `<p class="oeuvre-lien-site"><button class="btn-lien" id="btn-voir-sur-site">Voir sur le site &rsaquo;</button></p>` : ''}
           </div>
           <div class="entete-fiche-actions">
             <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
@@ -486,6 +492,10 @@ export async function rendreOeuvreFiche(contenu, params) {
     contenu.querySelector('#btn-voir-oeuvres-artiste').addEventListener('click', () =>
       naviguer('oeuvres-liste', { artiste_id: o.artiste_id, artiste_nom: o.artiste_nom })
     );
+    const btnVoirSite = contenu.querySelector('#btn-voir-sur-site');
+    if (btnVoirSite && o.url_site) {
+      btnVoirSite.addEventListener('click', () => window.api.ouvrirUrl(o.url_site));
+    }
     const btnVendre = contenu.querySelector('#btn-vendre');
     if (btnVendre) {
       btnVendre.addEventListener('click', () =>
@@ -667,6 +677,7 @@ export async function rendreOeuvreFiche(contenu, params) {
               ${champTexte({ nom: 'emplacement', libelle: 'Emplacement (gallerie)', valeur: o.emplacement })}
               ${champTexte({ nom: 'exposition_actuelle', libelle: 'Exposition actuelle', valeur: o.exposition_actuelle })}
             </div>
+            ${champTexte({ nom: 'url_site', libelle: "URL de la fiche sur le site web", valeur: o.url_site, type: 'url', attributs: 'placeholder="https://galerievieuxstjean.com/produit/…"' })}
           </section>
 
           <div class="form-actions">
@@ -834,6 +845,21 @@ export async function rendreOeuvreFiche(contenu, params) {
     const elLargeur = form.elements.largeur;
     const elProfondeur = form.elements.profondeur;
     const elFormat = form.elements.format;
+    const elArtiste = form.elements.artiste_id;
+    const elInventaire = form.elements.numero_inventaire;
+    // Auto-rafraîchir le numéro d'inventaire quand l'artiste change, à condition
+    // que l'utilisateur n'ait pas déjà modifié manuellement le champ.
+    if (nouveau && elArtiste && elInventaire) {
+      let derniereSuggestion = elInventaire.value;
+      elInventaire.addEventListener('input', () => { derniereSuggestion = null; });
+      elArtiste.addEventListener('change', async () => {
+        if (derniereSuggestion === null) return;
+        try {
+          const sug = await window.api.oeuvreApercuNumeroInventaire(elArtiste.value ? Number(elArtiste.value) : null);
+          if (sug) { elInventaire.value = sug; derniereSuggestion = sug; }
+        } catch {}
+      });
+    }
     const elOrientation = form.elements.orientation;
     const elDimensions = form.elements.dimensions;
     const elApercu = contenu.querySelector('#dim-apercu');
@@ -894,6 +920,13 @@ export async function rendreOeuvreFiche(contenu, params) {
 
       try {
         if (nouveau) {
+          // Si l'utilisateur a gardé la valeur pré-remplie pour le numéro
+          // d'inventaire, on réserve (= incrémente le compteur global).
+          // Sinon (saisie manuelle), on laisse le compteur tel quel.
+          const numAttendu = await window.api.oeuvreApercuNumeroInventaire(data.artiste_id ? Number(data.artiste_id) : null);
+          if ((data.numero_inventaire || '').trim() === numAttendu && numAttendu) {
+            try { await window.api.oeuvreReserverNumeroInventaire(data.artiste_id ? Number(data.artiste_id) : null); } catch {}
+          }
           o = await window.api.oeuvreCreer(data);
           modifierParamsCourants({ id: o.id, nouveau: false });
           // Si une image a été choisie en amont, l'enregistrer maintenant que l'ID existe

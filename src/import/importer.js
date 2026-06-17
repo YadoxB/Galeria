@@ -163,6 +163,7 @@ function valeursOeuvre(row, artisteId, numInv) {
     emptyToNull(row['Description']),
     parsePrix(row['Prix régulier']),
     normalizeStatut(row['Statut']),
+    premiere(row['URL'], row['URL site'], row['URL site web'], row['Lien produit'], row['Site web']),
   ];
 }
 
@@ -173,8 +174,8 @@ function importOeuvres(db, rows, mode = 'ajouter') {
       artiste_id, type, numero_inventaire, numero_delivrance,
       annee, medium, support, dimensions,
       format, orientation, sujets,
-      emplacement_signature, particularite, description, prix, statut
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      emplacement_signature, particularite, description, prix, statut, url_site
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const updateStmt = db.prepare(`
     UPDATE oeuvres SET
@@ -182,7 +183,7 @@ function importOeuvres(db, rows, mode = 'ajouter') {
       annee = ?, medium = ?, support = ?, dimensions = ?,
       format = ?, orientation = ?, sujets = ?,
       emplacement_signature = ?, particularite = ?, description = ?,
-      prix = ?, statut = ?,
+      prix = ?, statut = ?, url_site = ?,
       modifie_le = datetime('now')
     WHERE id = ?
   `);

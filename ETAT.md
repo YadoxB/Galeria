@@ -269,12 +269,13 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 
 ### Roadmap des 5 jalons (synthèse des modifications post-tests)
 
-**Jalon 1 — Quick wins polish & UX** (1 jour)
-- Sceau du certificat repositionné en bas-droite plus serré (actuellement empiète sur le cadre).
-- Filtre des œuvres par taille (format) dans le panneau Filtres.
-- Champ « URL de la fiche sur le site » sur la fiche d'œuvre + bouton « Voir sur le site ».
-- Premier numéro séquentiel d'inventaire (global à la galerie) ajustable dans Réglages.
-- Chaînage de création d'œuvres pour un artiste **existant** (le flux existe déjà pour un nouvel artiste).
+### Jalon 1 — Livré en v0.2.2
+
+- ~~Sceau du certificat repositionné~~ → **Nouveau gabarit complet** intégré depuis `certificat_outil_GVSJ_9.html` fourni par Dave, avec fonction `remplir(data)` qui pilote les inputs du panneau de saisie depuis les données de Galeria. Le template reste utilisable en standalone. Polices Garamond externalisées vers `actifs/` pour éviter un crash Acrobat à la fermeture (problème connu avec polices base64 ré-embarquées par printToPDF).
+- ~~Filtre des œuvres par taille~~ → 4 chips (Petit / Moyen / Grand / Très grand) dans le panneau Filtres.
+- ~~URL de la fiche sur le site~~ → champ dans le formulaire + bouton « Voir sur le site › » sous le prix dans la fiche en lecture. **504 URLs importées depuis Airtable** via script dédié `scripts/import-urls-oeuvres.js` (matching par numéro d'inventaire, sauvegarde automatique).
+- ~~Numéro séquentiel d'inventaire global~~ → ajustable dans Réglages → Documents. Pré-rempli sur le formulaire d'œuvre (préfixe artiste + numéro), incrémenté seulement si la valeur suggérée n'est pas modifiée à la main.
+- ~~Chaînage œuvres pour artiste existant~~ → bouton **« + Ajouter d'autres œuvres »** sur la fiche artiste. Et sur la liste Œuvres, le bouton « + Ajouter une œuvre » ouvre une modale qui demande l'artiste (avec option **✦ Nouvel artiste…** en tête) — si nouvel artiste choisi, redirige vers la fiche de création d'artiste qui chaîne ensuite vers les œuvres.
 
 **Jalon 2 — Cotes & calculateur de prix** (2-3 jours, pièce maîtresse)
 - Modèle de données : cotes par artiste, variation par taille (P/M/G/TG), variation optionnelle par médium, unité (po² ou po linéaires = H+L), deux versions (préférentiel sans cadre / courante encadrée = préférentiel + 2 $/po, le prix affiché est courant).

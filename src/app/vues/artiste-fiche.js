@@ -200,13 +200,16 @@ export async function rendreArtisteFiche(contenu, params) {
 
         ${navVoisins}
 
-        ${a.nb_oeuvres > 0 ? `
-          <div class="actions-fiche">
+        <div class="actions-fiche">
+          ${a.nb_oeuvres > 0 ? `
             <button class="btn-action" id="btn-voir-oeuvres">
               Voir ${a.nb_oeuvres === 1 ? 'son œuvre' : 'ses œuvres'} &rsaquo;
             </button>
-          </div>
-        ` : ''}
+          ` : ''}
+          <button class="btn-action btn-principal" id="btn-ajouter-oeuvres">
+            + Ajouter ${a.nb_oeuvres > 0 ? "d'autres" : 'des'} œuvres
+          </button>
+        </div>
 
         ${lignesContact ? blocPliable('Contact', `<dl class="champs">${lignesContact}</dl>`) : ''}
         ${a.biographie ? blocPliable('Biographie', `<p class="texte-long">${ech(a.biographie).replace(/\n/g, '<br>')}</p>`) : ''}
@@ -255,6 +258,18 @@ export async function rendreArtisteFiche(contenu, params) {
       btnVoir.addEventListener('click', () =>
         naviguer('oeuvres-liste', { artiste_id: a.id, artiste_nom: nomCompletA })
       );
+    }
+    const btnAjouterOeuvres = contenu.querySelector('#btn-ajouter-oeuvres');
+    if (btnAjouterOeuvres) {
+      btnAjouterOeuvres.addEventListener('click', () => {
+        naviguer('oeuvre-fiche', {
+          nouveau: true,
+          artiste_id: a.id,
+          enchainement: true,
+          enchainement_compte: 0,
+          enchainement_artiste_nom: nomCompletA,
+        });
+      });
     }
   }
 

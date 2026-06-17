@@ -60,7 +60,7 @@ function listerOeuvres(filtres = {}) {
   const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
   return db.prepare(`
     SELECT o.id, o.titre, o.numero_inventaire, o.numero_delivrance,
-           o.type, o.annee, o.medium, o.support, o.dimensions,
+           o.type, o.annee, o.medium, o.support, o.dimensions, o.format,
            o.prix, o.statut, o.image_path, o.archive,
            a.id AS artiste_id, TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom
     FROM oeuvres o

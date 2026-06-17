@@ -33,6 +33,8 @@ contextBridge.exposeInMainWorld('api', {
   oeuvreVoisins: (id) => ipcRenderer.invoke('oeuvres:voisins', id),
   oeuvreModifier: (id, data) => ipcRenderer.invoke('oeuvres:modifier', id, data),
   oeuvreCreer: (data) => ipcRenderer.invoke('oeuvres:creer', data),
+  oeuvreApercuNumeroInventaire: (artisteId) => ipcRenderer.invoke('oeuvres:apercu-numero-inventaire', artisteId),
+  oeuvreReserverNumeroInventaire: (artisteId) => ipcRenderer.invoke('oeuvres:reserver-numero-inventaire', artisteId),
   oeuvreSupprimer: (id) => ipcRenderer.invoke('oeuvres:supprimer', id),
   oeuvresTypes: () => ipcRenderer.invoke('oeuvres:types'),
   oeuvresStats: () => ipcRenderer.invoke('oeuvres:stats'),

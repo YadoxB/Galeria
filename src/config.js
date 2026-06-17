@@ -29,6 +29,7 @@ const DEFAULTS = {
     tvq_taux: 9.975,
     cote_galerie_pourcent: 50,
     signataire_certificat: '',
+    prochain_numero_inventaire: 1,
   },
   sauvegardes: {
     frequence_minutes: 60,

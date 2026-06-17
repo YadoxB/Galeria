@@ -320,6 +320,8 @@ export function gabaritEntetePage(options) {
     boutonAjouterLibelle = '+ Ajouter',
     idRecherche = 'recherche',
     idBoutonAjouter = 'btn-ajouter',
+    boutonSecondaireLibelle = null,
+    idBoutonSecondaire = 'btn-ajouter-multiple',
   } = options;
   return `
     <div class="entete-page">
@@ -334,6 +336,7 @@ export function gabaritEntetePage(options) {
         </div>
       </div>
       <div class="entete-page-actions">
+        ${boutonSecondaireLibelle ? `<button type="button" class="btn-action btn-secondaire-action" id="${ech(idBoutonSecondaire)}">${ech(boutonSecondaireLibelle)}</button>` : ''}
         <button type="button" class="btn-primaire" id="${ech(idBoutonAjouter)}">${ech(boutonAjouterLibelle)}</button>
       </div>
     </div>

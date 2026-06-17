@@ -53,6 +53,7 @@ const {
   apercuProchainNumeroFacture, reserverProchainNumeroFacture,
   creerCertificat, modifierCertificat, supprimerCertificat,
   apercuProchainNumeroCertificat, reserverProchainNumeroCertificat,
+  apercuProchainNumeroInventaire, reserverProchainNumeroInventaire,
   definirArchive,
 } = require('./db/mutations');
 
@@ -526,6 +527,8 @@ app.whenReady().then(() => {
   ipcMain.handle('ventes:modifier', (_e, id, data) => modifierVente(id, data));
   ipcMain.handle('ventes:supprimer', (_e, id) => supprimerVente(id));
   ipcMain.handle('ventes:apercu-numero-facture', () => apercuProchainNumeroFacture());
+  ipcMain.handle('oeuvres:apercu-numero-inventaire', (_e, artisteId) => apercuProchainNumeroInventaire(artisteId));
+  ipcMain.handle('oeuvres:reserver-numero-inventaire', (_e, artisteId) => reserverProchainNumeroInventaire(artisteId));
   ipcMain.handle('ventes:reserver-numero-facture', () => reserverProchainNumeroFacture());
   ipcMain.handle('certificats:liste-oeuvre', (_e, oeuvreId) => listerCertificatsParOeuvre(oeuvreId));
   ipcMain.handle('certificats:liste-vente', (_e, venteId) => listerCertificatsParVente(venteId));

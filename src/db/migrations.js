@@ -23,6 +23,7 @@ const COLONNES_ATTENDUES = {
     ['hauteur', 'REAL'],
     ['largeur', 'REAL'],
     ['profondeur', 'REAL'],
+    ['url_site', 'TEXT'],
   ],
   clients: [
     ['prenom', 'TEXT'],

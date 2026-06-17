@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS oeuvres (
   image_path             TEXT,
   emplacement            TEXT,
   exposition_actuelle    TEXT,
+  url_site               TEXT,
   archive                INTEGER NOT NULL DEFAULT 0
                          CHECK (archive IN (0, 1)),
   cree_le                TEXT NOT NULL DEFAULT (datetime('now')),

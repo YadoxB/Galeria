@@ -90,6 +90,13 @@ export async function rendreReglages(contenu) {
             <p class="aide-champ">Format actuel des numéros : <strong>${ech(d.prefixe_certificat || 'C-2026')}-001</strong>, <strong>${ech(d.prefixe_certificat || 'C-2026')}-002</strong>, etc. La nomenclature finale sera ajustée plus tard ; il suffira de modifier le préfixe et de remettre le compteur à la bonne valeur.</p>
           </div>
           <div class="bloc-secondaire">
+            <h4 class="sous-titre">Numérotation d'inventaire</h4>
+            <div class="grille-form">
+              ${champTexte({ nom: 'd_prochain_numero_inventaire', libelle: "Prochain numéro d'inventaire", valeur: d.prochain_numero_inventaire, type: 'number', attributs: 'min="1" step="1"' })}
+            </div>
+            <p class="aide-champ">Compteur global à la galerie. Lors de la création d'une œuvre, ce numéro est pré-rempli en combinaison avec le préfixe d'inventaire de l'artiste (ex. <strong>JOU1992</strong> pour Joe Untel, préfixe « JOU »), et incrémenté automatiquement au save. Tu peux ajuster ici pour reprendre la numérotation des parents.</p>
+          </div>
+          <div class="bloc-secondaire">
             <h4 class="sous-titre">TPS</h4>
             <div class="grille-form">
               ${champCheckbox({ nom: 'd_tps_actif', libelle: 'Appliquer la TPS sur les factures', valeur: !!d.tps_actif })}
@@ -284,6 +291,7 @@ export async function rendreReglages(contenu) {
         tvq_taux: Math.max(0, Math.min(100, num('d_tvq_taux') ?? 0)),
         cote_galerie_pourcent: Math.max(0, Math.min(100, num('d_cote') ?? 0)),
         signataire_certificat: v('d_signataire').trim(),
+        prochain_numero_inventaire: Math.max(1, Math.floor(num('d_prochain_numero_inventaire') || 1)),
       },
       sauvegardes: {
         frequence_minutes: Math.max(5, Math.floor(num('s_frequence') || 60)),

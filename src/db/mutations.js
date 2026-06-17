@@ -83,6 +83,7 @@ const COLONNES_OEUVRE = [
   ['statut', vide],
   ['emplacement', vide],
   ['exposition_actuelle', vide],
+  ['url_site', vide],
 ];
 
 function modifierArtiste(id, data) {
@@ -256,6 +257,28 @@ function reserverProchainNumeroFacture() {
     documents: { prochain_numero_facture: cfg.documents.prochain_numero_facture + 1 },
   });
   return numero;
+}
+
+function apercuProchainNumeroInventaire(artisteId) {
+  const cfg = obtenirConfig();
+  const num = cfg.documents.prochain_numero_inventaire || 1;
+  if (!artisteId) return String(num);
+  const db = openDatabase();
+  const artiste = db.prepare('SELECT prefixe_inventaire FROM artistes WHERE id = ?').get(entier(artisteId));
+  const prefixe = (artiste?.prefixe_inventaire || '').trim();
+  return `${prefixe}${num}`;
+}
+
+function reserverProchainNumeroInventaire(artisteId) {
+  const cfg = obtenirConfig();
+  const num = cfg.documents.prochain_numero_inventaire || 1;
+  const db = openDatabase();
+  const artiste = db.prepare('SELECT prefixe_inventaire FROM artistes WHERE id = ?').get(entier(artisteId));
+  const prefixe = (artiste?.prefixe_inventaire || '').trim();
+  mettreAJourConfig({
+    documents: { prochain_numero_inventaire: num + 1 },
+  });
+  return `${prefixe}${num}`;
 }
 
 function apercuProchainNumeroFactureArtiste() {
@@ -481,6 +504,7 @@ module.exports = {
   obtenirOuReserverNumeroFactureArtisteVente,
   creerCertificat, modifierCertificat, supprimerCertificat,
   apercuProchainNumeroCertificat, reserverProchainNumeroCertificat,
+  apercuProchainNumeroInventaire, reserverProchainNumeroInventaire,
   formaterNumero,
   definirArchive,
 };
