@@ -6,6 +6,7 @@ import {
   parserNumerosTaxes, urlPhoto, sansAccents, nomComplet,
   badgeArchive, boutonArchive, basculerArchive,
 } from '../commun.js';
+import { parserCotes, TAILLES_COTES, formaterMontant } from '../calcul-prix.js';
 import { recadrerCarre } from '../recadrage.js';
 import { visionner } from '../visionneuse.js';
 import { confirmer } from '../dialogue.js';
@@ -27,13 +28,34 @@ const GABARIT_VIDE = {
   notes: null,
   instructions_ia: null,
   lien_chatgpt: null,
+  cotes: null,
   nb_oeuvres: 0,
 };
+
+const MEDIUMS_PAR_DEFAUT = ['Acrylique', 'Huile', 'Encaustique', 'Aquarelle', 'Pastel', 'Photographie', 'Mixte'];
 
 export async function rendreArtisteFiche(contenu, params) {
   const estNouveau = !!params.nouveau;
   let a;
   let voisins = { precedent: null, suivant: null, position: null, total: 0 };
+
+  // Liste des médiums : fusion de la base existante et de la liste par défaut.
+  // On charge en plus les médiums propres à CET artiste pour les mettre en
+  // tête du dropdown (très visible).
+  let mediumsConnus = [];
+  let mediumsArtiste = [];
+  try {
+    const dbMediums = await window.api.oeuvresMediums();
+    const set = new Set([...MEDIUMS_PAR_DEFAUT, ...dbMediums]);
+    mediumsConnus = Array.from(set).sort((x, y) => x.localeCompare(y, 'fr', { sensitivity: 'base' }));
+  } catch {
+    mediumsConnus = [...MEDIUMS_PAR_DEFAUT];
+  }
+  if (!estNouveau) {
+    try {
+      mediumsArtiste = await window.api.oeuvresMediumsArtiste(params.id);
+    } catch { mediumsArtiste = []; }
+  }
 
   if (estNouveau) {
     a = { ...GABARIT_VIDE };
@@ -148,6 +170,15 @@ export async function rendreArtisteFiche(contenu, params) {
         : '',
     ].join('');
 
+    const cotesA = parserCotes(a.cotes);
+    const lignesCotes = cotesA.length ? cotesA.map((c) => {
+      const uniteLib = c.unite === 'carre' ? '$/po²' : '$/po lin';
+      const cible = c.medium === 'Tous' && c.taille === 'Tous'
+        ? 'Toutes œuvres'
+        : `${c.medium}${c.taille !== 'Tous' ? ' · ' + c.taille : ''}`;
+      return champ(cible, `${formaterMontant(c.prix_pref)} ${uniteLib}`);
+    }).join('') : '';
+
     const nomCompletA = nomComplet(a) || a.nom || '';
     const avatarHtml = a.photo_path
       ? `<div class="avatar grand avec-photo cliquable" id="avatar-vision" title="Voir en grand"><img src="${urlPhoto(a.photo_path)}" alt="${ech(nomCompletA)}"></div>`
@@ -216,6 +247,7 @@ export async function rendreArtisteFiche(contenu, params) {
         ${a.demarche ? blocPliable('Démarche', `<p class="texte-long">${ech(a.demarche).replace(/\n/g, '<br>')}</p>`) : ''}
         ${a.curriculum ? blocPliable('Curriculum', `<p class="texte-long">${ech(a.curriculum).replace(/\n/g, '<br>')}</p>`) : ''}
         ${lignesTaxes ? blocPliable('Fiscalité', `<dl class="champs">${lignesTaxes}</dl>`) : ''}
+        ${lignesCotes ? blocPliable('Cotes (calcul de prix)', `<dl class="champs">${lignesCotes}</dl><p class="aide-champ" style="margin-top:8px;">Le prix courant ajoute automatiquement <strong>2 $/po linéaire</strong> au tarif préférentiel pour l'encadrement.</p>`) : ''}
         ${a.notes ? blocPliable('Notes', `<p class="texte-long">${ech(a.notes).replace(/\n/g, '<br>')}</p>`) : ''}
       </div>
     `;
@@ -371,6 +403,25 @@ export async function rendreArtisteFiche(contenu, params) {
           </section>
 
           <section class="bloc">
+            <h3>Cotes (calcul de prix)</h3>
+            <p class="aide-champ">Tarif <strong>préférentiel</strong> (sans encadrement) appliqué selon le médium et la taille de l'œuvre. La version <strong>courante</strong> ajoute automatiquement 2 $ à la cote (= prix avec encadrement). Si aucune cote ne correspond, le prix de l'œuvre reste saisi à la main.</p>
+            <div id="zone-cotes"></div>
+            <button type="button" id="btn-ajouter-cote" class="btn-ajouter">+ Ajouter une cote</button>
+            <details class="aide-priorite-cotes" style="margin-top:12px;">
+              <summary>Ordre de priorité (cliquer pour déplier)</summary>
+              <p class="aide-champ" style="margin-top:8px;">Quand plusieurs cotes pourraient s'appliquer à une œuvre, Galeria prend toujours la <strong>plus précise</strong> :</p>
+              <ol class="aide-champ" style="margin:6px 0 8px 1.4em; padding:0;">
+                <li>Médium <em>exact</em> + taille <em>exacte</em></li>
+                <li>Médium « Tous » + taille <em>exacte</em></li>
+                <li>Médium <em>exact</em> + taille « Tous »</li>
+                <li>Médium « Tous » + taille « Tous » (fallback général)</li>
+              </ol>
+              <p class="aide-champ" style="margin-top:8px;"><strong>Exemple.</strong> Tu veux 30 $ partout sauf 35 $ en très grand : 1 cote « Tous / Tous = 30 » + 1 cote « Tous / Très grand = 35 » suffit. Pas besoin de répéter pour Petit / Moyen / Grand.</p>
+              <p class="aide-champ"><strong>À noter.</strong> Le médium est insensible à la casse et aux accents : « Acrylique », « acrylique » et « ACRYLIQUE » sont équivalents.</p>
+            </details>
+          </section>
+
+          <section class="bloc">
             <h3>Aide à la description IA</h3>
             ${champTextarea({ nom: 'instructions_ia', libelle: "Consignes pour ChatGPT spécifiques à cet artiste", valeur: a.instructions_ia, lignes: 6 })}
             <p class="aide-champ">Ce texte sera inclus dans le prompt généré par le bouton « Copier pour ChatGPT » sur les fiches d'œuvres de cet artiste. Tu peux y coller le système prompt de son GPT personnalisé : style à adopter, mots-clés à privilégier, termes à éviter, longueur cible, exemples, etc.</p>
@@ -515,6 +566,111 @@ export async function rendreArtisteFiche(contenu, params) {
       if (dernierEtiq) dernierEtiq.focus();
     });
 
+    // ====== Éditeur de cotes ======
+    const zoneCotes = contenu.querySelector('#zone-cotes');
+    function gabaritLigneCote(c = {}) {
+      const medium = (c.medium || 'Tous').replace(/"/g, '&quot;');
+      const taille = c.taille || 'Tous';
+      const unite = c.unite || 'lineaire';
+      const prix = c.prix_pref ?? '';
+      const optionsTailles = ['Tous', ...TAILLES_COTES]
+        .map((t) => `<option value="${t}" ${t === taille ? 'selected' : ''}>${ech(t)}</option>`).join('');
+      return `
+        <div class="ligne-cote">
+          <div class="select-edit-wrap" data-medium-wrap>
+            <input type="text" class="cote-medium" placeholder="Médium (ou Tous)" value="${medium}" autocomplete="off">
+            <button type="button" class="select-edit-toggle" aria-label="Voir les options" tabindex="-1">▾</button>
+          </div>
+          <select class="cote-taille">${optionsTailles}</select>
+          <select class="cote-unite">
+            <option value="lineaire" ${unite === 'lineaire' ? 'selected' : ''}>$/po linéaire</option>
+            <option value="carre" ${unite === 'carre' ? 'selected' : ''}>$/po²</option>
+          </select>
+          <input type="number" class="cote-prix" placeholder="Prix" value="${prix}" min="0" step="0.01">
+          <button type="button" class="btn-supprimer-ligne" title="Retirer cette cote" aria-label="Retirer">&times;</button>
+        </div>
+      `;
+    }
+    // Dropdown custom pour les médiums : input texte libre + bouton ▾ qui
+    // affiche toute la liste, sans filtrage. Click outside pour fermer.
+    // Deux sections : médiums déjà utilisés par cet artiste (en haut),
+    // puis tous les autres médiums (le reste).
+    const normaliser = (s) => (s || '').toString().normalize('NFD').replace(/\p{Mn}/gu, '').trim().toLowerCase();
+    const ensembleArtiste = new Set(mediumsArtiste.map(normaliser));
+    const autresMediums = mediumsConnus.filter((m) => !ensembleArtiste.has(normaliser(m)) && normaliser(m) !== 'tous');
+
+    function brancherDropdownMedium(wrap) {
+      const input = wrap.querySelector('.cote-medium');
+      const toggle = wrap.querySelector('.select-edit-toggle');
+      let panneau = null;
+      const fermer = () => {
+        if (panneau) { panneau.remove(); panneau = null; }
+        document.removeEventListener('mousedown', onClicExt);
+      };
+      const onClicExt = (e) => {
+        if (!wrap.contains(e.target)) fermer();
+      };
+      const optionsHtml = (vals) => vals
+        .map((v) => `<button type="button" class="select-edit-option">${ech(v)}</button>`)
+        .join('');
+      const ouvrir = () => {
+        if (panneau) return;
+        panneau = document.createElement('div');
+        panneau.className = 'select-edit-panel';
+        let html = `<button type="button" class="select-edit-option select-edit-option-tous">Tous</button>`;
+        if (mediumsArtiste.length) {
+          html += `<div class="select-edit-section">Médiums de cet artiste</div>`;
+          html += optionsHtml(mediumsArtiste);
+        }
+        if (autresMediums.length) {
+          html += `<div class="select-edit-section">Autres médiums</div>`;
+          html += optionsHtml(autresMediums);
+        }
+        panneau.innerHTML = html;
+        wrap.appendChild(panneau);
+        panneau.querySelectorAll('.select-edit-option').forEach((b) => {
+          b.addEventListener('click', () => {
+            input.value = b.textContent;
+            modifie = true;
+            fermer();
+            input.focus();
+          });
+        });
+        setTimeout(() => document.addEventListener('mousedown', onClicExt), 0);
+      };
+      toggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (panneau) fermer(); else ouvrir();
+      });
+    }
+
+    function rendreCotes(cotesArr) {
+      const liste = Array.isArray(cotesArr) && cotesArr.length ? cotesArr : [];
+      zoneCotes.innerHTML = liste.map(gabaritLigneCote).join('') ||
+        '<p class="aide-champ" style="margin:0 0 8px;">Aucune cote définie. Ajoute-en une pour activer le calcul automatique du prix.</p>';
+      zoneCotes.querySelectorAll('.btn-supprimer-ligne').forEach((btn) => {
+        btn.onclick = () => { btn.closest('.ligne-cote').remove(); modifie = true; };
+      });
+      zoneCotes.querySelectorAll('[data-medium-wrap]').forEach(brancherDropdownMedium);
+    }
+    rendreCotes(parserCotes(a.cotes));
+    contenu.querySelector('#btn-ajouter-cote').addEventListener('click', () => {
+      // Si message « Aucune cote… » présent, on le remplace par une vraie ligne.
+      const aucune = zoneCotes.querySelector('.aide-champ');
+      if (aucune) zoneCotes.innerHTML = '';
+      zoneCotes.insertAdjacentHTML('beforeend', gabaritLigneCote());
+      const nouvelle = zoneCotes.querySelector('.ligne-cote:last-child');
+      if (nouvelle) {
+        nouvelle.querySelectorAll('.btn-supprimer-ligne').forEach((btn) => {
+          btn.onclick = () => { btn.closest('.ligne-cote').remove(); modifie = true; };
+        });
+        nouvelle.querySelectorAll('[data-medium-wrap]').forEach(brancherDropdownMedium);
+      }
+      modifie = true;
+      const dernierPrix = zoneCotes.querySelector('.ligne-cote:last-child .cote-prix');
+      if (dernierPrix) dernierPrix.focus();
+    });
+
     form.addEventListener('input', () => { modifie = true; });
     form.addEventListener('change', () => { modifie = true; });
 
@@ -558,6 +714,16 @@ export async function rendreArtisteFiche(contenu, params) {
         }))
         .filter((t) => t.numero);
       data.numeros_taxes = lignesTaxes.length ? JSON.stringify(lignesTaxes) : null;
+
+      const lignesCotes = Array.from(zoneCotes.querySelectorAll('.ligne-cote'))
+        .map((l) => ({
+          medium: l.querySelector('.cote-medium').value.trim() || 'Tous',
+          taille: l.querySelector('.cote-taille').value,
+          unite: l.querySelector('.cote-unite').value,
+          prix_pref: Number(l.querySelector('.cote-prix').value) || 0,
+        }))
+        .filter((c) => c.prix_pref > 0);
+      data.cotes = lignesCotes.length ? JSON.stringify(lignesCotes) : null;
 
       const enchainerApresCreation = nouveau && e.submitter?.id === 'btn-creer-et-oeuvres';
 

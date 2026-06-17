@@ -14,6 +14,7 @@ const COLONNES_ATTENDUES = {
     ['archive', 'INTEGER NOT NULL DEFAULT 0'],
     ['instructions_ia', 'TEXT'],
     ['lien_chatgpt', 'TEXT'],
+    ['cotes', 'TEXT'],
   ],
   oeuvres: [
     ['format', 'TEXT'],
@@ -24,6 +25,7 @@ const COLONNES_ATTENDUES = {
     ['largeur', 'REAL'],
     ['profondeur', 'REAL'],
     ['url_site', 'TEXT'],
+    ['cote_hors_normes', 'INTEGER NOT NULL DEFAULT 0'],
   ],
   clients: [
     ['prenom', 'TEXT'],

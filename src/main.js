@@ -27,6 +27,8 @@ const {
   obtenirOeuvre,
   voisinsOeuvre,
   listerTypesOeuvre,
+  listerMediumsOeuvre,
+  listerMediumsArtiste,
   statsOeuvres,
   listerClients,
   obtenirClient,
@@ -105,6 +107,20 @@ function createWindow(splash) {
   });
 
   Menu.setApplicationMenu(null);
+
+  // Activation des DevTools via F12 ou Ctrl+Shift+I (raccourcis standards
+  // Chromium désactivés par le menu null). Sert au débogage occasionnel.
+  win.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown') return;
+    if (input.key === 'F12') {
+      win.webContents.toggleDevTools();
+      event.preventDefault();
+    } else if (input.control && input.shift && (input.key === 'I' || input.key === 'i')) {
+      win.webContents.toggleDevTools();
+      event.preventDefault();
+    }
+  });
+
   win.loadFile(path.join(__dirname, 'index.html'));
   win.webContents.on('did-finish-load', () => {
     try {
@@ -511,6 +527,8 @@ app.whenReady().then(() => {
     demarrerSauvegardePeriodique();
   });
   ipcMain.handle('oeuvres:types', () => listerTypesOeuvre());
+  ipcMain.handle('oeuvres:mediums', () => listerMediumsOeuvre());
+  ipcMain.handle('oeuvres:mediums-artiste', (_e, artisteId) => listerMediumsArtiste(artisteId));
   ipcMain.handle('oeuvres:stats', () => statsOeuvres());
   ipcMain.handle('clients:liste', (_e, filtres) => listerClients(filtres));
   ipcMain.handle('clients:get', (_e, id) => obtenirClient(id));

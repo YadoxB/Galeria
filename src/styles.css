@@ -95,6 +95,13 @@ body { user-select: none; }
   flex: 1;
 }
 
+/* Bloc bas de la sidebar : Outils + Réglages, ancré en bas */
+.menu-sidebar-bas {
+  flex: 0 0 auto;
+  padding-top: var(--s2);
+  border-top: 1px solid rgba(217, 182, 107, 0.18);
+}
+
 .entree-sidebar {
   display: flex;
   align-items: center;
@@ -1546,6 +1553,222 @@ footer {
 }
 .chatgpt-image-statut.succes { color: var(--succes); }
 .chatgpt-image-statut.erreur { color: var(--erreur); }
+
+/* Vue Outils */
+.vue-outils {
+  max-width: 980px;
+  margin: 0 auto;
+}
+.outils-entete {
+  margin-bottom: var(--s4);
+}
+.outils-entete h1 {
+  font-family: var(--font-titre);
+  font-size: 32px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ink);
+}
+.outils-sous-titre {
+  margin: 4px 0 0;
+  color: var(--slate);
+  font-size: 14px;
+}
+.outil-calculateur h3 {
+  font-family: var(--font-titre);
+  font-size: 20px;
+  margin: 0 0 8px;
+}
+.calc-resultat { margin-top: var(--s3); }
+.table-cotes {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+.table-cotes th {
+  text-align: left;
+  background: var(--cloud);
+  color: var(--slate);
+  font-weight: 600;
+  padding: 6px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+}
+.table-cotes td { padding: 6px 10px; border-bottom: 1px solid var(--mist); }
+.table-cotes tr:last-child td { border-bottom: none; }
+
+/* Prix suggéré sur la fiche œuvre */
+.prix-suggere {
+  margin: var(--s2) 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-family: var(--font-ui);
+}
+.prix-suggere-actif {
+  background: rgba(201, 154, 61, 0.08);
+  border: 1px solid rgba(201, 154, 61, 0.30);
+}
+.prix-suggere-aucun {
+  background: var(--cloud);
+  color: var(--slate);
+  font-size: 13px;
+  font-style: italic;
+}
+.prix-suggere-horsnorm {
+  background: rgba(80, 80, 80, 0.10);
+  color: var(--ink);
+  font-size: 13px;
+}
+.prix-suggere-entete {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.prix-suggere-libelle {
+  font-size: 12px;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.prix-suggere-note {
+  text-transform: none;
+  font-style: italic;
+  color: var(--slate);
+}
+.prix-suggere-valeur {
+  font-family: var(--font-titre);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--ink);
+  flex: 1;
+}
+.prix-suggere-formule {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--slate);
+  line-height: 1.5;
+}
+
+/* Bloc d'aide pliable « Ordre de priorité » sur la section Cotes */
+.aide-priorite-cotes summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font-ui);
+  color: var(--slate);
+  user-select: none;
+}
+.aide-priorite-cotes summary:hover {
+  color: var(--warm-gold);
+}
+.aide-priorite-cotes[open] summary {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* Dropdown custom (input texte libre + liste cliquable scrollable) */
+.select-edit-wrap {
+  position: relative;
+  display: flex;
+}
+.select-edit-wrap > input {
+  flex: 1;
+  padding-right: 28px;
+}
+.select-edit-toggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  background: transparent;
+  border: none;
+  color: var(--slate);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.select-edit-toggle:hover { color: var(--warm-gold); }
+.select-edit-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 2px;
+  background: var(--porcelain);
+  border: 1px solid var(--mist);
+  border-radius: 8px;
+  box-shadow: var(--ombre-carte);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 50;
+  padding: 4px 0;
+}
+.select-edit-option {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 6px 12px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.select-edit-option:hover {
+  background: var(--cloud);
+}
+.select-edit-option-tous {
+  font-weight: 600;
+  border-bottom: 1px solid var(--mist);
+  margin-bottom: 4px;
+}
+.select-edit-section {
+  padding: 6px 12px 4px;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--slate);
+  border-top: 1px solid var(--mist);
+}
+.select-edit-section:first-of-type {
+  border-top: none;
+  margin-top: 0;
+}
+
+/* Lignes de cotes (éditeur sur la fiche artiste) */
+.ligne-cote {
+  display: grid;
+  grid-template-columns: 1fr 130px 150px 110px 32px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.ligne-cote input,
+.ligne-cote select {
+  height: 36px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  border: 1px solid var(--mist);
+  border-radius: 8px;
+  background: var(--porcelain);
+  padding: 0 8px;
+}
+.ligne-cote input:focus,
+.ligne-cote select:focus {
+  outline: none;
+  border-color: var(--warm-gold);
+  box-shadow: 0 0 0 3px rgba(201, 154, 61, 0.18);
+}
 
 /* Trio H × L × P pour les dimensions d'œuvre */
 .dim-trio {

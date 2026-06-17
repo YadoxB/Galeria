@@ -37,6 +37,8 @@ contextBridge.exposeInMainWorld('api', {
   oeuvreReserverNumeroInventaire: (artisteId) => ipcRenderer.invoke('oeuvres:reserver-numero-inventaire', artisteId),
   oeuvreSupprimer: (id) => ipcRenderer.invoke('oeuvres:supprimer', id),
   oeuvresTypes: () => ipcRenderer.invoke('oeuvres:types'),
+  oeuvresMediums: () => ipcRenderer.invoke('oeuvres:mediums'),
+  oeuvresMediumsArtiste: (artisteId) => ipcRenderer.invoke('oeuvres:mediums-artiste', artisteId),
   oeuvresStats: () => ipcRenderer.invoke('oeuvres:stats'),
   clientsListe: (filtres) => ipcRenderer.invoke('clients:liste', filtres),
   clientGet: (id) => ipcRenderer.invoke('clients:get', id),

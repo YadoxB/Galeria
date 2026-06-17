@@ -21,6 +21,41 @@ const entier = (v) => {
 
 const STATUTS_VALIDES = new Set(['disponible', 'reserve', 'vendu', 'pretee']);
 
+const TAILLES_COTES = new Set(['Tous', 'Petit', 'Moyen', 'Grand', 'Très grand']);
+const UNITES_COTES = new Set(['lineaire', 'carre']);
+
+const normaliserCotes = (v) => {
+  if (v == null || v === '') return null;
+  let arr;
+  try {
+    arr = typeof v === 'string' ? JSON.parse(v) : v;
+  } catch {
+    throw new Error('Cotes : format invalide.');
+  }
+  if (!Array.isArray(arr)) throw new Error('Cotes : doit être une liste.');
+  const nettoye = arr
+    .map((item) => {
+      const medium = vide(item?.medium) || 'Tous';
+      const taille = vide(item?.taille);
+      const unite = vide(item?.unite);
+      const prixPref = nombre(item?.prix_pref);
+      if (taille && !TAILLES_COTES.has(taille)) {
+        throw new Error(`Taille de cote invalide : ${taille}.`);
+      }
+      if (unite && !UNITES_COTES.has(unite)) {
+        throw new Error(`Unité de cote invalide : ${unite}.`);
+      }
+      return {
+        medium,
+        taille: taille || 'Tous',
+        unite: unite || 'lineaire',
+        prix_pref: prixPref,
+      };
+    })
+    .filter((item) => item.prix_pref != null && item.prix_pref > 0);
+  return nettoye.length ? JSON.stringify(nettoye) : null;
+};
+
 const normaliserNumerosTaxes = (v) => {
   if (v == null || v === '') return null;
   let arr;
@@ -58,6 +93,7 @@ const COLONNES_ARTISTE = [
   ['notes', vide],
   ['instructions_ia', vide],
   ['lien_chatgpt', vide],
+  ['cotes', normaliserCotes],
 ];
 
 const COLONNES_OEUVRE = [
@@ -84,6 +120,7 @@ const COLONNES_OEUVRE = [
   ['emplacement', vide],
   ['exposition_actuelle', vide],
   ['url_site', vide],
+  ['cote_hors_normes', bool],
 ];
 
 function modifierArtiste(id, data) {

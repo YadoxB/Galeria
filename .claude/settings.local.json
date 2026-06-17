@@ -75,7 +75,10 @@
       "Bash(ls -lh \"F:/Galerie/Automatisation/certificat_outil_GVSJ_9.html\" 2>&1 | head -3)",
       "Bash(cp \"F:/Galerie/Automatisation/certificat_outil_GVSJ_9.html\" gabarits/gabarit-certificat.html && echo \"Copié\")",
       "Bash(node scripts/import-urls-oeuvres.js \"F:/Galerie/Automatisation/GalerieApp/Œuvres-Grid view 3.csv\")",
-      "Bash(node scripts/import-urls-oeuvres.js \"F:/Galerie/Automatisation/GalerieApp/Œuvres-Grid view 3.csv\" --execute)"
+      "Bash(node scripts/import-urls-oeuvres.js \"F:/Galerie/Automatisation/GalerieApp/Œuvres-Grid view 3.csv\" --execute)",
+      "Bash(curl -s \"https://api.github.com/repos/YadoxB/Galeria/releases/latest\")",
+      "Bash(curl -s \"https://api.github.com/repos/YadoxB/Galeria/releases/tags/v0.2.2\")",
+      "Bash(grep -n \"majDimensions\\\\\\\\\\(\\\\\\\\\\);\\\\|format/orientation\" src/app/vues/oeuvre-fiche.js)"
     ]
   }
 }

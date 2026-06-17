@@ -23,6 +23,9 @@ function sectionDe(nomVue) {
   if (nomVue.startsWith('oeuvre'))  return 'oeuvres';
   if (nomVue.startsWith('client'))  return 'clients';
   if (nomVue.startsWith('vente'))   return 'ventes';
+  if (nomVue === 'outils')           return 'outils';
+  if (nomVue === 'reglages')         return 'reglages';
+  if (nomVue === 'profil-galerie')   return 'profil-galerie';
   return '';
 }
 

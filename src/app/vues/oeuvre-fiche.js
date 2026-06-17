@@ -1,10 +1,11 @@
 import { naviguer, retour, poserGardien, leverGardien, modifierParamsCourants, remplacerCourant } from '../router.js';
 import {
   ech, formaterPrix, badgeStatut, STATUTS,
-  champTexte, champTextarea, champSelect, datalist, urlPhoto,
+  champTexte, champTextarea, champSelect, champCheckbox, datalist, urlPhoto,
   formaterDate, nomComplet, sansAccents,
   badgeArchive, boutonArchive, basculerArchive,
 } from '../commun.js';
+import { calculerPrixSuggere } from '../calcul-prix.js';
 import { visionner } from '../visionneuse.js';
 import { confirmer, alerter } from '../dialogue.js';
 import { ouvrirCreationCertificat } from './certificat-creation.js';
@@ -22,6 +23,7 @@ const GABARIT_VIDE = {
   annee: null, medium: null, support: null, dimensions: null,
   hauteur: null, largeur: null, profondeur: null,
   format: null, orientation: null, sujets: null,
+  cote_hors_normes: 0,
   emplacement_signature: null, particularite: null, description: null,
   prix: null, statut: 'disponible',
   emplacement: null, exposition_actuelle: null,
@@ -677,6 +679,8 @@ export async function rendreOeuvreFiche(contenu, params) {
               ${champTexte({ nom: 'emplacement', libelle: 'Emplacement (gallerie)', valeur: o.emplacement })}
               ${champTexte({ nom: 'exposition_actuelle', libelle: 'Exposition actuelle', valeur: o.exposition_actuelle })}
             </div>
+            <div id="zone-prix-suggere"></div>
+            ${champCheckbox({ nom: 'cote_hors_normes', libelle: 'Cote hors-normes (œuvre exceptionnelle, prix saisi à la main)', valeur: !!o.cote_hors_normes })}
             ${champTexte({ nom: 'url_site', libelle: "URL de la fiche sur le site web", valeur: o.url_site, type: 'url', attributs: 'placeholder="https://galerievieuxstjean.com/produit/…"' })}
           </section>
 
@@ -909,6 +913,131 @@ export async function rendreOeuvreFiche(contenu, params) {
       el.addEventListener('input', majDimensions);
     });
     majDimensions();
+
+    // ====== Prix suggéré à partir des cotes de l'artiste ======
+    const zonePrixSuggere = contenu.querySelector('#zone-prix-suggere');
+    const elPrix = form.elements.prix;
+    const elMedium = form.elements.medium;
+    const elHorsNormes = form.elements.cote_hors_normes;
+    let artisteCote = null;          // cache de l'artiste avec ses cotes
+    let dernierPrixAuto = null;      // dernière valeur auto-appliquée
+    let prixModifieManuellement = false;
+
+    async function chargerArtisteCote(artisteId) {
+      if (!artisteId) { artisteCote = null; return; }
+      try { artisteCote = await window.api.artisteGet(Number(artisteId)); }
+      catch { artisteCote = null; }
+    }
+
+    // L'utilisateur a tapé une valeur dans le champ Prix. Si elle diffère de
+    // la dernière valeur auto-appliquée, on considère qu'il l'a écrasée
+    // volontairement et on cesse l'auto-fill jusqu'à un reset (ou bouton).
+    if (elPrix) {
+      elPrix.addEventListener('input', () => {
+        if (dernierPrixAuto != null && String(elPrix.value) !== String(dernierPrixAuto)) {
+          prixModifieManuellement = true;
+        }
+      });
+    }
+
+    function rendrePrixSuggere() {
+      if (!zonePrixSuggere) return;
+      if (elHorsNormes?.checked) {
+        zonePrixSuggere.innerHTML = `<p class="prix-suggere prix-suggere-horsnorm">Œuvre marquée <strong>hors-normes</strong>. Le prix est saisi à la main.</p>`;
+        return;
+      }
+      if (!artisteCote || !artisteCote.cotes) {
+        zonePrixSuggere.innerHTML = '';
+        return;
+      }
+      const oeuvreVirt = {
+        hauteur: Number(elHauteur.value) || 0,
+        largeur: Number(elLargeur.value) || 0,
+        medium: elMedium?.value || '',
+        format: elFormat?.value || '',
+      };
+      const res = calculerPrixSuggere({ artiste: artisteCote, oeuvre: oeuvreVirt });
+      if (!res) {
+        zonePrixSuggere.innerHTML = `<p class="prix-suggere prix-suggere-aucun">Aucune cote applicable (vérifie médium, format, dimensions).</p>`;
+        return;
+      }
+
+      // Auto-application du prix si l'utilisateur n'a pas tapé sa propre valeur.
+      const prixCourantValeur = String(res.prix_courant);
+      const valeurActuelle = String(elPrix?.value || '').trim();
+      const peutAutoAppliquer = elPrix && !prixModifieManuellement && (
+        valeurActuelle === '' ||
+        valeurActuelle === String(dernierPrixAuto)
+      );
+      if (peutAutoAppliquer) {
+        elPrix.value = prixCourantValeur;
+        dernierPrixAuto = res.prix_courant;
+        modifie = true;
+      }
+
+      const marqueEcrase = prixModifieManuellement
+        ? '<span class="prix-suggere-note">Prix actuel saisi à la main · </span>'
+        : '<span class="prix-suggere-note">Appliqué automatiquement · </span>';
+      const libelleBouton = prixModifieManuellement ? 'Réappliquer' : 'Réappliquer';
+
+      zonePrixSuggere.innerHTML = `
+        <div class="prix-suggere prix-suggere-actif">
+          <div class="prix-suggere-entete">
+            <span class="prix-suggere-libelle">${marqueEcrase}Prix courant (encadré)</span>
+            <span class="prix-suggere-valeur">${res.prix_courant.toLocaleString('fr-CA')} $</span>
+            <button type="button" class="btn-action btn-secondaire-action" id="btn-utiliser-prix-suggere">${ech(libelleBouton)}</button>
+          </div>
+          <p class="prix-suggere-formule">${ech(res.formule_preferentiel)}<br>${ech(res.formule_courant)}</p>
+          <p class="prix-suggere-formule">Préférentiel (sans cadre) : <strong>${res.prix_preferentiel.toLocaleString('fr-CA')} $</strong></p>
+        </div>
+      `;
+      const btnUtiliser = zonePrixSuggere.querySelector('#btn-utiliser-prix-suggere');
+      if (btnUtiliser) {
+        btnUtiliser.addEventListener('click', () => {
+          if (!elPrix) return;
+          elPrix.value = res.prix_courant;
+          dernierPrixAuto = res.prix_courant;
+          prixModifieManuellement = false;
+          modifie = true;
+          rendrePrixSuggere();
+        });
+      }
+    }
+
+    // Chargement initial (artiste éventuellement déjà sélectionné)
+    if (form.elements.artiste_id?.value) {
+      // Si l'œuvre existe déjà avec un prix saisi, on présume qu'il est manuel.
+      if (!nouveau && elPrix && elPrix.value) {
+        prixModifieManuellement = true;
+      }
+      chargerArtisteCote(form.elements.artiste_id.value).then(rendrePrixSuggere);
+    }
+    if (form.elements.artiste_id) {
+      form.elements.artiste_id.addEventListener('change', async () => {
+        await chargerArtisteCote(form.elements.artiste_id.value);
+        // Changement d'artiste → on réinitialise pour permettre une nouvelle
+        // auto-application si le prix n'a pas encore été touché.
+        rendrePrixSuggere();
+      });
+    }
+    [elHauteur, elLargeur, elFormat, elMedium].forEach((el) => {
+      if (el) el.addEventListener('input', rendrePrixSuggere);
+      if (el && el.tagName === 'SELECT') el.addEventListener('change', rendrePrixSuggere);
+    });
+    if (elHorsNormes) {
+      elHorsNormes.addEventListener('change', () => {
+        if (elHorsNormes.checked && elPrix) {
+          elPrix.value = '';
+          dernierPrixAuto = null;
+          prixModifieManuellement = true;
+        } else if (!elHorsNormes.checked) {
+          // On laisse l'utilisateur ré-enclencher l'auto-fill manuellement
+          // en cliquant « Réappliquer » ; on n'écrase pas un prix déjà saisi.
+          prixModifieManuellement = !!(elPrix && elPrix.value);
+        }
+        rendrePrixSuggere();
+      });
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();

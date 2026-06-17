@@ -10,6 +10,7 @@ import { rendreVentesListe } from './vues/ventes-liste.js';
 import { rendreVenteFiche } from './vues/vente-fiche.js';
 import { rendreReglages } from './vues/reglages.js';
 import { rendreProfilGalerie } from './vues/profil-galerie.js';
+import { rendreOutils } from './vues/outils.js';
 import { rafraichirEntete } from './marque.js';
 import { formaterTelephone } from './commun.js';
 import { initialiserUpdater } from './updater.js';
@@ -25,6 +26,7 @@ enregistrer('ventes-liste', rendreVentesListe);
 enregistrer('vente-fiche', rendreVenteFiche);
 enregistrer('reglages', rendreReglages);
 enregistrer('profil-galerie', rendreProfilGalerie);
+enregistrer('outils', rendreOutils);
 
 document.getElementById('btn-retour').addEventListener('click', retour);
 document.getElementById('logo-galeria').addEventListener('click', () => remplacer('accueil'));

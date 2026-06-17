@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS artistes (
   notes               TEXT,
   instructions_ia     TEXT,
   lien_chatgpt        TEXT,
+  cotes               TEXT,
   archive             INTEGER NOT NULL DEFAULT 0
                       CHECK (archive IN (0, 1)),
   cree_le             TEXT NOT NULL DEFAULT (datetime('now')),
@@ -56,6 +57,8 @@ CREATE TABLE IF NOT EXISTS oeuvres (
   emplacement            TEXT,
   exposition_actuelle    TEXT,
   url_site               TEXT,
+  cote_hors_normes       INTEGER NOT NULL DEFAULT 0
+                         CHECK (cote_hors_normes IN (0, 1)),
   archive                INTEGER NOT NULL DEFAULT 0
                          CHECK (archive IN (0, 1)),
   cree_le                TEXT NOT NULL DEFAULT (datetime('now')),

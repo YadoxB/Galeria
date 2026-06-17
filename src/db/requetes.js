@@ -337,6 +337,24 @@ function listerTypesOeuvre() {
     .map((r) => r.type);
 }
 
+function listerMediumsOeuvre() {
+  const db = openDatabase();
+  return db
+    .prepare(`SELECT DISTINCT medium FROM oeuvres WHERE medium IS NOT NULL AND TRIM(medium) <> '' ORDER BY medium COLLATE NOCASE`)
+    .all()
+    .map((r) => r.medium.trim());
+}
+
+function listerMediumsArtiste(artisteId) {
+  const id = Number(artisteId);
+  if (!Number.isFinite(id) || id <= 0) return [];
+  const db = openDatabase();
+  return db
+    .prepare(`SELECT DISTINCT medium FROM oeuvres WHERE artiste_id = ? AND medium IS NOT NULL AND TRIM(medium) <> '' ORDER BY medium COLLATE NOCASE`)
+    .all(id)
+    .map((r) => r.medium.trim());
+}
+
 function listerVentes() {
   const db = openDatabase();
   return db.prepare(`
@@ -444,6 +462,8 @@ module.exports = {
   obtenirOeuvre,
   voisinsOeuvre,
   listerTypesOeuvre,
+  listerMediumsOeuvre,
+  listerMediumsArtiste,
   statsOeuvres,
   listerClients,
   obtenirClient,
