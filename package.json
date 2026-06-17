@@ -19,7 +19,7 @@
     "prepare:assets:public": "npm run prepare:icon && npm run prepare:seed:vide && npm run prepare:photos:vide",
     "build:complet": "npm run prepare:assets:complet && electron-builder --win",
     "build:public": "npm run prepare:assets:public && electron-builder --win --publish=never",
-    "release": "npm run prepare:assets:public && electron-builder --win --publish=always",
+    "release": "node scripts/release.js",
     "build": "npm run build:complet"
   },
   "devDependencies": {
