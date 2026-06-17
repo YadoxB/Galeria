@@ -2,6 +2,14 @@
 
 > À conserver à la racine du projet sous le nom `CLAUDE.md` pour que Claude Code le relise à chaque session.
 
+## Documents de référence à consulter en début de session
+
+- **`ETAT.md`** — état détaillé du projet, roadmap des jalons en cours, recommandation pour la prochaine étape.
+- **`CHANGELOG.md`** — historique versionné (Keep a Changelog) depuis la 0.1.0. La section « Non publié » liste ce qui est dans la branche en cours.
+- **`A-VALIDER.md`** — liste vivante des questions à clarifier avec les parents de Dave (galeristes). À mettre à jour quand une décision est prise.
+
+Ces trois fichiers évoluent avec le projet. `CLAUDE.md` (ce fichier) reste relativement stable et décrit l'intention de fond.
+
 ---
 
 ## 1. Le projet en une phrase

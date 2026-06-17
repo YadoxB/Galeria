@@ -1,13 +1,15 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-06-15.
+> Date de cette sauvegarde : 2026-06-17.
+>
+> **Voir aussi** : `CHANGELOG.md` (historique versionné détaillé) et `A-VALIDER.md` (questions ouvertes avec les parents).
 
 ---
 
 ## En une phrase
 
-L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est fonctionnelle de bout en bout pour le cœur du métier (catalogue, ventes, certificats, factures artiste avec PDF) et elle a reçu sa **refonte UI complète** selon le brief visuel fourni. Reste à concevoir les documents complémentaires (facture client, lettre de remerciement), traiter quelques demandes en attente, puis Phase 4 (Sage 50) et Phase 5 (web).
+L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable et installée chez les parents (v0.2.2 sur GitHub Releases avec auto-update). Les jalons 1 et 2 de la roadmap post-tests sont livrés (polish UX + cotes & calculateur de prix). La v0.2.3 est en cours sur la branche `claude/youthful-bartik-5675fa` — pas encore taggée. Reste les jalons 3 (cycle de vie), 4 (pack de vente) et 5 (réorganisation photos), plus les phases reportées (Sage, web, sécurité).
 
 ---
 
@@ -277,26 +279,30 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 - ~~Numéro séquentiel d'inventaire global~~ → ajustable dans Réglages → Documents. Pré-rempli sur le formulaire d'œuvre (préfixe artiste + numéro), incrémenté seulement si la valeur suggérée n'est pas modifiée à la main.
 - ~~Chaînage œuvres pour artiste existant~~ → bouton **« + Ajouter d'autres œuvres »** sur la fiche artiste. Et sur la liste Œuvres, le bouton « + Ajouter une œuvre » ouvre une modale qui demande l'artiste (avec option **✦ Nouvel artiste…** en tête) — si nouvel artiste choisi, redirige vers la fiche de création d'artiste qui chaîne ensuite vers les œuvres.
 
-**Jalon 2 — Cotes & calculateur de prix** (2-3 jours, pièce maîtresse)
-- Modèle de données : cotes par artiste, variation par taille (P/M/G/TG), variation optionnelle par médium, unité (po² ou po linéaires = H+L), deux versions (préférentiel sans cadre / courante encadrée = préférentiel + 2 $/po, le prix affiché est courant).
-- Champ « cote hors-normes » sur l'œuvre pour les formats atypiques (override du prix calculé).
-- Calcul auto du prix sur la fiche œuvre à partir de l'artiste, des dimensions et du médium.
-- Section « Cotes » sur la fiche artiste.
-- Section « Outils » dans l'app : calculateur autonome (artiste + dimensions → prix).
+### Jalon 2 — Livré en v0.2.3 (en cours, pas encore taggée)
 
-**Jalon 3 — Suivi cycle de vie** (1-2 jours)
+- ~~Modèle de données cotes par artiste~~ → colonne `cotes` (JSON) sur artistes + colonne `cote_hors_normes` (INTEGER) sur oeuvres. Chaque entrée = `{ medium, taille, unite, prix_pref }`. Liste vide acceptée (= pas de calcul auto, prix saisi à la main comme avant).
+- ~~Calcul automatique~~ → module `src/app/calcul-prix.js`. **Formule courante** = `(prix_pref + 2) × base` : le 2 $ s'ajoute à la cote (par unité), pas au prix total. Sur cote en $/po linéaire ça revient au même qu'un supplément linéaire ; sur cote en $/po² ça creuse l'écart. **À reconfirmer avec les parents pour les po²** (noté dans `A-VALIDER.md`).
+- ~~Matching de cote~~ → priorité explicite : exact médium + exact taille > Tous + exact taille > exact médium + Tous > Tous + Tous. **Insensible à la casse et aux accents** (« Acrylique » = « acrylique »).
+- ~~UI section Cotes~~ sur fiche artiste : éditeur ligne-par-ligne, dropdown custom pour le médium (input texte libre + bouton ▾ qui ouvre une liste **complète, scrollable**, séparée en « Médiums de cet artiste » et « Autres médiums » avec « Tous » épinglé). Encart pliable « Ordre de priorité » qui explique la logique.
+- ~~Prix suggéré sur fiche œuvre~~ → bloc doré sous le champ Prix régulier qui montre le prix courant avec formule détaillée. **Auto-appliqué au champ** dès que dimensions / médium / format / artiste sont remplis ; si l'utilisateur écrase la valeur, l'auto-fill arrête (détecté par comparaison à la dernière valeur appliquée). Bouton **« Réappliquer »** pour revenir au calculé.
+- ~~Switch « Cote hors-normes »~~ sur l'œuvre : si coché, vide le prix et masque le bloc suggéré.
+- ~~Section Outils~~ : nouvelle entrée dans la sidebar (en bas avec Réglages, séparée par une fine ligne dorée). Première page : **calculateur de prix autonome** (artiste + dimensions + médium optionnel → prix courant + préférentiel + formule + grille des cotes configurées de l'artiste).
+- Sidebar segmentée en deux blocs visuellement séparés : haut = Accueil/Artistes/Œuvres/Clients/Ventes ; bas = Outils/Réglages ; pied = Profil.
+
+### Jalon 3 — Suivi cycle de vie (1-2 jours)
 - Statuts manuels de préparation : créé dans Sage (oui/non + date), créé sur le site (oui/non + date).
 - Statuts manuels post-vente : paiement (statut + date), emballage (date), envoi (date), livraison (date).
 - Bloc « Commandes non complétées » sur le tableau de bord (œuvres vendues dont les statuts post-vente ne sont pas tous à « complété »).
 
-**Jalon 4 — Pack de vente complet** (3-4 jours)
+### Jalon 4 — Pack de vente complet (3-4 jours)
 - **Présentation artiste** : PDF élégant de plusieurs pages (8.5×11) avec bio, démarche, CV, distinctions, photos d'œuvres représentatives. **Indépendant des ventes** — utile aussi pour démarchage, expositions, etc.
 - **Catalogue artiste** : PDF 6 œuvres/page, indépendant des ventes (la galerie en imprime à la demande).
 - **Lettre de remerciement personnalisée** selon méthode d'achat (web, en personne, cadeau, autres). Variantes de texte à venir de Dave.
 - **Commission galerie selon type d'œuvre** : 50 % toiles, 33 % sculptures, 50 % reproductions après coûts (champ « coûts de production » sur la fiche d'œuvre).
 - **Bundle PDF de vente** : certificat + facture artiste + présentation artiste + lettre de remerciement (et facture Sage en pièce jointe manuelle).
 
-**Jalon 5 — Réorganisation des photos** (2 jours, à faire en dernier car risqué)
+### Jalon 5 — Réorganisation des photos (2 jours, à faire en dernier car risqué)
 - Sous-dossiers par artiste dans `Documents\Galeria\Photos\`.
 - Renommage formulé : `(code 3 lettres)(num séq)-(titre slug)-(formatLettre)(HxLxP)-(médiumLettre)(supportLettre)-(emplSignature)(année)`. Exemple : `CLD1992-Entre-le-vent-et-la-mer-M30x30x.75-AT-BD2023`.
 - Migration des 500+ photos existantes, avec sauvegarde préalable.
@@ -321,7 +327,8 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 
 | Priorité | Tâche | Note |
 |---|---|---|
-| **Reco** | **#9 Mises à jour automatiques** (electron-updater) | Décision à prendre : releases publiques (GitHub Releases) ou serveur privé. Sans ça, chaque correction nécessite une réinstallation manuelle chez les parents. |
+| **Reco** | **Tag + release v0.2.3** | La branche `claude/youthful-bartik-5675fa` contient le jalon 2 commité (`d2ee7f7`) mais pas encore taggée. Une fois Dave satisfait, bumper en `0.2.3` et lancer `npm run release` (nouveau GH_TOKEN à demander). |
+| **Reco** | **Jalon 3 — Suivi cycle de vie** | Statuts manuels de préparation et post-vente + bloc « Commandes non complétées » sur le tableau de bord. Détaillé plus haut. |
 | | **#13 Tutoriel de première ouverture** | Overlay guidé qui présente les sections au 1er lancement. Quelques décisions de design. |
 | | **#2 Édition en batch** (vue tableau) | Gros morceau qu'on a reporté à deux reprises. Toujours là. |
 | | **Migration manuelle des 2 pseudonymes** | « LO (Laurent Torregrossa) » et « Sofia (Sophie Lebeuf) » dans les fiches artistes — 5 minutes dans l'app. |
@@ -351,10 +358,14 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 
 ### Hygiène et test
 
-- **Retest manuel chez les parents** avec l'installateur 0.2.0 pour collecter le vrai feedback avant d'ouvrir un nouveau gros chantier.
+- **Tests des cotes chez les parents** : Dave doit configurer quelques artistes avec des cotes (P/M/G/TG ou Tous + exception), tester le calcul auto sur des œuvres existantes, vérifier que ça « colle » avec les prix manuels actuels.
 - **Audit Loi 25** : confirmer que la fonction ChatGPT n'envoie que les données de l'œuvre (pas de client). Déjà vérifié côté code.
+- **Tester les commandes avec la formule courante en po²** : valider avec les parents que `(prix_pref + 2) × surface` est la bonne formule, ou si pour le carré c'est plutôt `(prix_pref × surface) + 2 × (H+L)`. Voir `A-VALIDER.md`.
 
-**Recommandation pour la prochaine session :** avant un gros chantier (Phase 4/5, batch edit), prioriser **#9 Mises à jour automatiques**. Sans ça, chaque correctif demande une réinstallation manuelle.
+**Recommandation pour la prochaine session :**
+1. Si Dave a testé les cotes et est content → **tag + release v0.2.3** (jalon 2 complet).
+2. Sinon → ajustements sur le calculateur ou le UI cotes avant release.
+3. Puis attaquer le **jalon 3 — cycle de vie** : un bon morceau autonome qui apporte de la valeur visible (commandes non complétées sur le tableau de bord).
 
 ---
 
