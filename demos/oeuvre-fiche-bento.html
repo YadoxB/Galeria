@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo fiche œuvre (bento)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+
+    /* ===== Barre de démo ===== */
+    .demo-bar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: var(--s3);
+      padding: var(--s2) var(--s4);
+      background: var(--deep-navy); color: var(--soft-ivory);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .switch { display: flex; gap: 4px; background: rgba(255,255,255,0.06); padding: 4px; border-radius: 999px; }
+    .demo-bar .switch button {
+      background: transparent; color: var(--soft-ivory);
+      border: 0; padding: 6px 14px; border-radius: 999px;
+      font-family: var(--font-ui); font-size: 13px; cursor: pointer;
+    }
+    .demo-bar .switch button:hover { background: rgba(255,255,255,0.06); }
+    .demo-bar .switch button.actif {
+      background: var(--warm-gold); color: var(--soft-ivory); font-weight: 500;
+    }
+
+    /* ===== Conteneur principal ===== */
+    main {
+      max-width: 1400px; margin: 0 auto;
+      padding: var(--s5) var(--s4);
+    }
+    .vue-fiche {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: var(--s3);
+    }
+
+    /* ===== Carte de base ===== */
+    .carte {
+      background: var(--porcelain);
+      border: 1px solid var(--mist);
+      border-radius: var(--r-carte);
+      box-shadow: var(--ombre-carte);
+    }
+    .lien {
+      color: var(--warm-gold); font-size: 13px; font-weight: 500;
+      text-decoration: none; cursor: pointer;
+    }
+    .lien:hover { text-decoration: underline; }
+
+    /* ===== Image (zone gauche) ===== */
+    .zone-image {
+      grid-column: span 5;
+      background: var(--porcelain);
+      border: 1px solid var(--mist);
+      border-radius: var(--r-carte);
+      box-shadow: var(--ombre-carte);
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      cursor: zoom-in;
+    }
+    .zone-image img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .zone-image-placeholder {
+      font-family: var(--font-titre);
+      font-size: 64px;
+      color: var(--stone);
+    }
+    .badge-archive-fiche {
+      position: absolute; top: var(--s2); left: var(--s2);
+      background: var(--badge-archivee-fond); color: var(--badge-archivee-texte);
+      font-family: var(--font-ui); font-size: 11px; font-weight: 500;
+      padding: 3px 10px; border-radius: var(--r-badge);
+    }
+
+    /* ===== Identité (titre + prix + actions) ===== */
+    .zone-identite {
+      grid-column: span 7;
+      padding: var(--s4);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .zone-identite h1 {
+      margin: 0;
+      font-family: var(--font-titre);
+      font-weight: 500;
+      font-size: 38px;
+      line-height: 1.1;
+      color: var(--ink);
+      word-break: break-word;
+    }
+    .zone-identite-artiste {
+      margin: var(--s2) 0 var(--s3);
+      color: var(--slate);
+      font-size: 15px;
+    }
+    .zone-identite-artiste .lien-artiste {
+      color: var(--gallery-navy);
+      font-weight: 500;
+    }
+    .zone-identite-prix-bloc {
+      display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
+      padding: var(--s3) 0;
+      border-top: 1px solid var(--mist);
+      border-bottom: 1px solid var(--mist);
+      margin-bottom: var(--s3);
+    }
+    .zone-identite-prix {
+      font-family: var(--font-titre);
+      font-size: 32px;
+      color: var(--gallery-navy);
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .badge-statut {
+      font-size: 12px; font-weight: 500;
+      padding: 4px 12px; border-radius: var(--r-badge);
+      font-family: var(--font-ui);
+    }
+    .badge-statut-disponible { background: var(--badge-disponible-fond); color: var(--badge-disponible-texte); }
+    .badge-statut-reserve    { background: var(--badge-reservee-fond);    color: var(--badge-reservee-texte); }
+    .badge-statut-vendue     { background: var(--badge-vendue-fond);      color: var(--badge-vendue-texte); }
+    .zone-identite-lien-site {
+      margin: 0 0 var(--s3); font-size: 13px;
+    }
+    .zone-identite-actions {
+      display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: auto;
+    }
+    .btn {
+      font-family: var(--font-ui); font-size: 13px; font-weight: 500;
+      padding: 8px 16px; border-radius: var(--r-btn);
+      border: 1px solid transparent; cursor: pointer;
+    }
+    .btn-primaire   { background: var(--warm-gold); color: var(--soft-ivory); }
+    .btn-secondaire { background: var(--porcelain); color: var(--ink); border-color: var(--mist); }
+    .btn-danger     { background: var(--porcelain); color: var(--erreur); border-color: rgba(182, 66, 60, 0.4); }
+
+    /* ===== Caractéristiques + Localisation (2 colonnes) ===== */
+    .zone-carac      { grid-column: span 6; padding: var(--s3) var(--s4); }
+    .zone-localisation { grid-column: span 6; padding: var(--s3) var(--s4); }
+
+    .zone-carac h3, .zone-localisation h3, .zone-description h3, .zone-certificats h3 {
+      font-family: var(--font-titre);
+      font-size: 18px;
+      color: var(--gallery-navy);
+      margin: 0 0 var(--s3);
+      font-weight: 500;
+    }
+    .sous-section { padding: var(--s3) 0; }
+    .sous-section:first-of-type { padding-top: 0; }
+    .sous-section + .sous-section { border-top: 1px solid var(--mist); }
+    .sous-section h4 {
+      margin: 0 0 var(--s2);
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--slate);
+    }
+    .champs-grille {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--s2) var(--s4);
+    }
+    .champ { display: flex; flex-direction: column; gap: 2px; }
+    .champ-lib {
+      font-size: 11px; color: var(--slate);
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .champ-val { font-size: 14px; color: var(--ink); }
+    .champ-vide { color: var(--stone); font-style: italic; font-size: 13px; }
+    .puce {
+      display: inline-block;
+      padding: 3px 12px;
+      margin: 0 4px 6px 0;
+      border-radius: var(--r-badge);
+      background: var(--cloud);
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    /* ===== Description ===== */
+    .zone-description { grid-column: span 12; padding: var(--s3) var(--s4); }
+    .zone-description .corps {
+      font-size: 15px; line-height: 1.65; color: var(--ink);
+    }
+    .zone-description .vide {
+      color: var(--stone); font-style: italic;
+      border: 1px dashed var(--mist); border-radius: var(--r-btn);
+      padding: var(--s4); text-align: center;
+    }
+
+    /* ===== Certificats ===== */
+    .zone-certificats { grid-column: span 12; padding: var(--s3) var(--s4); }
+    .zone-certificats .entete {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: var(--s3); gap: var(--s2);
+    }
+    .zone-certificats .entete h3 { margin: 0; }
+    .liste-certs { display: flex; flex-direction: column; gap: var(--s2); }
+    .cert-ligne {
+      display: flex; align-items: center; gap: var(--s3);
+      padding: var(--s3); background: var(--cloud);
+      border-radius: var(--r-btn);
+    }
+    .cert-ligne .cert-num {
+      font-family: var(--font-titre); font-size: 18px;
+      color: var(--gallery-navy);
+    }
+    .cert-ligne .cert-info {
+      flex: 1; font-size: 13px; color: var(--slate);
+    }
+    .cert-ligne .cert-actions { display: flex; gap: 6px; }
+    .cert-ligne .cert-actions .btn { font-size: 12px; padding: 5px 10px; }
+
+    /* ===== Pied de la démo ===== */
+    .demo-pied {
+      max-width: 1400px; margin: var(--s5) auto var(--s4);
+      padding: 0 var(--s4);
+      color: var(--slate); font-size: 12px; line-height: 1.6;
+    }
+    .demo-pied strong { color: var(--ink); }
+    .demo-pied ul { padding-left: 18px; margin: 6px 0 0; }
+  </style>
+</head>
+<body>
+
+  <header class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Démo fiche œuvre (bento)</div>
+    <div class="switch" id="switch-profil">
+      <button data-profil="riche" class="actif">Œuvre riche</button>
+      <button data-profil="vendue">Vendue</button>
+      <button data-profil="minimal">Minimale</button>
+      <button data-profil="archive">Archivée</button>
+    </div>
+  </header>
+
+  <main id="contenu"></main>
+
+  <div class="demo-pied">
+    <strong>Notes</strong>
+    <ul>
+      <li>Maquette statique — aucun bouton n'est branché.</li>
+      <li>L'image est représentée par un dégradé neutre. Dans l'app, c'est la vraie photo de l'œuvre en <code>object-fit: contain</code> sur fond porcelain (encadrement visuel).</li>
+      <li>Le bloc Certificats reproduit la liste actuelle (une ligne par certificat avec ses actions).</li>
+    </ul>
+  </div>
+
+  <script>
+    const PROFILS = {
+      riche: {
+        titre: "Marée du soir",
+        artiste: "Claude Lefebvre-Dubé",
+        couleurImage: 'linear-gradient(135deg, #6e8492 0%, #9aa7b0 50%, #c8b89a 100%)',
+        archive: false,
+        statut: 'disponible',
+        prix: 4200,
+        url_site: 'galerievieuxstjean.com/produit/maree-du-soir',
+        type: 'Toile',
+        numero_inventaire: 'CLD-2023-014',
+        numero_delivrance: 'C-2024-031',
+        annee: 2023,
+        medium: 'Acrylique',
+        support: 'Toile montée',
+        dimensions: '24 × 36 po',
+        format: 'Grand',
+        orientation: 'Horizontale',
+        particularite: 'Signée et titrée au verso',
+        emplacement_signature: 'Bas droite',
+        emplacement: 'Salle principale',
+        exposition_actuelle: 'Vernissage du 12 mai 2024',
+        sujets: ['Marine', 'Coucher de soleil', 'Côte'],
+        description: "Une marée basse capturée à l'heure dorée, où le ciel et le sable se confondent dans une orchestration de tons chauds. L'artiste superpose des couches successives d'acrylique transparent, laissant percevoir la dérive du regard plutôt qu'une horizon fermée.",
+        certificats: [
+          { num: 'C-2024-031', date: '12 mai 2024', valeur: '4 200 $', signataire: 'Joanne Boucher, Galeriste' }
+        ],
+        vente: null,
+      },
+      vendue: {
+        titre: "Souche I",
+        artiste: "Jean Tremblay",
+        couleurImage: 'linear-gradient(135deg, #5e4a36 0%, #7a6249 50%, #8f7456 100%)',
+        archive: false,
+        statut: 'vendue',
+        prix: 2800,
+        url_site: '',
+        type: 'Sculpture',
+        numero_inventaire: 'JTR-2023-003',
+        numero_delivrance: 'C-2023-018',
+        annee: 2023,
+        medium: 'Bois récupéré',
+        support: 'Socle de chêne',
+        dimensions: '18 × 12 × 22 po',
+        format: 'Moyen',
+        orientation: 'Verticale',
+        particularite: '',
+        emplacement_signature: 'Dessous',
+        emplacement: 'Vendue',
+        exposition_actuelle: '',
+        sujets: ['Nature morte', 'Bois'],
+        description: "Sculpture taillée dans une souche d'érable récupérée près de la rivière Yamaska. Le travail conserve les irrégularités naturelles du bois pour souligner la mémoire de l'arbre.",
+        certificats: [
+          { num: 'C-2023-018', date: '03 sept 2023', valeur: '2 800 $', signataire: 'Joanne Boucher, Galeriste' }
+        ],
+        vente: { numero: 'F-2023-042', date: '03 sept 2023', client: 'Pierre et Marie Côté' },
+      },
+      minimal: {
+        titre: "Sans titre",
+        artiste: "Sofia Lebeuf",
+        couleurImage: 'linear-gradient(135deg, #d0d0d0 0%, #e8e8e8 100%)',
+        archive: false,
+        statut: 'disponible',
+        prix: null,
+        url_site: '',
+        type: '',
+        numero_inventaire: 'SOF-2024-001',
+        numero_delivrance: '',
+        annee: null,
+        medium: '',
+        support: '',
+        dimensions: '',
+        format: '',
+        orientation: '',
+        particularite: '',
+        emplacement_signature: '',
+        emplacement: '',
+        exposition_actuelle: '',
+        sujets: [],
+        description: '',
+        certificats: [],
+        vente: null,
+      },
+      archive: {
+        titre: "Quai du matin",
+        artiste: "Marie Dupont",
+        couleurImage: 'linear-gradient(135deg, #4a4a4a 0%, #6b6b6b 50%, #8a8a8a 100%)',
+        archive: true,
+        statut: 'vendue',
+        prix: 1850,
+        url_site: '',
+        type: 'Photographie',
+        numero_inventaire: 'MDU-2020-007',
+        numero_delivrance: 'C-2020-023',
+        annee: 2020,
+        medium: 'Argentique noir et blanc',
+        support: 'Tirage baryté',
+        dimensions: '16 × 20 po',
+        format: 'Moyen',
+        orientation: 'Verticale',
+        particularite: 'Tirage de l\'artiste, 1/5',
+        emplacement_signature: 'Verso',
+        emplacement: 'Archivée',
+        exposition_actuelle: '',
+        sujets: ['Bas-Saint-Laurent', 'Port', 'Argentique'],
+        description: "Vue d'un quai au petit matin, brume sur l'eau. Une des séries documentaires de Marie Dupont sur les communautés portuaires du Bas-Saint-Laurent.",
+        certificats: [
+          { num: 'C-2020-023', date: '14 oct 2020', valeur: '1 850 $', signataire: 'Joanne Boucher, Galeriste' }
+        ],
+        vente: { numero: 'F-2020-038', date: '14 oct 2020', client: 'François Bellemare' },
+      }
+    };
+
+    const ech = (s) => (s == null ? '' : String(s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const formaterPrix = (n) => n == null ? '—' : Math.round(n).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
+    const libStatut = { disponible: 'Disponible', reserve: 'Réservée', vendue: 'Vendue' };
+
+    function champ(libelle, valeur) {
+      if (valeur == null || valeur === '') {
+        return `<div class="champ"><span class="champ-lib">${ech(libelle)}</span><span class="champ-vide">—</span></div>`;
+      }
+      return `<div class="champ"><span class="champ-lib">${ech(libelle)}</span><span class="champ-val">${ech(valeur)}</span></div>`;
+    }
+
+    function rendre(profil) {
+      const o = PROFILS[profil];
+
+      const lignesIdent = `
+        <div class="champs-grille">
+          ${champ('Type', o.type)}
+          ${champ("N° d'inventaire", o.numero_inventaire)}
+          ${champ('N° de délivrance', o.numero_delivrance)}
+          ${champ('Année', o.annee)}
+        </div>
+      `;
+
+      const lignesMat = `
+        <div class="champs-grille">
+          ${champ('Médium', o.medium)}
+          ${champ('Support', o.support)}
+          ${champ('Dimensions', o.dimensions)}
+          ${champ('Format', o.format)}
+          ${champ('Orientation', o.orientation)}
+          ${champ('Empl. signature', o.emplacement_signature)}
+        </div>
+        ${o.particularite ? `<div style="margin-top:var(--s2); font-size:13px; color:var(--slate);"><strong style="color:var(--ink);">Particularité.</strong> ${ech(o.particularite)}</div>` : ''}
+      `;
+
+      const sujetsHtml = o.sujets.length
+        ? o.sujets.map((s) => `<span class="puce">${ech(s)}</span>`).join('')
+        : '<span class="champ-vide">Aucun sujet renseigné</span>';
+
+      const certsHtml = o.certificats.length
+        ? o.certificats.map((c) => `
+            <div class="cert-ligne">
+              <div class="cert-num">${ech(c.num)}</div>
+              <div class="cert-info">
+                Délivré le ${ech(c.date)} · ${ech(c.valeur)} · ${ech(c.signataire)}
+              </div>
+              <div class="cert-actions">
+                <button class="btn btn-secondaire">Voir le PDF</button>
+                <button class="btn btn-secondaire">Dossier</button>
+                <button class="btn btn-secondaire">Re-générer</button>
+              </div>
+            </div>
+          `).join('')
+        : '<p class="champ-vide" style="margin:0;">Aucun certificat encore produit pour cette œuvre.</p>';
+
+      document.getElementById('contenu').innerHTML = `
+        <div class="vue-fiche">
+          <div class="zone-image">
+            ${o.archive ? '<span class="badge-archive-fiche">Archivée</span>' : ''}
+            <div style="width:80%; height:80%; background:${o.couleurImage}; border-radius:6px;"></div>
+          </div>
+
+          <div class="carte zone-identite">
+            <div>
+              <h1>${ech(o.titre)}</h1>
+              <p class="zone-identite-artiste">par <span class="lien lien-artiste">${ech(o.artiste)}</span></p>
+              <div class="zone-identite-prix-bloc">
+                ${o.prix != null ? `<span class="zone-identite-prix">${formaterPrix(o.prix)}</span>` : '<span class="champ-vide">Prix non défini</span>'}
+                <span class="badge-statut badge-statut-${o.statut === 'reserve' ? 'reserve' : (o.statut === 'vendue' ? 'vendue' : 'disponible')}">${libStatut[o.statut]}</span>
+              </div>
+              ${o.url_site ? `<p class="zone-identite-lien-site"><span class="lien">Voir sur le site ›</span></p>` : ''}
+              ${o.vente ? `<p class="zone-identite-lien-site"><span class="lien">Voir la vente ${ech(o.vente.numero)} (${ech(o.vente.client)}) ›</span></p>` : ''}
+            </div>
+            <div class="zone-identite-actions">
+              <button class="btn btn-danger">Supprimer</button>
+              <button class="btn btn-secondaire">${o.archive ? 'Désarchiver' : 'Archiver'}</button>
+              <button class="btn btn-secondaire">Modifier</button>
+              ${o.statut !== 'vendue' ? '<button class="btn btn-primaire">Vendre</button>' : ''}
+            </div>
+          </div>
+
+          <div class="carte zone-carac">
+            <h3>Caractéristiques</h3>
+            <div class="sous-section">
+              <h4>Identification</h4>
+              ${lignesIdent}
+            </div>
+            <div class="sous-section">
+              <h4>Matériel et facture</h4>
+              ${lignesMat}
+            </div>
+          </div>
+
+          <div class="carte zone-localisation">
+            <h3>Localisation et sujets</h3>
+            <div class="sous-section">
+              <h4>Emplacement et exposition</h4>
+              <div class="champs-grille">
+                ${champ('Emplacement (galerie)', o.emplacement)}
+                ${champ('Exposition actuelle', o.exposition_actuelle)}
+              </div>
+            </div>
+            <div class="sous-section">
+              <h4>Sujets</h4>
+              <div>${sujetsHtml}</div>
+            </div>
+          </div>
+
+          <div class="carte zone-description">
+            <h3>Description</h3>
+            ${o.description
+              ? `<div class="corps">${ech(o.description)}</div>`
+              : `<div class="vide">Aucune description renseignée.<br><span class="lien" style="display:inline-block; margin-top:8px;">+ Ajouter une description</span> · <span class="lien">✦ Copier pour ChatGPT</span></div>`
+            }
+          </div>
+
+          <div class="carte zone-certificats">
+            <div class="entete">
+              <h3>Certificats d'authenticité ${o.certificats.length ? `(${o.certificats.length})` : ''}</h3>
+              <button class="btn btn-secondaire">+ Produire un certificat</button>
+            </div>
+            <div class="liste-certs">${certsHtml}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    document.querySelectorAll('#switch-profil button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#switch-profil button').forEach((b) => b.classList.remove('actif'));
+        btn.classList.add('actif');
+        rendre(btn.dataset.profil);
+      });
+    });
+
+    rendre('riche');
+  </script>
+</body>
+</html>

@@ -22,9 +22,11 @@ const { genererCertificatPdf, genererFactureArtistePdf } = require('./pdf');
 const {
   listerArtistes,
   obtenirArtiste,
+  obtenirFicheArtisteBundle,
   voisinsArtiste,
   listerOeuvres,
   obtenirOeuvre,
+  obtenirFicheOeuvreBundle,
   voisinsOeuvre,
   listerTypesOeuvre,
   listerMediumsOeuvre,
@@ -32,11 +34,13 @@ const {
   statsOeuvres,
   listerClients,
   obtenirClient,
+  obtenirFicheClientBundle,
   voisinsClient,
   listerVentesClient,
   listerVentesOeuvre,
   listerVentes,
   obtenirVente,
+  obtenirFicheVenteBundle,
   voisinsVente,
   listerCertificatsParOeuvre,
   listerCertificatsParVente,
@@ -475,6 +479,13 @@ app.whenReady().then(() => {
     shell.openExternal(url);
     return { ok: true };
   });
+  ipcMain.handle('app:ouvrir-dossier', async (_e, dossier) => {
+    if (typeof dossier !== 'string' || !dossier) {
+      return { ok: false, erreur: 'Chemin invalide' };
+    }
+    const erreur = await shell.openPath(dossier);
+    return erreur ? { ok: false, erreur } : { ok: true };
+  });
   ipcMain.handle('app:infos', () => ({
     nom: app.getName(),
     version: app.getVersion(),
@@ -495,12 +506,14 @@ app.whenReady().then(() => {
   ipcMain.handle('artistes:liste', (_e, filtres) => listerArtistes(filtres));
   ipcMain.handle('fiche:archiver', (_e, table, id, archive) => definirArchive(table, id, archive));
   ipcMain.handle('artistes:get', (_e, id) => obtenirArtiste(id));
+  ipcMain.handle('artistes:fiche-bundle', (_e, id) => obtenirFicheArtisteBundle(id));
   ipcMain.handle('artistes:voisins', (_e, id) => voisinsArtiste(id));
   ipcMain.handle('artistes:modifier', (_e, id, data) => modifierArtiste(id, data));
   ipcMain.handle('artistes:creer', (_e, data) => creerArtiste(data));
   ipcMain.handle('artistes:supprimer', (_e, id) => supprimerArtiste(id));
   ipcMain.handle('oeuvres:liste', (_e, filtres) => listerOeuvres(filtres));
   ipcMain.handle('oeuvres:get', (_e, id) => obtenirOeuvre(id));
+  ipcMain.handle('oeuvres:fiche-bundle', (_e, id) => obtenirFicheOeuvreBundle(id));
   ipcMain.handle('oeuvres:voisins', (_e, id) => voisinsOeuvre(id));
   ipcMain.handle('oeuvres:modifier', (_e, id, data) => modifierOeuvre(id, data));
   ipcMain.handle('oeuvres:creer', (_e, data) => creerOeuvre(data));
@@ -532,6 +545,7 @@ app.whenReady().then(() => {
   ipcMain.handle('oeuvres:stats', () => statsOeuvres());
   ipcMain.handle('clients:liste', (_e, filtres) => listerClients(filtres));
   ipcMain.handle('clients:get', (_e, id) => obtenirClient(id));
+  ipcMain.handle('clients:fiche-bundle', (_e, id) => obtenirFicheClientBundle(id));
   ipcMain.handle('clients:voisins', (_e, id) => voisinsClient(id));
   ipcMain.handle('clients:modifier', (_e, id, data) => modifierClient(id, data));
   ipcMain.handle('clients:creer', (_e, data) => creerClient(data));
@@ -540,6 +554,7 @@ app.whenReady().then(() => {
   ipcMain.handle('oeuvres:ventes', (_e, id) => listerVentesOeuvre(id));
   ipcMain.handle('ventes:liste', () => listerVentes());
   ipcMain.handle('ventes:get', (_e, id) => obtenirVente(id));
+  ipcMain.handle('ventes:fiche-bundle', (_e, id) => obtenirFicheVenteBundle(id));
   ipcMain.handle('ventes:voisins', (_e, id) => voisinsVente(id));
   ipcMain.handle('ventes:creer', (_e, data) => creerVente(data));
   ipcMain.handle('ventes:modifier', (_e, id, data) => modifierVente(id, data));

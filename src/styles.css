@@ -2256,6 +2256,1172 @@ details.bloc.pliable > .bloc-corps {
   flex-shrink: 0;
 }
 
+/* ====== Fiche en grille bento (artiste — lecture) ======
+   Mise en page à 12 colonnes : identité en haut (photo + titre + stats),
+   présentation à onglets, conditions galerie (cotes + fiscalité dans une
+   seule carte), contact, aide IA, catalogue, notes. Ne s'applique qu'aux
+   fiches qui portent la classe .vue-fiche-bento — les autres fiches
+   conservent le layout linéaire pré-existant. */
+
+.vue-fiche-bento { max-width: 1400px; }
+
+.grille-bento {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--s3);
+}
+
+/* Base carte pour toutes les tuiles du bento : fond porcelain, bordure
+   mist, ombre légère. Les composants enfants ajoutent leur propre
+   padding/grille de colonne. */
+.grille-bento > .carte {
+  background: var(--porcelain);
+  border: 1px solid var(--mist);
+  border-radius: var(--r-carte);
+  box-shadow: var(--ombre-carte);
+}
+
+/* --- Photo (zone identitaire, gauche) --- */
+.zone-photo {
+  grid-column: span 2;
+  position: relative;
+  background: var(--deep-navy);
+  border-radius: var(--r-carte);
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--ombre-carte);
+}
+.zone-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.zone-photo.cliquable { cursor: zoom-in; }
+.zone-photo-initiales {
+  font-family: var(--font-titre);
+  font-size: 64px;
+  font-weight: 500;
+  color: var(--warm-gold);
+}
+.badge-archive-photo {
+  position: absolute;
+  top: var(--s2);
+  left: var(--s2);
+  background: var(--badge-archivee-fond);
+  color: var(--badge-archivee-texte);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: var(--r-badge);
+}
+
+/* --- Identité (titre + meta + actions) --- */
+.zone-identite {
+  grid-column: span 6;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--s3) var(--s4);
+}
+.zone-identite h1 {
+  margin: 0;
+  font-family: var(--font-titre);
+  font-weight: 500;
+  font-size: 38px;
+  line-height: 1.1;
+  color: var(--ink);
+  word-break: break-word;
+}
+.zone-identite-meta {
+  margin: var(--s1) 0 0;
+  color: var(--slate);
+  font-size: 14px;
+}
+.zone-identite-actions {
+  display: flex;
+  gap: var(--s2);
+  margin-top: var(--s3);
+  flex-wrap: wrap;
+}
+
+/* --- Stats (2×2 mini-cartes à droite) --- */
+.zone-stats {
+  grid-column: span 4;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: var(--s2);
+}
+.stat-bento {
+  background: var(--porcelain);
+  border: 1px solid var(--mist);
+  border-radius: var(--r-carte);
+  padding: var(--s3);
+  box-shadow: var(--ombre-carte);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.stat-bento-label {
+  font-size: 12px;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.stat-bento-val {
+  font-family: var(--font-titre);
+  font-size: 32px;
+  line-height: 1;
+  color: var(--gallery-navy);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stat-bento-val-money { font-size: 22px; }
+.stat-bento-navy {
+  background: var(--deep-navy);
+  border-color: transparent;
+}
+.stat-bento-navy .stat-bento-label { color: rgba(252, 250, 244, 0.7); }
+.stat-bento-navy .stat-bento-val   { color: var(--warm-gold); }
+
+/* --- Carte Présentation (onglets Bio / Démarche / CV) --- */
+.carte-presentation {
+  grid-column: span 12;
+  display: flex;
+  flex-direction: column;
+  padding: var(--s3) var(--s4);
+  min-height: 260px;
+}
+.carte-presentation h3 { display: none; } /* le titre est porté par les onglets */
+.onglets-bento {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--mist);
+  margin: 0 0 var(--s3);
+}
+.onglet-bento {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 10px 18px 12px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--slate);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .12s;
+}
+.onglet-bento:hover { color: var(--ink); }
+.onglet-bento.actif {
+  color: var(--gallery-navy);
+  border-bottom-color: var(--warm-gold);
+  font-weight: 500;
+}
+.onglet-corps {
+  flex: 1;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink);
+  user-select: text;
+}
+.onglet-corps-vide {
+  color: var(--stone);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--mist);
+  border-radius: var(--r-btn);
+  padding: var(--s5);
+  min-height: 140px;
+}
+
+/* --- Carte Conditions galerie (Cotes + Fiscalité) --- */
+.carte-conditions { grid-column: span 6; padding: var(--s3) var(--s4); }
+.conditions-corps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+.conditions-corps .sous-section + .sous-section {
+  padding-top: var(--s4);
+  border-top: 1px solid var(--mist);
+}
+.sous-section h4 {
+  margin: 0 0 var(--s2);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+.sous-section-ligne {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.55;
+  user-select: text;
+}
+.sous-section-libelle { color: var(--slate); }
+.sous-section-vide {
+  color: var(--stone);
+  font-style: italic;
+}
+.pastille-bento {
+  display: inline-block;
+  background: var(--cloud);
+  color: var(--slate);
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: var(--r-badge);
+  margin-bottom: var(--s2);
+}
+.pastille-bento-positive {
+  background: var(--badge-disponible-fond);
+  color: var(--badge-disponible-texte);
+}
+
+/* Table des cotes — affichage complet dans la sous-section Cotes */
+.cotes-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  font-family: var(--font-ui);
+}
+.cotes-table thead th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--slate);
+  padding: 0 var(--s2) 6px;
+  border-bottom: 1px solid var(--mist);
+}
+.cotes-table thead th:nth-child(2) { text-align: right; }
+.cotes-table tbody td {
+  padding: 8px var(--s2);
+  border-bottom: 1px solid var(--cloud);
+  font-size: 14px;
+  color: var(--ink);
+  user-select: text;
+}
+.cotes-table tbody tr:last-child td { border-bottom: 0; }
+.cotes-table .cote-prix {
+  text-align: right;
+  color: var(--warm-gold);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.cotes-table .cote-unite {
+  color: var(--slate);
+  font-size: 13px;
+  white-space: nowrap;
+  width: 1%;
+}
+.cotes-note {
+  margin: var(--s2) 0 0;
+  font-size: 12px;
+  color: var(--slate);
+  font-style: italic;
+}
+
+/* --- Cartes opérationnelles (Contact, Aide IA) --- */
+.carte-op {
+  grid-column: span 3;
+  padding: var(--s3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.carte-op h3 {
+  font-family: var(--font-titre);
+  font-size: 18px;
+  color: var(--gallery-navy);
+  margin: 0 0 var(--s2);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.carte-op-ligne {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.55;
+  user-select: text;
+}
+.carte-op-libelle { color: var(--slate); }
+
+/* La carte Présentation et Conditions ont aussi un h3 (caché ou repris)
+   en style identique au .carte-op h3 pour Conditions. */
+.carte-conditions > h3 {
+  font-family: var(--font-titre);
+  font-size: 18px;
+  color: var(--gallery-navy);
+  margin: 0 0 var(--s3);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* --- Catalogue (aperçu de 8 vignettes) --- */
+.zone-catalogue-bento { grid-column: span 12; padding: var(--s3) var(--s4); }
+.entete-bloc-bento {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--s3);
+  gap: var(--s2);
+}
+.entete-bloc-bento h3 {
+  font-family: var(--font-titre);
+  font-size: 20px;
+  color: var(--gallery-navy);
+  margin: 0;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.entete-bloc-actions {
+  display: flex;
+  gap: var(--s2);
+}
+.vignettes-bento {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: var(--s2);
+}
+.vignette-bento {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  border: 1px solid var(--mist);
+  background: var(--cloud);
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform .12s, box-shadow .12s;
+}
+.vignette-bento:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--ombre-carte);
+}
+.vignette-bento img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.vignette-bento-placeholder {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-titre);
+  font-size: 22px;
+  color: var(--slate);
+}
+.vignette-bento-statut {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.85);
+}
+.vignette-bento-statut-vendue   { background: var(--badge-vendue-texte); }
+.vignette-bento-statut-reservee { background: var(--badge-reservee-texte); }
+
+.zone-catalogue-bento-vide .zone-catalogue-bento-message {
+  margin: 0;
+  color: var(--slate);
+  font-style: italic;
+}
+
+/* --- Notes internes --- */
+.zone-notes-bento { grid-column: span 12; padding: var(--s3) var(--s4); }
+.zone-notes-bento h3 {
+  font-family: var(--font-titre);
+  font-size: 18px;
+  color: var(--gallery-navy);
+  margin: 0 0 var(--s2);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* --- Repli responsive : sous 1200px le bento collapse les colonnes --- */
+@media (max-width: 1200px) {
+  .zone-photo     { grid-column: span 3; }
+  .zone-identite  { grid-column: span 9; }
+  .zone-stats     { grid-column: span 12; grid-template-rows: 1fr; }
+  .carte-conditions { grid-column: span 12; }
+  .carte-op       { grid-column: span 6; }
+}
+
+/* ====== Fiche en grille bento (œuvre — lecture) ======
+   Image grand format à gauche, carte identité à droite avec deux prix
+   (courant et préférentiel) + badge statut. Caractéristiques et
+   Localisation côte à côte, puis Description et Certificats pleine
+   largeur. */
+
+/* --- Image (carte avec contain pour voir toute l'œuvre) --- */
+.zone-image-bento {
+  grid-column: span 3;
+  background: var(--porcelain);
+  border: 1px solid var(--mist);
+  border-radius: var(--r-carte);
+  box-shadow: var(--ombre-carte);
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.zone-image-bento.cliquable { cursor: zoom-in; }
+.zone-image-bento img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  -webkit-user-drag: none;
+}
+.zone-image-placeholder {
+  font-family: var(--font-titre);
+  font-size: 64px;
+  color: var(--stone);
+}
+
+/* --- Identité œuvre --- */
+.zone-identite-bento {
+  grid-column: span 9;
+  padding: var(--s4);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.zone-identite-bento h1 {
+  margin: 0;
+  font-family: var(--font-titre);
+  font-weight: 500;
+  font-size: 38px;
+  line-height: 1.1;
+  color: var(--ink);
+  word-break: break-word;
+}
+.zone-identite-artiste {
+  margin: var(--s2) 0 var(--s3);
+  color: var(--slate);
+  font-size: 15px;
+}
+.zone-identite-artiste .btn-lien {
+  color: var(--gallery-navy);
+  font-weight: 500;
+  font-family: var(--font-ui);
+}
+.zone-identite-lien {
+  margin: 0 0 var(--s2);
+  font-size: 13px;
+}
+
+/* Bloc avec les deux prix + badge statut, séparé par des filets haut/bas */
+.prix-statut-bloc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  padding: var(--s3) 0;
+  border-top: 1px solid var(--mist);
+  border-bottom: 1px solid var(--mist);
+  margin-bottom: var(--s3);
+}
+.prix-paire {
+  display: flex;
+  gap: var(--s5);
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.prix-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.prix-label {
+  font-size: 11px;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.prix-val {
+  font-family: var(--font-titre);
+  font-size: 32px;
+  line-height: 1;
+  color: var(--gallery-navy);
+  font-variant-numeric: tabular-nums;
+}
+.prix-item-pref .prix-val { color: var(--stone); }
+
+/* --- Actions identité œuvre --- */
+.zone-identite-actions {
+  display: flex;
+  gap: var(--s2);
+  margin-top: var(--s3);
+  flex-wrap: wrap;
+}
+
+/* --- Caractéristiques et Localisation --- */
+.zone-carac-bento,
+.zone-localisation-bento {
+  grid-column: span 6;
+  padding: var(--s3) var(--s4);
+}
+.zone-carac-bento > h3,
+.zone-localisation-bento > h3,
+.zone-description-bento > h3,
+.zone-certificats-bento > .entete-bloc-bento h3 {
+  font-family: var(--font-titre);
+  font-size: 18px;
+  color: var(--gallery-navy);
+  margin: 0 0 var(--s3);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* Sous-sections empilées avec filet de séparation pour les fiches œuvre */
+.zone-carac-bento > .sous-section + .sous-section,
+.zone-localisation-bento > .sous-section + .sous-section {
+  padding-top: var(--s4);
+  border-top: 1px solid var(--mist);
+  margin-top: var(--s3);
+}
+
+/* Grille des champs (label + valeur) */
+.champs-grille-bento {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--s3) var(--s4);
+}
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.champ-lib {
+  font-size: 11px;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.champ-val {
+  font-size: 14px;
+  color: var(--ink);
+  user-select: text;
+}
+.champ-vide {
+  color: var(--stone);
+  font-style: italic;
+}
+
+.carac-particularite {
+  margin-top: var(--s3);
+  font-size: 13px;
+  color: var(--slate);
+  line-height: 1.55;
+  padding: var(--s2) var(--s3);
+  background: var(--soft-ivory);
+  border-left: 2px solid var(--warm-gold);
+  border-radius: 0 var(--r-btn) var(--r-btn) 0;
+}
+.carac-particularite strong { color: var(--ink); }
+
+.sujets-zone { line-height: 2; }
+
+/* --- Description --- */
+.zone-description-bento {
+  grid-column: span 12;
+  padding: var(--s3) var(--s4);
+}
+.description-vide {
+  color: var(--stone);
+  font-style: italic;
+  border: 1px dashed var(--mist);
+  border-radius: var(--r-btn);
+  padding: var(--s4);
+  text-align: center;
+}
+
+/* --- Certificats --- */
+.zone-certificats-bento {
+  grid-column: span 12;
+  padding: var(--s3) var(--s4);
+}
+.zone-certificats-bento .compteur-inline {
+  color: var(--slate);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+/* --- Repli responsive pour la fiche œuvre --- */
+@media (max-width: 1200px) {
+  .zone-image-bento     { grid-column: span 4; }
+  .zone-identite-bento  { grid-column: span 8; }
+  .zone-carac-bento,
+  .zone-localisation-bento { grid-column: span 12; }
+}
+@media (max-width: 900px) {
+  .zone-image-bento     { grid-column: span 12; aspect-ratio: 4 / 3; }
+  .zone-identite-bento  { grid-column: span 12; }
+}
+
+/* ====== Fiche en grille bento (client — lecture) ======
+   Avatar navy + identité + 4 stats en haut. Coordonnées + Loi 25
+   sur la 2e bande. Historique d'achat pleine largeur puis notes. */
+
+/* --- Avatar (navy carré avec initiales) --- */
+.zone-avatar-client {
+  grid-column: span 2;
+  position: relative;
+  background: var(--deep-navy);
+  border-radius: var(--r-carte);
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--ombre-carte);
+}
+.zone-avatar-initiales {
+  font-family: var(--font-titre);
+  font-size: 56px;
+  font-weight: 500;
+  color: var(--warm-gold);
+}
+
+/* --- Identité client --- */
+.zone-identite-client {
+  grid-column: span 6;
+  padding: var(--s3) var(--s4);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.zone-identite-client h1 {
+  margin: 0;
+  font-family: var(--font-titre);
+  font-weight: 500;
+  font-size: 38px;
+  line-height: 1.1;
+  color: var(--ink);
+  word-break: break-word;
+}
+.zone-identite-client-meta {
+  margin: var(--s1) 0 0;
+  color: var(--slate);
+  font-size: 14px;
+}
+
+/* La carte Stats du client réutilise les variables de la fiche artiste
+   (.zone-stats / .stat-bento). On ajoute juste un format compact pour
+   les valeurs de date (« Dernier achat », « Client depuis »). */
+.stat-bento-val-date {
+  font-size: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Coordonnées et Loi 25 --- */
+.zone-coord { grid-column: span 8; padding: var(--s3) var(--s4); }
+.zone-loi25 { grid-column: span 4; padding: var(--s3) var(--s4); }
+.zone-coord > h3,
+.zone-loi25 > h3,
+.zone-historique-bento > .entete-bloc-bento h3,
+.zone-notes-bento > h3 {
+  font-family: var(--font-titre);
+  font-size: 18px;
+  color: var(--gallery-navy);
+  margin: 0 0 var(--s3);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.adresse-bloc {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.55;
+  padding-top: var(--s3);
+  border-top: 1px solid var(--mist);
+  margin-top: var(--s3);
+  user-select: text;
+}
+.adresse-bloc .champ-lib {
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* --- Loi 25 --- */
+.pastille-consentement {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: var(--r-badge);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: var(--s3);
+}
+.pastille-consentement-oui {
+  background: var(--badge-disponible-fond);
+  color: var(--badge-disponible-texte);
+}
+.pastille-consentement-non {
+  background: var(--cloud);
+  color: var(--slate);
+}
+.loi25-info {
+  margin: 0;
+  font-size: 13px;
+  color: var(--slate);
+  line-height: 1.55;
+}
+.loi25-info strong { color: var(--ink); }
+
+/* --- Historique d'achat --- */
+.zone-historique-bento {
+  grid-column: span 12;
+  padding: var(--s3) var(--s4);
+}
+.zone-historique-bento .compteur-inline {
+  color: var(--slate);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 400;
+  margin-left: 6px;
+}
+.total-achats-bento {
+  font-size: 14px;
+  color: var(--slate);
+}
+.total-achats-bento strong {
+  font-family: var(--font-titre);
+  font-size: 22px;
+  color: var(--gallery-navy);
+  margin-left: 8px;
+}
+.historique-vide {
+  color: var(--stone);
+  font-style: italic;
+  border: 1px dashed var(--mist);
+  border-radius: var(--r-btn);
+  padding: var(--s4);
+  text-align: center;
+}
+
+/* --- Repli responsive client --- */
+@media (max-width: 1200px) {
+  .zone-avatar-client    { grid-column: span 3; }
+  .zone-identite-client  { grid-column: span 9; }
+  .zone-stats            { grid-column: span 12; grid-template-rows: 1fr; }
+  .zone-coord            { grid-column: span 12; }
+  .zone-loi25            { grid-column: span 12; }
+}
+
+/* ====== Fiche en grille bento (vente — lecture) ======
+   Identité (N° facture grand + date + mode) à gauche, tuile Total navy
+   plein à droite. Œuvre + Client côte à côte, puis Détails financiers
+   et Documents sur la même bande. Notes en pied. */
+
+/* --- Identité vente --- */
+.zone-identite-vente {
+  grid-column: span 8;
+  padding: var(--s3) var(--s4);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.zone-identite-vente h1 {
+  margin: 0;
+  font-family: var(--font-titre);
+  font-weight: 500;
+  font-size: 38px;
+  line-height: 1.1;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+.zone-identite-vente-meta {
+  margin: var(--s2) 0 0;
+  color: var(--slate);
+  font-size: 14px;
+}
+.zone-identite-vente-mode {
+  display: inline-block;
+  background: var(--cloud);
+  color: var(--slate);
+  font-size: 12px;
+  padding: 3px 12px;
+  border-radius: var(--r-badge);
+  margin-top: var(--s3);
+}
+
+/* --- Tuile Total (navy plein) --- */
+.zone-total {
+  grid-column: span 4;
+  background: var(--deep-navy);
+  border-radius: var(--r-carte);
+  box-shadow: var(--ombre-carte);
+  padding: var(--s4);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: var(--soft-ivory);
+}
+.zone-total-label {
+  font-size: 12px;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.zone-total-montant {
+  font-family: var(--font-titre);
+  font-size: 44px;
+  line-height: 1;
+  color: var(--warm-gold);
+  margin: 4px 0 var(--s3);
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
+}
+.zone-total-recap {
+  font-size: 13px;
+  opacity: 0.75;
+}
+.zone-total-recap .ligne {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+.zone-total-recap .ligne strong {
+  color: var(--soft-ivory);
+  font-weight: 500;
+}
+
+/* --- Œuvre + Client (deux cartes 6/6) --- */
+.zone-oeuvre-vente,
+.zone-client-vente {
+  grid-column: span 6;
+  padding: var(--s3) var(--s4);
+}
+.zone-oeuvre-vente > h3,
+.zone-client-vente > h3,
+.zone-details-vente > h3,
+.zone-documents-vente > .entete-bloc-bento h3 {
+  font-family: var(--font-titre);
+  font-size: 18px;
+  color: var(--gallery-navy);
+  margin: 0 0 var(--s3);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.vignette-client {
+  background: var(--gallery-navy);
+  color: var(--soft-ivory);
+  font-size: 24px;
+}
+
+/* --- Détails financiers (table-facture) --- */
+.zone-details-vente {
+  grid-column: span 5;
+  padding: var(--s3) var(--s4);
+}
+.table-facture {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table-facture td {
+  padding: 8px 0;
+  font-size: 14px;
+  border-bottom: 1px solid var(--cloud);
+}
+.table-facture td:first-child {
+  color: var(--slate);
+}
+.table-facture td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  user-select: text;
+}
+.table-facture .ligne-rabais td:last-child {
+  color: var(--terracotta);
+}
+.table-facture .ligne-soustotal td {
+  font-weight: 500;
+  color: var(--ink) !important;
+}
+.table-facture .ligne-total td {
+  border-top: 2px solid var(--deep-navy);
+  border-bottom: 0;
+  padding-top: 12px;
+  font-family: var(--font-titre);
+  font-size: 20px;
+  color: var(--gallery-navy);
+  font-weight: 500;
+}
+.table-facture .ligne-total td:last-child { color: var(--warm-gold); }
+
+/* --- Documents (actions + liste docs générés) --- */
+.zone-documents-vente {
+  grid-column: span 7;
+  padding: var(--s3) var(--s4);
+}
+.zone-documents-vente .compteur-inline {
+  color: var(--slate);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 400;
+  margin-left: 6px;
+}
+.documents-actions {
+  display: flex;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  padding: var(--s3);
+  background: var(--cloud);
+  border-radius: var(--r-btn);
+  margin-bottom: var(--s3);
+}
+.documents-liste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+.doc-ligne {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3);
+  background: var(--soft-ivory);
+  border: 1px solid var(--mist);
+  border-radius: var(--r-btn);
+}
+.doc-icone {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-titre);
+  font-size: 18px;
+  flex-shrink: 0;
+  background: var(--gallery-navy);
+  color: var(--soft-ivory);
+}
+.doc-icone-facture {
+  background: var(--warm-gold);
+  color: var(--soft-ivory);
+}
+.doc-info { flex: 1; min-width: 0; }
+.doc-info .doc-titre {
+  margin: 0;
+  font-family: var(--font-titre);
+  font-size: 15px;
+  color: var(--ink);
+  font-weight: 500;
+}
+.doc-info .doc-meta {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--slate);
+}
+.doc-actions {
+  display: flex;
+  gap: 6px;
+}
+.doc-actions .btn-action {
+  font-size: 12px;
+  padding: 0 10px;
+  height: 32px;
+}
+
+/* --- Repli responsive vente --- */
+@media (max-width: 1200px) {
+  .zone-identite-vente   { grid-column: span 12; }
+  .zone-total            { grid-column: span 12; }
+  .zone-oeuvre-vente,
+  .zone-client-vente     { grid-column: span 12; }
+  .zone-details-vente,
+  .zone-documents-vente  { grid-column: span 12; }
+}
+
+/* ====== Harmonisation 2026-06 ======
+   Titres de carte unifiés à 24px gallery-navy et sous-sections en encarts
+   ivory + bordure mist (au lieu de filets séparateurs). S'applique à
+   toutes les cartes de la grille bento (fiches + Réglages). */
+
+.grille-bento > .carte > h3,
+.grille-bento > .carte > .entete-bloc-bento > h3 {
+  font-family: var(--font-titre);
+  font-size: 24px;
+  color: var(--gallery-navy);
+  margin: 0 0 var(--s3);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.sous-section {
+  background: var(--soft-ivory);
+  border: 1px solid var(--mist);
+  border-radius: var(--r-btn);
+  padding: var(--s3);
+  margin-bottom: var(--s2);
+}
+.sous-section:last-of-type { margin-bottom: 0; }
+.sous-section h4 {
+  margin: 0 0 var(--s2);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+/* Annuler les séparateurs précédents — le fond ivory délimite déjà */
+.conditions-corps .sous-section + .sous-section,
+.zone-carac-bento > .sous-section + .sous-section,
+.zone-localisation-bento > .sous-section + .sous-section {
+  padding-top: var(--s3);
+  border-top: 0;
+  margin-top: 0;
+}
+.conditions-corps { gap: var(--s2); }
+
+/* ====== Page Réglages (bento) ====== */
+
+.reglages-entete {
+  max-width: 1400px;
+  margin: 0 auto var(--s4);
+}
+.reglages-entete h1 {
+  margin: 0;
+  font-family: var(--font-titre);
+  font-weight: 500;
+  font-size: 38px;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.reglages-entete-meta {
+  margin: var(--s2) 0 0;
+  color: var(--slate);
+  font-size: 14px;
+  max-width: 720px;
+  line-height: 1.5;
+}
+.reglages-entete-meta strong { color: var(--ink); }
+
+.zone-numerotation { grid-column: span 8; padding: var(--s3) var(--s4); }
+.zone-taxes-cote   { grid-column: span 4; padding: var(--s3) var(--s4); }
+.zone-sauvegardes  { grid-column: span 6; padding: var(--s3) var(--s4); }
+.zone-affichage    { grid-column: span 3; padding: var(--s3) var(--s4); }
+.zone-import       { grid-column: span 3; padding: var(--s3) var(--s4); }
+.zone-ia           { grid-column: span 6; padding: var(--s3) var(--s4); }
+.zone-apropos      { grid-column: span 6; padding: var(--s3) var(--s4); }
+
+/* Bouton large pour les cartes Sauvegardes/Import */
+.btn-gros-bento {
+  width: 100%;
+  height: 44px;
+  margin-top: var(--s3);
+}
+
+/* Tableau d'infos app dans la carte À propos */
+.infos-app-bento {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px var(--s3);
+  font-size: 13px;
+  margin: 0;
+}
+.infos-app-bento dt { color: var(--slate); }
+.infos-app-bento dd { margin: 0; color: var(--ink); }
+
+/* Lien dossier cliquable (pillule cloud + flèche dorée) */
+.lien-dossier {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--cloud);
+  color: var(--gallery-navy);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 12px;
+  border: 0;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.lien-dossier:hover {
+  background: var(--mist);
+  color: var(--warm-gold);
+}
+.lien-dossier::after {
+  content: "↗";
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--warm-gold);
+}
+
+/* Bloc updater dans la carte À propos */
+.updater-bloc {
+  margin-top: var(--s3);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--mist);
+}
+.updater-statut {
+  font-size: 13px;
+  color: var(--slate);
+  margin: 0 0 var(--s2);
+}
+
+@media (max-width: 1200px) {
+  .zone-numerotation { grid-column: span 12; }
+  .zone-taxes-cote   { grid-column: span 12; }
+  .zone-sauvegardes  { grid-column: span 12; }
+  .zone-affichage,
+  .zone-import       { grid-column: span 6; }
+  .zone-ia,
+  .zone-apropos      { grid-column: span 12; }
+}
+
+/* ====== Page Profil galerie (bento) ====== */
+
+.zone-profil-identite,
+.zone-profil-coord,
+.zone-profil-fisc,
+.zone-profil-visuel {
+  grid-column: span 6;
+  padding: var(--s3) var(--s4);
+}
+
+@media (max-width: 1200px) {
+  .zone-profil-identite,
+  .zone-profil-coord,
+  .zone-profil-fisc,
+  .zone-profil-visuel { grid-column: span 12; }
+}
+
+/* ====== Page Outils (bento) ====== */
+
+.zone-outil-calc  { grid-column: span 8; padding: var(--s3) var(--s4); }
+.zone-outil-cotes { grid-column: span 4; padding: var(--s3) var(--s4); }
+
+@media (max-width: 1200px) {
+  .zone-outil-calc,
+  .zone-outil-cotes { grid-column: span 12; }
+}
+
 /* ====== Formulaires d'édition ====== */
 
 .titre-formulaire {
@@ -2681,19 +3847,18 @@ details.bloc.pliable > .bloc-corps {
   align-items: center;
   gap: 0.75rem;
   padding: 0.7rem 1rem;
-  background: var(--porcelain);
-  border: 1px solid var(--mist);
+  background: transparent;
+  border: 0;
   border-radius: var(--r-btn);
   cursor: pointer;
   font-family: var(--font-ui);
   color: var(--ink);
   text-align: left;
-  transition: border-color 0.12s ease, background 0.12s ease, transform 0.12s ease;
+  transition: background 0.12s ease, transform 0.12s ease;
   min-width: 0;
 }
 
 .btn-voisin:not(:disabled):hover {
-  border-color: var(--warm-gold);
   background: var(--cloud);
   transform: translateY(-1px);
 }

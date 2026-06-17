@@ -58,14 +58,23 @@ export async function rendreVenteFiche(contenu, params) {
       notes: null,
     };
   } else {
-    [v, voisins, certificats] = await Promise.all([
-      window.api.venteGet(params.id),
-      window.api.venteVoisins(params.id),
-      window.api.certificatsListeVente(params.id),
-    ]);
-    if (!v) {
+    const bundle = await window.api.venteFicheBundle(params.id);
+    if (!bundle || !bundle.vente) {
       contenu.innerHTML = `<p class="erreur">Vente introuvable.</p>`;
       return;
+    }
+    v = bundle.vente;
+    voisins = bundle.voisins;
+    certificats = bundle.certificats;
+  }
+
+  async function rechargerBundle() {
+    if (!v || !v.id) return;
+    const bundle = await window.api.venteFicheBundle(v.id);
+    if (bundle && bundle.vente) {
+      v = bundle.vente;
+      voisins = bundle.voisins;
+      certificats = bundle.certificats;
     }
   }
 
@@ -252,13 +261,135 @@ export async function rendreVenteFiche(contenu, params) {
     const tps = Number(v.tps) || 0;
     const tvq = Number(v.tvq) || 0;
     const total = sousTotal + tps + tvq;
+    const aDesRabais = rabArt > 0 || rabGal > 0;
 
-    const blocPliable = (titre, contenuInterne, ouvertParDefaut = true) =>
-      `<details class="bloc pliable" ${ouvertParDefaut ? 'open' : ''}>
-         <summary><h3>${ech(titre)}</h3><span class="chevron-bloc">&rsaquo;</span></summary>
-         <div class="bloc-corps">${contenuInterne}</div>
-       </details>`;
+    // === Identité (N° facture + date + mode) ===
+    const zoneIdentite = `
+      <div class="carte zone-identite-vente">
+        <div>
+          <h1>${v.numero_facture ? ech(v.numero_facture) : 'Vente'}</h1>
+          <p class="zone-identite-vente-meta">Vente du ${ech(formaterDate(v.date_vente))}</p>
+          ${v.mode_paiement ? `<span class="zone-identite-vente-mode">${ech(v.mode_paiement)}</span>` : ''}
+        </div>
+        <div class="zone-identite-actions">
+          <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
+          <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
+        </div>
+      </div>
+    `;
 
+    // === Total (tuile navy plein) ===
+    const zoneTotal = `
+      <div class="zone-total">
+        <span class="zone-total-label">Total</span>
+        <span class="zone-total-montant">${formaterPrix(total)}</span>
+        <div class="zone-total-recap">
+          <div class="ligne"><span>Sous-total</span><strong>${formaterPrix(sousTotal)}</strong></div>
+          ${tps > 0 ? `<div class="ligne"><span>TPS</span><span>${formaterPrix(tps)}</span></div>` : ''}
+          ${tvq > 0 ? `<div class="ligne"><span>TVQ</span><span>${formaterPrix(tvq)}</span></div>` : ''}
+        </div>
+      </div>
+    `;
+
+    // === Œuvre + Client (côte à côte) ===
+    const zoneOeuvre = `
+      <div class="carte zone-oeuvre-vente">
+        <h3>Œuvre vendue</h3>
+        <button class="ligne-vente" id="aller-oeuvre" data-id="${v.oeuvre_id}">
+          ${v.image_path
+            ? `<div class="vignette avec-photo"><img src="${urlPhoto(v.image_path)}" loading="lazy" alt=""></div>`
+            : `<div class="vignette"><span>&#9635;</span></div>`}
+          <div class="info">
+            <p class="ligne-titre">${ech(v.oeuvre_titre)}</p>
+            <p class="ligne-meta">
+              ${ech(v.artiste_nom)}
+              ${v.numero_inventaire ? `&nbsp;&middot;&nbsp;${ech(v.numero_inventaire)}` : ''}
+              ${v.dimensions ? `&nbsp;&middot;&nbsp;${ech(v.dimensions)}` : ''}
+            </p>
+          </div>
+          <span class="chevron">&rsaquo;</span>
+        </button>
+      </div>
+    `;
+
+    const zoneClient = `
+      <div class="carte zone-client-vente">
+        <h3>Client</h3>
+        <button class="ligne-vente" id="aller-client" data-id="${v.client_id}">
+          <div class="vignette vignette-client"><span>&#128100;</span></div>
+          <div class="info">
+            <p class="ligne-titre">${ech(client)}</p>
+            <p class="ligne-meta">
+              ${v.client_courriel ? ech(v.client_courriel) : ''}
+              ${v.client_telephone ? `&nbsp;&middot;&nbsp;${ech(v.client_telephone)}` : ''}
+            </p>
+          </div>
+          <span class="chevron">&rsaquo;</span>
+        </button>
+      </div>
+    `;
+
+    // === Détails financiers (table type facture) ===
+    const zoneDetails = `
+      <div class="carte zone-details-vente">
+        <h3>Détails financiers</h3>
+        <table class="table-facture">
+          <tbody>
+            ${aDesRabais ? `<tr><td>Prix régulier</td><td>${formaterPrix(prixRegulier)}</td></tr>` : ''}
+            ${rabArt > 0 ? `<tr class="ligne-rabais"><td>Rabais artiste</td><td>− ${formaterPrix(rabArt)}</td></tr>` : ''}
+            ${rabGal > 0 ? `<tr class="ligne-rabais"><td>Rabais galerie</td><td>− ${formaterPrix(rabGal)}</td></tr>` : ''}
+            <tr class="ligne-soustotal"><td>Sous-total</td><td>${formaterPrix(sousTotal)}</td></tr>
+            ${tps > 0 ? `<tr><td>TPS</td><td>${formaterPrix(tps)}</td></tr>` : ''}
+            ${tvq > 0 ? `<tr><td>TVQ</td><td>${formaterPrix(tvq)}</td></tr>` : ''}
+            <tr class="ligne-total"><td>Total</td><td>${formaterPrix(total)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    // === Documents (actions + liste de docs générés) ===
+    const factureArtisteHTML = v.facture_artiste_path ? `
+      <div class="doc-ligne">
+        <div class="doc-icone doc-icone-facture">A</div>
+        <div class="doc-info">
+          <p class="doc-titre">Facture artiste</p>
+          <p class="doc-meta">PDF généré</p>
+        </div>
+        <div class="doc-actions">
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-voir-facture-artiste">Voir le PDF</button>
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-ouvrir-dossier-facture-artiste" title="Ouvrir le dossier">Dossier</button>
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-regen-facture-artiste">Re-générer</button>
+        </div>
+      </div>
+    ` : '';
+
+    const zoneDocuments = `
+      <div class="carte zone-documents-vente">
+        <div class="entete-bloc-bento">
+          <h3>Documents ${certificats.length > 0 ? `<span class="compteur-inline">(${certificats.length} certificat${certificats.length > 1 ? 's' : ''})</span>` : ''}</h3>
+        </div>
+        <div class="documents-actions">
+          <button type="button" class="btn-action" id="btn-produire-certificat-vente">+ Produire un certificat</button>
+          ${!v.facture_artiste_path ? '<button type="button" class="btn-action btn-principal" id="btn-gen-facture-artiste">+ Produire la facture artiste</button>' : ''}
+        </div>
+        <div class="documents-liste">
+          ${factureArtisteHTML}
+          <div id="liste-certificats-vente">
+            ${dessinerListeCertificatsVente(certificats)}
+          </div>
+        </div>
+      </div>
+    `;
+
+    // === Notes ===
+    const zoneNotes = v.notes ? `
+      <div class="carte zone-notes-bento">
+        <h3>Notes internes</h3>
+        <div class="texte-long">${ech(v.notes).replace(/\n/g, '<br>')}</div>
+      </div>
+    ` : '';
+
+    // === Nav voisins ===
     const navVoisins = voisins.total > 1 ? `
       <nav class="nav-voisins" aria-label="Navigation entre ventes">
         <button class="btn-voisin btn-voisin-prec" ${voisins.precedent ? '' : 'disabled'} title="${voisins.precedent ? ech(voisins.precedent.nom) : ''}">
@@ -279,89 +410,18 @@ export async function rendreVenteFiche(contenu, params) {
       </nav>
     ` : '';
 
-    const oeuvreCard = `
-      <button class="ligne-vente" id="aller-oeuvre" data-id="${v.oeuvre_id}">
-        ${v.image_path
-          ? `<div class="vignette avec-photo"><img src="${urlPhoto(v.image_path)}" loading="lazy" alt=""></div>`
-          : `<div class="vignette"><span>&#9635;</span></div>`}
-        <div class="info">
-          <p class="ligne-titre">${ech(v.oeuvre_titre)}</p>
-          <p class="ligne-meta">
-            ${ech(v.artiste_nom)}
-            ${v.numero_inventaire ? `&nbsp;&middot;&nbsp;${ech(v.numero_inventaire)}` : ''}
-            ${v.dimensions ? `&nbsp;&middot;&nbsp;${ech(v.dimensions)}` : ''}
-          </p>
-        </div>
-        <span class="chevron">&rsaquo;</span>
-      </button>
-    `;
-
-    const clientCard = `
-      <button class="ligne-vente" id="aller-client" data-id="${v.client_id}">
-        <div class="vignette"><span>&#128100;</span></div>
-        <div class="info">
-          <p class="ligne-titre">${ech(client)}</p>
-          <p class="ligne-meta">
-            ${v.client_courriel ? ech(v.client_courriel) : ''}
-            ${v.client_telephone ? `&nbsp;&middot;&nbsp;${ech(v.client_telephone)}` : ''}
-          </p>
-        </div>
-        <span class="chevron">&rsaquo;</span>
-      </button>
-    `;
-
-    const aDesRabais = rabArt > 0 || rabGal > 0;
-    const detailsHTML = `
-      <dl class="champs">
-        <div class="champ"><dt>Date</dt><dd>${formaterDate(v.date_vente)}</dd></div>
-        ${v.numero_facture ? `<div class="champ"><dt>N° de facture</dt><dd>${ech(v.numero_facture)}</dd></div>` : ''}
-        ${v.mode_paiement ? `<div class="champ"><dt>Mode de paiement</dt><dd>${ech(v.mode_paiement)}</dd></div>` : ''}
-        ${aDesRabais ? `<div class="champ"><dt>Prix régulier</dt><dd>${formaterPrix(prixRegulier)}</dd></div>` : ''}
-        ${rabArt > 0 ? `<div class="champ"><dt>Rabais artiste</dt><dd>− ${formaterPrix(rabArt)}</dd></div>` : ''}
-        ${rabGal > 0 ? `<div class="champ"><dt>Rabais galerie</dt><dd>− ${formaterPrix(rabGal)}</dd></div>` : ''}
-        <div class="champ"><dt>Sous-total</dt><dd>${formaterPrix(sousTotal)}</dd></div>
-        ${tps > 0 ? `<div class="champ"><dt>TPS</dt><dd>${formaterPrix(tps)}</dd></div>` : ''}
-        ${tvq > 0 ? `<div class="champ"><dt>TVQ</dt><dd>${formaterPrix(tvq)}</dd></div>` : ''}
-        <div class="champ"><dt><strong>Total</strong></dt><dd><strong>${formaterPrix(total)}</strong></dd></div>
-      </dl>
-    `;
-
-    const factureArtisteHTML = v.facture_artiste_path
-      ? `<button type="button" class="btn-action btn-secondaire-action" id="btn-voir-facture-artiste">Voir la facture artiste</button>
-         <button type="button" class="btn-action btn-secondaire-action" id="btn-ouvrir-dossier-facture-artiste" title="Ouvrir le dossier">Ouvrir le dossier</button>
-         <button type="button" class="btn-action btn-secondaire-action" id="btn-regen-facture-artiste">Re-générer</button>`
-      : `<button type="button" class="btn-action btn-principal" id="btn-gen-facture-artiste">+ Produire la facture artiste</button>`;
-
-    const documentsHTML = `
-      <div class="form-champ">
-        <button type="button" class="btn-action btn-secondaire-action" id="btn-produire-certificat-vente">+ Produire un certificat</button>
-        ${factureArtisteHTML}
-      </div>
-      <div id="liste-certificats-vente">
-        ${dessinerListeCertificatsVente(certificats)}
-      </div>
-    `;
-
     contenu.innerHTML = `
-      <div class="vue-fiche">
-        <div class="entete-fiche">
-          <div class="entete-fiche-info">
-            <h2>${v.numero_facture ? ech(v.numero_facture) : 'Vente'}</h2>
-            <p class="meta">${formaterDate(v.date_vente)} &middot; ${formaterPrix(total)}</p>
-          </div>
-          <div class="entete-fiche-actions">
-            <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
-            <button class="btn-action" id="btn-modifier">Modifier</button>
-          </div>
-        </div>
-
+      <div class="vue-fiche vue-fiche-bento">
         ${navVoisins}
-
-        ${blocPliable('Œuvre vendue', oeuvreCard)}
-        ${blocPliable('Client', clientCard)}
-        ${blocPliable('Détails de la vente', detailsHTML)}
-        ${blocPliable(`Documents${certificats.length > 0 ? ` (${certificats.length} certificat${certificats.length > 1 ? 's' : ''})` : ''}`, documentsHTML)}
-        ${v.notes ? blocPliable('Notes', `<p class="texte-long">${ech(v.notes).replace(/\n/g, '<br>')}</p>`) : ''}
+        <div class="grille-bento">
+          ${zoneIdentite}
+          ${zoneTotal}
+          ${zoneOeuvre}
+          ${zoneClient}
+          ${zoneDetails}
+          ${zoneDocuments}
+          ${zoneNotes}
+        </div>
       </div>
     `;
 
@@ -619,6 +679,7 @@ export async function rendreVenteFiche(contenu, params) {
           await remplacerCourant('vente-fiche', { id: resultat.id });
         } else {
           v = resultat;
+          await rechargerBundle();
           sortirEdition();
         }
       } catch (err) {

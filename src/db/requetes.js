@@ -23,6 +23,45 @@ function obtenirArtiste(id) {
   return { ...artiste, nb_oeuvres };
 }
 
+function obtenirFicheArtisteBundle(id) {
+  const artiste = obtenirArtiste(id);
+  if (!artiste) return null;
+  const voisins = voisinsArtiste(id);
+  const db = openDatabase();
+
+  const dispoRow = db
+    .prepare(`SELECT COUNT(*) AS n, COALESCE(SUM(prix), 0) AS v
+              FROM oeuvres
+              WHERE artiste_id = ? AND statut = 'disponible' AND archive = 0`)
+    .get(id);
+
+  const ventesNb = db
+    .prepare(`SELECT COUNT(*) AS n FROM ventes v
+              JOIN oeuvres o ON o.id = v.oeuvre_id
+              WHERE o.artiste_id = ?`)
+    .get(id).n;
+
+  const apercu = db
+    .prepare(`SELECT id, titre, image_path, statut
+              FROM oeuvres
+              WHERE artiste_id = ? AND archive = 0
+              ORDER BY cree_le DESC, id DESC
+              LIMIT 8`)
+    .all(id);
+
+  return {
+    artiste,
+    voisins,
+    stats: {
+      catalogue: artiste.nb_oeuvres,
+      disponibles: dispoRow.n,
+      valeurDispo: dispoRow.v,
+      ventes: ventesNb,
+    },
+    apercu,
+  };
+}
+
 function voisinsArtiste(id) {
   const db = openDatabase();
   const liste = db
@@ -80,6 +119,16 @@ function obtenirOeuvre(id) {
   `).get(id);
 }
 
+function obtenirFicheOeuvreBundle(id) {
+  const oeuvre = obtenirOeuvre(id);
+  if (!oeuvre) return null;
+  const voisins = voisinsOeuvre(id);
+  const ventes = listerVentesOeuvre(id);
+  const certificats = listerCertificatsParOeuvre(id);
+  const artiste = oeuvre.artiste_id ? obtenirArtiste(oeuvre.artiste_id) : null;
+  return { oeuvre, voisins, ventes, certificats, artiste };
+}
+
 function voisinsOeuvre(id) {
   const db = openDatabase();
   const liste = db
@@ -116,6 +165,14 @@ function obtenirClient(id) {
     .prepare('SELECT COUNT(*) AS n FROM ventes WHERE client_id = ?')
     .get(id).n;
   return { ...client, nb_ventes };
+}
+
+function obtenirFicheClientBundle(id) {
+  const client = obtenirClient(id);
+  if (!client) return null;
+  const voisins = voisinsClient(id);
+  const ventes = listerVentesClient(id);
+  return { client, voisins, ventes };
 }
 
 function listerVentesOeuvre(oeuvreId) {
@@ -436,6 +493,14 @@ function obtenirCertificat(id) {
   `).get(id);
 }
 
+function obtenirFicheVenteBundle(id) {
+  const vente = obtenirVente(id);
+  if (!vente) return null;
+  const voisins = voisinsVente(id);
+  const certificats = listerCertificatsParVente(id);
+  return { vente, voisins, certificats };
+}
+
 function voisinsVente(id) {
   const db = openDatabase();
   const liste = db
@@ -457,9 +522,11 @@ function voisinsVente(id) {
 module.exports = {
   listerArtistes,
   obtenirArtiste,
+  obtenirFicheArtisteBundle,
   voisinsArtiste,
   listerOeuvres,
   obtenirOeuvre,
+  obtenirFicheOeuvreBundle,
   voisinsOeuvre,
   listerTypesOeuvre,
   listerMediumsOeuvre,
@@ -467,11 +534,13 @@ module.exports = {
   statsOeuvres,
   listerClients,
   obtenirClient,
+  obtenirFicheClientBundle,
   voisinsClient,
   listerVentesClient,
   listerVentesOeuvre,
   listerVentes,
   obtenirVente,
+  obtenirFicheVenteBundle,
   voisinsVente,
   listerCertificatsParOeuvre,
   listerCertificatsParVente,

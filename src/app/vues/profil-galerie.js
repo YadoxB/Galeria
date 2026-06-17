@@ -23,46 +23,52 @@ export async function rendreProfilGalerie(contenu) {
   const g = config.galerie;
 
   contenu.innerHTML = `
-    <div class="vue-fiche">
-      <h2 class="titre-formulaire">Profil de la galerie</h2>
-      <p class="aide-champ" style="margin-bottom: 1.5rem;">
-        Ces informations alimentent les bas de page, les en-têtes et les blocs de coordonnées
-        de tous les documents générés (certificats, factures).
-      </p>
+    <div class="vue-fiche vue-fiche-bento">
+      <div class="reglages-entete">
+        <h1>Profil de la galerie</h1>
+        <p class="reglages-entete-meta">
+          Ces informations alimentent les bas de page, les en-têtes et les blocs de coordonnées
+          de tous les documents générés (certificats, factures).
+        </p>
+      </div>
+
       <form id="formulaire" class="formulaire" novalidate>
+        <div class="grille-bento">
 
-        <section class="bloc">
-          <h3>Identité</h3>
-          <div class="grille-form">
-            ${champTexte({ nom: 'g_nom', libelle: 'Nom de la galerie', valeur: g.nom, requis: true })}
-            ${champTexte({ nom: 'g_site_web', libelle: 'Site web', valeur: g.site_web, type: 'url' })}
+          <div class="carte zone-profil-identite">
+            <h3>Identité</h3>
+            <div class="grille-form">
+              ${champTexte({ nom: 'g_nom', libelle: 'Nom de la galerie', valeur: g.nom, requis: true })}
+              ${champTexte({ nom: 'g_site_web', libelle: 'Site web', valeur: g.site_web, type: 'url' })}
+            </div>
           </div>
-        </section>
 
-        <section class="bloc">
-          <h3>Coordonnées</h3>
-          <div class="grille-form">
-            ${champTexte({ nom: 'g_telephone', libelle: 'Téléphone', valeur: g.telephone, type: 'tel' })}
-            ${champTexte({ nom: 'g_courriel', libelle: 'Courriel', valeur: g.courriel, type: 'email' })}
+          <div class="carte zone-profil-coord">
+            <h3>Coordonnées</h3>
+            <div class="grille-form">
+              ${champTexte({ nom: 'g_telephone', libelle: 'Téléphone', valeur: g.telephone, type: 'tel' })}
+              ${champTexte({ nom: 'g_courriel', libelle: 'Courriel', valeur: g.courriel, type: 'email' })}
+            </div>
+            <div class="grille-form">
+              ${champTexte({ nom: 'g_adresse_ligne1', libelle: 'Adresse (ligne 1)', valeur: g.adresse_ligne1 })}
+              ${champTexte({ nom: 'g_adresse_ligne2', libelle: 'Adresse (ligne 2)', valeur: g.adresse_ligne2 })}
+            </div>
           </div>
-          <div class="grille-form">
-            ${champTexte({ nom: 'g_adresse_ligne1', libelle: 'Adresse (ligne 1)', valeur: g.adresse_ligne1 })}
-            ${champTexte({ nom: 'g_adresse_ligne2', libelle: 'Adresse (ligne 2)', valeur: g.adresse_ligne2 })}
-          </div>
-        </section>
 
-        <section class="bloc">
-          <h3>Fiscalité</h3>
-          <div class="grille-form">
-            ${champTexte({ nom: 'g_numero_tps', libelle: 'Numéro TPS de la galerie', valeur: g.numero_tps })}
-            ${champTexte({ nom: 'g_numero_tvq', libelle: 'Numéro TVQ de la galerie', valeur: g.numero_tvq })}
+          <div class="carte zone-profil-fisc">
+            <h3>Fiscalité</h3>
+            <div class="grille-form">
+              ${champTexte({ nom: 'g_numero_tps', libelle: 'Numéro TPS de la galerie', valeur: g.numero_tps })}
+              ${champTexte({ nom: 'g_numero_tvq', libelle: 'Numéro TVQ de la galerie', valeur: g.numero_tvq })}
+            </div>
           </div>
-        </section>
 
-        <section class="bloc">
-          <h3>Identité visuelle</h3>
-          ${champTexte({ nom: 'g_logo_path', libelle: 'Chemin du logo (optionnel — laisse vide pour le logo par défaut)', valeur: g.logo_path })}
-        </section>
+          <div class="carte zone-profil-visuel">
+            <h3>Identité visuelle</h3>
+            ${champTexte({ nom: 'g_logo_path', libelle: 'Chemin du logo (optionnel — laisse vide pour le logo par défaut)', valeur: g.logo_path })}
+          </div>
+
+        </div>
 
         <div class="form-actions">
           <button type="button" class="btn-action btn-secondaire-action" id="btn-annuler">Annuler</button>

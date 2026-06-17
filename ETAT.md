@@ -9,7 +9,7 @@
 
 ## En une phrase
 
-L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable et installée chez les parents (v0.2.2 sur GitHub Releases avec auto-update). Les jalons 1 et 2 de la roadmap post-tests sont livrés (polish UX + cotes & calculateur de prix). La v0.2.3 est en cours sur la branche `claude/youthful-bartik-5675fa` — pas encore taggée. Reste les jalons 3 (cycle de vie), 4 (pack de vente) et 5 (réorganisation photos), plus les phases reportées (Sage, web, sécurité).
+L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable et installée chez les parents (v0.2.2 sur GitHub Releases avec auto-update). Les jalons 1 et 2 de la roadmap post-tests sont livrés (polish UX + cotes & calculateur de prix). **La v0.2.3 est taggée localement** : elle contient le jalon 2 + une refonte bento complète des 7 pages principales (Artiste, Œuvre, Client, Vente, Réglages, Profil galerie, Outils) — reste à pousser le tag et publier la release. Ensuite les jalons 3 (cycle de vie), 4 (pack de vente) et 5 (réorganisation photos), plus les phases reportées (Sage, web, sécurité).
 
 ---
 
@@ -162,6 +162,20 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable e
 ### Import en masse des photos d'œuvres
 
 - 505 photos importées depuis F:\, matching par numéro d'inventaire. Script `npm run import-photos-oeuvres`.
+
+### Refonte bento des 7 pages principales (v0.2.3)
+
+- **Architecture** : grille CSS 12 colonnes (`.grille-bento`) avec cartes (`.carte`) qui occupent un nombre variable de colonnes selon leur importance. Variables visuelles dans `theme.css`.
+- **Fiche Artiste** : photo grande à gauche, identité + 4 stats (catalogue / disponibles / ventes / valeur dispo) en bande supérieure, présentation à onglets Bio/Démarche/CV pleine largeur, conditions galerie (cotes + fiscalité en sous-sections empilées), contact, aide IA, aperçu de 8 vignettes du catalogue.
+- **Fiche Œuvre** : image en `object-fit: contain` (carrée 3 cols, pour ne plus cropper l'œuvre), carte identité avec **2 prix Courant + Préférentiel côte à côte** (calculés via `calculerPrixSuggere`) + badge statut, caractéristiques (Identification + Matériel en sous-sections), localisation et sujets, description, certificats avec leurs actions Voir/Dossier/Re-générer.
+- **Fiche Client** : avatar navy + identité + 4 stats (achats / total dépensé / dernier achat / client depuis), coordonnées + bloc Loi 25 avec pastille verte/grise selon consentement, historique d'achat cliquable pleine largeur, notes.
+- **Fiche Vente** : numéro de facture en titre + date + mode paiement, **tuile Total Deep Navy/Or** à droite avec montant grand et récap, œuvre + client en lignes cliquables, détails financiers en table-facture (rabais en terracotta, sous-total marqué, total souligné), documents avec icônes A (doré) et C (navy).
+- **Page Réglages** : numérotation (8 col) + taxes & commission (4), sauvegardes (6) + affichage (3) + import (3), IA (6) + à propos (6). **Lien dossier cliquable** sur le chemin du dossier de données dans À propos (ouvre l'Explorateur via le nouvel IPC `app:ouvrir-dossier`).
+- **Page Profil galerie** : 4 cartes 2×2 (Identité, Coordonnées, Fiscalité, Identité visuelle).
+- **Page Outils** : Calculateur de prix (8 col) + Cotes de l'artiste (4 col) côte à côte.
+- **Harmonisation finale** : titres de cartes en **Cormorant 24px gallery-navy**, sous-sections internes en **encarts soft-ivory + bordure mist** (au lieu de filets séparateurs), boutons de navigation Précédent/Suivant sans cadre.
+- **5 IPC `*FicheBundle`** + IPC `app:ouvrir-dossier` ajoutés (`requetes.js`, `main.js`, `preload.js`). Chaque bundle charge en un appel tout ce que la fiche en lecture a besoin (entité + voisins + listes apparentées + stats).
+- **Démos HTML standalone** dans `demos/` pour chaque page (artiste, œuvre, client, vente, réglages) — utilisées pour valider visuellement les mises en page à taille réelle avant l'intégration.
 
 ---
 
@@ -327,7 +341,7 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 
 | Priorité | Tâche | Note |
 |---|---|---|
-| **Reco** | **Tag + release v0.2.3** | La branche `claude/youthful-bartik-5675fa` contient le jalon 2 commité (`d2ee7f7`) mais pas encore taggée. Une fois Dave satisfait, bumper en `0.2.3` et lancer `npm run release` (nouveau GH_TOKEN à demander). |
+| **Reco** | **Pousser le tag v0.2.3 + release GitHub** | Le tag est créé localement (jalon 2 + refonte bento complète). Reste `git push --tags origin claude/practical-payne-6f7562` puis `npm run release` (nouveau GH_TOKEN à demander) pour publier sur GitHub Releases et déclencher l'auto-update chez les parents. |
 | **Reco** | **Jalon 3 — Suivi cycle de vie** | Statuts manuels de préparation et post-vente + bloc « Commandes non complétées » sur le tableau de bord. Détaillé plus haut. |
 | | **#13 Tutoriel de première ouverture** | Overlay guidé qui présente les sections au 1er lancement. Quelques décisions de design. |
 | | **#2 Édition en batch** (vue tableau) | Gros morceau qu'on a reporté à deux reprises. Toujours là. |
@@ -363,9 +377,8 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 - **Tester les commandes avec la formule courante en po²** : valider avec les parents que `(prix_pref + 2) × surface` est la bonne formule, ou si pour le carré c'est plutôt `(prix_pref × surface) + 2 × (H+L)`. Voir `A-VALIDER.md`.
 
 **Recommandation pour la prochaine session :**
-1. Si Dave a testé les cotes et est content → **tag + release v0.2.3** (jalon 2 complet).
-2. Sinon → ajustements sur le calculateur ou le UI cotes avant release.
-3. Puis attaquer le **jalon 3 — cycle de vie** : un bon morceau autonome qui apporte de la valeur visible (commandes non complétées sur le tableau de bord).
+1. **Pousser le tag v0.2.3 et publier la release GitHub** pour que les parents reçoivent l'auto-update (jalon 2 cotes + refonte bento complète).
+2. Puis attaquer le **jalon 3 — cycle de vie** : un bon morceau autonome qui apporte de la valeur visible (commandes non complétées sur le tableau de bord).
 
 ---
 

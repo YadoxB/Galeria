@@ -45,138 +45,164 @@ export async function rendreReglages(contenu) {
   }
   poserGardien(gardien);
 
-  const blocPliable = (titre, corps, ouvert = true) =>
-    `<details class="bloc pliable" ${ouvert ? 'open' : ''}>
-       <summary><h3>${ech(titre)}</h3><span class="chevron-bloc">&rsaquo;</span></summary>
-       <div class="bloc-corps">${corps}</div>
-     </details>`;
-
   const d = config.documents;
   const s = config.sauvegardes;
 
   contenu.innerHTML = `
-    <div class="vue-fiche">
-      <h2 class="titre-formulaire">Réglages</h2>
-      <p class="aide-champ" style="margin-bottom: 1.5rem;">
-        Les informations sur la galerie elle-même (nom, adresse, numéros de taxes) sont
-        dans le <strong>Profil de la galerie</strong>, accessible en cliquant sur le profil
-        en bas de la barre latérale.
-      </p>
+    <div class="vue-fiche vue-fiche-bento">
+      <div class="reglages-entete">
+        <h1>Réglages</h1>
+        <p class="reglages-entete-meta">
+          Les informations sur la galerie elle-même (nom, adresse, numéros de taxes) sont
+          dans le <strong>Profil de la galerie</strong>, accessible en cliquant sur le profil
+          en bas de la barre latérale.
+        </p>
+      </div>
+
       <form id="formulaire" class="formulaire" novalidate>
-        ${blocPliable('Les documents', `
-          <div class="bloc-secondaire">
-            <h4 class="sous-titre">Factures client</h4>
-            <div class="grille-form">
-              ${champTexte({ nom: 'd_prefixe_facture', libelle: 'Préfixe de facture client', valeur: d.prefixe_facture, attributs: 'placeholder="F-2026"' })}
-              ${champTexte({ nom: 'd_prochain_numero_facture', libelle: 'Prochain numéro', valeur: d.prochain_numero_facture, type: 'number', attributs: 'min="1" step="1"' })}
-            </div>
-            <p class="aide-champ">Émise par la galerie pour l'acheteur lors d'une vente.</p>
-          </div>
-          <div class="bloc-secondaire">
-            <h4 class="sous-titre">Factures artiste</h4>
-            <div class="grille-form">
-              ${champTexte({ nom: 'd_prefixe_facture_artiste', libelle: 'Préfixe de facture artiste', valeur: d.prefixe_facture_artiste, attributs: 'placeholder="A-2026"' })}
-              ${champTexte({ nom: 'd_prochain_numero_facture_artiste', libelle: 'Prochain numéro', valeur: d.prochain_numero_facture_artiste, type: 'number', attributs: 'min="1" step="1"' })}
-            </div>
-            <p class="aide-champ">Document que l'artiste devrait émettre vers la galerie pour sa part de la vente. La galerie le génère à sa place. Numérotation distincte des factures client.</p>
-          </div>
-          <div class="bloc-secondaire">
-            <h4 class="sous-titre">Certificats d'authenticité</h4>
-            <div class="grille-form">
-              ${champTexte({ nom: 'd_prefixe_certificat', libelle: 'Préfixe de certificat', valeur: d.prefixe_certificat, attributs: 'placeholder="C-2026"' })}
-              ${champTexte({ nom: 'd_prochain_numero_certificat', libelle: 'Prochain numéro de certificat', valeur: d.prochain_numero_certificat, type: 'number', attributs: 'min="1" step="1"' })}
-            </div>
-            ${champTexte({ nom: 'd_signataire', libelle: 'Texte du signataire sur le certificat', valeur: d.signataire_certificat })}
-            <p class="aide-champ">Format actuel des numéros : <strong>${ech(d.prefixe_certificat || 'C-2026')}-001</strong>, <strong>${ech(d.prefixe_certificat || 'C-2026')}-002</strong>, etc. La nomenclature finale sera ajustée plus tard ; il suffira de modifier le préfixe et de remettre le compteur à la bonne valeur.</p>
-          </div>
-          <div class="bloc-secondaire">
-            <h4 class="sous-titre">Numérotation d'inventaire</h4>
-            <div class="grille-form">
-              ${champTexte({ nom: 'd_prochain_numero_inventaire', libelle: "Prochain numéro d'inventaire", valeur: d.prochain_numero_inventaire, type: 'number', attributs: 'min="1" step="1"' })}
-            </div>
-            <p class="aide-champ">Compteur global à la galerie. Lors de la création d'une œuvre, ce numéro est pré-rempli en combinaison avec le préfixe d'inventaire de l'artiste (ex. <strong>JOU1992</strong> pour Joe Untel, préfixe « JOU »), et incrémenté automatiquement au save. Tu peux ajuster ici pour reprendre la numérotation des parents.</p>
-          </div>
-          <div class="bloc-secondaire">
-            <h4 class="sous-titre">TPS</h4>
-            <div class="grille-form">
-              ${champCheckbox({ nom: 'd_tps_actif', libelle: 'Appliquer la TPS sur les factures', valeur: !!d.tps_actif })}
-              ${champTexte({ nom: 'd_tps_taux', libelle: 'Taux TPS (%)', valeur: d.tps_taux, type: 'number', attributs: 'min="0" max="100" step="0.001"' })}
-            </div>
-          </div>
-          <div class="bloc-secondaire">
-            <h4 class="sous-titre">TVQ</h4>
-            <div class="grille-form">
-              ${champCheckbox({ nom: 'd_tvq_actif', libelle: 'Appliquer la TVQ sur les factures', valeur: !!d.tvq_actif })}
-              ${champTexte({ nom: 'd_tvq_taux', libelle: 'Taux TVQ (%)', valeur: d.tvq_taux, type: 'number', attributs: 'min="0" max="100" step="0.001"' })}
-            </div>
-          </div>
-          <div class="bloc-secondaire">
-            <h4 class="sous-titre">Facture artiste</h4>
-            <div class="grille-form">
-              ${champTexte({ nom: 'd_cote', libelle: 'Cote de la galerie par défaut (%)', valeur: d.cote_galerie_pourcent, type: 'number', attributs: 'min="0" max="100" step="0.1"' })}
-            </div>
-            <p class="aide-champ">La cote sert de valeur par défaut à la création d'une facture artiste. Modifiable par vente.</p>
-          </div>
-        `)}
+        <div class="grille-bento">
 
-        ${blocPliable('Les sauvegardes', `
-          <div class="grille-form">
-            ${champTexte({ nom: 's_frequence', libelle: 'Fréquence (minutes entre chaque sauvegarde auto)', valeur: s.frequence_minutes, type: 'number', attributs: 'min="5" step="5"' })}
-            ${champTexte({ nom: 's_retention', libelle: 'Nombre de copies conservées', valeur: s.retention, type: 'number', attributs: 'min="5" step="1"' })}
-          </div>
-          <div class="form-champ">
-            <label for="f-s_dossier">Dossier de destination</label>
-            <div class="ligne-dossier">
-              <input type="text" id="f-s_dossier" name="s_dossier" value="${ech(s.dossier)}" placeholder="Par défaut : Documents\\GalerieApp\\Sauvegardes" readonly>
-              <button type="button" class="btn-action btn-secondaire-action" id="btn-choisir-dossier">Choisir un dossier…</button>
-              <button type="button" class="btn-action btn-secondaire-action" id="btn-defaut-dossier">Défaut</button>
+          <!-- Numérotation (8 col) -->
+          <div class="carte zone-numerotation">
+            <h3>Numérotation des documents</h3>
+
+            <div class="sous-section">
+              <h4>Factures client</h4>
+              <div class="grille-form">
+                ${champTexte({ nom: 'd_prefixe_facture', libelle: 'Préfixe', valeur: d.prefixe_facture, attributs: 'placeholder="F-2026"' })}
+                ${champTexte({ nom: 'd_prochain_numero_facture', libelle: 'Prochain numéro', valeur: d.prochain_numero_facture, type: 'number', attributs: 'min="1" step="1"' })}
+              </div>
+              <p class="aide-champ">Émise par la galerie pour l'acheteur lors d'une vente.</p>
+            </div>
+
+            <div class="sous-section">
+              <h4>Factures artiste</h4>
+              <div class="grille-form">
+                ${champTexte({ nom: 'd_prefixe_facture_artiste', libelle: 'Préfixe', valeur: d.prefixe_facture_artiste, attributs: 'placeholder="A-2026"' })}
+                ${champTexte({ nom: 'd_prochain_numero_facture_artiste', libelle: 'Prochain numéro', valeur: d.prochain_numero_facture_artiste, type: 'number', attributs: 'min="1" step="1"' })}
+              </div>
+              <p class="aide-champ">Document que l'artiste devrait émettre vers la galerie pour sa part de la vente. La galerie le génère à sa place.</p>
+            </div>
+
+            <div class="sous-section">
+              <h4>Certificats d'authenticité</h4>
+              <div class="grille-form">
+                ${champTexte({ nom: 'd_prefixe_certificat', libelle: 'Préfixe', valeur: d.prefixe_certificat, attributs: 'placeholder="C-2026"' })}
+                ${champTexte({ nom: 'd_prochain_numero_certificat', libelle: 'Prochain numéro', valeur: d.prochain_numero_certificat, type: 'number', attributs: 'min="1" step="1"' })}
+              </div>
+              ${champTexte({ nom: 'd_signataire', libelle: 'Texte du signataire sur le certificat', valeur: d.signataire_certificat })}
+              <p class="aide-champ">Format actuel : <strong>${ech(d.prefixe_certificat || 'C-2026')}-001</strong>, <strong>${ech(d.prefixe_certificat || 'C-2026')}-002</strong>, etc.</p>
+            </div>
+
+            <div class="sous-section">
+              <h4>Numérotation d'inventaire</h4>
+              <div class="grille-form">
+                ${champTexte({ nom: 'd_prochain_numero_inventaire', libelle: "Prochain numéro", valeur: d.prochain_numero_inventaire, type: 'number', attributs: 'min="1" step="1"' })}
+              </div>
+              <p class="aide-champ">Compteur global. Combiné avec le préfixe d'inventaire de l'artiste (ex. <strong>JOU1992</strong>).</p>
             </div>
           </div>
-          <p class="aide-champ">Les anciennes sauvegardes sont supprimées automatiquement quand le nombre dépasse la limite. Fréquence minimale : 5 minutes.</p>
-          <div class="form-champ">
-            <button type="button" class="btn-action btn-secondaire-action" id="btn-sauvegarder-maintenant">Sauvegarder maintenant</button>
-          </div>
-        `)}
 
-        ${blocPliable("Import de données", `
-          <p class="aide-champ">Importe un fichier CSV exporté d'Airtable (table Artistes ou Œuvres). Tu pourras choisir entre <em>mettre à jour</em> les fiches existantes ou <em>n'ajouter que les nouvelles</em>.</p>
-          <button type="button" class="btn-action btn-secondaire-action" id="btn-importer">Importer un fichier CSV…</button>
-        `, false)}
+          <!-- Taxes & commission (4 col) -->
+          <div class="carte zone-taxes-cote">
+            <h3>Taxes &amp; commission</h3>
 
-        ${blocPliable("Intelligence artificielle (ChatGPT)", `
-          ${champTextarea({ nom: 'ia_instructions_galerie', libelle: 'Consignes générales de la galerie (toujours incluses)', valeur: config.ia?.instructions_galerie || '', lignes: 6 })}
-          <p class="aide-champ">Ces consignes s'ajoutent à toutes les générations de description, peu importe l'artiste. Sert à fixer le ton maison (ex. accessible, jamais grandiloquent), la longueur cible générale, et toute autre règle commune.</p>
-          ${champTexte({ nom: 'ia_lien_chatgpt_defaut', libelle: 'Lien ChatGPT par défaut', valeur: config.ia?.lien_chatgpt_defaut || 'https://chat.openai.com/', attributs: 'placeholder="https://chat.openai.com/"' })}
-          <p class="aide-champ">Utilisé quand l'artiste n'a pas de lien spécifique vers son propre GPT.</p>
-        `, false)}
+            <div class="sous-section">
+              <h4>TPS</h4>
+              <div class="grille-form">
+                ${champCheckbox({ nom: 'd_tps_actif', libelle: 'Appliquer', valeur: !!d.tps_actif })}
+                ${champTexte({ nom: 'd_tps_taux', libelle: 'Taux (%)', valeur: d.tps_taux, type: 'number', attributs: 'min="0" max="100" step="0.001"' })}
+              </div>
+            </div>
 
-        ${blocPliable("Affichage", `
-          <div class="form-champ">
-            <label for="f-a_zoom">Taille d'affichage</label>
-            <select id="f-a_zoom" name="a_zoom">
-              ${NIVEAUX_ZOOM.map((n) => `<option value="${n.val}" ${Math.abs(n.val - zoomInitial) < 0.001 ? 'selected' : ''}>${ech(n.libelle)} — ${Math.round(n.val * 100)} %</option>`).join('')}
-            </select>
-            <p class="aide-champ">Ajuste la taille de tous les éléments de l'application. L'aperçu est appliqué immédiatement quand tu changes la valeur ; il sera enregistré quand tu cliques sur <strong>Enregistrer</strong>. Annule pour revenir à la valeur d'origine.</p>
-          </div>
-        `, false)}
+            <div class="sous-section">
+              <h4>TVQ</h4>
+              <div class="grille-form">
+                ${champCheckbox({ nom: 'd_tvq_actif', libelle: 'Appliquer', valeur: !!d.tvq_actif })}
+                ${champTexte({ nom: 'd_tvq_taux', libelle: 'Taux (%)', valeur: d.tvq_taux, type: 'number', attributs: 'min="0" max="100" step="0.001"' })}
+              </div>
+            </div>
 
-        ${blocPliable("À propos", `
-          <dl class="champs">
-            <div class="champ"><dt>Application</dt><dd>${ech(infosApp.nom)}</dd></div>
-            <div class="champ"><dt>Version</dt><dd>${ech(infosApp.version)}</dd></div>
-            <div class="champ"><dt>Marque affichée</dt><dd>${ech(config.galerie?.nom || '—')}</dd></div>
-            <div class="champ"><dt>Dossier des données</dt><dd><code>${ech(infosApp.dataDir)}</code></dd></div>
-            <div class="champ"><dt>Moteur</dt><dd>Electron ${ech(infosApp.electron)} sur ${ech(infosApp.plateforme)}</dd></div>
-          </dl>
-          <div class="reglages-updater">
-            <p class="reglages-updater-statut" id="updater-statut">${ech(libelleEtat())}</p>
-            <div class="form-actions" style="justify-content: flex-start;">
-              <button type="button" class="btn-action btn-secondaire-action" id="btn-updater-verifier">Vérifier les mises à jour</button>
-              <button type="button" class="btn-action btn-secondaire-action" id="btn-updater-voir" hidden>Voir les détails</button>
+            <div class="sous-section">
+              <h4>Cote galerie</h4>
+              <div class="grille-form">
+                ${champTexte({ nom: 'd_cote', libelle: 'Pourcentage par défaut (%)', valeur: d.cote_galerie_pourcent, type: 'number', attributs: 'min="0" max="100" step="0.1"' })}
+              </div>
+              <p class="aide-champ">Valeur préremplie à la création d'une facture artiste. Modifiable par vente.</p>
             </div>
           </div>
-          <p class="aide-champ" style="margin-top:1rem;">Données conservées localement (Loi 25).</p>
-        `, false)}
+
+          <!-- Sauvegardes (6 col) -->
+          <div class="carte zone-sauvegardes">
+            <h3>Sauvegardes</h3>
+            <div class="grille-form">
+              ${champTexte({ nom: 's_frequence', libelle: 'Fréquence (minutes)', valeur: s.frequence_minutes, type: 'number', attributs: 'min="5" step="5"' })}
+              ${champTexte({ nom: 's_retention', libelle: 'Nombre de copies conservées', valeur: s.retention, type: 'number', attributs: 'min="5" step="1"' })}
+            </div>
+            <div class="form-champ" style="margin-top: var(--s3);">
+              <label for="f-s_dossier">Dossier de destination</label>
+              <div class="ligne-dossier">
+                <input type="text" id="f-s_dossier" name="s_dossier" value="${ech(s.dossier)}" placeholder="Par défaut : Documents\\Galeria\\Sauvegardes" readonly>
+                <button type="button" class="btn-action btn-secondaire-action" id="btn-choisir-dossier">Choisir…</button>
+                <button type="button" class="btn-action btn-secondaire-action" id="btn-defaut-dossier">Défaut</button>
+              </div>
+            </div>
+            <p class="aide-champ">Anciennes sauvegardes supprimées automatiquement. Minimum 5 minutes.</p>
+            <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-sauvegarder-maintenant">Sauvegarder maintenant</button>
+          </div>
+
+          <!-- Affichage (3 col) -->
+          <div class="carte zone-affichage">
+            <h3>Affichage</h3>
+            <div class="form-champ">
+              <label for="f-a_zoom">Taille d'affichage</label>
+              <select id="f-a_zoom" name="a_zoom">
+                ${NIVEAUX_ZOOM.map((n) => `<option value="${n.val}" ${Math.abs(n.val - zoomInitial) < 0.001 ? 'selected' : ''}>${ech(n.libelle)} — ${Math.round(n.val * 100)} %</option>`).join('')}
+              </select>
+              <p class="aide-champ">Aperçu appliqué immédiatement. Annule pour revenir à l'original.</p>
+            </div>
+          </div>
+
+          <!-- Import (3 col) -->
+          <div class="carte zone-import">
+            <h3>Import de données</h3>
+            <p class="aide-champ" style="margin-top:0;">
+              Importe un fichier CSV exporté d'Airtable (Artistes ou Œuvres). Tu choisiras entre <em>mettre à jour</em> ou <em>n'ajouter que les nouvelles</em>.
+            </p>
+            <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-importer">Importer un fichier CSV…</button>
+          </div>
+
+          <!-- IA (6 col) -->
+          <div class="carte zone-ia">
+            <h3>Intelligence artificielle (ChatGPT)</h3>
+            ${champTextarea({ nom: 'ia_instructions_galerie', libelle: 'Consignes générales de la galerie', valeur: config.ia?.instructions_galerie || '', lignes: 5 })}
+            <p class="aide-champ">Ces consignes s'ajoutent à toutes les générations, peu importe l'artiste.</p>
+            ${champTexte({ nom: 'ia_lien_chatgpt_defaut', libelle: 'Lien ChatGPT par défaut', valeur: config.ia?.lien_chatgpt_defaut || 'https://chat.openai.com/', attributs: 'placeholder="https://chat.openai.com/"' })}
+            <p class="aide-champ">Utilisé quand l'artiste n'a pas de lien spécifique vers son propre GPT.</p>
+          </div>
+
+          <!-- À propos (6 col) -->
+          <div class="carte zone-apropos">
+            <h3>À propos</h3>
+            <dl class="infos-app-bento">
+              <dt>Application</dt><dd>${ech(infosApp.nom)}</dd>
+              <dt>Version</dt><dd>${ech(infosApp.version)}</dd>
+              <dt>Marque affichée</dt><dd>${ech(config.galerie?.nom || '—')}</dd>
+              <dt>Dossier des données</dt>
+              <dd><button type="button" class="lien-dossier" id="btn-ouvrir-dossier-donnees" title="Ouvrir le dossier dans l'Explorateur">${ech(infosApp.dataDir)}</button></dd>
+              <dt>Moteur</dt><dd>Electron ${ech(infosApp.electron)} sur ${ech(infosApp.plateforme)}</dd>
+            </dl>
+            <div class="updater-bloc">
+              <p class="updater-statut" id="updater-statut">${ech(libelleEtat())}</p>
+              <div style="display: flex; gap: var(--s2);">
+                <button type="button" class="btn-action btn-secondaire-action" id="btn-updater-verifier">Vérifier les mises à jour</button>
+                <button type="button" class="btn-action btn-secondaire-action" id="btn-updater-voir" hidden>Voir les détails</button>
+              </div>
+            </div>
+            <p class="aide-champ" style="margin-top: var(--s3);">Données conservées localement (Loi 25).</p>
+          </div>
+
+        </div>
 
         <div class="form-actions">
           <button type="button" class="btn-action btn-secondaire-action" id="btn-annuler">Annuler</button>
@@ -210,6 +236,24 @@ export async function rendreReglages(contenu) {
       }
     });
     observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  const btnOuvrirDossierDonnees = contenu.querySelector('#btn-ouvrir-dossier-donnees');
+  if (btnOuvrirDossierDonnees) {
+    btnOuvrirDossierDonnees.addEventListener('click', async () => {
+      try {
+        const r = await window.api.ouvrirDossier(infosApp.dataDir);
+        if (r && !r.ok) {
+          await alerter({
+            type: 'error',
+            title: 'Impossible d\'ouvrir le dossier',
+            message: r.erreur || 'Une erreur est survenue.',
+          });
+        }
+      } catch (err) {
+        await alerter({ type: 'error', title: 'Impossible d\'ouvrir le dossier', message: err.message });
+      }
+    });
   }
 
   const selZoom = contenu.querySelector('#f-a_zoom');

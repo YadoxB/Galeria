@@ -8,7 +8,7 @@ identifiants.
 
 ---
 
-## [Non publié] — 0.2.3 (en cours)
+## [0.2.3] — 2026-06-17
 
 ### Ajouté
 
@@ -28,11 +28,36 @@ identifiants.
   filtrage natif du `<datalist>`), scrollable. La liste sépare les
   **médiums de l'artiste** (en tête) des **autres médiums** (en dessous),
   avec un raccourci « Tous » épinglé tout en haut.
+- **Refonte bento des 7 pages principales.** Mise en page en grille
+  12 colonnes avec cartes hiérarchisées remplaçant les piles
+  d'accordéons verticaux. Couvre **Artiste** (photo + identité + 4
+  stats, présentation à onglets Bio/Démarche/CV, conditions galerie
+  avec cotes + fiscalité, contact, aide IA, aperçu de 8 œuvres),
+  **Œuvre** (image + identité avec 2 prix Courant/Préférentiel,
+  caractéristiques, localisation/sujets, description, certificats),
+  **Client** (avatar + identité + 4 stats achats/total/dernier/depuis,
+  coordonnées + bloc Loi 25 avec pastille consentement, historique
+  d'achat, notes), **Vente** (identité + tuile Total navy/or, œuvre +
+  client cliquables, détails financiers en table-facture, documents
+  avec icônes A/C), **Réglages** (numérotation + taxes & commission,
+  sauvegardes + affichage + import, IA + à propos), **Profil galerie**
+  (4 cartes 2×2), **Outils** (calculateur + cotes de référence côte
+  à côte).
+- **Nouveau IPC `app:ouvrir-dossier`** (wrap `shell.openPath`). Le
+  chemin du dossier de données dans À propos est maintenant un bouton
+  pillule cliquable qui ouvre l'Explorateur Windows directement.
+- **5 nouveaux IPC `*FicheBundle`** (artiste, œuvre, client, vente,
+  réglages) qui chargent tout ce qu'une fiche en lecture a besoin en
+  un seul appel — incluant les stats calculées et les listes
+  apparentées.
 - **DevTools accessibles via F12 ou Ctrl+Shift+I** (utile pour le
   débogage occasionnel ; menu de la fenêtre toujours désactivé).
 - **Document `A-VALIDER.md`** à la racine du projet : liste vivante
   des questions à clarifier avec les parents (formule du courant pour
   les cotes en po², catégories de format, taxes par client, etc.).
+- **Démos HTML standalone** dans `demos/` (artiste, œuvre, client,
+  vente, réglages) pour valider visuellement les mises en page avant
+  l'intégration dans l'app.
 
 ### Modifié
 
@@ -47,6 +72,12 @@ identifiants.
   prix total. Sur une cote en $/po linéaire, ça revient au même qu'un
   supplément linéaire ; sur une cote en $/po², l'écart se creuse avec
   la surface (à reconfirmer avec les parents).
+- **Titres de cartes harmonisés à 24 px Cormorant gallery-navy**
+  sur toutes les pages bento (au lieu de 18 px). Sous-sections
+  internes en encarts soft-ivory + bordure mist (au lieu de filets
+  séparateurs) pour mieux délimiter visuellement les zones.
+- **Boutons de navigation Précédent/Suivant** sans cadre, juste flèche
+  + libellé et fond cloud au survol.
 
 ### Corrigé
 

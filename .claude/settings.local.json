@@ -78,7 +78,11 @@
       "Bash(node scripts/import-urls-oeuvres.js \"F:/Galerie/Automatisation/GalerieApp/Œuvres-Grid view 3.csv\" --execute)",
       "Bash(curl -s \"https://api.github.com/repos/YadoxB/Galeria/releases/latest\")",
       "Bash(curl -s \"https://api.github.com/repos/YadoxB/Galeria/releases/tags/v0.2.2\")",
-      "Bash(grep -n \"majDimensions\\\\\\\\\\(\\\\\\\\\\);\\\\|format/orientation\" src/app/vues/oeuvre-fiche.js)"
+      "Bash(grep -n \"majDimensions\\\\\\\\\\(\\\\\\\\\\);\\\\|format/orientation\" src/app/vues/oeuvre-fiche.js)",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget",
+      "PowerShell(if \\(-not \\(Test-Path demos\\)\\) { New-Item -ItemType Directory -Path demos | Out-Null; \"demos/ créé\" } else { \"demos/ existe déjà\" })",
+      "Bash(npm start *)"
     ]
   }
 }

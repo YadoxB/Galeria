@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo fiche artiste (bento)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+
+    /* ===== Barre de démo ===== */
+    .demo-bar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: var(--s3);
+      padding: var(--s2) var(--s4);
+      background: var(--deep-navy); color: var(--soft-ivory);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .switch { display: flex; gap: 4px; background: rgba(255,255,255,0.06); padding: 4px; border-radius: 999px; }
+    .demo-bar .switch button {
+      background: transparent; color: var(--soft-ivory);
+      border: 0; padding: 6px 14px; border-radius: 999px;
+      font-family: var(--font-ui); font-size: 13px; cursor: pointer;
+    }
+    .demo-bar .switch button:hover { background: rgba(255,255,255,0.06); }
+    .demo-bar .switch button.actif {
+      background: var(--warm-gold); color: var(--soft-ivory); font-weight: 500;
+    }
+
+    /* ===== Conteneur principal ===== */
+    main {
+      max-width: 1280px; margin: 0 auto;
+      padding: var(--s5) var(--s4);
+    }
+    .vue-fiche {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--s3);
+    }
+
+    /* ===== Carte de base ===== */
+    .carte {
+      background: var(--porcelain);
+      border: 1px solid var(--mist);
+      border-radius: var(--r-carte);
+      padding: var(--s3) var(--s3);
+      box-shadow: var(--ombre-carte);
+    }
+    .carte h3 {
+      margin: 0 0 var(--s2);
+      font-family: var(--font-titre); font-weight: 500;
+      font-size: 18px; color: var(--gallery-navy);
+    }
+    .carte .lien {
+      color: var(--warm-gold); font-size: 13px; font-weight: 500;
+      text-decoration: none;
+    }
+    .carte .lien:hover { text-decoration: underline; }
+
+    /* ===== Bande Identité ===== */
+    .zone-photo {
+      grid-column: span 2;
+      background: var(--deep-navy);
+      border-radius: var(--r-carte);
+      aspect-ratio: 1 / 1;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-titre);
+      font-size: 56px; font-weight: 500;
+      color: var(--warm-gold);
+      box-shadow: var(--ombre-carte);
+      position: relative; overflow: hidden;
+    }
+    .zone-photo .badge-archive {
+      position: absolute; top: var(--s2); left: var(--s2);
+      background: var(--badge-archivee-fond); color: var(--badge-archivee-texte);
+      font-family: var(--font-ui); font-size: 11px; font-weight: 500;
+      padding: 3px 10px; border-radius: var(--r-badge);
+    }
+
+    .zone-identite { grid-column: span 6; display: flex; flex-direction: column; justify-content: space-between; }
+    .zone-identite h1 {
+      margin: 0;
+      font-family: var(--font-titre); font-weight: 500;
+      font-size: 38px; line-height: 1.1; color: var(--gallery-navy);
+    }
+    .zone-identite .meta {
+      margin: var(--s1) 0 0; color: var(--slate); font-size: 14px;
+    }
+    .zone-identite .actions {
+      display: flex; gap: var(--s2); margin-top: var(--s3);
+      flex-wrap: wrap;
+    }
+    .btn {
+      font-family: var(--font-ui); font-size: 13px; font-weight: 500;
+      padding: 8px 16px; border-radius: var(--r-btn);
+      border: 1px solid transparent; cursor: pointer;
+      transition: background-color .12s;
+    }
+    .btn-primaire { background: var(--warm-gold); color: var(--soft-ivory); }
+    .btn-primaire:hover { background: var(--warm-gold-hover); }
+    .btn-secondaire { background: var(--porcelain); color: var(--ink); border-color: var(--mist); }
+    .btn-secondaire:hover { background: var(--cloud); }
+    .btn-danger { background: var(--porcelain); color: var(--erreur); border-color: rgba(182, 66, 60, 0.4); }
+    .btn-danger:hover { background: #fbeae8; }
+
+    .zone-stats {
+      grid-column: span 4;
+      display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2);
+    }
+    .stat {
+      background: var(--porcelain);
+      border: 1px solid var(--mist);
+      border-radius: var(--r-carte);
+      padding: var(--s3);
+      box-shadow: var(--ombre-carte);
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .stat .label { font-size: 12px; color: var(--slate); }
+    .stat .val { font-family: var(--font-titre); font-size: 32px; color: var(--gallery-navy); line-height: 1; }
+    .stat-navy {
+      background: var(--deep-navy); border-color: transparent;
+    }
+    .stat-navy .label { color: rgba(252, 250, 244, 0.7); }
+    .stat-navy .val { color: var(--warm-gold); }
+
+    /* ===== Bande Présentation (3 cartes égales) ===== */
+    .zone-presentation { grid-column: span 12; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--s3); }
+    .carte-texte { display: flex; flex-direction: column; min-height: 200px; }
+    .carte-texte .corps {
+      flex: 1; color: var(--ink); font-size: 14px; line-height: 1.6;
+      overflow: hidden; position: relative;
+      display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical;
+    }
+    .carte-texte .vide {
+      flex: 1; color: var(--stone); font-size: 13px; font-style: italic;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px dashed var(--mist); border-radius: 8px; padding: var(--s3);
+    }
+    .carte-texte .pied { margin-top: var(--s2); }
+
+    /* ===== Bande Opérations (4 cartes égales) ===== */
+    .zone-operations { grid-column: span 12; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: var(--s3); }
+    .carte-op { display: flex; flex-direction: column; gap: 4px; }
+    .carte-op h3 { font-size: 15px; margin-bottom: var(--s2); }
+    .carte-op .ligne { font-size: 13px; color: var(--ink); line-height: 1.55; }
+    .carte-op .ligne .libelle { color: var(--slate); }
+    .carte-op .pied { margin-top: auto; padding-top: var(--s2); }
+    .carte-op .grand {
+      font-family: var(--font-titre); font-size: 32px;
+      color: var(--warm-gold); line-height: 1; margin-bottom: 2px;
+    }
+    .carte-op .pastille {
+      display: inline-block; background: var(--cloud); color: var(--slate);
+      font-size: 11px; padding: 2px 10px; border-radius: var(--r-badge);
+    }
+
+    /* ===== Bande Catalogue ===== */
+    .zone-catalogue { grid-column: span 12; }
+    .zone-catalogue .entete-bloc {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: var(--s3);
+    }
+    .vignettes { display: grid; grid-template-columns: repeat(8, 1fr); gap: var(--s2); }
+    .vignette {
+      aspect-ratio: 1 / 1; border-radius: 8px;
+      border: 1px solid var(--mist);
+      display: flex; align-items: flex-end; padding: 6px;
+      font-size: 10px; color: var(--soft-ivory); font-weight: 500;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    }
+
+    /* ===== Bande Notes ===== */
+    .zone-notes { grid-column: span 12; }
+    .zone-notes .corps { font-size: 13px; color: var(--slate); line-height: 1.55; }
+
+    /* ===== Mode REGROUPÉ — carte Présentation à onglets ===== */
+    .carte-presentation { grid-column: span 12; display: flex; flex-direction: column; min-height: 260px; }
+    .onglets { display: flex; gap: 0; border-bottom: 1px solid var(--mist); margin: calc(var(--s2) * -1) 0 var(--s3); }
+    .onglet {
+      background: none; border: 0; cursor: pointer;
+      padding: 10px 18px 12px;
+      font-family: var(--font-ui); font-size: 14px; color: var(--slate);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color .12s;
+    }
+    .onglet:hover { color: var(--ink); }
+    .onglet.actif { color: var(--gallery-navy); border-bottom-color: var(--warm-gold); font-weight: 500; }
+    .onglet-compteur {
+      font-size: 11px; color: var(--stone); margin-left: 6px;
+    }
+    .onglet-corps {
+      flex: 1; font-size: 14px; line-height: 1.65; color: var(--ink);
+      padding: 0 2px;
+    }
+    .onglet-corps.vide {
+      color: var(--stone); font-style: italic;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px dashed var(--mist); border-radius: 8px; padding: var(--s5);
+      min-height: 140px;
+    }
+
+    /* ===== Mode REGROUPÉ — carte Conditions galerie ===== */
+    .carte-conditions { grid-column: span 6; }
+    .conditions-corps {
+      display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4);
+    }
+    .sous-section h4 {
+      margin: 0 0 var(--s2);
+      font-family: var(--font-ui); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--slate);
+    }
+    .sous-section .grand {
+      font-family: var(--font-titre); font-size: 32px;
+      color: var(--warm-gold); line-height: 1; margin-bottom: 4px;
+    }
+    .sous-section .ligne { font-size: 13px; color: var(--ink); line-height: 1.55; }
+    .sous-section .ligne .libelle { color: var(--slate); }
+    .sous-section .pastille {
+      display: inline-block; background: var(--cloud); color: var(--slate);
+      font-size: 11px; padding: 2px 10px; border-radius: var(--r-badge);
+      margin-bottom: var(--s1);
+    }
+    .sous-section .pied { margin-top: var(--s2); }
+
+    /* En mode regroupé, Contact et Aide IA occupent 3 colonnes chacun à droite */
+    .mode-regroupe .carte-op-droite { grid-column: span 3; }
+
+    /* ===== Pied de la démo ===== */
+    .demo-pied {
+      max-width: 1280px; margin: var(--s5) auto var(--s4);
+      padding: 0 var(--s4);
+      color: var(--slate); font-size: 12px; line-height: 1.6;
+    }
+    .demo-pied strong { color: var(--ink); }
+    .demo-pied ul { padding-left: 18px; margin: 6px 0 0; }
+  </style>
+</head>
+<body>
+
+  <header class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Démo fiche artiste (bento)</div>
+    <div style="display: flex; gap: var(--s3); align-items: center;">
+      <div class="switch" id="switch-layout">
+        <button data-layout="separe">Cartes séparées</button>
+        <button data-layout="regroupe" class="actif">Regroupé</button>
+      </div>
+      <div class="switch" id="switch-profil">
+        <button data-profil="riche" class="actif">Profil riche</button>
+        <button data-profil="minimal">Profil minimal</button>
+        <button data-profil="archive">Archivé</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="contenu"></main>
+
+  <div class="demo-pied">
+    <strong>Notes sur cette démo</strong>
+    <ul>
+      <li>Maquette statique : aucun bouton n'est branché. Sert à valider la mise en page, la lisibilité et la hiérarchie visuelle à taille réelle.</li>
+      <li>Polices et palette = celles de l'app (via <code>src/theme.css</code>).</li>
+      <li>Photo de l'artiste représentée par les initiales sur fond Deep Navy (vraies photos à venir dans l'app).</li>
+      <li>Vignettes du catalogue représentées par des dégradés de couleurs neutres.</li>
+    </ul>
+  </div>
+
+  <script>
+    const PROFILS = {
+      riche: {
+        prenom: 'Claude',
+        nom: 'Lefebvre-Dubé',
+        initiales: 'CL',
+        type: 'Peintre',
+        prefixe: 'CLD',
+        archive: false,
+        stats: { catalogue: 47, dispo: 31, ventes: 12, valeur: '38 450 $' },
+        biographie: "Née à Saint-Hyacinthe en 1972, Claude Lefebvre-Dubé étudie la gravure à l'École des arts visuels de l'UQAM avant de se tourner vers la peinture acrylique grand format au milieu des années 90. Elle travaille aujourd'hui depuis son atelier de Saint-Lambert et expose régulièrement au Québec, en Ontario et en Nouvelle-Angleterre.",
+        demarche: "Sa pratique fait dialoguer abstraction lyrique et fragments figuratifs. Les couches successives de couleur — souvent transparentes — laissent percevoir les hésitations et les corrections de la touche, comme une géologie intime de la décision picturale.",
+        curriculum: "2023 — Solo, Galerie du Vieux Saint-Jean. 2021 — Symposium international de Baie-Saint-Paul. 2019 — Prix de la relève en arts visuels du Conseil des arts du Québec. 2016 — Bourse de création du CALQ. Représentée au Musée des beaux-arts de Sherbrooke (collection permanente).",
+        contact: { email: 'claude.lfd@exemple.ca', tel: '514 555-0142', ville: 'Saint-Lambert, QC' },
+        fisc: { actif: true, lignes: [['TPS', '123 456 789 RT0001'], ['TVQ', '1234 567 890 TQ0001']] },
+        cotes: { n: 5, plage: '28 – 38 $/po lin', extra: 'dont 1 cote en $/po²' },
+        ia: { configurees: true, gpt: true },
+        notes: "Aime être prévenue 48 h à l'avance des vernissages. Préfère le téléphone au courriel pour les sujets administratifs. Anniversaire le 14 mars.",
+        vignettes: [
+          ['Ondes I', '#7c8e7a'], ['Strates', '#a08864'], ['Nocturne', '#3a4e5e'],
+          ['Boréale', '#9aa7b0'], ['Marée', '#6e8492'], ['Sillage', '#b89976'],
+          ['Veines', '#54473b'], ['Reflux', '#d8c7a8']
+        ]
+      },
+      minimal: {
+        prenom: 'Jean',
+        nom: 'Tremblay',
+        initiales: 'JT',
+        type: 'Sculpteur',
+        prefixe: 'JTR',
+        archive: false,
+        stats: { catalogue: 6, dispo: 4, ventes: 1, valeur: '8 200 $' },
+        biographie: "Sculpteur autodidacte basé à Lévis. Travail à partir de bois récupéré.",
+        demarche: '',
+        curriculum: '',
+        contact: { email: '', tel: '418 555-0177', ville: 'Lévis, QC' },
+        fisc: { actif: false, lignes: [] },
+        cotes: null,
+        ia: { configurees: false, gpt: false },
+        notes: '',
+        vignettes: [
+          ['Souche I', '#7a6249'], ['Branche', '#5e4a36'], ['Racine', '#8f7456'],
+          ['Tronc', '#6d5740']
+        ]
+      },
+      archive: {
+        prenom: 'Marie',
+        nom: 'Dupont',
+        initiales: 'MD',
+        type: 'Photographe',
+        prefixe: 'MDU',
+        archive: true,
+        stats: { catalogue: 14, dispo: 0, ventes: 14, valeur: '0 $' },
+        biographie: "Photographe documentaire ayant collaboré avec la galerie de 2018 à 2023. Toutes ses œuvres ont été vendues. Archivée à sa demande après son déménagement à Montréal.",
+        demarche: "Photographie argentique noir et blanc. Portraits de communautés rurales du Bas-Saint-Laurent.",
+        curriculum: "2022 — Solo, Galerie du Vieux Saint-Jean. 2020 — Festival photo Rimouski.",
+        contact: { email: 'marie.dupont.photo@exemple.ca', tel: '', ville: 'Montréal, QC' },
+        fisc: { actif: true, lignes: [['TPS', '987 654 321 RT0001']] },
+        cotes: null,
+        ia: { configurees: false, gpt: false },
+        notes: "Plus active à la galerie depuis l'automne 2023. Conserver les coordonnées pour expositions rétrospectives éventuelles.",
+        vignettes: [
+          ['Quai', '#4a4a4a'], ['Fumée', '#6b6b6b'], ['Vent', '#8a8a8a'],
+          ['Tôle', '#3d3d3d'], ['Phare', '#5c5c5c'], ['Brume', '#7a7a7a']
+        ]
+      }
+    };
+
+    const ech = (s) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    function blocTexte(titre, contenu) {
+      const corps = contenu
+        ? `<div class="corps">${ech(contenu)}</div>
+           <div class="pied"><a class="lien" href="#">Lire la suite ›</a></div>`
+        : `<div class="vide">Aucun(e) ${titre.toLowerCase()}</div>
+           <div class="pied"><a class="lien" href="#">+ Ajouter ›</a></div>`;
+      return `<div class="carte carte-texte"><h3>${titre}</h3>${corps}</div>`;
+    }
+
+    function carteCotes(c) {
+      if (!c) {
+        return `<div class="carte carte-op">
+          <h3>Cotes</h3>
+          <div class="ligne" style="color: var(--stone); font-style: italic;">Pas de cote configurée</div>
+          <div class="pied"><a class="lien" href="#">+ Définir une cote ›</a></div>
+        </div>`;
+      }
+      return `<div class="carte carte-op">
+        <h3>Cotes</h3>
+        <div class="grand">${c.n}</div>
+        <div class="ligne">${ech(c.plage)}</div>
+        ${c.extra ? `<div class="ligne"><span class="libelle">${ech(c.extra)}</span></div>` : ''}
+        <div class="pied"><a class="lien" href="#">Voir le détail ›</a></div>
+      </div>`;
+    }
+
+    function carteFiscalite(f) {
+      if (!f.actif) {
+        return `<div class="carte carte-op">
+          <h3>Fiscalité</h3>
+          <div class="ligne"><span class="pastille">Ne perçoit pas</span></div>
+        </div>`;
+      }
+      const lignes = f.lignes.map(([et, num]) => `<div class="ligne"><span class="libelle">${ech(et)}</span> ${ech(num)}</div>`).join('');
+      return `<div class="carte carte-op">
+        <h3>Fiscalité</h3>
+        <div class="ligne"><span class="pastille" style="background: var(--badge-disponible-fond); color: var(--badge-disponible-texte);">Perçoit</span></div>
+        ${lignes}
+      </div>`;
+    }
+
+    function carteContact(c) {
+      const ls = [];
+      if (c.email) ls.push(`<div class="ligne">${ech(c.email)}</div>`);
+      if (c.tel) ls.push(`<div class="ligne">${ech(c.tel)}</div>`);
+      if (c.ville) ls.push(`<div class="ligne"><span class="libelle">${ech(c.ville)}</span></div>`);
+      if (!ls.length) ls.push(`<div class="ligne" style="color: var(--stone); font-style: italic;">Pas de coordonnées</div>`);
+      return `<div class="carte carte-op"><h3>Contact</h3>${ls.join('')}</div>`;
+    }
+
+    function carteIA(ia) {
+      const état = ia.configurees ? 'Consignes configurées' : 'Aucune consigne';
+      const gpt = ia.gpt ? 'GPT personnalisé lié' : '';
+      return `<div class="carte carte-op">
+        <h3>Aide IA</h3>
+        <div class="ligne">${état}</div>
+        ${gpt ? `<div class="ligne"><span class="libelle">${gpt}</span></div>` : ''}
+        <div class="pied"><a class="lien" href="#">${ia.configurees ? 'Modifier' : '+ Configurer'} ›</a></div>
+      </div>`;
+    }
+
+    function cartePresentationOnglets(a) {
+      const onglets = [
+        { cle: 'bio', titre: 'Biographie', contenu: a.biographie },
+        { cle: 'dem', titre: 'Démarche',  contenu: a.demarche },
+        { cle: 'cur', titre: 'Curriculum', contenu: a.curriculum },
+      ];
+      const remplis = onglets.filter((o) => o.contenu).length;
+      // Onglet actif par défaut : le premier rempli, sinon le premier.
+      const cleActive = (onglets.find((o) => o.contenu) || onglets[0]).cle;
+
+      const tetes = onglets.map((o) => {
+        const marqueur = o.contenu ? '' : '<span class="onglet-compteur">·</span>';
+        return `<button class="onglet ${o.cle === cleActive ? 'actif' : ''}" data-onglet="${o.cle}">${o.titre}${marqueur}</button>`;
+      }).join('');
+
+      const corps = onglets.map((o) => {
+        const cache = o.cle !== cleActive ? 'style="display:none;"' : '';
+        if (o.contenu) {
+          return `<div class="onglet-corps" data-corps="${o.cle}" ${cache}>${ech(o.contenu)}</div>`;
+        }
+        return `<div class="onglet-corps vide" data-corps="${o.cle}" ${cache}>Aucune ${o.titre.toLowerCase()} — <a class="lien" href="#" style="margin-left:6px;">+ Ajouter ›</a></div>`;
+      }).join('');
+
+      return `<div class="carte carte-presentation">
+        <div class="onglets">${tetes}</div>
+        ${corps}
+      </div>`;
+    }
+
+    function carteConditionsGalerie(a) {
+      const c = a.cotes;
+      const f = a.fisc;
+
+      const sousCotes = c
+        ? `<div class="grand">${c.n}</div>
+           <div class="ligne">${ech(c.plage)}</div>
+           ${c.extra ? `<div class="ligne"><span class="libelle">${ech(c.extra)}</span></div>` : ''}
+           <div class="pied"><a class="lien" href="#">Voir le détail ›</a></div>`
+        : `<div class="ligne" style="color: var(--stone); font-style: italic;">Pas de cote configurée</div>
+           <div class="pied"><a class="lien" href="#">+ Définir une cote ›</a></div>`;
+
+      let sousFisc;
+      if (!f.actif) {
+        sousFisc = `<span class="pastille">Ne perçoit pas</span>`;
+      } else {
+        const lignes = f.lignes.map(([et, num]) => `<div class="ligne"><span class="libelle">${ech(et)}</span> ${ech(num)}</div>`).join('');
+        sousFisc = `<span class="pastille" style="background: var(--badge-disponible-fond); color: var(--badge-disponible-texte);">Perçoit</span>${lignes}`;
+      }
+
+      return `<div class="carte carte-conditions">
+        <h3>Conditions galerie</h3>
+        <div class="conditions-corps">
+          <div class="sous-section"><h4>Cotes (calcul de prix)</h4>${sousCotes}</div>
+          <div class="sous-section"><h4>Fiscalité</h4>${sousFisc}</div>
+        </div>
+      </div>`;
+    }
+
+    function rendre(profil, layout) {
+      const a = PROFILS[profil];
+      const nomComplet = `${a.prenom} ${a.nom}`;
+      const stats = a.stats;
+
+      const vignettes = a.vignettes.map(([titre, couleur]) =>
+        `<div class="vignette" style="background: ${couleur};">${ech(titre)}</div>`
+      ).join('');
+
+      const enteteIdentite = `
+        <div class="zone-photo">
+          ${a.archive ? '<span class="badge-archive">Archivée</span>' : ''}
+          <span>${a.initiales}</span>
+        </div>
+
+        <div class="carte zone-identite">
+          <div>
+            <h1>${ech(nomComplet)}</h1>
+            <p class="meta">${ech(a.type)} · Préfixe ${ech(a.prefixe)} · ${stats.catalogue} œuvre${stats.catalogue > 1 ? 's' : ''} au catalogue</p>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primaire">Modifier</button>
+            <button class="btn btn-secondaire">${a.archive ? 'Désarchiver' : 'Archiver'}</button>
+            <button class="btn btn-danger">Supprimer</button>
+          </div>
+        </div>
+
+        <div class="zone-stats">
+          <div class="stat"><span class="label">Au catalogue</span><span class="val">${stats.catalogue}</span></div>
+          <div class="stat stat-navy"><span class="label">Disponibles</span><span class="val">${stats.dispo}</span></div>
+          <div class="stat"><span class="label">Ventes</span><span class="val">${stats.ventes}</span></div>
+          <div class="stat"><span class="label">Valeur dispo</span><span class="val" style="font-size: 24px;">${stats.valeur}</span></div>
+        </div>
+      `;
+
+      const piedCommun = `
+        <div class="carte zone-catalogue">
+          <div class="entete-bloc">
+            <h3 style="margin: 0;">Aperçu du catalogue</h3>
+            <a class="lien" href="#">Voir les ${stats.catalogue} œuvres · + Ajouter ›</a>
+          </div>
+          <div class="vignettes">${vignettes}</div>
+        </div>
+
+        ${a.notes ? `<div class="carte zone-notes"><h3>Notes internes</h3><div class="corps">${ech(a.notes)}</div></div>` : ''}
+      `;
+
+      let corps;
+      if (layout === 'regroupe') {
+        corps = `
+          ${enteteIdentite}
+          ${cartePresentationOnglets(a)}
+          ${carteConditionsGalerie(a)}
+          <div class="carte carte-op carte-op-droite"><h3>Contact</h3>${contactLignes(a.contact)}</div>
+          <div class="carte carte-op carte-op-droite">${corpsIA(a.ia)}</div>
+          ${piedCommun}
+        `;
+      } else {
+        corps = `
+          ${enteteIdentite}
+          <div class="zone-presentation">
+            ${blocTexte('Biographie', a.biographie)}
+            ${blocTexte('Démarche', a.demarche)}
+            ${blocTexte('Curriculum', a.curriculum)}
+          </div>
+          <div class="zone-operations">
+            ${carteCotes(a.cotes)}
+            ${carteFiscalite(a.fisc)}
+            ${carteContact(a.contact)}
+            ${carteIA(a.ia)}
+          </div>
+          ${piedCommun}
+        `;
+      }
+
+      const classeMode = layout === 'regroupe' ? 'mode-regroupe' : 'mode-separe';
+      document.getElementById('contenu').innerHTML = `<div class="vue-fiche ${classeMode}">${corps}</div>`;
+
+      // Brancher les onglets de la carte Présentation (mode regroupé).
+      const onglets = document.querySelectorAll('.onglet');
+      onglets.forEach((tete) => {
+        tete.addEventListener('click', () => {
+          const cle = tete.dataset.onglet;
+          document.querySelectorAll('.onglet').forEach((t) => t.classList.toggle('actif', t === tete));
+          document.querySelectorAll('[data-corps]').forEach((c) => {
+            c.style.display = (c.dataset.corps === cle) ? '' : 'none';
+          });
+        });
+      });
+    }
+
+    // Helpers pour pouvoir réutiliser le contenu des cartes Contact et Aide IA
+    // tel quel dans le mode regroupé.
+    function contactLignes(c) {
+      const ls = [];
+      if (c.email) ls.push(`<div class="ligne">${ech(c.email)}</div>`);
+      if (c.tel) ls.push(`<div class="ligne">${ech(c.tel)}</div>`);
+      if (c.ville) ls.push(`<div class="ligne"><span class="libelle">${ech(c.ville)}</span></div>`);
+      if (!ls.length) ls.push(`<div class="ligne" style="color: var(--stone); font-style: italic;">Pas de coordonnées</div>`);
+      return ls.join('');
+    }
+    function corpsIA(ia) {
+      const état = ia.configurees ? 'Consignes configurées' : 'Aucune consigne';
+      const gpt = ia.gpt ? '<div class="ligne"><span class="libelle">GPT personnalisé lié</span></div>' : '';
+      return `<h3>Aide IA</h3>
+        <div class="ligne">${état}</div>
+        ${gpt}
+        <div class="pied"><a class="lien" href="#">${ia.configurees ? 'Modifier' : '+ Configurer'} ›</a></div>`;
+    }
+
+    let layoutCourant = 'regroupe';
+    let profilCourant = 'riche';
+
+    document.querySelectorAll('#switch-profil button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#switch-profil button').forEach((b) => b.classList.remove('actif'));
+        btn.classList.add('actif');
+        profilCourant = btn.dataset.profil;
+        rendre(profilCourant, layoutCourant);
+      });
+    });
+    document.querySelectorAll('#switch-layout button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#switch-layout button').forEach((b) => b.classList.remove('actif'));
+        btn.classList.add('actif');
+        layoutCourant = btn.dataset.layout;
+        rendre(profilCourant, layoutCourant);
+      });
+    });
+
+    rendre(profilCourant, layoutCourant);
+  </script>
+</body>
+</html>

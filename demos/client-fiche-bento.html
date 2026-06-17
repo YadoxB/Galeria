@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo fiche client (bento)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+
+    .demo-bar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: var(--s3);
+      padding: var(--s2) var(--s4);
+      background: var(--deep-navy); color: var(--soft-ivory);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .switch { display: flex; gap: 4px; background: rgba(255,255,255,0.06); padding: 4px; border-radius: 999px; }
+    .demo-bar .switch button {
+      background: transparent; color: var(--soft-ivory);
+      border: 0; padding: 6px 14px; border-radius: 999px;
+      font-family: var(--font-ui); font-size: 13px; cursor: pointer;
+    }
+    .demo-bar .switch button:hover { background: rgba(255,255,255,0.06); }
+    .demo-bar .switch button.actif {
+      background: var(--warm-gold); color: var(--soft-ivory); font-weight: 500;
+    }
+
+    main { max-width: 1400px; margin: 0 auto; padding: var(--s5) var(--s4); }
+    .vue-fiche {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: var(--s3);
+    }
+    .carte {
+      background: var(--porcelain);
+      border: 1px solid var(--mist);
+      border-radius: var(--r-carte);
+      box-shadow: var(--ombre-carte);
+    }
+
+    /* ===== Avatar ===== */
+    .zone-avatar {
+      grid-column: span 2;
+      background: var(--deep-navy);
+      border-radius: var(--r-carte);
+      aspect-ratio: 1 / 1;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--ombre-carte);
+      position: relative;
+      overflow: hidden;
+    }
+    .zone-avatar-initiales {
+      font-family: var(--font-titre);
+      font-size: 56px; font-weight: 500;
+      color: var(--warm-gold);
+    }
+    .badge-archive-fiche {
+      position: absolute; top: var(--s2); left: var(--s2);
+      background: var(--badge-archivee-fond); color: var(--badge-archivee-texte);
+      font-family: var(--font-ui); font-size: 11px; font-weight: 500;
+      padding: 3px 10px; border-radius: var(--r-badge);
+    }
+
+    /* ===== Identité ===== */
+    .zone-identite {
+      grid-column: span 6;
+      padding: var(--s3) var(--s4);
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .zone-identite h1 {
+      margin: 0;
+      font-family: var(--font-titre);
+      font-weight: 500; font-size: 38px;
+      line-height: 1.1; color: var(--ink);
+      word-break: break-word;
+    }
+    .zone-identite .meta {
+      margin: var(--s1) 0 0;
+      color: var(--slate); font-size: 14px;
+    }
+    .zone-identite-actions {
+      display: flex; gap: var(--s2);
+      margin-top: var(--s3); flex-wrap: wrap;
+    }
+    .btn {
+      font-family: var(--font-ui); font-size: 13px; font-weight: 500;
+      padding: 8px 16px; border-radius: var(--r-btn);
+      border: 1px solid transparent; cursor: pointer;
+    }
+    .btn-primaire   { background: var(--warm-gold); color: var(--soft-ivory); }
+    .btn-secondaire { background: var(--porcelain); color: var(--ink); border-color: var(--mist); }
+    .btn-danger     { background: var(--porcelain); color: var(--erreur); border-color: rgba(182, 66, 60, 0.4); }
+
+    /* ===== Stats (2×2) ===== */
+    .zone-stats {
+      grid-column: span 4;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: var(--s2);
+    }
+    .stat-bento {
+      background: var(--porcelain);
+      border: 1px solid var(--mist);
+      border-radius: var(--r-carte);
+      padding: var(--s3);
+      box-shadow: var(--ombre-carte);
+      display: flex; flex-direction: column; gap: 4px;
+      min-width: 0;
+    }
+    .stat-bento-label {
+      font-size: 12px; color: var(--slate);
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .stat-bento-val {
+      font-family: var(--font-titre);
+      font-size: 28px; line-height: 1;
+      color: var(--gallery-navy);
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-bento-val-small { font-size: 18px; }
+    .stat-bento-navy {
+      background: var(--deep-navy);
+      border-color: transparent;
+    }
+    .stat-bento-navy .stat-bento-label { color: rgba(252, 250, 244, 0.7); }
+    .stat-bento-navy .stat-bento-val   { color: var(--warm-gold); }
+
+    /* ===== Coordonnées + Loi 25 ===== */
+    .zone-coord { grid-column: span 8; padding: var(--s3) var(--s4); }
+    .zone-loi25 { grid-column: span 4; padding: var(--s3) var(--s4); }
+    .zone-coord h3, .zone-loi25 h3, .zone-historique h3, .zone-notes h3 {
+      font-family: var(--font-titre);
+      font-size: 18px;
+      color: var(--gallery-navy);
+      margin: 0 0 var(--s3);
+      font-weight: 500;
+    }
+    .champs-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--s2) var(--s4); }
+    .champ { display: flex; flex-direction: column; gap: 2px; }
+    .champ-lib { font-size: 11px; color: var(--slate); text-transform: uppercase; letter-spacing: 0.04em; }
+    .champ-val { font-size: 14px; color: var(--ink); user-select: text; }
+    .champ-vide { color: var(--stone); font-style: italic; font-size: 13px; }
+    .adresse-bloc {
+      grid-column: 1 / -1;
+      font-size: 14px; color: var(--ink); line-height: 1.55;
+      padding-top: var(--s2);
+      border-top: 1px solid var(--mist);
+      margin-top: var(--s2);
+    }
+    .adresse-bloc .champ-lib { display: block; margin-bottom: 4px; }
+
+    /* ===== Loi 25 ===== */
+    .pastille-consentement {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: var(--r-badge);
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: var(--s3);
+    }
+    .pastille-consentement-oui {
+      background: var(--badge-disponible-fond);
+      color: var(--badge-disponible-texte);
+    }
+    .pastille-consentement-non {
+      background: var(--cloud);
+      color: var(--slate);
+    }
+    .loi25-info { font-size: 13px; color: var(--slate); line-height: 1.55; }
+    .loi25-info strong { color: var(--ink); }
+
+    /* ===== Historique d'achat ===== */
+    .zone-historique { grid-column: span 12; padding: var(--s3) var(--s4); }
+    .zone-historique .entete {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: var(--s3); gap: var(--s2);
+    }
+    .zone-historique .entete h3 { margin: 0; }
+    .total-achats { font-size: 14px; color: var(--slate); }
+    .total-achats strong {
+      font-family: var(--font-titre);
+      font-size: 22px;
+      color: var(--gallery-navy);
+      margin-left: 8px;
+    }
+    .historique-liste { display: flex; flex-direction: column; gap: var(--s2); }
+    .ligne-vente {
+      display: flex; align-items: center; gap: var(--s3);
+      padding: var(--s3); background: var(--cloud);
+      border-radius: var(--r-btn);
+      cursor: pointer;
+      transition: background .12s;
+      border: 0;
+      font-family: var(--font-ui);
+      text-align: left;
+      width: 100%;
+    }
+    .ligne-vente:hover { background: var(--mist); }
+    .vignette {
+      width: 56px; height: 56px;
+      border-radius: 6px;
+      background: var(--stone);
+      flex-shrink: 0;
+    }
+    .ligne-vente .info { flex: 1; min-width: 0; }
+    .ligne-vente .ligne-titre {
+      margin: 0;
+      font-family: var(--font-titre); font-size: 17px;
+      color: var(--ink); font-weight: 500;
+    }
+    .ligne-vente .ligne-meta {
+      margin: 2px 0 0;
+      font-size: 12px; color: var(--slate);
+    }
+    .ligne-vente .prix {
+      font-family: var(--font-titre); font-size: 18px;
+      color: var(--gallery-navy);
+      font-variant-numeric: tabular-nums;
+    }
+    .ligne-vente .chevron {
+      color: var(--stone);
+      font-size: 1.4rem;
+      margin-left: var(--s2);
+    }
+    .historique-vide {
+      color: var(--stone); font-style: italic;
+      border: 1px dashed var(--mist); border-radius: var(--r-btn);
+      padding: var(--s4); text-align: center;
+    }
+
+    /* ===== Notes ===== */
+    .zone-notes { grid-column: span 12; padding: var(--s3) var(--s4); }
+    .zone-notes .corps { font-size: 14px; color: var(--ink); line-height: 1.6; }
+
+    /* ===== Pied démo ===== */
+    .demo-pied {
+      max-width: 1400px; margin: var(--s5) auto var(--s4);
+      padding: 0 var(--s4);
+      color: var(--slate); font-size: 12px; line-height: 1.6;
+    }
+    .demo-pied strong { color: var(--ink); }
+    .demo-pied ul { padding-left: 18px; margin: 6px 0 0; }
+  </style>
+</head>
+<body>
+
+  <header class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Démo fiche client (bento)</div>
+    <div class="switch" id="switch-profil">
+      <button data-profil="fidele" class="actif">Client fidèle</button>
+      <button data-profil="nouveau">Nouveau</button>
+      <button data-profil="sansconsentement">Sans consentement</button>
+      <button data-profil="archive">Archivé</button>
+    </div>
+  </header>
+
+  <main id="contenu"></main>
+
+  <div class="demo-pied">
+    <strong>Notes</strong>
+    <ul>
+      <li>Maquette statique. Les vraies vignettes des ventes viendront des œuvres achetées.</li>
+      <li>Le bloc Loi 25 met en évidence le consentement courriel (pastille verte/grise + date).</li>
+      <li>L'historique d'achat reproduit la liste actuelle, juste enveloppée dans une carte du bento.</li>
+    </ul>
+  </div>
+
+  <script>
+    const PROFILS = {
+      fidele: {
+        prenom: 'Pierre',
+        nom: 'Côté',
+        initiales: 'PC',
+        archive: false,
+        nbVentes: 8,
+        totalAchats: 27450,
+        derniereVente: '14 mars 2026',
+        clientDepuis: '08 juin 2018',
+        courriel: 'pierre.cote.collec@exemple.ca',
+        telephone: '450 555-0142',
+        adresse: { numero: '142', rue: 'rue Saint-Charles', app: '301', ville: 'Saint-Jean-sur-Richelieu', province: 'Québec', cp: 'J3B 2K7', pays: 'Canada' },
+        consentement: true,
+        consentement_date: '08 juin 2018',
+        notes: "Collectionneur de longue date. Aime être prévenu avant les vernissages. Préfère le téléphone au courriel pour les sujets de transaction. Sa femme Marie l'accompagne souvent.",
+        ventes: [
+          { oeuvre: 'Marée du soir', artiste: 'Claude Lefebvre-Dubé', inv: 'CLD-2023-014', date: '14 mars 2026', mode: 'Virement', facture: 'F-2026-003', total: 4200, couleur: '#6e8492' },
+          { oeuvre: 'Strates', artiste: 'Claude Lefebvre-Dubé', inv: 'CLD-2022-008', date: '12 juin 2025', mode: 'Carte', facture: 'F-2025-024', total: 3800, couleur: '#a08864' },
+          { oeuvre: 'Souche I', artiste: 'Jean Tremblay', inv: 'JTR-2023-003', date: '03 sept 2024', mode: 'Comptant', facture: 'F-2024-017', total: 2800, couleur: '#7a6249' },
+          { oeuvre: 'Veines', artiste: 'Claude Lefebvre-Dubé', inv: 'CLD-2021-007', date: '21 nov 2023', mode: 'Virement', facture: 'F-2023-038', total: 5200, couleur: '#54473b' },
+          { oeuvre: 'Reflux', artiste: 'Claude Lefebvre-Dubé', inv: 'CLD-2020-002', date: '05 mai 2022', mode: 'Carte', facture: 'F-2022-014', total: 3450, couleur: '#d8c7a8' },
+        ],
+      },
+      nouveau: {
+        prenom: 'Sarah',
+        nom: 'Bélanger',
+        initiales: 'SB',
+        archive: false,
+        nbVentes: 0,
+        totalAchats: 0,
+        derniereVente: null,
+        clientDepuis: null,
+        courriel: 'sarah.belanger@exemple.ca',
+        telephone: '514 555-0188',
+        adresse: { numero: '', rue: '', app: '', ville: 'Montréal', province: 'Québec', cp: '', pays: 'Canada' },
+        consentement: true,
+        consentement_date: '17 juin 2026',
+        notes: '',
+        ventes: [],
+      },
+      sansconsentement: {
+        prenom: 'Luc',
+        nom: 'Bouchard',
+        initiales: 'LB',
+        archive: false,
+        nbVentes: 2,
+        totalAchats: 6100,
+        derniereVente: '21 oct 2025',
+        clientDepuis: '14 jan 2024',
+        courriel: 'lbouchard@exemple.ca',
+        telephone: '418 555-0156',
+        adresse: { numero: '88', rue: 'avenue du Parc', app: '', ville: 'Québec', province: 'Québec', cp: 'G1R 4S8', pays: 'Canada' },
+        consentement: false,
+        consentement_date: null,
+        notes: "Ne souhaite pas recevoir de courriels. À contacter uniquement par téléphone.",
+        ventes: [
+          { oeuvre: 'Nocturne', artiste: 'Claude Lefebvre-Dubé', inv: 'CLD-2024-002', date: '21 oct 2025', mode: 'Virement', facture: 'F-2025-031', total: 3200, couleur: '#3a4e5e' },
+          { oeuvre: 'Boréale', artiste: 'Claude Lefebvre-Dubé', inv: 'CLD-2023-021', date: '14 jan 2024', mode: 'Comptant', facture: 'F-2024-002', total: 2900, couleur: '#9aa7b0' },
+        ],
+      },
+      archive: {
+        prenom: 'François',
+        nom: 'Bellemare',
+        initiales: 'FB',
+        archive: true,
+        nbVentes: 14,
+        totalAchats: 38900,
+        derniereVente: '14 oct 2020',
+        clientDepuis: '03 mars 2012',
+        courriel: 'francois.bellemare@exemple.ca',
+        telephone: '',
+        adresse: { numero: '210', rue: 'rue Champlain', app: '', ville: 'Saint-Hyacinthe', province: 'Québec', cp: 'J2S 1Z3', pays: 'Canada' },
+        consentement: true,
+        consentement_date: '03 mars 2012',
+        notes: "Client de longue date, parti à la retraite à l'étranger. Archivé en 2021.",
+        ventes: [
+          { oeuvre: 'Quai du matin', artiste: 'Marie Dupont', inv: 'MDU-2020-007', date: '14 oct 2020', mode: 'Virement', facture: 'F-2020-038', total: 1850, couleur: '#4a4a4a' },
+          { oeuvre: 'Brume', artiste: 'Marie Dupont', inv: 'MDU-2019-012', date: '03 juin 2019', mode: 'Virement', facture: 'F-2019-021', total: 2100, couleur: '#7a7a7a' },
+        ],
+      },
+    };
+
+    const ech = (s) => (s == null ? '' : String(s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const formaterPrix = (n) => n == null ? '—' : Math.round(n).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
+
+    function champ(libelle, valeur) {
+      if (valeur == null || valeur === '') {
+        return `<div class="champ"><span class="champ-lib">${ech(libelle)}</span><span class="champ-vide">—</span></div>`;
+      }
+      return `<div class="champ"><span class="champ-lib">${ech(libelle)}</span><span class="champ-val">${ech(valeur)}</span></div>`;
+    }
+
+    function adresseAffichee(a) {
+      const ligne1 = [[a.numero, a.rue].filter(Boolean).join(' '), a.app ? `app. ${a.app}` : ''].filter(Boolean).join(', ');
+      const ligne2 = [a.ville, a.province, a.cp].filter(Boolean).join(', ');
+      const ligne3 = a.pays;
+      const lignes = [ligne1, ligne2, ligne3].filter((x) => x && x.trim());
+      return lignes.length ? lignes.join('<br>') : '';
+    }
+
+    function rendre(profil) {
+      const c = PROFILS[profil];
+      const nomComplet = `${c.prenom} ${c.nom}`;
+      const adr = adresseAffichee(c.adresse);
+
+      const ventesHtml = c.ventes.length
+        ? c.ventes.map((v) => `
+          <button class="ligne-vente">
+            <div class="vignette" style="background: ${v.couleur};"></div>
+            <div class="info">
+              <p class="ligne-titre">${ech(v.oeuvre)}</p>
+              <p class="ligne-meta">
+                ${ech(v.artiste)} · ${ech(v.inv)} · ${ech(v.date)} · ${ech(v.mode)} · Facture ${ech(v.facture)}
+              </p>
+            </div>
+            <div class="prix">${formaterPrix(v.total)}</div>
+            <span class="chevron">›</span>
+          </button>
+        `).join('')
+        : '<div class="historique-vide">Aucune vente enregistrée pour ce client.</div>';
+
+      document.getElementById('contenu').innerHTML = `
+        <div class="vue-fiche">
+          <div class="zone-avatar">
+            ${c.archive ? '<span class="badge-archive-fiche">Archivée</span>' : ''}
+            <span class="zone-avatar-initiales">${ech(c.initiales)}</span>
+          </div>
+
+          <div class="carte zone-identite">
+            <div>
+              <h1>${ech(nomComplet)}</h1>
+              <p class="meta">
+                ${c.nbVentes > 0 ? c.nbVentes + ' achat' + (c.nbVentes > 1 ? 's' : '') : 'aucun achat enregistré'}
+                ${c.clientDepuis ? ' · Client depuis ' + ech(c.clientDepuis) : ''}
+              </p>
+            </div>
+            <div class="zone-identite-actions">
+              <button class="btn btn-danger">Supprimer</button>
+              <button class="btn btn-secondaire">${c.archive ? 'Désarchiver' : 'Archiver'}</button>
+              <button class="btn btn-secondaire">Modifier</button>
+            </div>
+          </div>
+
+          <div class="zone-stats">
+            <div class="stat-bento">
+              <span class="stat-bento-label">Achats</span>
+              <span class="stat-bento-val">${c.nbVentes}</span>
+            </div>
+            <div class="stat-bento stat-bento-navy">
+              <span class="stat-bento-label">Total dépensé</span>
+              <span class="stat-bento-val stat-bento-val-small">${formaterPrix(c.totalAchats)}</span>
+            </div>
+            <div class="stat-bento">
+              <span class="stat-bento-label">Dernier achat</span>
+              <span class="stat-bento-val stat-bento-val-small">${c.derniereVente || '—'}</span>
+            </div>
+            <div class="stat-bento">
+              <span class="stat-bento-label">Client depuis</span>
+              <span class="stat-bento-val stat-bento-val-small">${c.clientDepuis || '—'}</span>
+            </div>
+          </div>
+
+          <div class="carte zone-coord">
+            <h3>Coordonnées</h3>
+            <div class="champs-grille">
+              ${champ('Courriel', c.courriel)}
+              ${champ('Téléphone', c.telephone)}
+              ${adr ? `<div class="adresse-bloc"><span class="champ-lib">Adresse</span>${adr}</div>` : ''}
+            </div>
+          </div>
+
+          <div class="carte zone-loi25">
+            <h3>Consentement courriel (Loi 25)</h3>
+            <span class="pastille-consentement ${c.consentement ? 'pastille-consentement-oui' : 'pastille-consentement-non'}">
+              ${c.consentement ? '✓ Consent à recevoir des courriels' : 'Ne consent pas'}
+            </span>
+            <p class="loi25-info">
+              ${c.consentement
+                ? `Consentement donné le <strong>${ech(c.consentement_date)}</strong>. Le client peut être contacté pour les invitations aux vernissages.`
+                : "Le client n'a pas consenti à recevoir des courriels. Ne pas l'ajouter aux envois d'invitations."}
+            </p>
+          </div>
+
+          <div class="carte zone-historique">
+            <div class="entete">
+              <h3>Historique d'achat ${c.ventes.length ? `(${c.ventes.length})` : ''}</h3>
+              ${c.ventes.length ? `<div class="total-achats">Total : <strong>${formaterPrix(c.totalAchats)}</strong></div>` : ''}
+            </div>
+            <div class="historique-liste">${ventesHtml}</div>
+          </div>
+
+          ${c.notes ? `
+            <div class="carte zone-notes">
+              <h3>Notes internes</h3>
+              <div class="corps">${ech(c.notes)}</div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    document.querySelectorAll('#switch-profil button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#switch-profil button').forEach((b) => b.classList.remove('actif'));
+        btn.classList.add('actif');
+        rendre(btn.dataset.profil);
+      });
+    });
+
+    rendre('fidele');
+  </script>
+</body>
+</html>

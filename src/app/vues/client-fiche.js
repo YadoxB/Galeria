@@ -35,14 +35,23 @@ export async function rendreClientFiche(contenu, params) {
   if (estNouveau) {
     c = { ...GABARIT_VIDE };
   } else {
-    [c, voisins, ventes] = await Promise.all([
-      window.api.clientGet(params.id),
-      window.api.clientVoisins(params.id),
-      window.api.clientVentes(params.id),
-    ]);
-    if (!c) {
+    const bundle = await window.api.clientFicheBundle(params.id);
+    if (!bundle || !bundle.client) {
       contenu.innerHTML = `<p class="erreur">Client introuvable.</p>`;
       return;
+    }
+    c = bundle.client;
+    voisins = bundle.voisins;
+    ventes = bundle.ventes;
+  }
+
+  async function rechargerBundle() {
+    if (!c || !c.id) return;
+    const bundle = await window.api.clientFicheBundle(c.id);
+    if (bundle && bundle.client) {
+      c = bundle.client;
+      voisins = bundle.voisins;
+      ventes = bundle.ventes;
     }
   }
 
@@ -116,16 +125,10 @@ export async function rendreClientFiche(contenu, params) {
   }
 
   function dessinerLecture() {
-    const champ = (libelle, valeur) =>
-      valeur != null && valeur !== ''
-        ? `<div class="champ"><dt>${ech(libelle)}</dt><dd>${ech(valeur).replace(/\n/g, '<br>')}</dd></div>`
-        : '';
-
-    const blocPliable = (titre, contenuInterne, ouvertParDefaut = true) =>
-      `<details class="bloc pliable" ${ouvertParDefaut ? 'open' : ''}>
-         <summary><h3>${ech(titre)}</h3><span class="chevron-bloc">&rsaquo;</span></summary>
-         <div class="bloc-corps">${contenuInterne}</div>
-       </details>`;
+    const champ = (libelle, valeur) => {
+      const v = (valeur == null || valeur === '') ? '<span class="champ-vide">—</span>' : ech(valeur);
+      return `<div class="champ"><span class="champ-lib">${ech(libelle)}</span><span class="champ-val">${v}</span></div>`;
+    };
 
     const adresseAffichee = (() => {
       const ligne1 = [
@@ -139,24 +142,106 @@ export async function rendreClientFiche(contenu, params) {
       return c.adresse ? ech(c.adresse).replace(/\n/g, '<br>') : '';
     })();
 
-    const lignesContact = [
-      champ('Courriel', c.courriel),
-      champ('Téléphone', c.telephone),
-      adresseAffichee ? `<div class="champ"><dt>Adresse</dt><dd>${adresseAffichee}</dd></div>` : '',
-    ].join('');
-
-    const lignesConsentement = [
-      champ('Consentement courriel', c.consentement_courriel ? 'Oui' : 'Non'),
-      c.consentement_courriel ? champ('Date du consentement', formaterDate(c.consentement_date)) : '',
-    ].join('');
-
+    // === Stats calculées depuis les ventes ===
     const totalAchats = ventes.reduce(
       (s, v) => s + (Number(v.prix_vente) || 0) + (Number(v.tps) || 0) + (Number(v.tvq) || 0),
       0,
     );
+    // Les ventes sont ordonnées DESC par date_vente → première = dernier achat.
+    const derniereVente = ventes.length ? formaterDate(ventes[0].date_vente) : null;
+    const clientDepuis = ventes.length ? formaterDate(ventes[ventes.length - 1].date_vente) : null;
+    const nbVentes = c.nb_ventes ?? ventes.length;
 
-    const historiqueContenu = ventes.length === 0
-      ? `<p class="liste-vide">Aucune vente enregistrée pour ce client. L'historique se remplira automatiquement quand tu enregistreras des ventes (Phase&nbsp;3B) ou que tu importeras les ventes depuis Sage&nbsp;50 (Phase&nbsp;4).</p>`
+    const nomCompletC = nomComplet(c);
+
+    // === Avatar (carré navy + initiales) ===
+    const avatarHtml = `
+      <div class="zone-avatar-client">
+        ${c.archive ? `<span class="badge-archive-photo">Archivé</span>` : ''}
+        <span class="zone-avatar-initiales">${ech(initiales(nomCompletC))}</span>
+      </div>
+    `;
+
+    // === Carte Identité ===
+    const metaParts = [];
+    if (nbVentes > 0) metaParts.push(pluriel(nbVentes, 'achat'));
+    else metaParts.push('<em>aucun achat enregistré</em>');
+    if (clientDepuis) metaParts.push(`Client depuis ${clientDepuis}`);
+
+    const zoneIdentite = `
+      <div class="carte zone-identite-client">
+        <div>
+          <h1>${ech(nomCompletC)}</h1>
+          <p class="zone-identite-client-meta">${metaParts.join(' &middot; ')}</p>
+        </div>
+        <div class="zone-identite-actions">
+          <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
+          ${boutonArchive({ archive: c.archive })}
+          <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
+        </div>
+      </div>
+    `;
+
+    // === Stats (2×2 mini-cartes) ===
+    const zoneStats = `
+      <div class="zone-stats">
+        <div class="stat-bento">
+          <span class="stat-bento-label">Achats</span>
+          <span class="stat-bento-val">${nbVentes}</span>
+        </div>
+        <div class="stat-bento stat-bento-navy">
+          <span class="stat-bento-label">Total dépensé</span>
+          <span class="stat-bento-val stat-bento-val-money">${formaterPrix(totalAchats)}</span>
+        </div>
+        <div class="stat-bento">
+          <span class="stat-bento-label">Dernier achat</span>
+          <span class="stat-bento-val stat-bento-val-date">${derniereVente || '—'}</span>
+        </div>
+        <div class="stat-bento">
+          <span class="stat-bento-label">Client depuis</span>
+          <span class="stat-bento-val stat-bento-val-date">${clientDepuis || '—'}</span>
+        </div>
+      </div>
+    `;
+
+    // === Carte Coordonnées ===
+    const zoneCoord = `
+      <div class="carte zone-coord">
+        <h3>Coordonnées</h3>
+        <div class="champs-grille-bento">
+          ${champ('Courriel', c.courriel)}
+          ${champ('Téléphone', c.telephone)}
+        </div>
+        ${adresseAffichee ? `
+          <div class="adresse-bloc">
+            <span class="champ-lib">Adresse</span>
+            ${adresseAffichee}
+          </div>
+        ` : ''}
+      </div>
+    `;
+
+    // === Carte Loi 25 ===
+    const consentement = !!c.consentement_courriel;
+    const zoneLoi25 = `
+      <div class="carte zone-loi25">
+        <h3>Consentement courriel (Loi 25)</h3>
+        <span class="pastille-consentement ${consentement ? 'pastille-consentement-oui' : 'pastille-consentement-non'}">
+          ${consentement ? '✓ Consent à recevoir des courriels' : 'Ne consent pas'}
+        </span>
+        <p class="loi25-info">
+          ${consentement
+            ? (c.consentement_date
+                ? `Consentement donné le <strong>${ech(formaterDate(c.consentement_date))}</strong>. Le client peut être contacté pour les invitations aux vernissages.`
+                : "Consentement à recevoir des courriels. Date non renseignée.")
+            : "Le client n'a pas consenti à recevoir des courriels. Ne pas l'ajouter aux envois d'invitations."}
+        </p>
+      </div>
+    `;
+
+    // === Carte Historique ===
+    const historiqueCorps = ventes.length === 0
+      ? `<div class="historique-vide">Aucune vente enregistrée pour ce client.</div>`
       : `
         <div class="historique-ventes">
           ${ventes.map((v) => `
@@ -179,9 +264,27 @@ export async function rendreClientFiche(contenu, params) {
             </button>
           `).join('')}
         </div>
-        <p class="total-achats">Total des achats : <strong>${formaterPrix(totalAchats)}</strong> (${pluriel(ventes.length, 'vente')})</p>
       `;
 
+    const zoneHistorique = `
+      <div class="carte zone-historique-bento">
+        <div class="entete-bloc-bento">
+          <h3>Historique d'achat ${ventes.length ? `<span class="compteur-inline">(${ventes.length})</span>` : ''}</h3>
+          ${ventes.length ? `<div class="total-achats-bento">Total : <strong>${formaterPrix(totalAchats)}</strong></div>` : ''}
+        </div>
+        ${historiqueCorps}
+      </div>
+    `;
+
+    // === Notes ===
+    const zoneNotes = c.notes ? `
+      <div class="carte zone-notes-bento">
+        <h3>Notes internes</h3>
+        <div class="texte-long">${ech(c.notes).replace(/\n/g, '<br>')}</div>
+      </div>
+    ` : '';
+
+    // === Nav voisins ===
     const navVoisins = voisins.total > 1 ? `
       <nav class="nav-voisins" aria-label="Navigation entre clients">
         <button class="btn-voisin btn-voisin-prec" ${voisins.precedent ? '' : 'disabled'} title="${voisins.precedent ? ech(voisins.precedent.nom) : ''}">
@@ -202,29 +305,19 @@ export async function rendreClientFiche(contenu, params) {
       </nav>
     ` : '';
 
+    // === Assemblage ===
     contenu.innerHTML = `
-      <div class="vue-fiche">
-        <div class="entete-fiche">
-          <div class="avatar grand"><span>${ech(initiales(nomComplet(c)))}</span></div>
-          <div class="entete-fiche-info">
-            <h2>${ech(nomComplet(c))} ${c.archive ? badgeArchive() : ''}</h2>
-            <p class="meta">
-              ${c.nb_ventes > 0 ? pluriel(c.nb_ventes, 'vente') + ' enregistrée(s)' : '<em>aucune vente enregistrée</em>'}
-            </p>
-          </div>
-          <div class="entete-fiche-actions">
-            <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
-            ${boutonArchive({ archive: c.archive })}
-            <button class="btn-action" id="btn-modifier">Modifier</button>
-          </div>
-        </div>
-
+      <div class="vue-fiche vue-fiche-bento">
         ${navVoisins}
-
-        ${lignesContact ? blocPliable('Coordonnées', `<dl class="champs">${lignesContact}</dl>`) : ''}
-        ${blocPliable("Historique d'achat", historiqueContenu, ventes.length > 0)}
-        ${lignesConsentement ? blocPliable('Consentement courriel (Loi 25)', `<dl class="champs">${lignesConsentement}</dl>`) : ''}
-        ${c.notes ? blocPliable('Notes', `<p class="texte-long">${ech(c.notes).replace(/\n/g, '<br>')}</p>`) : ''}
+        <div class="grille-bento">
+          ${avatarHtml}
+          ${zoneIdentite}
+          ${zoneStats}
+          ${zoneCoord}
+          ${zoneLoi25}
+          ${zoneHistorique}
+          ${zoneNotes}
+        </div>
       </div>
     `;
 
@@ -236,7 +329,7 @@ export async function rendreClientFiche(contenu, params) {
         fiche: c,
         libelleFiche: nomComplet(c),
         confirmer,
-        surFait: () => dessiner(),
+        surFait: async () => { await rechargerBundle(); dessiner(); },
       });
     });
     contenu.querySelectorAll('.ligne-vente').forEach((btn) => {
@@ -348,6 +441,7 @@ export async function rendreClientFiche(contenu, params) {
         } else {
           c = await window.api.clientModifier(c.id, data);
         }
+        await rechargerBundle();
         sortirEdition();
       } catch (err) {
         await confirmer({

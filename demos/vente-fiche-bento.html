@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo fiche vente (bento)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+
+    .demo-bar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: var(--s3);
+      padding: var(--s2) var(--s4);
+      background: var(--deep-navy); color: var(--soft-ivory);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .switch { display: flex; gap: 4px; background: rgba(255,255,255,0.06); padding: 4px; border-radius: 999px; }
+    .demo-bar .switch button {
+      background: transparent; color: var(--soft-ivory);
+      border: 0; padding: 6px 14px; border-radius: 999px;
+      font-family: var(--font-ui); font-size: 13px; cursor: pointer;
+    }
+    .demo-bar .switch button:hover { background: rgba(255,255,255,0.06); }
+    .demo-bar .switch button.actif {
+      background: var(--warm-gold); color: var(--soft-ivory); font-weight: 500;
+    }
+
+    main { max-width: 1400px; margin: 0 auto; padding: var(--s5) var(--s4); }
+    .vue-fiche {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: var(--s3);
+    }
+    .carte {
+      background: var(--porcelain);
+      border: 1px solid var(--mist);
+      border-radius: var(--r-carte);
+      box-shadow: var(--ombre-carte);
+    }
+
+    /* ===== Identité (numéro facture + date + actions) ===== */
+    .zone-identite {
+      grid-column: span 8;
+      padding: var(--s3) var(--s4);
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .zone-identite h1 {
+      margin: 0;
+      font-family: var(--font-titre);
+      font-weight: 500;
+      font-size: 38px;
+      line-height: 1.1;
+      color: var(--ink);
+      letter-spacing: 0.01em;
+    }
+    .zone-identite .meta {
+      margin: var(--s2) 0 0;
+      color: var(--slate);
+      font-size: 14px;
+    }
+    .zone-identite-mode {
+      display: inline-block;
+      background: var(--cloud); color: var(--slate);
+      font-size: 12px; padding: 3px 12px; border-radius: var(--r-badge);
+      margin-top: var(--s3);
+    }
+    .zone-identite-actions {
+      display: flex; gap: var(--s2); margin-top: var(--s3); flex-wrap: wrap;
+    }
+    .btn {
+      font-family: var(--font-ui); font-size: 13px; font-weight: 500;
+      padding: 8px 16px; border-radius: var(--r-btn);
+      border: 1px solid transparent; cursor: pointer;
+    }
+    .btn-primaire   { background: var(--warm-gold); color: var(--soft-ivory); }
+    .btn-secondaire { background: var(--porcelain); color: var(--ink); border-color: var(--mist); }
+    .btn-danger     { background: var(--porcelain); color: var(--erreur); border-color: rgba(182, 66, 60, 0.4); }
+
+    /* ===== Bloc Total (tuile navy à droite) ===== */
+    .zone-total {
+      grid-column: span 4;
+      background: var(--deep-navy);
+      border-radius: var(--r-carte);
+      box-shadow: var(--ombre-carte);
+      padding: var(--s4);
+      display: flex; flex-direction: column; justify-content: center;
+      color: var(--soft-ivory);
+    }
+    .zone-total .label-total {
+      font-size: 12px; opacity: 0.7;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .zone-total .montant-total {
+      font-family: var(--font-titre);
+      font-size: 48px; line-height: 1;
+      color: var(--warm-gold);
+      margin: 4px 0 var(--s3);
+      font-variant-numeric: tabular-nums;
+    }
+    .zone-total-recap { font-size: 13px; opacity: 0.75; }
+    .zone-total-recap .ligne { display: flex; justify-content: space-between; padding: 2px 0; }
+    .zone-total-recap .ligne strong { color: var(--soft-ivory); font-weight: 500; }
+
+    /* ===== Œuvre + Client ===== */
+    .zone-oeuvre, .zone-client { grid-column: span 6; padding: var(--s3) var(--s4); }
+    .zone-oeuvre h3, .zone-client h3, .zone-details h3, .zone-documents h3, .zone-notes h3 {
+      font-family: var(--font-titre);
+      font-size: 18px;
+      color: var(--gallery-navy);
+      margin: 0 0 var(--s3);
+      font-weight: 500;
+    }
+    .ligne-vente {
+      display: flex; align-items: center; gap: var(--s3);
+      padding: var(--s3); background: var(--cloud);
+      border-radius: var(--r-btn);
+      cursor: pointer;
+      transition: background .12s;
+      border: 0;
+      font-family: var(--font-ui);
+      text-align: left;
+      width: 100%;
+    }
+    .ligne-vente:hover { background: var(--mist); }
+    .vignette {
+      width: 56px; height: 56px;
+      border-radius: 6px;
+      background: var(--stone);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; color: var(--soft-ivory);
+    }
+    .ligne-vente .info { flex: 1; min-width: 0; }
+    .ligne-vente .ligne-titre {
+      margin: 0;
+      font-family: var(--font-titre); font-size: 17px;
+      color: var(--ink); font-weight: 500;
+    }
+    .ligne-vente .ligne-meta {
+      margin: 2px 0 0;
+      font-size: 12px; color: var(--slate);
+    }
+    .ligne-vente .chevron {
+      color: var(--stone); font-size: 1.4rem;
+    }
+
+    /* ===== Détails financiers (table type facture) ===== */
+    .zone-details { grid-column: span 5; padding: var(--s3) var(--s4); }
+    .table-facture { width: 100%; border-collapse: collapse; }
+    .table-facture td {
+      padding: 8px 0;
+      font-size: 14px;
+      border-bottom: 1px solid var(--cloud);
+    }
+    .table-facture td:first-child { color: var(--slate); }
+    .table-facture td:last-child {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+    }
+    .table-facture .ligne-rabais td:last-child { color: var(--terracotta); }
+    .table-facture .ligne-total td {
+      border-top: 2px solid var(--deep-navy);
+      border-bottom: 0;
+      padding-top: 12px;
+      font-family: var(--font-titre);
+      font-size: 18px;
+      color: var(--gallery-navy);
+    }
+    .table-facture .ligne-total td:last-child { color: var(--warm-gold); }
+    .table-facture .ligne-soustotal td { font-weight: 500; color: var(--ink) !important; }
+
+    /* ===== Documents ===== */
+    .zone-documents { grid-column: span 7; padding: var(--s3) var(--s4); }
+    .documents-actions {
+      display: flex; gap: var(--s2); flex-wrap: wrap;
+      padding: var(--s3); background: var(--cloud);
+      border-radius: var(--r-btn);
+      margin-bottom: var(--s3);
+    }
+    .documents-liste { display: flex; flex-direction: column; gap: var(--s2); }
+    .doc-ligne {
+      display: flex; align-items: center; gap: var(--s3);
+      padding: var(--s3); background: var(--soft-ivory);
+      border: 1px solid var(--mist);
+      border-radius: var(--r-btn);
+    }
+    .doc-icone {
+      width: 40px; height: 40px;
+      border-radius: 8px;
+      background: var(--warm-gold);
+      color: var(--soft-ivory);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .doc-info { flex: 1; min-width: 0; }
+    .doc-info .doc-titre {
+      margin: 0;
+      font-family: var(--font-titre); font-size: 15px;
+      color: var(--ink); font-weight: 500;
+    }
+    .doc-info .doc-meta {
+      margin: 2px 0 0;
+      font-size: 12px; color: var(--slate);
+    }
+    .doc-actions { display: flex; gap: 6px; }
+    .doc-actions .btn { font-size: 12px; padding: 5px 10px; }
+    .documents-vide {
+      color: var(--stone); font-style: italic;
+      border: 1px dashed var(--mist); border-radius: var(--r-btn);
+      padding: var(--s3); text-align: center; font-size: 13px;
+    }
+
+    /* ===== Notes ===== */
+    .zone-notes { grid-column: span 12; padding: var(--s3) var(--s4); }
+    .zone-notes .corps { font-size: 14px; color: var(--ink); line-height: 1.6; }
+
+    /* ===== Pied démo ===== */
+    .demo-pied {
+      max-width: 1400px; margin: var(--s5) auto var(--s4);
+      padding: 0 var(--s4);
+      color: var(--slate); font-size: 12px; line-height: 1.6;
+    }
+    .demo-pied strong { color: var(--ink); }
+    .demo-pied ul { padding-left: 18px; margin: 6px 0 0; }
+  </style>
+</head>
+<body>
+
+  <header class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Démo fiche vente (bento)</div>
+    <div class="switch" id="switch-profil">
+      <button data-profil="simple" class="actif">Vente simple</button>
+      <button data-profil="rabais">Avec rabais</button>
+      <button data-profil="fraiche">Tout juste créée</button>
+      <button data-profil="sansfacture">Sans facture</button>
+    </div>
+  </header>
+
+  <main id="contenu"></main>
+
+  <div class="demo-pied">
+    <strong>Notes</strong>
+    <ul>
+      <li>Le bloc Total à droite est en navy plein avec le montant en doré : c'est la valeur la plus consultée.</li>
+      <li>Œuvre et Client gardent leur format de ligne cliquable existant (vignette + métadonnées).</li>
+      <li>Le tableau financier reproduit la structure d'une facture : prix régulier, rabais, sous-total, taxes, total.</li>
+      <li>Documents : actions à gauche, certificats en liste à droite. La facture artiste se distingue avec son icône dorée.</li>
+    </ul>
+  </div>
+
+  <script>
+    const PROFILS = {
+      simple: {
+        numero: 'F-2026-003',
+        date: '14 mars 2026',
+        mode: 'Virement bancaire',
+        oeuvre: { titre: 'Marée du soir', artiste: 'Claude Lefebvre-Dubé', inv: 'CLD-2023-014', dim: '24 × 36 po', couleur: '#6e8492' },
+        client: { nom: 'Pierre Côté', courriel: 'pierre.cote.collec@exemple.ca', tel: '450 555-0142' },
+        montants: { sousTotal: 4200, rabaisArt: 0, rabaisGal: 0, tps: 210, tvq: 418.95 },
+        documents: {
+          factureArtiste: { num: 'A-2026-003', date: '14 mars 2026' },
+          certificats: [{ num: 'C-2026-008', date: '14 mars 2026', valeur: 4200 }],
+        },
+        notes: '',
+      },
+      rabais: {
+        numero: 'F-2025-024',
+        date: '12 juin 2025',
+        mode: 'Carte de crédit',
+        oeuvre: { titre: 'Strates', artiste: 'Claude Lefebvre-Dubé', inv: 'CLD-2022-008', dim: '18 × 24 po', couleur: '#a08864' },
+        client: { nom: 'Pierre Côté', courriel: 'pierre.cote.collec@exemple.ca', tel: '450 555-0142' },
+        montants: { sousTotal: 3800, rabaisArt: 200, rabaisGal: 0, tps: 190, tvq: 379.05 },
+        documents: {
+          factureArtiste: { num: 'A-2025-024', date: '12 juin 2025' },
+          certificats: [{ num: 'C-2025-024', date: '12 juin 2025', valeur: 4000 }],
+        },
+        notes: "Rabais artiste de 200 $ accordé à la demande de l'artiste, pour faciliter la vente à un collectionneur de longue date.",
+      },
+      fraiche: {
+        numero: 'F-2026-004',
+        date: '17 juin 2026',
+        mode: '',
+        oeuvre: { titre: 'Nocturne', artiste: 'Claude Lefebvre-Dubé', inv: 'CLD-2024-002', dim: '20 × 24 po', couleur: '#3a4e5e' },
+        client: { nom: 'Sarah Bélanger', courriel: 'sarah.belanger@exemple.ca', tel: '514 555-0188' },
+        montants: { sousTotal: 3200, rabaisArt: 0, rabaisGal: 0, tps: 160, tvq: 319.20 },
+        documents: { factureArtiste: null, certificats: [] },
+        notes: '',
+      },
+      sansfacture: {
+        numero: '',
+        date: '14 jan 2024',
+        mode: 'Comptant',
+        oeuvre: { titre: 'Boréale', artiste: 'Claude Lefebvre-Dubé', inv: 'CLD-2023-021', dim: '12 × 16 po', couleur: '#9aa7b0' },
+        client: { nom: 'Luc Bouchard', courriel: 'lbouchard@exemple.ca', tel: '418 555-0156' },
+        montants: { sousTotal: 2900, rabaisArt: 0, rabaisGal: 0, tps: 145, tvq: 289.28 },
+        documents: { factureArtiste: null, certificats: [{ num: 'C-2024-002', date: '14 jan 2024', valeur: 2900 }] },
+        notes: '',
+      },
+    };
+
+    const ech = (s) => (s == null ? '' : String(s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const formaterPrix = (n) => n == null ? '—' : Number(n).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 2 });
+
+    function rendre(profil) {
+      const v = PROFILS[profil];
+      const sousTotal = v.montants.sousTotal;
+      const prixReg = sousTotal + v.montants.rabaisArt + v.montants.rabaisGal;
+      const total = sousTotal + v.montants.tps + v.montants.tvq;
+      const aDesRabais = v.montants.rabaisArt > 0 || v.montants.rabaisGal > 0;
+
+      const certsHtml = v.documents.certificats.length
+        ? v.documents.certificats.map((c) => `
+          <div class="doc-ligne">
+            <div class="doc-icone" style="background: var(--gallery-navy);">C</div>
+            <div class="doc-info">
+              <p class="doc-titre">Certificat ${ech(c.num)}</p>
+              <p class="doc-meta">Délivré le ${ech(c.date)} · Valeur ${formaterPrix(c.valeur)}</p>
+            </div>
+            <div class="doc-actions">
+              <button class="btn btn-secondaire">Voir le PDF</button>
+              <button class="btn btn-secondaire">Dossier</button>
+            </div>
+          </div>
+        `).join('')
+        : '';
+
+      const factureArtisteHtml = v.documents.factureArtiste ? `
+        <div class="doc-ligne">
+          <div class="doc-icone">A</div>
+          <div class="doc-info">
+            <p class="doc-titre">Facture artiste ${ech(v.documents.factureArtiste.num)}</p>
+            <p class="doc-meta">Émise le ${ech(v.documents.factureArtiste.date)}</p>
+          </div>
+          <div class="doc-actions">
+            <button class="btn btn-secondaire">Voir le PDF</button>
+            <button class="btn btn-secondaire">Dossier</button>
+            <button class="btn btn-secondaire">Re-générer</button>
+          </div>
+        </div>
+      ` : '';
+
+      const aucunDoc = !v.documents.certificats.length && !v.documents.factureArtiste;
+
+      document.getElementById('contenu').innerHTML = `
+        <div class="vue-fiche">
+          <div class="carte zone-identite">
+            <div>
+              <h1>${v.numero ? ech(v.numero) : 'Vente sans numéro'}</h1>
+              <p class="meta">Vente du ${ech(v.date)}</p>
+              ${v.mode ? `<span class="zone-identite-mode">${ech(v.mode)}</span>` : ''}
+            </div>
+            <div class="zone-identite-actions">
+              <button class="btn btn-danger">Supprimer</button>
+              <button class="btn btn-secondaire">Modifier</button>
+            </div>
+          </div>
+
+          <div class="zone-total">
+            <span class="label-total">Total</span>
+            <span class="montant-total">${formaterPrix(total)}</span>
+            <div class="zone-total-recap">
+              <div class="ligne"><span>Sous-total</span><strong>${formaterPrix(sousTotal)}</strong></div>
+              ${v.montants.tps > 0 ? `<div class="ligne"><span>TPS</span><span>${formaterPrix(v.montants.tps)}</span></div>` : ''}
+              ${v.montants.tvq > 0 ? `<div class="ligne"><span>TVQ</span><span>${formaterPrix(v.montants.tvq)}</span></div>` : ''}
+            </div>
+          </div>
+
+          <div class="carte zone-oeuvre">
+            <h3>Œuvre vendue</h3>
+            <button class="ligne-vente">
+              <div class="vignette" style="background: ${v.oeuvre.couleur};"></div>
+              <div class="info">
+                <p class="ligne-titre">${ech(v.oeuvre.titre)}</p>
+                <p class="ligne-meta">${ech(v.oeuvre.artiste)} · ${ech(v.oeuvre.inv)} · ${ech(v.oeuvre.dim)}</p>
+              </div>
+              <span class="chevron">›</span>
+            </button>
+          </div>
+
+          <div class="carte zone-client">
+            <h3>Client</h3>
+            <button class="ligne-vente">
+              <div class="vignette">👤</div>
+              <div class="info">
+                <p class="ligne-titre">${ech(v.client.nom)}</p>
+                <p class="ligne-meta">${ech(v.client.courriel)} · ${ech(v.client.tel)}</p>
+              </div>
+              <span class="chevron">›</span>
+            </button>
+          </div>
+
+          <div class="carte zone-details">
+            <h3>Détails financiers</h3>
+            <table class="table-facture">
+              <tbody>
+                ${aDesRabais ? `<tr><td>Prix régulier</td><td>${formaterPrix(prixReg)}</td></tr>` : ''}
+                ${v.montants.rabaisArt > 0 ? `<tr class="ligne-rabais"><td>Rabais artiste</td><td>− ${formaterPrix(v.montants.rabaisArt)}</td></tr>` : ''}
+                ${v.montants.rabaisGal > 0 ? `<tr class="ligne-rabais"><td>Rabais galerie</td><td>− ${formaterPrix(v.montants.rabaisGal)}</td></tr>` : ''}
+                <tr class="ligne-soustotal"><td>Sous-total</td><td>${formaterPrix(sousTotal)}</td></tr>
+                ${v.montants.tps > 0 ? `<tr><td>TPS (5%)</td><td>${formaterPrix(v.montants.tps)}</td></tr>` : ''}
+                ${v.montants.tvq > 0 ? `<tr><td>TVQ (9,975%)</td><td>${formaterPrix(v.montants.tvq)}</td></tr>` : ''}
+                <tr class="ligne-total"><td>Total</td><td>${formaterPrix(total)}</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="carte zone-documents">
+            <h3>Documents</h3>
+            <div class="documents-actions">
+              <button class="btn btn-secondaire">+ Produire un certificat</button>
+              ${!v.documents.factureArtiste ? '<button class="btn btn-primaire">+ Produire la facture artiste</button>' : ''}
+            </div>
+            <div class="documents-liste">
+              ${factureArtisteHtml}
+              ${certsHtml}
+              ${aucunDoc ? '<div class="documents-vide">Aucun document encore produit pour cette vente.</div>' : ''}
+            </div>
+          </div>
+
+          ${v.notes ? `
+            <div class="carte zone-notes">
+              <h3>Notes internes</h3>
+              <div class="corps">${ech(v.notes)}</div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    document.querySelectorAll('#switch-profil button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#switch-profil button').forEach((b) => b.classList.remove('actif'));
+        btn.classList.add('actif');
+        rendre(btn.dataset.profil);
+      });
+    });
+
+    rendre('simple');
+  </script>
+</body>
+</html>

@@ -57,16 +57,31 @@ export async function rendreArtisteFiche(contenu, params) {
     } catch { mediumsArtiste = []; }
   }
 
+  let stats = { catalogue: 0, disponibles: 0, valeurDispo: 0, ventes: 0 };
+  let apercu = [];
+
   if (estNouveau) {
     a = { ...GABARIT_VIDE };
   } else {
-    [a, voisins] = await Promise.all([
-      window.api.artisteGet(params.id),
-      window.api.artisteVoisins(params.id),
-    ]);
-    if (!a) {
+    const bundle = await window.api.artisteFicheBundle(params.id);
+    if (!bundle) {
       contenu.innerHTML = `<p class="erreur">Artiste introuvable.</p>`;
       return;
+    }
+    a = bundle.artiste;
+    voisins = bundle.voisins;
+    stats = bundle.stats;
+    apercu = bundle.apercu;
+  }
+
+  async function rechargerBundle() {
+    if (!a || !a.id) return;
+    const bundle = await window.api.artisteFicheBundle(a.id);
+    if (bundle) {
+      a = bundle.artiste;
+      voisins = bundle.voisins;
+      stats = bundle.stats;
+      apercu = bundle.apercu;
     }
   }
 
@@ -147,49 +162,205 @@ export async function rendreArtisteFiche(contenu, params) {
   }
 
   function dessinerLecture() {
-    const champ = (libelle, valeur) =>
-      valeur != null && valeur !== ''
-        ? `<div class="champ"><dt>${ech(libelle)}</dt><dd>${ech(valeur).replace(/\n/g, '<br>')}</dd></div>`
-        : '';
+    const nomCompletA = nomComplet(a) || a.nom || '';
 
-    const libelleSub = a.pays === 'États-Unis' ? 'État' : (a.pays && a.pays !== 'Canada' ? 'Région' : 'Province');
-    const lignesContact = [
-      champ('Courriel', a.courriel),
-      champ('Téléphone', a.telephone),
-      champ('Adresse', a.adresse),
-      champ('Pays', a.pays),
-      champ(libelleSub, a.province),
-      champ('Langue', a.langue),
-    ].join('');
+    // === Photo (carrée, grande) ===
+    const photoHtml = a.photo_path
+      ? `<div class="zone-photo avec-photo cliquable" id="avatar-vision" title="Voir en grand">
+           ${a.archive ? `<span class="badge-archive-photo">Archivée</span>` : ''}
+           <img src="${urlPhoto(a.photo_path)}" alt="${ech(nomCompletA)}">
+         </div>`
+      : `<div class="zone-photo">
+           ${a.archive ? `<span class="badge-archive-photo">Archivée</span>` : ''}
+           <span class="zone-photo-initiales">${ech(initiales(nomCompletA))}</span>
+         </div>`;
+
+    // === Identité (titre + meta + actions) ===
+    const zoneIdentite = `
+      <div class="carte zone-identite">
+        <div class="zone-identite-titre">
+          <h1>${ech(nomCompletA)}</h1>
+          <p class="zone-identite-meta">
+            ${a.type ? ech(a.type) : '<em>type non précisé</em>'}
+            ${a.prefixe_inventaire ? ` &middot; Préfixe ${ech(a.prefixe_inventaire)}` : ''}
+            &middot; ${pluriel(a.nb_oeuvres, 'œuvre')} au catalogue
+          </p>
+        </div>
+        <div class="zone-identite-actions">
+          <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
+          ${boutonArchive({ archive: a.archive })}
+          <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
+        </div>
+      </div>
+    `;
+
+    // === Stats (4 mini-cartes, dont 1 navy pour Disponibles) ===
+    const zoneStats = `
+      <div class="zone-stats">
+        <div class="stat-bento">
+          <span class="stat-bento-label">Au catalogue</span>
+          <span class="stat-bento-val">${stats.catalogue}</span>
+        </div>
+        <div class="stat-bento stat-bento-navy">
+          <span class="stat-bento-label">Disponibles</span>
+          <span class="stat-bento-val">${stats.disponibles}</span>
+        </div>
+        <div class="stat-bento">
+          <span class="stat-bento-label">Ventes</span>
+          <span class="stat-bento-val">${stats.ventes}</span>
+        </div>
+        <div class="stat-bento">
+          <span class="stat-bento-label">Valeur dispo</span>
+          <span class="stat-bento-val stat-bento-val-money">${formaterMontant(stats.valeurDispo)}</span>
+        </div>
+      </div>
+    `;
+
+    // === Présentation (onglets Biographie / Démarche / Curriculum) ===
+    const onglets = [
+      { cle: 'bio', titre: 'Biographie', contenu: a.biographie },
+      { cle: 'dem', titre: 'Démarche',  contenu: a.demarche },
+      { cle: 'cur', titre: 'Curriculum', contenu: a.curriculum },
+    ];
+    const cleActive = (onglets.find((o) => o.contenu) || onglets[0]).cle;
+    const tetes = onglets.map((o) =>
+      `<button type="button" class="onglet-bento ${o.cle === cleActive ? 'actif' : ''}" data-onglet="${o.cle}">${o.titre}</button>`
+    ).join('');
+    const corpsOnglets = onglets.map((o) => {
+      const cache = o.cle !== cleActive ? 'style="display:none;"' : '';
+      if (o.contenu) {
+        return `<div class="onglet-corps" data-corps="${o.cle}" ${cache}>${ech(o.contenu).replace(/\n/g, '<br>')}</div>`;
+      }
+      return `<div class="onglet-corps onglet-corps-vide" data-corps="${o.cle}" ${cache}>Aucune ${o.titre.toLowerCase()} renseignée.</div>`;
+    }).join('');
+    const zonePresentation = `
+      <div class="carte carte-presentation">
+        <div class="onglets-bento">${tetes}</div>
+        ${corpsOnglets}
+      </div>
+    `;
+
+    // === Conditions galerie (Cotes + Fiscalité) ===
+    const cotesA = parserCotes(a.cotes);
+    let sousCotes;
+    if (cotesA.length === 0) {
+      sousCotes = `<div class="sous-section-ligne sous-section-vide">Pas de cote configurée</div>`;
+    } else {
+      const lignesCotes = cotesA.map((c) => {
+        const cible = (c.medium === 'Tous' && c.taille === 'Tous')
+          ? 'Toutes œuvres'
+          : `${ech(c.medium)}${c.taille !== 'Tous' ? ` &middot; ${ech(c.taille)}` : ''}`;
+        const uniteLib = c.unite === 'carre' ? '$/po²' : '$/po lin';
+        return `
+          <tr>
+            <td class="cote-cible">${cible}</td>
+            <td class="cote-prix">${formaterMontant(c.prix_pref)}</td>
+            <td class="cote-unite">${uniteLib}</td>
+          </tr>
+        `;
+      }).join('');
+      sousCotes = `
+        <table class="cotes-table">
+          <thead><tr><th>Cible</th><th>Préférentiel</th><th>Unité</th></tr></thead>
+          <tbody>${lignesCotes}</tbody>
+        </table>
+        <p class="cotes-note">Le prix courant ajoute automatiquement <strong>+2 $/unité</strong> (encadrement).</p>
+      `;
+    }
 
     const taxes = parserNumerosTaxes(a.numeros_taxes);
-    const lignesTaxes = [
-      champ('Perçoit les taxes', a.percoit_taxes ? 'Oui' : 'Non'),
-      a.percoit_taxes && taxes.length
-        ? taxes.map((t) => champ(t.etiquette, t.numero)).join('')
-        : '',
-    ].join('');
+    let sousFisc;
+    if (!a.percoit_taxes) {
+      sousFisc = `<span class="pastille-bento">Ne perçoit pas</span>`;
+    } else {
+      const lignesTaxes = taxes.map((t) =>
+        `<div class="sous-section-ligne"><span class="sous-section-libelle">${ech(t.etiquette)}</span> ${ech(t.numero)}</div>`
+      ).join('');
+      sousFisc = `<span class="pastille-bento pastille-bento-positive">Perçoit</span>${lignesTaxes}`;
+    }
 
-    const cotesA = parserCotes(a.cotes);
-    const lignesCotes = cotesA.length ? cotesA.map((c) => {
-      const uniteLib = c.unite === 'carre' ? '$/po²' : '$/po lin';
-      const cible = c.medium === 'Tous' && c.taille === 'Tous'
-        ? 'Toutes œuvres'
-        : `${c.medium}${c.taille !== 'Tous' ? ' · ' + c.taille : ''}`;
-      return champ(cible, `${formaterMontant(c.prix_pref)} ${uniteLib}`);
-    }).join('') : '';
+    const zoneConditions = `
+      <div class="carte carte-conditions">
+        <h3>Conditions galerie</h3>
+        <div class="conditions-corps">
+          <div class="sous-section">
+            <h4>Cotes (calcul de prix)</h4>
+            ${sousCotes}
+          </div>
+          <div class="sous-section">
+            <h4>Fiscalité</h4>
+            ${sousFisc}
+          </div>
+        </div>
+      </div>
+    `;
 
-    const nomCompletA = nomComplet(a) || a.nom || '';
-    const avatarHtml = a.photo_path
-      ? `<div class="avatar grand avec-photo cliquable" id="avatar-vision" title="Voir en grand"><img src="${urlPhoto(a.photo_path)}" alt="${ech(nomCompletA)}"></div>`
-      : `<div class="avatar grand"><span>${ech(initiales(nomCompletA))}</span></div>`;
+    // === Contact ===
+    const lignesContact = [];
+    if (a.courriel) lignesContact.push(`<div class="carte-op-ligne">${ech(a.courriel)}</div>`);
+    if (a.telephone) lignesContact.push(`<div class="carte-op-ligne">${ech(a.telephone)}</div>`);
+    if (a.adresse) lignesContact.push(`<div class="carte-op-ligne carte-op-libelle">${ech(a.adresse).replace(/\n/g, '<br>')}</div>`);
+    const villePays = [a.province, a.pays].filter(Boolean).join(', ');
+    if (villePays) lignesContact.push(`<div class="carte-op-ligne carte-op-libelle">${ech(villePays)}</div>`);
+    if (a.langue) lignesContact.push(`<div class="carte-op-ligne carte-op-libelle">Langue : ${ech(a.langue)}</div>`);
+    const zoneContact = `
+      <div class="carte carte-op">
+        <h3>Contact</h3>
+        ${lignesContact.length ? lignesContact.join('') : '<div class="carte-op-ligne carte-op-libelle" style="font-style:italic;">Pas de coordonnées</div>'}
+      </div>
+    `;
 
-    const blocPliable = (titre, contenuInterne, ouvertParDefaut = true) =>
-      `<details class="bloc pliable" ${ouvertParDefaut ? 'open' : ''}>
-         <summary><h3>${ech(titre)}</h3><span class="chevron-bloc">&rsaquo;</span></summary>
-         <div class="bloc-corps">${contenuInterne}</div>
-       </details>`;
+    // === Aide IA ===
+    const aDesConsignes = !!(a.instructions_ia && a.instructions_ia.trim());
+    const zoneIA = `
+      <div class="carte carte-op">
+        <h3>Aide à la description IA</h3>
+        <div class="carte-op-ligne">${aDesConsignes ? 'Consignes configurées' : 'Aucune consigne'}</div>
+        ${a.lien_chatgpt ? `<div class="carte-op-ligne carte-op-libelle">GPT personnalisé lié</div>` : ''}
+      </div>
+    `;
 
+    // === Catalogue (aperçu de 8 vignettes) ===
+    const vignettes = (apercu || []).map((o) => {
+      const titre = ech(o.titre || '');
+      const img = o.image_path
+        ? `<img src="${urlPhoto(o.image_path)}" alt="${titre}">`
+        : `<span class="vignette-bento-placeholder">${ech(initiales(o.titre || '?'))}</span>`;
+      const statut = o.statut === 'vendue' ? 'vendue' : (o.statut === 'reserve' ? 'reservee' : '');
+      const badge = statut ? `<span class="vignette-bento-statut vignette-bento-statut-${statut}"></span>` : '';
+      return `<button type="button" class="vignette-bento" data-oeuvre-id="${o.id}" title="${titre}">${img}${badge}</button>`;
+    }).join('');
+
+    const zoneCatalogue = a.nb_oeuvres > 0 ? `
+      <div class="carte zone-catalogue-bento">
+        <div class="entete-bloc-bento">
+          <h3>Aperçu du catalogue</h3>
+          <div class="entete-bloc-actions">
+            <button class="btn-action" id="btn-voir-oeuvres">Voir ${pluriel(a.nb_oeuvres, 'œuvre')} &rsaquo;</button>
+            <button class="btn-action btn-principal" id="btn-ajouter-oeuvres">+ Ajouter</button>
+          </div>
+        </div>
+        ${vignettes ? `<div class="vignettes-bento">${vignettes}</div>` : ''}
+      </div>
+    ` : `
+      <div class="carte zone-catalogue-bento zone-catalogue-bento-vide">
+        <div class="entete-bloc-bento">
+          <h3>Aperçu du catalogue</h3>
+          <button class="btn-action btn-principal" id="btn-ajouter-oeuvres">+ Ajouter des œuvres</button>
+        </div>
+        <p class="zone-catalogue-bento-message">Aucune œuvre au catalogue pour cet artiste.</p>
+      </div>
+    `;
+
+    // === Notes internes (si présentes) ===
+    const zoneNotes = a.notes ? `
+      <div class="carte zone-notes-bento">
+        <h3>Notes internes</h3>
+        <div class="texte-long">${ech(a.notes).replace(/\n/g, '<br>')}</div>
+      </div>
+    ` : '';
+
+    // === Nav voisins (conservée telle quelle au-dessus de la grille) ===
     const navVoisins = voisins.total > 1 ? `
       <nav class="nav-voisins" aria-label="Navigation entre artistes">
         <button class="btn-voisin btn-voisin-prec" ${voisins.precedent ? '' : 'disabled'} title="${voisins.precedent ? ech(voisins.precedent.nom) : ''}">
@@ -210,48 +381,25 @@ export async function rendreArtisteFiche(contenu, params) {
       </nav>
     ` : '';
 
+    // === Assemblage ===
     contenu.innerHTML = `
-      <div class="vue-fiche">
-        <div class="entete-fiche">
-          ${avatarHtml}
-          <div class="entete-fiche-info">
-            <h2>${ech(nomCompletA)} ${a.archive ? badgeArchive() : ''}</h2>
-            <p class="meta">
-              ${a.type ? ech(a.type) : '<em>type non précisé</em>'}
-              ${a.prefixe_inventaire ? ` &middot; Préfixe ${ech(a.prefixe_inventaire)}` : ''}
-              &middot; ${pluriel(a.nb_oeuvres, 'œuvre')} au catalogue
-            </p>
-          </div>
-          <div class="entete-fiche-actions">
-            <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
-            ${boutonArchive({ archive: a.archive })}
-            <button class="btn-action" id="btn-modifier">Modifier</button>
-          </div>
-        </div>
-
+      <div class="vue-fiche vue-fiche-bento">
         ${navVoisins}
-
-        <div class="actions-fiche">
-          ${a.nb_oeuvres > 0 ? `
-            <button class="btn-action" id="btn-voir-oeuvres">
-              Voir ${a.nb_oeuvres === 1 ? 'son œuvre' : 'ses œuvres'} &rsaquo;
-            </button>
-          ` : ''}
-          <button class="btn-action btn-principal" id="btn-ajouter-oeuvres">
-            + Ajouter ${a.nb_oeuvres > 0 ? "d'autres" : 'des'} œuvres
-          </button>
+        <div class="grille-bento">
+          ${photoHtml}
+          ${zoneIdentite}
+          ${zoneStats}
+          ${zoneConditions}
+          ${zoneContact}
+          ${zoneIA}
+          ${zonePresentation}
+          ${zoneCatalogue}
+          ${zoneNotes}
         </div>
-
-        ${lignesContact ? blocPliable('Contact', `<dl class="champs">${lignesContact}</dl>`) : ''}
-        ${a.biographie ? blocPliable('Biographie', `<p class="texte-long">${ech(a.biographie).replace(/\n/g, '<br>')}</p>`) : ''}
-        ${a.demarche ? blocPliable('Démarche', `<p class="texte-long">${ech(a.demarche).replace(/\n/g, '<br>')}</p>`) : ''}
-        ${a.curriculum ? blocPliable('Curriculum', `<p class="texte-long">${ech(a.curriculum).replace(/\n/g, '<br>')}</p>`) : ''}
-        ${lignesTaxes ? blocPliable('Fiscalité', `<dl class="champs">${lignesTaxes}</dl>`) : ''}
-        ${lignesCotes ? blocPliable('Cotes (calcul de prix)', `<dl class="champs">${lignesCotes}</dl><p class="aide-champ" style="margin-top:8px;">Le prix courant ajoute automatiquement <strong>2 $/po linéaire</strong> au tarif préférentiel pour l'encadrement.</p>`) : ''}
-        ${a.notes ? blocPliable('Notes', `<p class="texte-long">${ech(a.notes).replace(/\n/g, '<br>')}</p>`) : ''}
       </div>
     `;
 
+    // === Handlers ===
     contenu.querySelector('#btn-modifier').addEventListener('click', entrerEdition);
     contenu.querySelector('#btn-supprimer').addEventListener('click', supprimer);
     contenu.querySelector('#btn-archiver').addEventListener('click', async () => {
@@ -260,10 +408,11 @@ export async function rendreArtisteFiche(contenu, params) {
         fiche: a,
         libelleFiche: nomCompletA,
         confirmer,
-        surFait: () => dessiner(),
+        surFait: async () => { await rechargerBundle(); dessiner(); },
       });
       if (!fait) return;
     });
+
     const avatarVision = contenu.querySelector('#avatar-vision');
     if (avatarVision && a.photo_path) {
       avatarVision.addEventListener('click', () => {
@@ -271,6 +420,7 @@ export async function rendreArtisteFiche(contenu, params) {
         visionner(urlPhoto(source));
       });
     }
+
     contenu.querySelectorAll('.btn-voisin-prec').forEach((btn) => {
       if (voisins.precedent) {
         btn.addEventListener('click', () =>
@@ -285,6 +435,7 @@ export async function rendreArtisteFiche(contenu, params) {
         );
       }
     });
+
     const btnVoir = contenu.querySelector('#btn-voir-oeuvres');
     if (btnVoir) {
       btnVoir.addEventListener('click', () =>
@@ -303,6 +454,25 @@ export async function rendreArtisteFiche(contenu, params) {
         });
       });
     }
+
+    // Onglets de la carte Présentation : bascule sans re-render.
+    contenu.querySelectorAll('.onglet-bento').forEach((tete) => {
+      tete.addEventListener('click', () => {
+        const cle = tete.dataset.onglet;
+        contenu.querySelectorAll('.onglet-bento').forEach((t) => t.classList.toggle('actif', t === tete));
+        contenu.querySelectorAll('[data-corps]').forEach((c) => {
+          c.style.display = (c.dataset.corps === cle) ? '' : 'none';
+        });
+      });
+    });
+
+    // Vignettes du catalogue : clic = ouvrir la fiche d'œuvre.
+    contenu.querySelectorAll('.vignette-bento').forEach((v) => {
+      v.addEventListener('click', () => {
+        const id = Number(v.dataset.oeuvreId);
+        if (Number.isFinite(id) && id > 0) naviguer('oeuvre-fiche', { id });
+      });
+    });
   }
 
   function gabaritLigneTaxe(etiquette = '', numero = '') {
@@ -745,6 +915,7 @@ export async function rendreArtisteFiche(contenu, params) {
           });
           return;
         }
+        await rechargerBundle();
         sortirEdition();
       } catch (err) {
         await confirmer({
