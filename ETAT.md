@@ -259,9 +259,62 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 
 ---
 
-## Prochaine étape concrète (après livraison v0.2.0 — 2026-06-16)
+## Prochaine étape concrète (après tests chez les parents — 2026-06-16)
 
-**État livré :** installateur `Galeria Setup 0.2.0.exe` (379 Mo) construit et copié dans `F:\Galerie\Automatisation\GalerieApp\dist\`. Tag `v0.2.0` poussé sur GitHub. Master à `1d7ed38`.
+**État livré :**
+- v0.2.0 installée chez les parents et testée en conditions réelles.
+- v0.2.1 publiée sur GitHub Releases (https://github.com/YadoxB/Galeria/releases/tag/v0.2.1) avec electron-updater intégré. À installer manuellement chez les parents pour activer le mécanisme d'auto-update.
+
+**Feedback issu des tests** : refonte importante du modèle économique (cotes), nouveaux outils (calculateur de prix, catalogue), suivi cycle de vie, pack de vente enrichi. Roadmap en 5 jalons ci-dessous.
+
+### Roadmap des 5 jalons (synthèse des modifications post-tests)
+
+**Jalon 1 — Quick wins polish & UX** (1 jour)
+- Sceau du certificat repositionné en bas-droite plus serré (actuellement empiète sur le cadre).
+- Filtre des œuvres par taille (format) dans le panneau Filtres.
+- Champ « URL de la fiche sur le site » sur la fiche d'œuvre + bouton « Voir sur le site ».
+- Premier numéro séquentiel d'inventaire (global à la galerie) ajustable dans Réglages.
+- Chaînage de création d'œuvres pour un artiste **existant** (le flux existe déjà pour un nouvel artiste).
+
+**Jalon 2 — Cotes & calculateur de prix** (2-3 jours, pièce maîtresse)
+- Modèle de données : cotes par artiste, variation par taille (P/M/G/TG), variation optionnelle par médium, unité (po² ou po linéaires = H+L), deux versions (préférentiel sans cadre / courante encadrée = préférentiel + 2 $/po, le prix affiché est courant).
+- Champ « cote hors-normes » sur l'œuvre pour les formats atypiques (override du prix calculé).
+- Calcul auto du prix sur la fiche œuvre à partir de l'artiste, des dimensions et du médium.
+- Section « Cotes » sur la fiche artiste.
+- Section « Outils » dans l'app : calculateur autonome (artiste + dimensions → prix).
+
+**Jalon 3 — Suivi cycle de vie** (1-2 jours)
+- Statuts manuels de préparation : créé dans Sage (oui/non + date), créé sur le site (oui/non + date).
+- Statuts manuels post-vente : paiement (statut + date), emballage (date), envoi (date), livraison (date).
+- Bloc « Commandes non complétées » sur le tableau de bord (œuvres vendues dont les statuts post-vente ne sont pas tous à « complété »).
+
+**Jalon 4 — Pack de vente complet** (3-4 jours)
+- **Présentation artiste** : PDF élégant de plusieurs pages (8.5×11) avec bio, démarche, CV, distinctions, photos d'œuvres représentatives. **Indépendant des ventes** — utile aussi pour démarchage, expositions, etc.
+- **Catalogue artiste** : PDF 6 œuvres/page, indépendant des ventes (la galerie en imprime à la demande).
+- **Lettre de remerciement personnalisée** selon méthode d'achat (web, en personne, cadeau, autres). Variantes de texte à venir de Dave.
+- **Commission galerie selon type d'œuvre** : 50 % toiles, 33 % sculptures, 50 % reproductions après coûts (champ « coûts de production » sur la fiche d'œuvre).
+- **Bundle PDF de vente** : certificat + facture artiste + présentation artiste + lettre de remerciement (et facture Sage en pièce jointe manuelle).
+
+**Jalon 5 — Réorganisation des photos** (2 jours, à faire en dernier car risqué)
+- Sous-dossiers par artiste dans `Documents\Galeria\Photos\`.
+- Renommage formulé : `(code 3 lettres)(num séq)-(titre slug)-(formatLettre)(HxLxP)-(médiumLettre)(supportLettre)-(emplSignature)(année)`. Exemple : `CLD1992-Entre-le-vent-et-la-mer-M30x30x.75-AT-BD2023`.
+- Migration des 500+ photos existantes, avec sauvegarde préalable.
+
+### Reporté plus tard (mais sur le radar)
+
+- **Suivi des paiements échelonnés mensuels** sur 12 mois (modes « payer maintenant » / « payer plus tard » / « paiements échelonnés »).
+- **Profil fiscal par client** : taxes activables/désactivables, taux personnalisés (pour ventes à l'étranger). S'applique à toutes les ventes du client.
+- **Pull des descriptions depuis le site WooCommerce** (au lieu de push vers WordPress). À cadrer ; risque de couplage à minimiser.
+- **Ouverture automatique de Sage** après l'enregistrement d'une vente dans Galeria (juste un `shell.openPath` sur l'exe de Sage).
+- **Tutoriel de première ouverture** (toujours dans la liste mais non urgent).
+- **Mises à jour automatiques** ✓ livrées en v0.2.1.
+
+### Décisions de design issues des tests
+
+- **Galeria ne pousse pas vers WordPress.** Les parents craignent le couplage : si la maintenance Galeria ne suit pas, ils restent coincés. Tout flux site → app, jamais app → site.
+- **Le numéro séquentiel d'inventaire est global** à la galerie, pas par artiste.
+- **Hors-normes = override par œuvre**, pas une cote permanente sur l'artiste.
+- **Commande non complétée = vente avec un statut post-vente non « terminé »**, à afficher en proéminence sur le tableau de bord.
 
 ### Faisable tout de suite (sans dépendance externe)
 
