@@ -181,45 +181,47 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable e
 
 ---
 
-## Ce qui reste à faire
+## Plan structuré — ce qui reste (organisé par dépendance)
 
-### Phase 3D — Documents complémentaires (en attente d'exemples)
+> Axe unique : **la dépendance décide quoi faire quand.**
+> **A** = faisable maintenant · **B** = bloqué sur les parents · **C** = grandes phases reportées.
+> Le détail des questions à poser aux parents (axe B) vit dans `A-VALIDER.md`.
+> Les numéros `#n` renvoient aux anciennes « demandes spontanées » pour la traçabilité.
 
-- **Facture client** (galerie → acheteur, émise au moment de la vente). À concevoir une fois que Dave aura un exemple/template. Distincte de la facture artiste. Numérotation F-2026-xxx déjà prête.
-- **Lettre de remerciement** : nom du client, mention de l'œuvre achetée, ton chaleureux, signature. Plus simple, mais texte par défaut à définir.
+### A — Faisable maintenant (aucune dépendance externe)
 
-### Phase 4 — Pont Sage 50 (reportée)
+**Chantier 1 · Visibilité & navigation** — *prochain jalon « Visibilité » ; naît du jalon 3 + du stepper du tableau de bord*
+- **Section Suivi (#16)** — vue dédiée des cycles de vie (en cours + complétées), plus complète que le bloc du tableau de bord. Réutilise les données et le rendu stepper. ⟵ **EN COURS**
+- **Section Documents (#15)** — index de tous les PDF générés (certificats, factures artiste, à terme factures client / lettres / présentations), classés et recherchables (type, date, œuvre/artiste/vente).
+- **Rapport journalier (#17)** — intrants (ajouts) / extrants (retraits, archivages) / ventes du jour. Format et plage à préciser (PDF ? dates configurables ?).
 
-Voir CLAUDE.md section 8. Inclut import des historiques de ventes Sage → app.
+**Chantier 2 · Modèle économique** — *partie non bloquée du jalon 4*
+- **Commission par type d'œuvre** (50 % toiles / 33 % sculptures / 50 % repro après coûts) + champ **coûts de production** sur l'œuvre → branché sur la facture artiste. (Les % exacts et la saisie des coûts repro restent à confirmer — axe B.)
 
-### Phase 5 — Publication web (reportée)
+**Chantier 3 · Polish & onboarding**
+- **Avancement du splash (#18)** — barre de progression et/ou étapes de chargement au démarrage (migrations DB, seed photos, config) pour voir si ça bloque. Petit, isolé.
+- **Tutoriel de première ouverture (#13)** — overlay guidé au 1er lancement, accessible ensuite depuis Réglages/Aide.
+- **Correction #356 « Chrysalide 1/30 »** — dimensions illisibles dans la base, à saisir à la main (5 min).
+- **Migration des 2 pseudonymes** — « LO (Laurent Torregrossa) », « Sofia (Sophie Lebeuf) » (5 min dans l'app).
 
-WordPress + WooCommerce. Voir CLAUDE.md section 7.
+**Chantier 4 · Données & catalogue** — *gros ou risqué, à isoler*
+- **Jalon 5 — renommage des photos** : sous-dossiers par artiste + déplacement/renommage physique des 500+ fichiers (générateur `src/db/nomenclature.js` déjà fait et testé). Sauvegarde préalable obligatoire. **Dépend des validations B** (codes-lettres, dimensions incomplètes).
+- **Édition en batch (#2)** — vue tableau multi-lignes. Gros morceau reporté plusieurs fois.
 
-### Sécurité (reportée comme phase dédiée)
+### B — Bloqué sur les parents (à poser en une seule conversation → `A-VALIDER.md`)
 
-- Verrou léger d'app avec code court, verrouillage auto, code hashé.
-- Plus tard : chiffrement de la base avec clé dans le coffre Windows.
+- **Gabarits & textes** : facture client (Phase 3D), lettre de remerciement + variantes par méthode d'achat (3D / jalon 4), mise en page de la présentation artiste.
+- **Modèle éco** : liste complète des types d'œuvre + %, où saisir les coûts de repro, modes de paiement (échelonné ?), taxes par client étranger.
+- **Cotes** : formule en po², unité par défaut, cotes par médium, marquage hors-normes, seuils de format.
+- **Nomenclature** : codes-lettres réels (médium/support/signature), format final des numéros (#7), dimensions incomplètes (0 vs vide).
+- **Divers** : Agenda (#14 — Outlook ?), résolution du moniteur (#5), signataire du certificat.
 
-### Demandes spontanées en attente
+### C — Grandes phases reportées (quand l'app sera en service réel)
 
-**Plus anciennes (depuis premières sessions)** :
-1. ~~**Splash screen** au démarrage avec logo Galeria, version.~~ **Livré en v0.2.0** : fenêtre 600×338, `gabarits/actifs/splash-galeria.png`, version en doré italique avec fade-in, durée min 1,2 s, filet de sécurité 8 s.
-2. **Consultation/édition en batch** des tables (vue tableau pour modifier plusieurs lignes).
-3. ~~**Archiver une/des fiches**~~ **Livré en v0.2.0** : voir section « Archivage des fiches » au-dessus.
-4. **Push d'infos vers le site web** (recoupe Phase 5).
-5. **Validation des dimensions de fenêtre** pour l'écran réel des parents (actuellement 1600×900). Idéalement à voir sur place.
-6. **Plus tard** : intégrer d'autres types de produits (encadrements, impressions).
-7. **Nomenclature finale des numéros** (factures, certificats, inventaires) : Dave doit obtenir les formules de ses parents. L'app utilise des préfixes/compteurs configurables — aucune migration nécessaire.
-
-**Nouvelles demandes (sessions récentes)** :
-8. ~~**Réglages d'application** (taille d'affichage).~~ **Livré en v0.2.0** : section « Affichage » dans Réglages, sélecteur 6 niveaux (80-150 %), preview live via `webContents.setZoomFactor()`, persistance dans `config.affichage.zoom`, réappliqué à chaque démarrage.
-9. **Mécanisme de mise à jour automatique** (push updates) : explorer electron-updater ou équivalent pour livrer les nouvelles versions aux parents sans qu'ils aient à réinstaller manuellement.
-10. ~~**Page d'accueil avec vue d'ensemble**.~~ **Livré en v0.2.0** : voir section « Tableau de bord » au-dessus.
-11. ~~**Descriptions d'œuvres générées par IA**.~~ **Livré en v0.2.0** (mode presse-papier vers ChatGPT existant des parents) : voir section « Intégration ChatGPT » au-dessus. Évolution possible vers une intégration API directe (Anthropic ou OpenAI) si le volume le justifie.
-12. ~~**Section « À propos » dans les réglages**.~~ **Livré en v0.2.0** : nom de l'app, version (`app.getVersion()`), marque, dossier des données, moteur (Electron + plateforme), copyright Loi 25.
-13. **Tutoriel de première ouverture** : flux d'accueil guidé qui présente les sections principales et leurs actions courantes. À déclencher au premier lancement, accessible ensuite depuis Réglages ou Aide.
-14. **Intégration Agenda** : bloc placeholder en place dans le tableau de bord. Les parents utilisent probablement Outlook ; à confirmer puis explorer (lecture iCal local, sync Microsoft Graph, ou autre).
+- **Phase 4 — Sage 50** : export CSV des ventes (import par les parents), lecture ODBC seule, import rétroactif des historiques Sage → app. **Jamais d'écriture dans Sage.** Voir CLAUDE.md §8. Lourd.
+- **Phase 5 — Web** : publication d'œuvres vers WordPress/WooCommerce (= #4 « push web »). **Décision** : flux site → app uniquement, jamais app → site (crainte de couplage) → plutôt *pull* des descriptions WooCommerce. Voir CLAUDE.md §7.
+- **Sécurité** : verrou léger (code court, verrouillage auto, code hashé), puis chiffrement de la base avec clé dans le coffre Windows.
+- **Sur le radar** : paiements échelonnés mensuels, profil fiscal par client, ouverture auto de Sage après vente, autres types de produits (#6 — encadrements, impressions), évolution ChatGPT presse-papier → API directe (Anthropic Haiku).
 
 ---
 
@@ -277,60 +279,15 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 
 ---
 
-## Prochaine étape concrète (après tests chez les parents — 2026-06-16)
+## Historique des jalons & journal de session
 
-**État livré :**
-- v0.2.0 installée chez les parents et testée en conditions réelles.
-- v0.2.1 publiée sur GitHub Releases (https://github.com/YadoxB/Galeria/releases/tag/v0.2.1) avec electron-updater intégré. À installer manuellement chez les parents pour activer le mécanisme d'auto-update.
+**État livré :** v0.2.4 publiée sur GitHub Releases, tout sur `master`. ⚠ **Les parents sont encore sur 0.2.0** (sans auto-update) — voir l'encadré « En une phrase » en tête.
 
-**Feedback issu des tests** : refonte importante du modèle économique (cotes), nouveaux outils (calculateur de prix, catalogue), suivi cycle de vie, pack de vente enrichi. Roadmap en 5 jalons ci-dessous.
+### Jalons livrés (récap — détail complet dans `CHANGELOG.md`)
 
-### Roadmap des 5 jalons (synthèse des modifications post-tests)
-
-### Jalon 1 — Livré en v0.2.2
-
-- ~~Sceau du certificat repositionné~~ → **Nouveau gabarit complet** intégré depuis `certificat_outil_GVSJ_9.html` fourni par Dave, avec fonction `remplir(data)` qui pilote les inputs du panneau de saisie depuis les données de Galeria. Le template reste utilisable en standalone. Polices Garamond externalisées vers `actifs/` pour éviter un crash Acrobat à la fermeture (problème connu avec polices base64 ré-embarquées par printToPDF).
-- ~~Filtre des œuvres par taille~~ → 4 chips (Petit / Moyen / Grand / Très grand) dans le panneau Filtres.
-- ~~URL de la fiche sur le site~~ → champ dans le formulaire + bouton « Voir sur le site › » sous le prix dans la fiche en lecture. **504 URLs importées depuis Airtable** via script dédié `scripts/import-urls-oeuvres.js` (matching par numéro d'inventaire, sauvegarde automatique).
-- ~~Numéro séquentiel d'inventaire global~~ → ajustable dans Réglages → Documents. Pré-rempli sur le formulaire d'œuvre (préfixe artiste + numéro), incrémenté seulement si la valeur suggérée n'est pas modifiée à la main.
-- ~~Chaînage œuvres pour artiste existant~~ → bouton **« + Ajouter d'autres œuvres »** sur la fiche artiste. Et sur la liste Œuvres, le bouton « + Ajouter une œuvre » ouvre une modale qui demande l'artiste (avec option **✦ Nouvel artiste…** en tête) — si nouvel artiste choisi, redirige vers la fiche de création d'artiste qui chaîne ensuite vers les œuvres.
-
-### Jalon 2 — Livré en v0.2.3 (en cours, pas encore taggée)
-
-- ~~Modèle de données cotes par artiste~~ → colonne `cotes` (JSON) sur artistes + colonne `cote_hors_normes` (INTEGER) sur oeuvres. Chaque entrée = `{ medium, taille, unite, prix_pref }`. Liste vide acceptée (= pas de calcul auto, prix saisi à la main comme avant).
-- ~~Calcul automatique~~ → module `src/app/calcul-prix.js`. **Formule courante** = `(prix_pref + 2) × base` : le 2 $ s'ajoute à la cote (par unité), pas au prix total. Sur cote en $/po linéaire ça revient au même qu'un supplément linéaire ; sur cote en $/po² ça creuse l'écart. **À reconfirmer avec les parents pour les po²** (noté dans `A-VALIDER.md`).
-- ~~Matching de cote~~ → priorité explicite : exact médium + exact taille > Tous + exact taille > exact médium + Tous > Tous + Tous. **Insensible à la casse et aux accents** (« Acrylique » = « acrylique »).
-- ~~UI section Cotes~~ sur fiche artiste : éditeur ligne-par-ligne, dropdown custom pour le médium (input texte libre + bouton ▾ qui ouvre une liste **complète, scrollable**, séparée en « Médiums de cet artiste » et « Autres médiums » avec « Tous » épinglé). Encart pliable « Ordre de priorité » qui explique la logique.
-- ~~Prix suggéré sur fiche œuvre~~ → bloc doré sous le champ Prix régulier qui montre le prix courant avec formule détaillée. **Auto-appliqué au champ** dès que dimensions / médium / format / artiste sont remplis ; si l'utilisateur écrase la valeur, l'auto-fill arrête (détecté par comparaison à la dernière valeur appliquée). Bouton **« Réappliquer »** pour revenir au calculé.
-- ~~Switch « Cote hors-normes »~~ sur l'œuvre : si coché, vide le prix et masque le bloc suggéré.
-- ~~Section Outils~~ : nouvelle entrée dans la sidebar (en bas avec Réglages, séparée par une fine ligne dorée). Première page : **calculateur de prix autonome** (artiste + dimensions + médium optionnel → prix courant + préférentiel + formule + grille des cotes configurées de l'artiste).
-- Sidebar segmentée en deux blocs visuellement séparés : haut = Accueil/Artistes/Œuvres/Clients/Ventes ; bas = Outils/Réglages ; pied = Profil.
-
-### Jalon 3 — Suivi cycle de vie (1-2 jours)
-- Statuts manuels de préparation : créé dans Sage (oui/non + date), créé sur le site (oui/non + date).
-- Statuts manuels post-vente : paiement (statut + date), emballage (date), envoi (date), livraison (date).
-- Bloc « Commandes non complétées » sur le tableau de bord (œuvres vendues dont les statuts post-vente ne sont pas tous à « complété »).
-
-### Jalon 4 — Pack de vente complet (3-4 jours)
-- **Présentation artiste** : PDF élégant de plusieurs pages (8.5×11) avec bio, démarche, CV, distinctions, photos d'œuvres représentatives. **Indépendant des ventes** — utile aussi pour démarchage, expositions, etc.
-- **Catalogue artiste** : PDF 6 œuvres/page, indépendant des ventes (la galerie en imprime à la demande).
-- **Lettre de remerciement personnalisée** selon méthode d'achat (web, en personne, cadeau, autres). Variantes de texte à venir de Dave.
-- **Commission galerie selon type d'œuvre** : 50 % toiles, 33 % sculptures, 50 % reproductions après coûts (champ « coûts de production » sur la fiche d'œuvre).
-- **Bundle PDF de vente** : certificat + facture artiste + présentation artiste + lettre de remerciement (et facture Sage en pièce jointe manuelle).
-
-### Jalon 5 — Réorganisation des photos (2 jours, à faire en dernier car risqué)
-- Sous-dossiers par artiste dans `Documents\Galeria\Photos\`.
-- Renommage formulé : `(code 3 lettres)(num séq)-(titre slug)-(formatLettre)(HxLxP)-(médiumLettre)(supportLettre)-(emplSignature)(année)`. Exemple : `CLD1992-Entre-le-vent-et-la-mer-M30x30x.75-AT-BD2023`.
-- Migration des 500+ photos existantes, avec sauvegarde préalable.
-
-### Reporté plus tard (mais sur le radar)
-
-- **Suivi des paiements échelonnés mensuels** sur 12 mois (modes « payer maintenant » / « payer plus tard » / « paiements échelonnés »).
-- **Profil fiscal par client** : taxes activables/désactivables, taux personnalisés (pour ventes à l'étranger). S'applique à toutes les ventes du client.
-- **Pull des descriptions depuis le site WooCommerce** (au lieu de push vers WordPress). À cadrer ; risque de couplage à minimiser.
-- **Ouverture automatique de Sage** après l'enregistrement d'une vente dans Galeria (juste un `shell.openPath` sur l'exe de Sage).
-- **Tutoriel de première ouverture** (toujours dans la liste mais non urgent).
-- **Mises à jour automatiques** ✓ livrées en v0.2.1.
+- **Jalon 1 (v0.2.2)** : nouveau gabarit de certificat, filtre des œuvres par format, URL de fiche web (504 importées), n° d'inventaire séquentiel **global**, chaînage de création d'œuvres (artiste existant ou nouveau).
+- **Jalon 2 (v0.2.3)** : cotes & calcul de prix par artiste (médium × taille, po linéaire/carré ; formule courante `(prix_pref + 2) × base`), section **Outils** + calculateur de prix autonome, refonte **bento** des 7 pages principales.
+- **Jalon 3 (v0.2.4)** : suivi du **cycle de vie** (préparation œuvre Sage/site + post-vente paiement/emballage/envoi/livraison, **éditables inline**), **garde-fou Sage** à la vente, champ **Style**, formulaires d'édition en bento, **générateur de nomenclature** (`src/db/nomenclature.js`).
 
 ### Décisions de design issues des tests
 
@@ -339,56 +296,19 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 - **Hors-normes = override par œuvre**, pas une cote permanente sur l'artiste.
 - **Commande non complétée = vente avec un statut post-vente non « terminé »**, à afficher en proéminence sur le tableau de bord.
 
-### Faisable tout de suite (sans dépendance externe)
-
-| Priorité | Tâche | Note |
-|---|---|---|
-| **Reco** | **Tag + release v0.2.4** | La branche `claude/practical-payne-6f7562` contient le jalon 3 + Style + formulaires bento + nomenclature, commités mais pas taggés. Une fois Dave satisfait, bumper `package.json` en `0.2.4`, `git tag v0.2.4`, pousser, puis `npm run release` (gh CLI déjà configuré → plus de token à gérer). |
-| **Reco** | **Jalon 4 — Pack de vente** | Présentation artiste PDF, catalogue artiste PDF, lettre de remerciement par méthode d'achat, commission par type d'œuvre, bundle PDF de vente. Détaillé plus bas. En attente de templates/textes des parents pour certains documents. |
-| | **Jalon 5 — Renommage des photos** | Le générateur de nom est **déjà fait** (`src/db/nomenclature.js`, testé). Reste : sous-dossiers par artiste (décidé) + renommage physique des fichiers existants avec sauvegarde préalable. Risqué — à faire isolément. |
-| | **#13 Tutoriel de première ouverture** | Overlay guidé qui présente les sections au 1er lancement. Quelques décisions de design. |
-| | **#2 Édition en batch** (vue tableau) | Gros morceau qu'on a reporté plusieurs fois. Toujours là. |
-| | **Migration manuelle des 2 pseudonymes** | « LO (Laurent Torregrossa) » et « Sofia (Sophie Lebeuf) » dans les fiches artistes — 5 minutes dans l'app. |
-
-### En attente d'input externe
-
-| Tâche | Manque |
-|---|---|
-| **Phase 3D — Facture client** | Exemple ou template des parents |
-| **Phase 3D — Lettre de remerciement** | Exemple ou template des parents |
-| **#7 Nomenclature finale des numéros** | Les formules réelles des parents (factures, certificats, inventaires) |
-| **#14 Intégration Agenda** (placeholder en place) | Confirmation : Outlook ou autre ? |
-| **#5 Dimensions de fenêtre** | Résolution du moniteur de tes parents (actuellement 1600×900) |
-
-### Phases majeures reportées
-
-| Phase | Portée |
-|---|---|
-| **Phase 4 — Sage 50** | Pont comptabilité (export → CSV pour import dans Sage, lecture ODBC seule). Inclut import des historiques de ventes Sage → app (alimentation rétroactive de l'historique des clients). Lourd. |
-| **Phase 5 — Web** | Publication d'œuvres vers le site WordPress/WooCommerce. Recoupe la demande #4 « Push d'infos vers le site ». |
-| **Sécurité** | Verrou léger avec code court, verrouillage auto après inactivité, chiffrement de la base avec clé dans le coffre Windows. À programmer quand l'app sera en service réel. |
-
-### Plus tard / à valider
-
-- **#6 Autres types de produits** (encadrements, impressions) — élargir le modèle d'œuvre ou ajouter une table « produits ».
-- **Évolution ChatGPT presse-papier → API directe** si les parents trouvent le presse-papier pénible à l'usage (Anthropic Haiku recommandé).
-
 ### Hygiène et test
 
 - **Tests des cotes chez les parents** : Dave doit configurer quelques artistes avec des cotes (P/M/G/TG ou Tous + exception), tester le calcul auto sur des œuvres existantes, vérifier que ça « colle » avec les prix manuels actuels.
 - **Audit Loi 25** : confirmer que la fonction ChatGPT n'envoie que les données de l'œuvre (pas de client). Déjà vérifié côté code.
 - **Tester les commandes avec la formule courante en po²** : valider avec les parents que `(prix_pref + 2) × surface` est la bonne formule, ou si pour le carré c'est plutôt `(prix_pref × surface) + 2 × (H+L)`. Voir `A-VALIDER.md`.
 
-**Recommandation pour la prochaine session :**
-1. **Tag + release v0.2.4** pour livrer aux parents le jalon 3 (suivi cycle de vie + garde-fou Sage), le champ Style et les formulaires bento. Le workflow release est maintenant `npm run release` via gh CLI (aucun token à manipuler — voir Notes techniques).
-2. Puis attaquer le **jalon 4 — pack de vente** (documents PDF, commission par type), ou le **jalon 5 — renommage des photos** (le générateur de nom est déjà fait, reste le déplacement physique).
+### Journal de session — 2026-06-17
 
-**État de la session 2026-06-17 (suite) :**
-- Jalon 3 livré et testé chez Dave : cartes Préparation (œuvre) et Suivi cycle de vie (vente) **éditables en place** sans passer par « Modifier », bloc « Commandes non complétées » sur le tableau de bord.
-- Garde-fou Sage : la vente d'une œuvre non créée dans Sage est refusée, avec un message qui donne le **nom de référence complet** (nomenclature). Le catalogue existant a été backfillé (`sage_cree = 1`, `site_publie = 1`) via `PRAGMA user_version`.
-- Champ Style (Figuratif / Abstrait / Mi-Figuratif) ajouté partout (form, lecture, filtre).
-- Formulaires d'édition artiste + œuvre passés en bento, photo compacte à icônes, sujets en chips, photo ajoutable dès la création d'artiste.
-- À reconfirmer avec les parents : la nomenclature sur de vraies œuvres (codes-lettres médium/support/signature corrects ?), et la proposition pour dimensions incomplètes (0 en remplacement d'une H/L manquante).
+- **Migration des dimensions** : 498 œuvres séparées du texte libre vers les colonnes **H/L/P** (`scripts/separer-dimensions.js`), texte régénéré au format de l'app, profondeur absente laissée **NULL**. #356 « Chrysalide 1/30 » laissée pour correction manuelle (données décalées). Sauvegarde auto avant écriture. Format/orientation existants non touchés.
+- **Tableau de bord** : bloc « Commandes non complétées » — les 4 étapes passent des petits points à un **stepper étiqueté** (icône + libellé + connecteurs ; vert = fait, terracotta = partiel). Démo des 3 variations conservée dans `demos/commandes-non-completees.html`.
+- **To-do enrichie** : #15 Section Documents, #16 Section Suivi, #17 Rapport journalier, #18 Avancement du splash.
+- **Planning réorganisé** par axe de dépendance (A/B/C, voir « Plan structuré » plus haut) — les anciennes listes redondantes (roadmap 5 jalons, tableaux « faisable/en attente/reportées ») ont été fusionnées.
+- **Prochaine étape décidée** : **Section Suivi (#16)**.
 
 ---
 

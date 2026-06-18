@@ -2,6 +2,15 @@ import { naviguer } from '../router.js';
 import { ech, pluriel, formaterPrix, formaterDate, badgeStatut, urlPhoto, nomComplet } from '../commun.js';
 import { chargerConfig } from '../marque.js';
 
+// Icônes du stepper « Commandes non complétées » (SVG inline, stroke courant)
+const ICONE_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const etapes = [
+  { lbl: 'Paiement',  icone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' },
+  { lbl: 'Emballage', icone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>' },
+  { lbl: 'Envoi',     icone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>' },
+  { lbl: 'Livraison', icone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>' },
+];
+
 function formaterEntier(n) {
   return (Number(n) || 0).toLocaleString('fr-CA');
 }
@@ -240,38 +249,42 @@ function remplirCommandesNonCompletees(contenu, commandes) {
     zone.innerHTML = `<p class="dashboard-vide">Toutes les commandes sont complétées 🎉</p>`;
     return;
   }
-  const pastille = (etat) => {
-    const classe = etat === 'fait' ? 'pastille-etape pastille-etape-fait'
-                 : etat === 'partiel' ? 'pastille-etape pastille-etape-partiel'
-                 : 'pastille-etape';
-    return `<span class="${classe}"></span>`;
+  const stepper = (v) => {
+    const etats = [
+      v.paiement_statut === 'recu' ? 'fait' : v.paiement_statut === 'partiel' ? 'partiel' : 'attente',
+      v.emballage_date ? 'fait' : 'attente',
+      v.envoi_date ? 'fait' : 'attente',
+      v.livraison_date ? 'fait' : 'attente',
+    ];
+    return etapes.map((e, i) => {
+      const etat = etats[i];
+      const icone = etat === 'fait' ? ICONE_CHECK : e.icone;
+      const conn = i < etapes.length - 1
+        ? `<span class="commande-conn ${etat === 'fait' && etats[i + 1] === 'fait' ? 'fait' : ''}"></span>`
+        : '';
+      return `<span class="commande-step ${etat}"><span class="rond">${icone}</span><span class="lbl">${e.lbl}</span></span>${conn}`;
+    }).join('');
   };
   zone.innerHTML = `<div class="dashboard-liste-compacte">${commandes.map((v) => {
     const client = v.client_nom || '—';
-    const etatPaiement = v.paiement_statut === 'recu' ? 'fait'
-                       : v.paiement_statut === 'partiel' ? 'partiel'
-                       : 'attente';
     return `
-      <button class="dashboard-ligne dashboard-ligne-commande" data-id="${v.id}" title="Voir la vente">
-        <div class="dashboard-ligne-vignette">
-          ${v.image_path
-            ? `<img src="${urlPhoto(v.image_path)}" loading="lazy" alt="">`
-            : `<span>&#9635;</span>`}
+      <button class="dashboard-ligne-commande" data-id="${v.id}" title="Voir la vente">
+        <div class="commande-haut">
+          <div class="dashboard-ligne-vignette">
+            ${v.image_path
+              ? `<img src="${urlPhoto(v.image_path)}" loading="lazy" alt="">`
+              : `<span>&#9635;</span>`}
+          </div>
+          <div class="dashboard-ligne-corps">
+            <p class="dashboard-ligne-titre">${ech(v.oeuvre_titre)}</p>
+            <p class="dashboard-ligne-meta">${ech(client)}${v.numero_facture ? ' · ' + ech(v.numero_facture) : ''}</p>
+          </div>
         </div>
-        <div class="dashboard-ligne-corps">
-          <p class="dashboard-ligne-titre">${ech(v.oeuvre_titre)}</p>
-          <p class="dashboard-ligne-meta">${ech(client)}${v.numero_facture ? ' · ' + ech(v.numero_facture) : ''}</p>
-        </div>
-        <div class="commande-etapes" aria-label="Étapes restantes">
-          ${pastille(etatPaiement)}
-          ${pastille(v.emballage_date ? 'fait' : 'attente')}
-          ${pastille(v.envoi_date ? 'fait' : 'attente')}
-          ${pastille(v.livraison_date ? 'fait' : 'attente')}
-        </div>
+        <div class="commande-stepper" aria-label="Étapes du cycle de vie">${stepper(v)}</div>
       </button>
     `;
   }).join('')}</div>`;
-  zone.querySelectorAll('.dashboard-ligne').forEach((btn) => {
+  zone.querySelectorAll('.dashboard-ligne-commande').forEach((btn) => {
     btn.addEventListener('click', () => naviguer('vente-fiche', { id: Number(btn.dataset.id) }));
   });
 }

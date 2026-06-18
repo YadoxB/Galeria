@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo section « Suivi »</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+
+    .demo-bar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: var(--s3); padding: var(--s2) var(--s4); background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .note { font-size: 12px; color: rgba(255,255,255,0.6); }
+
+    main { max-width: 1240px; margin: 0 auto; padding: 28px 32px 60px; }
+
+    .page-entete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+    .page-entete h1 { font-family: var(--font-titre); font-size: 32px; color: var(--ink); margin: 0; font-weight: 600; }
+    .recherche { display: flex; align-items: center; gap: 8px; background: var(--porcelain); border: 1px solid var(--mist); border-radius: 999px; padding: 8px 16px; color: var(--slate); font-size: 13px; min-width: 300px; }
+    .recherche svg { width: 15px; height: 15px; }
+
+    /* Bandeau de synthèse : files d'attente, groupées Préparation / Expédition */
+    .files-wrap { display: flex; gap: 14px; margin-bottom: 24px; align-items: stretch; }
+    .files-groupe { background: var(--porcelain); border: 1px solid var(--mist); border-radius: 14px; padding: 12px 16px; }
+    .files-groupe > .titre-g { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--stone); margin: 0 0 10px; font-weight: 600; }
+    .files-groupe.prep { flex: 0 0 auto; }
+    .files-groupe.post { flex: 1; }
+    .files { display: flex; gap: 18px; }
+    .file-tuile { display: flex; align-items: center; gap: 11px; cursor: pointer; padding: 4px 8px; border-radius: 10px; }
+    .file-tuile:hover { background: var(--cloud); }
+    .file-tuile .ico { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; flex-shrink: 0; }
+    .file-tuile .ico svg { width: 17px; height: 17px; }
+    .file-tuile .val { font-family: var(--font-titre); font-size: 23px; line-height: 1; color: var(--ink); }
+    .file-tuile .lbl { font-size: 11.5px; color: var(--slate); margin-top: 3px; white-space: nowrap; }
+    .ico.sage { background: #E3E9F0; color: var(--gallery-navy); }
+    .ico.site { background: #EAE4F0; color: #6B5B8A; }
+    .ico.encaisser { background: #F4E3D8; color: var(--terracotta); }
+    .ico.emballer  { background: #EDE7DA; color: #8A7A53; }
+    .ico.expedier  { background: #E3E9F0; color: var(--gallery-navy); }
+    .ico.livrer    { background: var(--badge-disponible-fond); color: var(--succes); }
+
+    .groupe-titre { display: flex; align-items: center; gap: 9px; margin: 4px 2px 10px; font-size: 14px; font-weight: 600; color: var(--gallery-navy); }
+    .groupe-titre .ico-g { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; }
+    .groupe-titre .ico-g svg { width: 15px; height: 15px; }
+    .groupe-titre .ic-prep { background: #E3E9F0; color: var(--gallery-navy); }
+    .groupe-titre .ic-cours { background: #F4E3D8; color: var(--terracotta); }
+    .groupe-titre .nb { background: var(--cloud); color: var(--slate); border-radius: 999px; padding: 1px 10px; font-size: 12px; font-weight: 600; }
+    .groupe + .groupe { margin-top: 26px; }
+
+    .onglets { display: flex; gap: 4px; background: var(--cloud); padding: 4px; border-radius: 999px; width: fit-content; margin-bottom: 18px; }
+    .onglets button { border: 0; background: transparent; font-family: inherit; font-size: 13px; color: var(--slate); padding: 8px 18px; border-radius: 999px; cursor: pointer; }
+    .onglets button.actif { background: var(--porcelain); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+
+    .carte-liste { background: var(--porcelain); border: 1px solid var(--mist); border-radius: 16px; overflow: hidden; }
+    .ligne-suivi { display: grid; gap: 18px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--mist); }
+    .ligne-suivi:last-child { border-bottom: 0; }
+    .ligne-suivi.prep { grid-template-columns: 52px 1.6fr 1.4fr auto; }
+    .ligne-suivi.post { grid-template-columns: 52px 1.4fr 1fr 2.4fr auto; }
+    .ouvrir { cursor: pointer; }
+    .ouvrir:hover .o { color: var(--warm-gold); }
+    .vignette { width: 52px; height: 52px; border-radius: 8px; background: var(--cloud); display: grid; place-items: center; color: var(--stone); overflow: hidden; }
+    .col-titre .o { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0; }
+    .col-titre .a { font-size: 12px; color: var(--slate); margin: 2px 0 0; }
+    .col-client .c { font-size: 13px; color: var(--ink); margin: 0; }
+    .col-client .f { font-size: 12px; color: var(--stone); margin: 2px 0 0; }
+
+    /* Stepper inline-éditable */
+    .stepper { display: flex; align-items: flex-start; }
+    .step { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 0 0 auto; width: 64px; }
+    .step .rond { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--mist); background: var(--porcelain); color: var(--stone); cursor: pointer; transition: box-shadow .12s; }
+    .step .rond:hover { box-shadow: 0 0 0 3px var(--cloud); }
+    .step .rond svg { width: 16px; height: 16px; }
+    .step .lbl { font-size: 10.5px; line-height: 1.1; text-align: center; color: var(--stone); }
+    .step.fait .rond { background: var(--succes); border-color: var(--succes); color: #fff; }
+    .step.fait .lbl { color: var(--succes); font-weight: 600; }
+    .step.partiel .rond { background: var(--terracotta); border-color: var(--terracotta); color: #fff; }
+    .step.partiel .lbl { color: var(--terracotta); font-weight: 600; }
+    .conn { flex: 1 1 auto; height: 2px; background: var(--mist); margin-top: 14px; border-radius: 2px; min-width: 12px; }
+    .conn.fait { background: var(--succes); }
+
+    .col-fin { text-align: right; min-width: 140px; }
+    .chip-prochaine { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: #F4E3D8; color: var(--terracotta); white-space: nowrap; }
+    .chip-prochaine svg { width: 13px; height: 13px; }
+    .etat-ok { font-size: 12px; color: var(--succes); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+    .etat-ok svg { width: 14px; height: 14px; }
+
+    .aide { font-size: 12px; color: var(--stone); margin: 10px 2px 0; }
+    .masque { display: none; }
+
+    /* Modale de confirmation (style dialogues de l'app) */
+    .overlay { position: fixed; inset: 0; background: rgba(7,26,47,0.45); backdrop-filter: blur(2px); display: none; align-items: center; justify-content: center; z-index: 50; }
+    .overlay.ouvert { display: flex; }
+    .modale { background: var(--porcelain); border-radius: 18px; padding: 24px 24px 20px; max-width: 400px; width: 90%; box-shadow: 0 24px 60px rgba(7,26,47,0.3); }
+    .modale h3 { font-family: var(--font-titre); font-size: 22px; color: var(--ink); margin: 0 0 8px; }
+    .modale p { font-size: 14px; color: var(--slate); margin: 0 0 22px; line-height: 1.5; }
+    .modale p b { color: var(--ink); }
+    .modale .actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .btn { border-radius: 10px; padding: 9px 18px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid transparent; }
+    .btn-sec { background: var(--porcelain); border-color: var(--mist); color: var(--ink); }
+    .btn-sec:hover { background: var(--cloud); }
+    .btn-primaire { background: var(--warm-gold); color: var(--soft-ivory); }
+    .btn-primaire:hover { background: var(--warm-gold-hover); }
+
+    /* Menu déroulant du statut de paiement */
+    .menu-pop { position: absolute; z-index: 60; background: var(--porcelain); border: 1px solid var(--mist); border-radius: 12px; box-shadow: 0 12px 30px rgba(7,26,47,0.18); padding: 6px; min-width: 170px; }
+    .menu-pop button { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; background: transparent; border: 0; font-family: inherit; font-size: 13px; color: var(--ink); padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+    .menu-pop button:hover { background: var(--cloud); }
+    .menu-pop .pastille-etat { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .menu-pop button.courant { font-weight: 600; }
+    .menu-pop .coche { margin-left: auto; color: var(--succes); display: inline-flex; }
+    .menu-pop .coche svg { width: 14px; height: 14px; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Section « Suivi » (cycle de vie complet)</div>
+    <div class="note">Maquette interactive — clique une étape pour la (dé)cocher. Données fictives.</div>
+  </div>
+
+  <main>
+    <div class="page-entete">
+      <h1>Suivi</h1>
+      <div class="recherche">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Rechercher une œuvre, un client, un n° de facture…
+      </div>
+    </div>
+
+    <div class="files-wrap">
+      <div class="files-groupe prep">
+        <p class="titre-g">Préparation</p>
+        <div class="files" id="files-prep"></div>
+      </div>
+      <div class="files-groupe post">
+        <p class="titre-g">Expédition</p>
+        <div class="files" id="files-post"></div>
+      </div>
+    </div>
+
+    <div class="onglets">
+      <button class="actif" data-onglet="actif" id="bt-actif"></button>
+      <button data-onglet="comp" id="bt-comp"></button>
+    </div>
+
+    <div id="vue-actif">
+      <div class="groupe" id="groupe-prep">
+        <div class="groupe-titre"><span class="ico-g ic-prep" id="gt-prep-ico"></span><span>À préparer</span><span class="nb" id="gt-prep-nb"></span></div>
+        <div class="carte-liste" id="liste-prep"></div>
+      </div>
+      <div class="groupe" id="groupe-cours">
+        <div class="groupe-titre"><span class="ico-g ic-cours" id="gt-cours-ico"></span><span>Commandes en cours</span><span class="nb" id="gt-cours-nb"></span></div>
+        <div class="carte-liste" id="liste-cours"></div>
+      </div>
+      <div class="carte-liste masque" id="actif-vide"><div style="padding:30px;text-align:center;color:var(--stone);font-size:13px">Rien à préparer ni à expédier — tout est à jour. 🎉</div></div>
+    </div>
+    <div class="carte-liste masque" id="liste-comp"></div>
+    <p class="aide" id="aide"></p>
+  </main>
+
+  <div class="overlay" id="overlay">
+    <div class="modale">
+      <h3 id="modale-titre"></h3>
+      <p id="modale-msg"></p>
+      <div class="actions">
+        <button class="btn btn-sec" id="modale-annuler">Annuler</button>
+        <button class="btn btn-primaire" id="modale-ok"></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const I = {
+      check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+      sage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>',
+      site: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+      paiement: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+      emballage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>',
+      envoi: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>',
+      livraison: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+      fleche: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>'
+    };
+    const PREP_STEPS = [ { cle:'sage', lbl:'Sage 50', icone:I.sage }, { cle:'site', lbl:'Site web', icone:I.site } ];
+    const POST_STEPS = [ { cle:'paiement', lbl:'Paiement', icone:I.paiement }, { cle:'emballage', lbl:'Emballage', icone:I.emballage }, { cle:'envoi', lbl:'Envoi', icone:I.envoi }, { cle:'livraison', lbl:'Livraison', icone:I.livraison } ];
+
+    // Œuvres en préparation (disponibles, pas encore toutes prêtes)
+    const OEUVRES = [
+      { id:'O1', o:'Aurore boréale', a:'Claude Lalonde', inv:'CLD2041', etats:{sage:'attente', site:'attente'} },
+      { id:'O2', o:'Vallée tranquille', a:'Anne Dubé', inv:'AND0118', etats:{sage:'fait', site:'attente'} },
+      { id:'O3', o:'Éclats', a:'Paul Renaud', inv:'PAR0307', etats:{sage:'attente', site:'fait'} },
+    ];
+    // Ventes (post-vente)
+    const VENTES = [
+      { id:'V1', o:"L'aube se lève", a:'Sophie Lebeuf', c:'Marie Tremblay', f:'F-2026-010', d:'12 juin 2026', etats:{paiement:'fait',emballage:'fait',envoi:'fait',livraison:'attente'} },
+      { id:'V2', o:'Brume matinale', a:'Claude Lalonde', c:'Jean Côté', f:'F-2026-014', d:'14 juin 2026', etats:{paiement:'fait',emballage:'fait',envoi:'attente',livraison:'attente'} },
+      { id:'V3', o:"Reflets d'automne", a:'Anne Dubé', c:'Luc Bélanger', f:'F-2026-013', d:'13 juin 2026', etats:{paiement:'partiel',emballage:'attente',envoi:'attente',livraison:'attente'} },
+      { id:'V4', o:'Silence bleu', a:'Paul Renaud', c:'Galerie (cadeau)', f:'F-2026-011', d:'11 juin 2026', etats:{paiement:'attente',emballage:'attente',envoi:'attente',livraison:'attente'} },
+      { id:'V5', o:'Le grand large', a:'Sophie Lebeuf', c:'Hélène Roy', f:'F-2026-009', d:'9 juin 2026', etats:{paiement:'fait',emballage:'fait',envoi:'fait',livraison:'fait'}, finLe:'10 juin 2026' },
+      { id:'V6', o:"Matin d'hiver", a:'Claude Lalonde', c:'Pierre Gagné', f:'F-2026-007', d:'5 juin 2026', etats:{paiement:'fait',emballage:'fait',envoi:'fait',livraison:'fait'}, finLe:'8 juin 2026' },
+    ];
+
+    const complet = (steps, e) => steps.every((s) => e[s.cle] === 'fait');
+
+    function stepperHTML(steps, etats, refId) {
+      return steps.map((s, i) => {
+        const etat = etats[s.cle];
+        const icone = etat === 'fait' ? I.check : s.icone;
+        const conn = i < steps.length - 1
+          ? `<span class="conn ${etat === 'fait' && etats[steps[i+1].cle] === 'fait' ? 'fait' : ''}"></span>` : '';
+        return `<span class="step ${etat}"><span class="rond" data-ref="${refId}" data-cle="${s.cle}" title="Cliquer pour (dé)cocher">${icone}</span><span class="lbl">${s.lbl}</span></span>${conn}`;
+      }).join('');
+    }
+
+    function tuile(cls, ico, val, lbl) {
+      return `<div class="file-tuile"><div class="ico ${cls}">${ico}</div><div><div class="val">${val}</div><div class="lbl">${lbl}</div></div></div>`;
+    }
+
+    function rendu() {
+      const prep = OEUVRES.filter((x) => !complet(PREP_STEPS, x.etats));
+      const cours = VENTES.filter((x) => !complet(POST_STEPS, x.etats));
+      const comp = VENTES.filter((x) => complet(POST_STEPS, x.etats));
+
+      // Files
+      document.getElementById('files-prep').innerHTML =
+        tuile('sage', I.sage, OEUVRES.filter((x)=>x.etats.sage!=='fait').length, 'À créer dans Sage') +
+        tuile('site', I.site, OEUVRES.filter((x)=>x.etats.site!=='fait').length, 'À publier au site');
+      document.getElementById('files-post').innerHTML =
+        tuile('encaisser', I.paiement, cours.filter((x)=>x.etats.paiement!=='fait').length, 'À encaisser') +
+        tuile('emballer', I.emballage, cours.filter((x)=>x.etats.paiement==='fait'&&x.etats.emballage!=='fait').length, 'À emballer') +
+        tuile('expedier', I.envoi, cours.filter((x)=>x.etats.emballage==='fait'&&x.etats.envoi!=='fait').length, 'À expédier') +
+        tuile('livrer', I.livraison, cours.filter((x)=>x.etats.envoi==='fait'&&x.etats.livraison!=='fait').length, 'À livrer');
+
+      // Onglets : « Actif » combine préparation + en cours
+      document.getElementById('bt-actif').textContent = `Actif (${prep.length + cours.length})`;
+      document.getElementById('bt-comp').textContent = `Complétées (${comp.length})`;
+
+      // En-têtes de groupes (masqués si vides)
+      document.getElementById('gt-prep-ico').innerHTML = I.sage;
+      document.getElementById('gt-cours-ico').innerHTML = I.emballage;
+      document.getElementById('gt-prep-nb').textContent = prep.length;
+      document.getElementById('gt-cours-nb').textContent = cours.length;
+      document.getElementById('groupe-prep').classList.toggle('masque', prep.length === 0);
+      document.getElementById('groupe-cours').classList.toggle('masque', cours.length === 0);
+      document.getElementById('actif-vide').classList.toggle('masque', prep.length + cours.length > 0);
+
+      // Listes
+      document.getElementById('liste-prep').innerHTML = prep.map((x) => `
+        <div class="ligne-suivi prep">
+          <div class="vignette ouvrir">&#9635;</div>
+          <div class="col-titre ouvrir"><p class="o">${x.o}</p><p class="a">${x.a}</p></div>
+          <div class="col-client"><p class="c">${x.inv}</p><p class="f">Disponible</p></div>
+          <div class="stepper">${stepperHTML(PREP_STEPS, x.etats, x.id)}</div>
+        </div>`).join('') || vide('Toutes les œuvres disponibles sont prêtes (créées dans Sage et publiées). 🎉');
+
+      const ligneVente = (x) => {
+        const prochaine = POST_STEPS.find((s) => x.etats[s.cle] !== 'fait');
+        const partiel = prochaine && x.etats[prochaine.cle] === 'partiel';
+        const fin = complet(POST_STEPS, x.etats)
+          ? `<span class="etat-ok">${I.check} Livré le ${x.finLe || '—'}</span>`
+          : `<span class="chip-prochaine">${I.fleche}${partiel ? 'Finir ' : ''}${prochaine.lbl}</span>`;
+        return `
+          <div class="ligne-suivi post">
+            <div class="vignette ouvrir">&#9635;</div>
+            <div class="col-titre ouvrir"><p class="o">${x.o}</p><p class="a">${x.a}</p></div>
+            <div class="col-client"><p class="c">${x.c}</p><p class="f">${x.f} · ${x.d}</p></div>
+            <div class="stepper">${stepperHTML(POST_STEPS, x.etats, x.id)}</div>
+            <div class="col-fin">${fin}</div>
+          </div>`;
+      };
+      document.getElementById('liste-cours').innerHTML = cours.map(ligneVente).join('') || vide('Aucune commande en cours.');
+      document.getElementById('liste-comp').innerHTML = comp.map(ligneVente).join('') || vide('Aucune commande complétée pour l\'instant.');
+
+      document.getElementById('aide').textContent = 'Démo : clique un rond d\'étape pour la marquer faite / à faire (paiement cycle : à faire → partiel → reçu). Dans l\'app, ça enregistrera et mettra les dates, comme sur les fiches.';
+      bind();
+    }
+
+    function vide(msg) { return `<div style="padding:22px;text-align:center;color:var(--stone);font-size:13px">${msg}</div>`; }
+
+    function trouver(ref) { return OEUVRES.find((x)=>x.id===ref) || VENTES.find((x)=>x.id===ref); }
+
+    const RANG = { attente: 0, partiel: 1, fait: 2 };
+    const LISIBLE = { attente: 'à faire', partiel: 'partiel', fait: 'fait' };
+    const LIBELLE = {};
+    [...PREP_STEPS, ...POST_STEPS].forEach((s) => { LIBELLE[s.cle] = s.lbl; });
+    if (LIBELLE.paiement) LISIBLE.fait = 'fait'; // « Reçu » côté paiement, géré au message
+
+    function modaleConfirmer({ titre, message, okLabel, onOk }) {
+      document.getElementById('modale-titre').textContent = titre;
+      document.getElementById('modale-msg').innerHTML = message;
+      const overlay = document.getElementById('overlay');
+      const btnOk = document.getElementById('modale-ok'); btnOk.textContent = okLabel;
+      const btnAn = document.getElementById('modale-annuler');
+      const fermer = () => {
+        overlay.classList.remove('ouvert');
+        btnOk.removeEventListener('click', ok);
+        btnAn.removeEventListener('click', fermer);
+        overlay.removeEventListener('click', fondClic);
+      };
+      const ok = () => { fermer(); onOk(); };
+      const fondClic = (e) => { if (e.target === overlay) fermer(); };
+      btnOk.addEventListener('click', ok);
+      btnAn.addEventListener('click', fermer);
+      overlay.addEventListener('click', fondClic);
+      overlay.classList.add('ouvert');
+    }
+
+    // ---- Menu déroulant du statut de paiement (3 choix) ----
+    const PAIEMENT_OPTIONS = [
+      { v: 'attente', l: 'À faire', c: 'var(--stone)' },
+      { v: 'partiel', l: 'Partiel', c: 'var(--terracotta)' },
+      { v: 'fait', l: 'Reçu', c: 'var(--succes)' },
+    ];
+    let menuOuvert = null;
+    function fermerMenu() {
+      if (menuOuvert) { menuOuvert.remove(); menuOuvert = null; document.removeEventListener('click', fermerMenuExt, true); }
+    }
+    function fermerMenuExt(e) { if (menuOuvert && !menuOuvert.contains(e.target)) fermerMenu(); }
+    function ouvrirMenuPaiement(rond, item) {
+      fermerMenu();
+      const menu = document.createElement('div');
+      menu.className = 'menu-pop';
+      menu.innerHTML = PAIEMENT_OPTIONS.map((o) => {
+        const courant = item.etats.paiement === o.v;
+        return `<button data-v="${o.v}" class="${courant ? 'courant' : ''}"><span class="pastille-etat" style="background:${o.c}"></span>${o.l}${courant ? `<span class="coche">${I.check}</span>` : ''}</button>`;
+      }).join('');
+      document.body.appendChild(menu);
+      const r = rond.getBoundingClientRect();
+      menu.style.top = (window.scrollY + r.bottom + 6) + 'px';
+      menu.style.left = (window.scrollX + r.left) + 'px';
+      menuOuvert = menu;
+      menu.querySelectorAll('button').forEach((b) => b.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const next = b.dataset.v; const cur = item.etats.paiement;
+        fermerMenu();
+        if (next === cur) return;
+        const appliquer = () => { item.etats.paiement = next; rendu(); };
+        if (RANG[next] < RANG[cur]) {
+          const motCur = cur === 'fait' ? 'reçu' : LISIBLE[cur];
+          const motNext = next === 'fait' ? 'reçu' : LISIBLE[next];
+          modaleConfirmer({ titre: 'Revenir en arrière ?', message: `Le paiement repassera de « ${motCur} » à « ${motNext} ».`, okLabel: 'Confirmer', onOk: appliquer });
+        } else appliquer();
+      }));
+      setTimeout(() => document.addEventListener('click', fermerMenuExt, true), 0);
+    }
+
+    function bind() {
+      document.querySelectorAll('.rond').forEach((r) => r.addEventListener('click', () => {
+        const item = trouver(r.dataset.ref); if (!item) return;
+        const cle = r.dataset.cle; const cur = item.etats[cle];
+        // Paiement : menu à 3 choix au lieu d'un cyclage
+        if (cle === 'paiement') { ouvrirMenuPaiement(r, item); return; }
+        const next = cur === 'fait' ? 'attente' : 'fait';
+        const appliquer = () => {
+          item.etats[cle] = next;
+          if (cle === 'livraison' && next === 'fait') item.finLe = '17 juin 2026';
+          rendu();
+        };
+        if (RANG[next] < RANG[cur]) {
+          // Décocher = revenir à un état moins avancé
+          const motCur = cle === 'paiement' && cur === 'fait' ? 'reçu' : LISIBLE[cur];
+          const motNext = next === 'fait' ? (cle === 'paiement' ? 'reçu' : 'fait') : LISIBLE[next];
+          modaleConfirmer({
+            titre: 'Revenir en arrière ?',
+            message: `L'étape <b>${LIBELLE[cle]}</b> repassera de « ${motCur} » à « ${motNext} ».`,
+            okLabel: 'Décocher',
+            onOk: appliquer,
+          });
+        } else if (cle === 'livraison' && next === 'fait') {
+          // Marquer livré = clôt la commande et la déplace dans Complétées
+          modaleConfirmer({
+            titre: 'Confirmer la livraison ?',
+            message: `La commande <b>${item.o}</b> sera marquée <b>livrée</b> et déplacée dans « Complétées ».`,
+            okLabel: 'Confirmer la livraison',
+            onOk: appliquer,
+          });
+        } else appliquer();
+      }));
+    }
+
+    document.querySelectorAll('.onglets button').forEach((b) => b.addEventListener('click', () => {
+      document.querySelectorAll('.onglets button').forEach((x) => x.classList.remove('actif'));
+      b.classList.add('actif');
+      const o = b.dataset.onglet;
+      document.getElementById('vue-actif').classList.toggle('masque', o !== 'actif');
+      document.getElementById('liste-comp').classList.toggle('masque', o !== 'comp');
+    }));
+
+    rendu();
+  </script>
+</body>
+</html>

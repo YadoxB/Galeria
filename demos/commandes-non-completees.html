@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo « Commandes non complétées »</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+
+    /* ===== Barre de démo ===== */
+    .demo-bar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: var(--s3); padding: var(--s2) var(--s4);
+      background: var(--deep-navy); color: var(--soft-ivory);
+    }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .note { font-size: 12px; color: rgba(255,255,255,0.6); }
+
+    main { padding: 32px; }
+    .intro { max-width: 1300px; margin: 0 auto 24px; color: var(--slate); font-size: 14px; line-height: 1.5; }
+    .intro b { color: var(--ink); }
+
+    .grille-variations {
+      display: grid; grid-template-columns: repeat(3, 440px); gap: 32px;
+      justify-content: center; align-items: start;
+    }
+    @media (max-width: 1450px) { .grille-variations { grid-template-columns: repeat(2, 440px); } }
+    @media (max-width: 980px)  { .grille-variations { grid-template-columns: 440px; } }
+
+    .colonne-var > h3 {
+      font-family: var(--font-ui); font-size: 14px; font-weight: 600; color: var(--slate);
+      text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 4px;
+    }
+    .colonne-var > p.desc { font-size: 13px; color: var(--stone); margin: 0 0 14px; min-height: 34px; }
+
+    /* ===== Reproduction du bloc tableau de bord ===== */
+    .dashboard-bloc {
+      background: var(--porcelain); border: 1px solid var(--mist);
+      border-radius: 16px; padding: 18px 18px 8px; width: 440px;
+      display: flex; flex-direction: column;
+    }
+    .dashboard-bloc-entete { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+    .dashboard-bloc-entete h2 { font-family: var(--font-titre); font-size: 22px; color: var(--gallery-navy); margin: 0; font-weight: 600; }
+    .dashboard-bloc-entete .compteur { font-size: 12px; color: var(--stone); }
+
+    .liste { display: flex; flex-direction: column; gap: 6px; padding-bottom: 10px; }
+
+    .ligne {
+      display: grid; gap: 12px; width: 100%; text-align: left;
+      background: transparent; border: 0; border-radius: 12px;
+      padding: 10px; cursor: pointer; font-family: inherit;
+    }
+    .ligne:hover { background: var(--cloud); }
+    .ligne-haut { display: flex; align-items: center; gap: 12px; }
+    .vignette {
+      width: 44px; height: 44px; border-radius: 8px; flex-shrink: 0;
+      background: var(--cloud); display: grid; place-items: center;
+      color: var(--stone); font-size: 18px; overflow: hidden;
+    }
+    .corps { min-width: 0; flex: 1; }
+    .corps .titre-o { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .corps .meta-o { font-size: 12px; color: var(--slate); margin: 2px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* couleurs d'état partagées */
+    /* fait = succès (vert), partiel = terracotta, attente = gris */
+
+    /* ============================================================
+       VARIATION A — Stepper étiqueté (icônes + libellés + connecteurs)
+       ============================================================ */
+    .stepperA { display: flex; align-items: flex-start; margin-top: 4px; }
+    .stepA { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 0 0 auto; width: 64px; }
+    .stepA .rond {
+      width: 30px; height: 30px; border-radius: 50%;
+      display: grid; place-items: center;
+      border: 1.5px solid var(--mist); background: var(--porcelain); color: var(--stone);
+    }
+    .stepA .rond svg { width: 16px; height: 16px; }
+    .stepA .lbl { font-size: 10.5px; color: var(--stone); text-align: center; line-height: 1.1; }
+    .stepA.fait .rond { background: var(--succes); border-color: var(--succes); color: #fff; }
+    .stepA.fait .lbl { color: var(--succes); font-weight: 600; }
+    .stepA.partiel .rond { background: var(--terracotta); border-color: var(--terracotta); color: #fff; }
+    .stepA.partiel .lbl { color: var(--terracotta); font-weight: 600; }
+    .connA { flex: 1 1 auto; height: 2px; background: var(--mist); margin-top: 14px; border-radius: 2px; }
+    .connA.fait { background: var(--succes); }
+
+    /* ============================================================
+       VARIATION B — Prochaine étape (pastille action + compteur)
+       ============================================================ */
+    .nextB { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+    .barreB { display: flex; gap: 3px; flex: 0 0 92px; }
+    .barreB .seg { height: 6px; flex: 1; border-radius: 3px; background: var(--mist); }
+    .barreB .seg.fait { background: var(--succes); }
+    .barreB .seg.partiel { background: var(--terracotta); }
+    .chipB {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px;
+      background: #F4E3D8; color: var(--terracotta); white-space: nowrap;
+    }
+    .chipB svg { width: 14px; height: 14px; }
+    .chipB.tout-fait { background: var(--badge-disponible-fond); color: var(--succes); }
+    .countB { font-size: 11px; color: var(--stone); margin-left: auto; white-space: nowrap; }
+
+    /* ============================================================
+       VARIATION C — Liste à cocher verticale
+       ============================================================ */
+    .checkC { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-top: 6px; }
+    .itemC { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--stone); }
+    .itemC .case {
+      width: 16px; height: 16px; border-radius: 5px; flex-shrink: 0;
+      border: 1.5px solid var(--mist); display: grid; place-items: center; color: transparent;
+    }
+    .itemC .case svg { width: 10px; height: 10px; }
+    .itemC.fait { color: var(--ink); }
+    .itemC.fait .case { background: var(--succes); border-color: var(--succes); color: #fff; }
+    .itemC.partiel { color: var(--ink); }
+    .itemC.partiel .case { background: var(--terracotta); border-color: var(--terracotta); color: #fff; }
+
+    .vide { color: var(--stone); font-size: 13px; padding: 20px 4px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Commandes non complétées</div>
+    <div class="note">Bloc affiché à sa largeur réelle (440 px). 3 variations à comparer.</div>
+  </div>
+
+  <main>
+    <p class="intro">
+      Le bloc actuel montre les 4 étapes post-vente avec de <b>petits points</b> (Paiement · Emballage · Envoi · Livraison).
+      Objectif : rendre les étapes <b>lisibles</b>. Voici trois pistes, rendues à la largeur réelle du bloc avec les mêmes
+      4 commandes d'exemple (à des stades différents). Code couleur commun : <b style="color:var(--succes)">vert = fait</b>,
+      <b style="color:var(--terracotta)">terracotta = partiel</b>, gris = à faire.
+    </p>
+
+    <div class="grille-variations">
+      <div class="colonne-var">
+        <h3>Variation A</h3>
+        <p class="desc">Stepper étiqueté : icône + libellé + connecteurs. Tout l'état visible d'un coup.</p>
+        <div id="varA"></div>
+      </div>
+      <div class="colonne-var">
+        <h3>Variation B</h3>
+        <p class="desc">Prochaine étape : pastille d'action + mini-barre de progression. Orienté « quoi faire ensuite ».</p>
+        <div id="varB"></div>
+      </div>
+      <div class="colonne-var">
+        <h3>Variation C</h3>
+        <p class="desc">Liste à cocher : 4 mini-lignes ✓/○ avec libellé. Le plus explicite, un peu plus haut.</p>
+        <div id="varC"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ---- Icônes SVG simples (stroke courant) ----
+    const I = {
+      check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+      paiement: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+      emballage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>',
+      envoi: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>',
+      livraison: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+      fleche: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>'
+    };
+
+    const ETAPES = [
+      { cle: 'paiement',  lbl: 'Paiement',  icone: I.paiement },
+      { cle: 'emballage', lbl: 'Emballage', icone: I.emballage },
+      { cle: 'envoi',     lbl: 'Envoi',     icone: I.envoi },
+      { cle: 'livraison', lbl: 'Livraison', icone: I.livraison },
+    ];
+
+    // états par commande : 'fait' | 'partiel' | 'attente'
+    const COMMANDES = [
+      { titre: "L'aube se lève",       meta: 'Sophie Lebeuf · F-2026-010', etats: { paiement:'fait',    emballage:'fait',    envoi:'fait',    livraison:'attente' } },
+      { titre: 'Brume matinale',       meta: 'Marie Tremblay · F-2026-014', etats: { paiement:'fait',    emballage:'fait',    envoi:'attente', livraison:'attente' } },
+      { titre: "Reflets d'automne",    meta: 'Jean Côté · F-2026-013',      etats: { paiement:'partiel', emballage:'attente', envoi:'attente', livraison:'attente' } },
+      { titre: 'Silence bleu',         meta: '— · F-2026-011',              etats: { paiement:'attente', emballage:'attente', envoi:'attente', livraison:'attente' } },
+    ];
+
+    const ligneHaut = (c) => `
+      <div class="ligne-haut">
+        <div class="vignette">&#9635;</div>
+        <div class="corps">
+          <p class="titre-o">${c.titre}</p>
+          <p class="meta-o">${c.meta}</p>
+        </div>
+      </div>`;
+
+    function bloc(contenuLignes) {
+      return `
+        <div class="dashboard-bloc">
+          <div class="dashboard-bloc-entete">
+            <h2>Commandes non complétées</h2>
+            <span class="compteur">${COMMANDES.length} en cours</span>
+          </div>
+          <div class="liste">${contenuLignes}</div>
+        </div>`;
+    }
+
+    // ---- Variation A ----
+    function renduA() {
+      const lignes = COMMANDES.map((c) => {
+        const stepper = ETAPES.map((e, i) => {
+          const etat = c.etats[e.cle];
+          const rondIcone = etat === 'fait' ? I.check : e.icone;
+          const conn = i < ETAPES.length - 1
+            ? `<div class="connA ${c.etats[ETAPES[i + 1].cle] === 'fait' && etat === 'fait' ? 'fait' : ''}"></div>` : '';
+          return `<div class="stepA ${etat}"><span class="rond">${rondIcone}</span><span class="lbl">${e.lbl}</span></div>${conn}`;
+        }).join('');
+        return `<button class="ligne">${ligneHaut(c)}<div class="stepperA">${stepper}</div></button>`;
+      }).join('');
+      document.getElementById('varA').innerHTML = bloc(lignes);
+    }
+
+    // ---- Variation B ----
+    function renduB() {
+      const lignes = COMMANDES.map((c) => {
+        const faits = ETAPES.filter((e) => c.etats[e.cle] === 'fait').length;
+        const prochaine = ETAPES.find((e) => c.etats[e.cle] !== 'fait');
+        const partiel = prochaine && c.etats[prochaine.cle] === 'partiel';
+        const barre = ETAPES.map((e) => `<span class="seg ${c.etats[e.cle]}"></span>`).join('');
+        const chip = prochaine
+          ? `<span class="chipB">${I.fleche}${partiel ? 'Finir ' : ''}${prochaine.lbl}</span>`
+          : `<span class="chipB tout-fait">${I.check} Complétée</span>`;
+        return `<button class="ligne">${ligneHaut(c)}
+          <div class="nextB">
+            <span class="barreB">${barre}</span>
+            ${chip}
+            <span class="countB">${faits}/4</span>
+          </div></button>`;
+      }).join('');
+      document.getElementById('varB').innerHTML = bloc(lignes);
+    }
+
+    // ---- Variation C ----
+    function renduC() {
+      const lignes = COMMANDES.map((c) => {
+        const items = ETAPES.map((e) => {
+          const etat = c.etats[e.cle];
+          const marque = etat === 'fait' ? I.check : (etat === 'partiel' ? '½' : '');
+          return `<span class="itemC ${etat}"><span class="case">${etat === 'partiel' ? '<b style="font-size:10px">½</b>' : I.check}</span>${e.lbl}</span>`;
+        }).join('');
+        return `<button class="ligne">${ligneHaut(c)}<div class="checkC">${items}</div></button>`;
+      }).join('');
+      document.getElementById('varC').innerHTML = bloc(lignes);
+    }
+
+    renduA(); renduB(); renduC();
+  </script>
+</body>
+</html>

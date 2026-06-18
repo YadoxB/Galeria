@@ -3043,33 +3043,74 @@ details.bloc.pliable > .bloc-corps {
 }
 
 /* Pastilles d'étape pour le bloc Commandes non complétées du dashboard */
-.commande-etapes {
-  display: flex;
-  gap: 6px;
-  margin-left: var(--s2);
-  align-items: center;
-  flex-shrink: 0;
-}
-.pastille-etape {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--mist);
-  border: 1px solid var(--stone);
-  display: inline-block;
-}
-.pastille-etape-fait {
-  background: var(--warm-gold);
-  border-color: var(--warm-gold);
-}
-.pastille-etape-partiel {
-  background: var(--terracotta);
-  border-color: var(--terracotta);
-}
-
+/* Ligne de commande : vignette + identité en haut, stepper d'étapes en bas */
 .dashboard-ligne-commande {
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  font-family: inherit;
 }
+.dashboard-ligne-commande:hover {
+  background: var(--cloud);
+  border-color: var(--mist);
+}
+.commande-haut {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+}
+.commande-haut .dashboard-ligne-corps { flex: 1; min-width: 0; }
+
+/* Stepper étiqueté (Paiement · Emballage · Envoi · Livraison) */
+.commande-stepper {
+  display: flex;
+  align-items: flex-start;
+}
+.commande-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  width: 60px;
+}
+.commande-step .rond {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--mist);
+  background: var(--porcelain);
+  color: var(--stone);
+}
+.commande-step .rond svg { width: 15px; height: 15px; }
+.commande-step .lbl {
+  font-size: 10.5px;
+  line-height: 1.1;
+  text-align: center;
+  color: var(--stone);
+}
+.commande-step.fait .rond { background: var(--succes); border-color: var(--succes); color: #fff; }
+.commande-step.fait .lbl { color: var(--succes); font-weight: 600; }
+.commande-step.partiel .rond { background: var(--terracotta); border-color: var(--terracotta); color: #fff; }
+.commande-step.partiel .lbl { color: var(--terracotta); font-weight: 600; }
+.commande-conn {
+  flex: 1 1 auto;
+  height: 2px;
+  background: var(--mist);
+  margin-top: 13px;
+  border-radius: 2px;
+}
+.commande-conn.fait { background: var(--succes); }
 
 /* ====== Contrôles inline-éditables (Préparation œuvre / Cycle de vie vente) ====== */
 .inline-prep {
