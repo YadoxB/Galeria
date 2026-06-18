@@ -11,7 +11,11 @@ const NOM_MARQUEUR = '.seed-applique';
 //   3. Skip si le dossier Photos contient déjà des fichiers (utilisateur a déjà
 //      des photos qu'on ne veut pas écraser).
 // Renvoie un compte sommaire des fichiers copiés (ou null si rien fait).
-function seedPhotosIfNeeded() {
+// `onProgress({ nbFichiers, total, pct })` est appelé pendant la copie (au plus
+// une fois par incrément de % entier) pour alimenter le splash. La copie est
+// asynchrone et cède la main entre les lots, pour que le splash se repeigne et
+// que la barre avance réellement (sinon une copie synchrone fige tout).
+async function seedPhotosIfNeeded(onProgress) {
   const seedDir = getSeedPhotosPath();
   if (!fs.existsSync(seedDir)) {
     return null; // Pas de seed dispo (mode dev, ou installateur sans photos)
@@ -36,27 +40,36 @@ function seedPhotosIfNeeded() {
     fs.mkdirSync(userDir, { recursive: true });
   }
 
-  // Copie récursive du seed vers le dossier utilisateur.
-  let nbFichiers = 0;
-  let tailleTotale = 0;
-  const tStart = Date.now();
-  (function copier(src, dst) {
+  // 1. Lister les fichiers à copier (en créant les sous-dossiers au passage).
+  const taches = [];
+  (function lister(src, dst) {
     fs.mkdirSync(dst, { recursive: true });
     for (const entree of fs.readdirSync(src, { withFileTypes: true })) {
       const cSrc = path.join(src, entree.name);
       const cDst = path.join(dst, entree.name);
-      if (entree.isDirectory()) {
-        copier(cSrc, cDst);
-      } else if (entree.isFile()) {
-        fs.copyFileSync(cSrc, cDst);
-        try {
-          const st = fs.statSync(cDst);
-          tailleTotale += st.size;
-        } catch {}
-        nbFichiers++;
-      }
+      if (entree.isDirectory()) lister(cSrc, cDst);
+      else if (entree.isFile()) taches.push([cSrc, cDst]);
     }
   })(seedDir, userDir);
+
+  // 2. Copier de façon asynchrone, en remontant la progression.
+  const total = taches.length;
+  let nbFichiers = 0;
+  let tailleTotale = 0;
+  let dernierPct = -1;
+  const tStart = Date.now();
+  for (const [cSrc, cDst] of taches) {
+    await fs.promises.copyFile(cSrc, cDst);
+    try { tailleTotale += fs.statSync(cDst).size; } catch {}
+    nbFichiers++;
+    const pct = total ? Math.floor((nbFichiers / total) * 100) : 100;
+    if (onProgress && pct !== dernierPct) {
+      dernierPct = pct;
+      onProgress({ nbFichiers, total, pct });
+      // Céder la main pour laisser l'IPC partir et le splash se repeindre.
+      await new Promise((r) => setImmediate(r));
+    }
+  }
 
   fs.writeFileSync(marqueur, new Date().toISOString());
   const dureeMs = Date.now() - tStart;

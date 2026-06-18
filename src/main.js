@@ -418,7 +418,7 @@ async function verifierMisesAJour({ silencieux = false } = {}) {
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   protocol.handle('galerie', async (request) => {
     const url = new URL(request.url);
     if (url.host !== 'photos') return new Response('Not Found', { status: 404 });
@@ -431,9 +431,29 @@ app.whenReady().then(() => {
     return net.fetch(pathToFileURL(abs).toString());
   });
 
+  // Splash affiché AVANT les étapes longues (copie des photos au 1er lancement)
+  // pour montrer la progression — sinon il n'apparaîtrait qu'après.
+  const splash = createSplashWindow();
+  splash.__ouvertureMs = Date.now();
+  await new Promise((res) => {
+    splash.webContents.once('did-finish-load', res);
+    setTimeout(res, 1500); // filet de sécurité si l'événement est manqué
+  });
+  const progres = (pct, texte) => {
+    if (!splash || splash.isDestroyed()) return Promise.resolve();
+    return splash.webContents
+      .executeJavaScript(`window.majProgres && window.majProgres(${pct}, ${JSON.stringify(texte)})`)
+      .catch(() => {});
+  };
+
+  await progres(12, 'Ouverture de la base de données…');
   openDatabase();
+
+  await progres(20, 'Préparation des photos…');
   try {
-    const r = seedPhotosIfNeeded();
+    const r = await seedPhotosIfNeeded(({ nbFichiers, total, pct }) => {
+      progres(20 + Math.floor(pct * 0.6), `Préparation des photos… ${nbFichiers} / ${total}`);
+    });
     if (r) {
       const mo = (r.tailleTotale / (1024 * 1024)).toFixed(1);
       console.log(`Photos initiales copiées : ${r.nbFichiers} fichiers, ${mo} Mo, en ${r.dureeMs} ms.`);
@@ -441,6 +461,8 @@ app.whenReady().then(() => {
   } catch (err) {
     console.error('Échec de la copie initiale des photos :', err);
   }
+
+  await progres(85, 'Chargement de l’interface…');
   ipcMain.handle('db:stats', () => getStats());
   ipcMain.handle('updater:etat', () => etatUpdater);
   ipcMain.handle('updater:verifier', () => verifierMisesAJour({ silencieux: false }));
@@ -597,9 +619,8 @@ app.whenReady().then(() => {
     shell.showItemInFolder(cheminPdf);
     return { ok: true };
   });
-  const splash = createSplashWindow();
-  splash.__ouvertureMs = Date.now();
   createWindow(splash);
+  progres(100, 'Prêt');
   demarrerSauvegardePeriodique();
 
   // Vérification silencieuse des mises à jour ~5 s après le démarrage,

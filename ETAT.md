@@ -202,7 +202,7 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable e
 **Chantier 3 · Polish & onboarding**
 - ~~**Sélecteur de taille de vignette (#19)**~~ — **✓ Livré** : segmenté Petit/Moyen/Grand (190/240/300 px) dans Artistes et Œuvres (vue grille), mémorisé en localStorage (`oeuvres-taille`, `artistes-taille`). Composant partagé `gabaritSelecteurTaille` + variable CSS `--vignette-min`.
 - ~~**Inverser les cartes Sujet et Commerce (#20)**~~ — **✓ Livré** : formulaire d'œuvre réagencé en Caractéristiques (8) + Commerce (4) ; Préparation (6) + Sujets (6).
-- **Avancement du splash (#18)** — barre de progression et/ou étapes de chargement au démarrage (migrations DB, seed photos, config) pour voir si ça bloque. Petit, isolé.
+- ~~**Avancement du splash (#18)**~~ — **✓ Livré** : barre dorée + libellé d'étape sur le splash (Ouverture base → Préparation photos X/N → Chargement → Prêt). Le splash s'affiche **avant** les étapes longues ; `seedPhotos` rendu asynchrone par lots pour que la barre avance réellement. Progression poussée via `executeJavaScript`.
 - **Tutoriel de première ouverture (#13)** — overlay guidé au 1er lancement, accessible ensuite depuis Réglages/Aide.
 - **Correction #356 « Chrysalide 1/30 »** — dimensions illisibles dans la base, à saisir à la main (5 min).
 - **Migration des 2 pseudonymes** — « LO (Laurent Torregrossa) », « Sofia (Sophie Lebeuf) » (5 min dans l'app).
