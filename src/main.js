@@ -462,6 +462,7 @@ app.whenReady().then(() => {
     ventesRecentes: ventesRecentes(6),
     oeuvresReservees: oeuvresReservees(8),
     commandesNonCompletees: commandesNonCompletees(10),
+    oeuvresEnPreparation: oeuvresAPreparer().slice(0, 12),
     ventesParMois: ventesParMois(12),
   }));
   ipcMain.handle('suivi:donnees', () => ({

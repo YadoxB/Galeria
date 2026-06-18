@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo tableau de bord : Œuvres en préparation</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <link rel="stylesheet" href="../src/styles.css">
+  <style>
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+    .demo-bar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px 20px; background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .note { font-size: 12px; color: rgba(255,255,255,0.6); }
+    main { padding: 28px 32px 60px; }
+    .intro { color: var(--slate); font-size: 14px; line-height: 1.5; margin: 0 0 22px; max-width: 980px; }
+    .intro b { color: var(--ink); }
+    /* Rangée du bas du tableau de bord (3 colonnes), à hauteur réelle */
+    .rangee-bas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; max-width: 1320px; height: 360px; }
+    .rangee-bas .dashboard-bloc { display: flex; flex-direction: column; min-height: 0; }
+    .rangee-bas .dashboard-bloc-corps { overflow: auto; }
+    .tag-nouveau { display:inline-block; font-size: 10px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color: var(--succes); background: var(--badge-disponible-fond); border-radius: 999px; padding: 1px 8px; margin-left: 8px; vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Tableau de bord : Œuvres en préparation</div>
+    <div class="note">Rangée du bas, CSS réel. Données fictives.</div>
+  </div>
+  <main>
+    <p class="intro">
+      Le bloc <b>« Résumé du catalogue »</b> (valeur cumulée + sparkline) est <b>retiré</b> et remplacé par
+      <b>« Œuvres en préparation »</b>. La rangée du bas devient : Commandes non complétées · Œuvres réservées ·
+      <b>Œuvres en préparation</b>. Chaque œuvre montre le stepper de préparation <b>Sage&nbsp;→&nbsp;Stock&nbsp;→&nbsp;Site</b>
+      (lecture seule ; clic → fiche de l'œuvre, comme les autres blocs).
+    </p>
+
+    <div class="rangee-bas">
+      <!-- NOUVEAU bloc (à gauche : avant-vente) -->
+      <section class="dashboard-bloc">
+        <header class="dashboard-bloc-entete"><h2>Œuvres en préparation <span class="tag-nouveau">nouveau</span></h2><span class="dashboard-bloc-aide">à préparer</span></header>
+        <div class="dashboard-bloc-corps" id="b-preparation"></div>
+      </section>
+      <!-- Bloc existant, pour le contexte -->
+      <section class="dashboard-bloc">
+        <header class="dashboard-bloc-entete"><h2>Œuvres réservées</h2><span class="dashboard-bloc-aide">à relancer</span></header>
+        <div class="dashboard-bloc-corps" id="b-reservees"></div>
+      </section>
+      <!-- Bloc existant (à droite : après-vente) -->
+      <section class="dashboard-bloc">
+        <header class="dashboard-bloc-entete"><h2>Commandes non complétées</h2><span class="dashboard-bloc-aide">à compléter</span></header>
+        <div class="dashboard-bloc-corps" id="b-commandes"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const ICO = {
+      check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+      sage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>',
+      stock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8H3l1.2-4h15.6L21 8z"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><line x1="9.5" y1="12" x2="14.5" y2="12"/></svg>',
+      site: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+    };
+    const PREP_STEPS = [ { cle:'sage', lbl:'Sage 50', icone:ICO.sage }, { cle:'stock', lbl:'Stock', icone:ICO.stock }, { cle:'site', lbl:'Site web', icone:ICO.site } ];
+
+    function stepper(etats) {
+      return PREP_STEPS.map((s, i) => {
+        const etat = etats[s.cle] ? 'fait' : 'attente';
+        const icone = etat === 'fait' ? ICO.check : s.icone;
+        const conn = i < PREP_STEPS.length - 1
+          ? `<span class="commande-conn ${etats[s.cle] && etats[PREP_STEPS[i+1].cle] ? 'fait' : ''}"></span>` : '';
+        return `<span class="commande-step ${etat}"><span class="rond">${icone}</span><span class="lbl">${s.lbl}</span></span>${conn}`;
+      }).join('');
+    }
+    function ligneOeuvre(o) {
+      return `<button class="dashboard-ligne-commande">
+        <div class="commande-haut">
+          <div class="dashboard-ligne-vignette"><span>&#9635;</span></div>
+          <div class="dashboard-ligne-corps">
+            <p class="dashboard-ligne-titre">${o.titre}</p>
+            <p class="dashboard-ligne-meta">${o.artiste} · ${o.inv}</p>
+          </div>
+        </div>
+        <div class="commande-stepper">${stepper(o.etats)}</div>
+      </button>`;
+    }
+    const PREP = [
+      { titre:'Aurore boréale', artiste:'Claude Lalonde', inv:'CLD2041', etats:{sage:false, stock:false, site:false} },
+      { titre:'Vallée tranquille', artiste:'Anne Dubé', inv:'AND0118', etats:{sage:true, stock:false, site:false} },
+      { titre:'Éclats', artiste:'Paul Renaud', inv:'PAR0307', etats:{sage:true, stock:true, site:false} },
+      { titre:'Reflets du soir', artiste:'Sophie Lebeuf', inv:'SOL0552', etats:{sage:true, stock:false, site:false} },
+    ];
+    document.getElementById('b-preparation').innerHTML =
+      `<div class="dashboard-liste-compacte">${PREP.map(ligneOeuvre).join('')}</div>`;
+
+    // Contexte : deux blocs voisins (rendu simplifié)
+    const ligneSimple = (titre, meta) => `<button class="dashboard-ligne"><div class="dashboard-ligne-vignette"><span>&#9635;</span></div><div class="dashboard-ligne-corps"><p class="dashboard-ligne-titre">${titre}</p><p class="dashboard-ligne-meta">${meta}</p></div></button>`;
+    document.getElementById('b-commandes').innerHTML = `<div class="dashboard-liste-compacte">${ligneSimple("L'aube se lève", 'Marie Tremblay · F-2026-010')}${ligneSimple('Brume matinale', 'Jean Côté · F-2026-014')}</div>`;
+    document.getElementById('b-reservees').innerHTML = `<div class="dashboard-liste-compacte">${ligneSimple('Le grand large', 'Sophie Lebeuf')}${ligneSimple('Silence bleu', 'Paul Renaud')}</div>`;
+  </script>
+</body>
+</html>

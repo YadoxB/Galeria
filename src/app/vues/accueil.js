@@ -11,6 +11,13 @@ const etapes = [
   { lbl: 'Livraison', icone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>' },
 ];
 
+// Étapes de préparation (Sage → Stock → Site) pour le bloc « Œuvres en préparation »
+const etapesPrep = [
+  { cle: 'sage_cree', lbl: 'Sage 50', icone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>' },
+  { cle: 'stock_fait', lbl: 'Stock', icone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8H3l1.2-4h15.6L21 8z"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><line x1="9.5" y1="12" x2="14.5" y2="12"/></svg>' },
+  { cle: 'site_publie', lbl: 'Site web', icone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>' },
+];
+
 function formaterEntier(n) {
   return (Number(n) || 0).toLocaleString('fr-CA');
 }
@@ -83,12 +90,12 @@ export async function rendreAccueil(contenu) {
           <div class="dashboard-bloc-corps" id="dashboard-ventes"></div>
         </section>
 
-        <section class="dashboard-bloc bloc-commandes">
+        <section class="dashboard-bloc bloc-preparation">
           <header class="dashboard-bloc-entete">
-            <h2>Commandes non complétées</h2>
-            <span class="dashboard-bloc-aide">à compléter</span>
+            <h2>Œuvres en préparation</h2>
+            <span class="dashboard-bloc-aide">à préparer</span>
           </header>
-          <div class="dashboard-bloc-corps" id="dashboard-commandes"></div>
+          <div class="dashboard-bloc-corps" id="dashboard-preparation"></div>
         </section>
 
         <section class="dashboard-bloc bloc-reservees">
@@ -99,11 +106,12 @@ export async function rendreAccueil(contenu) {
           <div class="dashboard-bloc-corps" id="dashboard-reservees"></div>
         </section>
 
-        <section class="dashboard-bloc bloc-catalogue">
+        <section class="dashboard-bloc bloc-commandes">
           <header class="dashboard-bloc-entete">
-            <h2>Résumé du catalogue</h2>
+            <h2>Commandes non complétées</h2>
+            <span class="dashboard-bloc-aide">à compléter</span>
           </header>
-          <div class="dashboard-bloc-corps" id="dashboard-catalogue"></div>
+          <div class="dashboard-bloc-corps" id="dashboard-commandes"></div>
         </section>
       </div>
     </div>
@@ -125,7 +133,7 @@ export async function rendreAccueil(contenu) {
     remplirVentesRecentes(contenu, d.ventesRecentes);
     remplirCommandesNonCompletees(contenu, d.commandesNonCompletees);
     remplirReservees(contenu, d.oeuvresReservees);
-    remplirCatalogue(contenu, d.stats, d.ventesParMois);
+    remplirOeuvresEnPreparation(contenu, d.oeuvresEnPreparation);
   } catch (err) {
     const zone = contenu.querySelector('#dashboard-stats');
     if (zone) zone.innerHTML = `<p class="erreur">Impossible de charger le tableau de bord : ${ech(err.message)}</p>`;
@@ -316,47 +324,39 @@ function remplirReservees(contenu, oeuvres) {
   });
 }
 
-function remplirCatalogue(contenu, stats, ventesParMois) {
-  const zone = contenu.querySelector('#dashboard-catalogue');
-  const valeurFmt = (() => {
-    const v = Number(stats.valeurCatalogue) || 0;
-    return v.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
-  })();
-
-  const moisCible = [];
-  const maintenant = new Date();
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(maintenant.getFullYear(), maintenant.getMonth() - i, 1);
-    moisCible.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+function remplirOeuvresEnPreparation(contenu, oeuvres) {
+  const zone = contenu.querySelector('#dashboard-preparation');
+  if (!zone) return;
+  if (!oeuvres || !oeuvres.length) {
+    zone.innerHTML = `<p class="dashboard-vide">Aucune œuvre en préparation 🎉</p>`;
+    return;
   }
-  const carte = new Map((ventesParMois || []).map((r) => [r.mois, Number(r.montant) || 0]));
-  const valeurs = moisCible.map((m) => carte.get(m) || 0);
-  const max = Math.max(...valeurs, 1);
+  const stepperPrep = (o) => etapesPrep.map((e, i) => {
+    const fait = !!o[e.cle];
+    const icone = fait ? ICONE_CHECK : e.icone;
+    const conn = i < etapesPrep.length - 1
+      ? `<span class="commande-conn ${fait && o[etapesPrep[i + 1].cle] ? 'fait' : ''}"></span>`
+      : '';
+    return `<span class="commande-step ${fait ? 'fait' : 'attente'}"><span class="rond">${icone}</span><span class="lbl">${e.lbl}</span></span>${conn}`;
+  }).join('');
 
-  const W = 320, H = 70, P = 6;
-  const pas = valeurs.length > 1 ? (W - 2 * P) / (valeurs.length - 1) : 0;
-  const points = valeurs.map((v, i) => {
-    const x = P + i * pas;
-    const y = H - P - (v / max) * (H - 2 * P);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(' ');
-  const pointsAire = `${P},${H - P} ${points} ${(P + (valeurs.length - 1) * pas).toFixed(1)},${H - P}`;
-
-  zone.innerHTML = `
-    <div class="catalogue-cle">
-      <p class="catalogue-libelle">Valeur du catalogue disponible</p>
-      <p class="catalogue-valeur">${ech(valeurFmt)}</p>
-    </div>
-    <div class="catalogue-graph">
-      <p class="catalogue-graph-libelle">Ventes des 12 derniers mois</p>
-      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" class="catalogue-svg" aria-hidden="true">
-        <polygon points="${pointsAire}" fill="var(--warm-gold)" opacity="0.18"/>
-        <polyline points="${points}" fill="none" stroke="var(--warm-gold)" stroke-width="2"/>
-      </svg>
-      <div class="catalogue-graph-axe">
-        <span>${ech(formaterMois(moisCible[0]))}</span>
-        <span>${ech(formaterMois(moisCible[moisCible.length - 1]))}</span>
+  zone.innerHTML = `<div class="dashboard-liste-compacte">${oeuvres.map((o) => `
+    <button class="dashboard-ligne-commande" data-id="${o.id}" title="Voir l'œuvre">
+      <div class="commande-haut">
+        <div class="dashboard-ligne-vignette">
+          ${o.image_path
+            ? `<img src="${urlPhoto(o.image_path)}" loading="lazy" alt="">`
+            : `<span>&#9635;</span>`}
+        </div>
+        <div class="dashboard-ligne-corps">
+          <p class="dashboard-ligne-titre">${ech(o.titre)}</p>
+          <p class="dashboard-ligne-meta">${ech(o.artiste_nom || '')}${o.numero_inventaire ? ' · ' + ech(o.numero_inventaire) : ''}</p>
+        </div>
       </div>
-    </div>
-  `;
+      <div class="commande-stepper" aria-label="Étapes de préparation">${stepperPrep(o)}</div>
+    </button>
+  `).join('')}</div>`;
+  zone.querySelectorAll('.dashboard-ligne-commande').forEach((btn) => {
+    btn.addEventListener('click', () => naviguer('oeuvre-fiche', { id: Number(btn.dataset.id) }));
+  });
 }
