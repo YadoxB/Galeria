@@ -105,6 +105,14 @@ export function datalist(id, valeurs) {
   return `<datalist id="${id}">${valeurs.map((v) => `<option value="${ech(v)}">`).join('')}</datalist>`;
 }
 
+// ===== Sélecteur de taille des vignettes (vue grille) =====
+export const TAILLES_VIGNETTE = { petit: '190px', moyen: '240px', grand: '300px' };
+
+export function gabaritSelecteurTaille(taille = 'moyen') {
+  const opt = (v, lbl) => `<button type="button" data-taille="${v}" class="${taille === v ? 'actif' : ''}">${lbl}</button>`;
+  return `<div class="taille-vue" role="group" aria-label="Taille des vignettes">${opt('petit', 'Petit')}${opt('moyen', 'Moyen')}${opt('grand', 'Grand')}</div>`;
+}
+
 // ===== Médium : champ texte libre + dropdown (même composant que les cotes) =====
 export const MEDIUMS_PAR_DEFAUT = ['Acrylique', 'Huile', 'Encaustique', 'Aquarelle', 'Pastel', 'Photographie', 'Mixte'];
 

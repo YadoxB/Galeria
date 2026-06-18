@@ -859,12 +859,18 @@ export async function rendreOeuvreFiche(contenu, params) {
               </div>
             </div>
 
-            <!-- Sujets en chips (4 col) -->
+            <!-- Commerce et localisation (4 col) -->
             <div class="carte span-4">
-              <h3>Sujets</h3>
-              <p class="aide-champ" style="margin-top:0;">Clique pour activer ou désactiver. Alimentent les filtres et la recherche.</p>
-              <div class="chip-zone" id="zone-sujets">${chipsHtml}</div>
-              <input type="hidden" name="sujets" id="f-sujets" value="${ech(o.sujets || '')}">
+              <h3>Commerce et localisation</h3>
+              <div class="grille-form">
+                ${champTexte({ nom: 'prix', libelle: 'Prix régulier ($)', valeur: o.prix, type: 'number', attributs: 'step="0.01" min="0"' })}
+                ${champSelect({ nom: 'statut', libelle: 'Statut', valeur: o.statut, options: statutsOptions })}
+                ${champTexte({ nom: 'emplacement', libelle: 'Emplacement (galerie)', valeur: o.emplacement })}
+                ${champTexte({ nom: 'exposition_actuelle', libelle: 'Exposition actuelle', valeur: o.exposition_actuelle })}
+              </div>
+              <div id="zone-prix-suggere"></div>
+              ${champCheckbox({ nom: 'cote_hors_normes', libelle: 'Cote hors-normes (œuvre exceptionnelle, prix saisi à la main)', valeur: !!o.cote_hors_normes })}
+              ${champTexte({ nom: 'url_site', libelle: "URL de la fiche sur le site web", valeur: o.url_site, type: 'url', attributs: 'placeholder="https://galerievieuxstjean.com/produit/…"' })}
             </div>
 
             <!-- Préparation (6 col) -->
@@ -895,18 +901,12 @@ export async function rendreOeuvreFiche(contenu, params) {
               <p class="aide-champ">Les dates s'auto-remplissent à aujourd'hui à la coche si vides.</p>
             </div>
 
-            <!-- Commerce et localisation (6 col) -->
+            <!-- Sujets en chips (6 col) -->
             <div class="carte span-6">
-              <h3>Commerce et localisation</h3>
-              <div class="grille-form">
-                ${champTexte({ nom: 'prix', libelle: 'Prix régulier ($)', valeur: o.prix, type: 'number', attributs: 'step="0.01" min="0"' })}
-                ${champSelect({ nom: 'statut', libelle: 'Statut', valeur: o.statut, options: statutsOptions })}
-                ${champTexte({ nom: 'emplacement', libelle: 'Emplacement (galerie)', valeur: o.emplacement })}
-                ${champTexte({ nom: 'exposition_actuelle', libelle: 'Exposition actuelle', valeur: o.exposition_actuelle })}
-              </div>
-              <div id="zone-prix-suggere"></div>
-              ${champCheckbox({ nom: 'cote_hors_normes', libelle: 'Cote hors-normes (œuvre exceptionnelle, prix saisi à la main)', valeur: !!o.cote_hors_normes })}
-              ${champTexte({ nom: 'url_site', libelle: "URL de la fiche sur le site web", valeur: o.url_site, type: 'url', attributs: 'placeholder="https://galerievieuxstjean.com/produit/…"' })}
+              <h3>Sujets</h3>
+              <p class="aide-champ" style="margin-top:0;">Clique pour activer ou désactiver. Alimentent les filtres et la recherche.</p>
+              <div class="chip-zone" id="zone-sujets">${chipsHtml}</div>
+              <input type="hidden" name="sujets" id="f-sujets" value="${ech(o.sujets || '')}">
             </div>
 
             <!-- Description (12 col) -->

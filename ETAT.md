@@ -200,8 +200,8 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable e
 - **Commission par type d'œuvre** (50 % toiles / 33 % sculptures / 50 % repro après coûts) + champ **coûts de production** sur l'œuvre → branché sur la facture artiste. (Les % exacts et la saisie des coûts repro restent à confirmer — axe B.)
 
 **Chantier 3 · Polish & onboarding**
-- **Sélecteur de taille de vignette (#19)** — dans les sections **Artistes** et **Œuvres** (vue grille), un contrôle pour agrandir/réduire les vignettes. Préférence à persister (localStorage, comme grille/liste et tri).
-- **Inverser les cartes Sujet et Commerce (#20)** — dans le **formulaire d'œuvre** (création/édition), permuter la position des cartes « Sujet(s) » et « Commerce ».
+- ~~**Sélecteur de taille de vignette (#19)**~~ — **✓ Livré** : segmenté Petit/Moyen/Grand (190/240/300 px) dans Artistes et Œuvres (vue grille), mémorisé en localStorage (`oeuvres-taille`, `artistes-taille`). Composant partagé `gabaritSelecteurTaille` + variable CSS `--vignette-min`.
+- ~~**Inverser les cartes Sujet et Commerce (#20)**~~ — **✓ Livré** : formulaire d'œuvre réagencé en Caractéristiques (8) + Commerce (4) ; Préparation (6) + Sujets (6).
 - **Avancement du splash (#18)** — barre de progression et/ou étapes de chargement au démarrage (migrations DB, seed photos, config) pour voir si ça bloque. Petit, isolé.
 - **Tutoriel de première ouverture (#13)** — overlay guidé au 1er lancement, accessible ensuite depuis Réglages/Aide.
 - **Correction #356 « Chrysalide 1/30 »** — dimensions illisibles dans la base, à saisir à la main (5 min).

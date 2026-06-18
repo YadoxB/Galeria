@@ -1140,9 +1140,35 @@ footer {
 
 .grille-oeuvres {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--vignette-min, 240px), 1fr));
   gap: var(--s3);
 }
+
+/* Sélecteur de taille des vignettes (vue grille) */
+.taille-vue {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--cloud);
+  padding: 4px;
+  border-radius: 999px;
+}
+.taille-vue button {
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--slate);
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.taille-vue button.actif {
+  background: var(--porcelain);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+.taille-vue.cache { display: none; }
 
 .oeuvre-carte {
   background: var(--porcelain);

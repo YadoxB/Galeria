@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo #19 taille vignettes + #20 cartes Sujet/Commerce</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <link rel="stylesheet" href="../src/styles.css">
+  <style>
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+    .demo-bar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px 20px; background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    main { padding: 24px 32px 60px; max-width: 1300px; }
+    h2.sec { font-family: var(--font-titre); font-size: 24px; color: var(--gallery-navy); margin: 36px 0 6px; }
+    p.desc { color: var(--slate); font-size: 14px; margin: 0 0 16px; }
+    p.desc b { color: var(--ink); }
+
+    /* #19 : la grille lit une variable pour la largeur min des vignettes */
+    .grille-oeuvres.demo { grid-template-columns: repeat(auto-fill, minmax(var(--vignette-min, 240px), 1fr)); }
+
+    /* Sélecteur de taille (segmenté), même esprit que le toggle grille/liste */
+    .taille-vue { display: inline-flex; gap: 4px; background: var(--cloud); padding: 4px; border-radius: 999px; }
+    .taille-vue button { border: 0; background: transparent; font-family: inherit; font-size: 13px; color: var(--slate); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+    .taille-vue button.actif { background: var(--porcelain); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+
+    .avant-apres { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; align-items: start; }
+    .avant-apres > div > h4 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--stone); margin: 0 0 10px; }
+    .mini-carte-contenu { color: var(--slate); font-size: 12px; }
+    .badge-apres { display:inline-block; font-size:10px; font-weight:600; text-transform:uppercase; color: var(--succes); background: var(--badge-disponible-fond); border-radius:999px; padding:1px 8px; margin-left:6px; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — #19 Taille des vignettes · #20 Cartes Sujet/Commerce</div>
+    <div class="note" style="font-size:12px;color:rgba(255,255,255,.6)">Données fictives. CSS réel.</div>
+  </div>
+
+  <main>
+    <h2 class="sec">#19 — Sélecteur de taille des vignettes (Artistes &amp; Œuvres)</h2>
+    <p class="desc">Un contrôle <b>Petit / Moyen / Grand</b> dans la barre des contrôles (vue grille seulement), à côté du bascule Grille/Liste. La préférence sera mémorisée (localStorage), comme grille/liste et le tri. Clique pour voir la grille se redimensionner.</p>
+
+    <div class="controles-vue" style="margin-bottom:16px;">
+      <div class="taille-vue" id="taille-vue">
+        <button data-min="190">Petit</button>
+        <button data-min="240" class="actif">Moyen</button>
+        <button data-min="300">Grand</button>
+      </div>
+    </div>
+
+    <div class="grille-oeuvres demo" id="grille" style="--vignette-min:240px;"></div>
+
+    <h2 class="sec">#20 — Inverser les cartes Sujet et Commerce <span class="badge-apres">formulaire d'œuvre</span></h2>
+    <p class="desc">Aujourd'hui « Sujets » (léger) est en haut près de Caractéristiques, et « Commerce et localisation » (lourd : prix, statut, URL…) est en bas. Proposition : <b>remonter Commerce</b> près de Caractéristiques et <b>descendre Sujets</b>, en équilibrant les largeurs (les deux rangées en 6+6) pour que Commerce garde de la place.</p>
+
+    <div class="avant-apres">
+      <div>
+        <h4>Avant (actuel)</h4>
+        <div class="formulaire"><div class="grille-bento" id="bento-avant"></div></div>
+      </div>
+      <div>
+        <h4>Option A — équilibré 6+6</h4>
+        <div class="formulaire"><div class="grille-bento" id="bento-apres"></div></div>
+      </div>
+      <div>
+        <h4>Option B — Caractéristiques 8 + Commerce 4</h4>
+        <div class="formulaire"><div class="grille-bento" id="bento-8-4"></div></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ---- #19 : grille de cartes ----
+    const OEUVRES = [
+      ['Aurore boréale','Claude Lalonde','2 400 $'],['Brume matinale','Anne Dubé','1 850 $'],
+      ['Reflets d\'automne','Paul Renaud','3 100 $'],['Silence bleu','Sophie Lebeuf','990 $'],
+      ['Le grand large','Claude Lalonde','4 200 $'],['Matin d\'hiver','Anne Dubé','1 500 $'],
+      ['Éclats','Paul Renaud','2 750 $'],['Vallée tranquille','Sophie Lebeuf','1 200 $'],
+    ];
+    document.getElementById('grille').innerHTML = OEUVRES.map(([t,a,p]) => `
+      <article class="oeuvre-carte">
+        <div class="oeuvre-carte-image"><span class="oeuvre-carte-image-vide">&#9635;</span></div>
+        <div class="oeuvre-carte-corps">
+          <div class="oeuvre-carte-ligne-titre"><h3 class="oeuvre-carte-titre">${t}</h3></div>
+          <p class="oeuvre-carte-artiste">${a}</p>
+          <p class="oeuvre-carte-prix">${p}</p>
+          <div class="oeuvre-carte-pied"><span class="badge badge-disponible">Disponible</span><button type="button" class="btn-menu-oeuvre">⋯</button></div>
+        </div>
+      </article>`).join('');
+    document.querySelectorAll('#taille-vue button').forEach((b) => b.addEventListener('click', () => {
+      document.querySelectorAll('#taille-vue button').forEach((x) => x.classList.remove('actif'));
+      b.classList.add('actif');
+      document.getElementById('grille').style.setProperty('--vignette-min', b.dataset.min + 'px');
+    }));
+
+    // ---- #20 : cartes du formulaire ----
+    const carte = (span, titre, contenu) => `<div class="carte span-${span}"><h3>${titre}</h3><div class="mini-carte-contenu">${contenu}</div></div>`;
+    const cCarac = 'Type, médium, support, dimensions, format, style…';
+    const cSujets = 'Pastilles cliquables (paysage, marine, abstrait…)';
+    const cPrep = 'Sage 50 · Stock · Site web (cases + dates)';
+    const cCommerce = 'Prix, statut, emplacement, exposition, prix suggéré, URL du site…';
+    const cDesc = 'Texte de description longue.';
+    // Avant : Caractéristiques(8) + Sujets(4) ; Préparation(6) + Commerce(6)
+    document.getElementById('bento-avant').innerHTML =
+      carte(8,'Caractéristiques',cCarac) + carte(4,'Sujets',cSujets) +
+      carte(6,'Préparation',cPrep) + carte(6,'Commerce et localisation',cCommerce) +
+      carte(12,'Description',cDesc);
+    // Option A : Caractéristiques(6) + Commerce(6) ; Préparation(6) + Sujets(6)
+    document.getElementById('bento-apres').innerHTML =
+      carte(6,'Caractéristiques',cCarac) + carte(6,'Commerce et localisation',cCommerce) +
+      carte(6,'Préparation',cPrep) + carte(6,'Sujets',cSujets) +
+      carte(12,'Description',cDesc);
+    // Option B : Caractéristiques(8) + Commerce(4) ; Préparation(6) + Sujets(6)
+    document.getElementById('bento-8-4').innerHTML =
+      carte(8,'Caractéristiques',cCarac) + carte(4,'Commerce et localisation',cCommerce) +
+      carte(6,'Préparation',cPrep) + carte(6,'Sujets',cSujets) +
+      carte(12,'Description',cDesc);
+  </script>
+</body>
+</html>

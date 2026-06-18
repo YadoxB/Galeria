@@ -2,10 +2,12 @@ import { naviguer } from '../router.js';
 import {
   ech, sansAccents, initiales, pluriel, urlPhoto, nomComplet,
   gabaritEntetePage, badgeArchive,
+  gabaritSelecteurTaille, TAILLES_VIGNETTE,
 } from '../commun.js';
 
 const CLE_PREF_VUE = 'artistes-vue';
 const CLE_PREF_TRI = 'artistes-tri';
+const CLE_PREF_TAILLE = 'artistes-taille';
 const CLE_PREF_ARCHIVES = 'artistes-inclure-archives';
 
 function lirePref(cle, defaut) {
@@ -33,6 +35,7 @@ export async function rendreArtistesListe(contenu) {
   let artistes = await window.api.artistesListe({ inclureArchives });
   let vueCourante = lirePref(CLE_PREF_VUE, 'grille');
   let triCourant = lirePref(CLE_PREF_TRI, 'nom-asc');
+  let tailleCourante = lirePref(CLE_PREF_TAILLE, 'moyen');
 
   contenu.innerHTML = `
     <div class="vue-liste">
@@ -57,6 +60,7 @@ export async function rendreArtistesListe(contenu) {
             </svg>
           </button>
         </div>
+        ${gabaritSelecteurTaille(tailleCourante)}
         <div class="tri-deroulant">
           <label for="tri-artistes" class="tri-deroulant-libelle">Trier par</label>
           <select id="tri-artistes">
@@ -84,7 +88,19 @@ export async function rendreArtistesListe(contenu) {
   const compteur = contenu.querySelector('#compteur');
   const btnVueGrille = contenu.querySelector('#btn-vue-grille');
   const btnVueListe = contenu.querySelector('#btn-vue-liste');
+  const selecteurTaille = contenu.querySelector('.taille-vue');
   const triSelect = contenu.querySelector('#tri-artistes');
+
+  if (selecteurTaille) {
+    selecteurTaille.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+      tailleCourante = b.dataset.taille;
+      ecrirePref(CLE_PREF_TAILLE, tailleCourante);
+      selecteurTaille.querySelectorAll('button').forEach((x) => x.classList.toggle('actif', x === b));
+      if (conteneur.classList.contains('grille-oeuvres')) {
+        conteneur.style.setProperty('--vignette-min', TAILLES_VIGNETTE[tailleCourante]);
+      }
+    }));
+  }
 
   contenu.querySelector('#btn-ajouter').addEventListener('click', () =>
     naviguer('artiste-fiche', { nouveau: true })
@@ -173,8 +189,10 @@ export async function rendreArtistesListe(contenu) {
       return;
     }
 
+    if (selecteurTaille) selecteurTaille.classList.toggle('cache', vueCourante !== 'grille');
     if (vueCourante === 'grille') {
       conteneur.className = 'grille-oeuvres';
+      conteneur.style.setProperty('--vignette-min', TAILLES_VIGNETTE[tailleCourante]);
       conteneur.innerHTML = triees.map(carteGrille).join('');
       conteneur.querySelectorAll('.artiste-carte').forEach((carte) => {
         carte.addEventListener('click', () => naviguer('artiste-fiche', { id: Number(carte.dataset.id) }));

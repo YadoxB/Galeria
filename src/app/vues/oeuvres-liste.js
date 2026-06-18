@@ -2,11 +2,13 @@ import { naviguer, remplacerCourant } from '../router.js';
 import {
   ech, sansAccents, formaterPrix, badgeStatut, pluriel, STATUTS, urlPhoto,
   gabaritEntetePage, gabaritBoutonFiltres, badgeArchive, nomComplet,
+  gabaritSelecteurTaille, TAILLES_VIGNETTE,
 } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
 
 const CLE_PREF_VUE = 'oeuvres-vue';
 const CLE_PREF_TRI = 'oeuvres-tri';
+const CLE_PREF_TAILLE = 'oeuvres-taille';
 const CLE_PREF_ARCHIVES = 'oeuvres-inclure-archives';
 
 function lirePref(cle, defaut) {
@@ -160,6 +162,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
 
   let vueCourante = lirePref(CLE_PREF_VUE, 'grille');
   let triCourant = lirePref(CLE_PREF_TRI, 'plus-recentes');
+  let tailleCourante = lirePref(CLE_PREF_TAILLE, 'moyen');
 
   const filtreActif = params.artiste_id != null
     ? `<div class="filtre-actif">
@@ -197,6 +200,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
             </svg>
           </button>
         </div>
+        ${gabaritSelecteurTaille(tailleCourante)}
         <div class="controles-vue-droite">
           ${gabaritBoutonFiltres()}
           <div class="tri-deroulant">
@@ -234,7 +238,19 @@ export async function rendreOeuvresListe(contenu, params = {}) {
   const compteur = contenu.querySelector('#compteur');
   const btnVueGrille = contenu.querySelector('#btn-vue-grille');
   const btnVueListe = contenu.querySelector('#btn-vue-liste');
+  const selecteurTaille = contenu.querySelector('.taille-vue');
   const triSelect = contenu.querySelector('#tri-oeuvres');
+
+  if (selecteurTaille) {
+    selecteurTaille.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+      tailleCourante = b.dataset.taille;
+      ecrirePref(CLE_PREF_TAILLE, tailleCourante);
+      selecteurTaille.querySelectorAll('button').forEach((x) => x.classList.toggle('actif', x === b));
+      if (conteneur.classList.contains('grille-oeuvres')) {
+        conteneur.style.setProperty('--vignette-min', TAILLES_VIGNETTE[tailleCourante]);
+      }
+    }));
+  }
   const btnToutVoir = contenu.querySelector('#btn-tout-voir');
   if (btnToutVoir) btnToutVoir.addEventListener('click', () => naviguer('oeuvres-liste'));
 
@@ -539,8 +555,10 @@ export async function rendreOeuvresListe(contenu, params = {}) {
       return;
     }
 
+    if (selecteurTaille) selecteurTaille.classList.toggle('cache', vueCourante !== 'grille');
     if (vueCourante === 'grille') {
       conteneur.className = 'grille-oeuvres';
+      conteneur.style.setProperty('--vignette-min', TAILLES_VIGNETTE[tailleCourante]);
       conteneur.innerHTML = triees.map(carteGrille).join('');
       conteneur.querySelectorAll('.oeuvre-carte').forEach((carte) => {
         const id = Number(carte.dataset.id);
