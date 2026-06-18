@@ -8,7 +8,7 @@ identifiants.
 
 ---
 
-## [Non publié] — 0.2.4 (en cours)
+## [0.2.4] — 2026-06-17
 
 ### Ajouté
 
