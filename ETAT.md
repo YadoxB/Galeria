@@ -191,7 +191,8 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable e
 ### A — Faisable maintenant (aucune dépendance externe)
 
 **Chantier 1 · Visibilité & navigation** — *prochain jalon « Visibilité » ; naît du jalon 3 + du stepper du tableau de bord*
-- **Section Suivi (#16)** — vue dédiée des cycles de vie (en cours + complétées), plus complète que le bloc du tableau de bord. Réutilise les données et le rendu stepper. ⟵ **EN COURS**
+- ~~**Section Suivi (#16)**~~ — **✓ Intégrée** : vue dédiée du cycle de vie complet (À préparer + Commandes en cours regroupés dans « Actif », onglet « Complétées »), bandeau de synthèse, stepper inline-éditable, paiement en menu déroulant, modales « Confirmer la livraison » / « Revenir en arrière ». Inclut l'étape de préparation **Stock** (Sage → Stock → Site).
+- **Œuvres en préparation sur le tableau de bord (#21)** — afficher les œuvres en préparation (Sage/Stock/Site) sur l'accueil, et **retirer le « Résumé du catalogue »** (valeur cumulée). Complète le bloc « Commandes non complétées ».
 - **Section Documents (#15)** — index de tous les PDF générés (certificats, factures artiste, à terme factures client / lettres / présentations), classés et recherchables (type, date, œuvre/artiste/vente).
 - **Rapport journalier (#17)** — intrants (ajouts) / extrants (retraits, archivages) / ventes du jour. Format et plage à préciser (PDF ? dates configurables ?).
 
@@ -199,6 +200,8 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable e
 - **Commission par type d'œuvre** (50 % toiles / 33 % sculptures / 50 % repro après coûts) + champ **coûts de production** sur l'œuvre → branché sur la facture artiste. (Les % exacts et la saisie des coûts repro restent à confirmer — axe B.)
 
 **Chantier 3 · Polish & onboarding**
+- **Sélecteur de taille de vignette (#19)** — dans les sections **Artistes** et **Œuvres** (vue grille), un contrôle pour agrandir/réduire les vignettes. Préférence à persister (localStorage, comme grille/liste et tri).
+- **Inverser les cartes Sujet et Commerce (#20)** — dans le **formulaire d'œuvre** (création/édition), permuter la position des cartes « Sujet(s) » et « Commerce ».
 - **Avancement du splash (#18)** — barre de progression et/ou étapes de chargement au démarrage (migrations DB, seed photos, config) pour voir si ça bloque. Petit, isolé.
 - **Tutoriel de première ouverture (#13)** — overlay guidé au 1er lancement, accessible ensuite depuis Réglages/Aide.
 - **Correction #356 « Chrysalide 1/30 »** — dimensions illisibles dans la base, à saisir à la main (5 min).
@@ -308,7 +311,11 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable e
 - **Tableau de bord** : bloc « Commandes non complétées » — les 4 étapes passent des petits points à un **stepper étiqueté** (icône + libellé + connecteurs ; vert = fait, terracotta = partiel). Démo des 3 variations conservée dans `demos/commandes-non-completees.html`.
 - **To-do enrichie** : #15 Section Documents, #16 Section Suivi, #17 Rapport journalier, #18 Avancement du splash.
 - **Planning réorganisé** par axe de dépendance (A/B/C, voir « Plan structuré » plus haut) — les anciennes listes redondantes (roadmap 5 jalons, tableaux « faisable/en attente/reportées ») ont été fusionnées.
-- **Prochaine étape décidée** : **Section Suivi (#16)**.
+- **Section Suivi (#16) intégrée** : nouvelle entrée sidebar + vue `src/app/vues/suivi.js`, IPC `suivi:donnees`, requêtes `oeuvresAPreparer` / `ventesSuivi`. Édition inline via les IPC existants (`oeuvreMajPreparation`, `venteMajCycle`), modales sur `confirmer`. Démo `demos/suivi.html`.
+- **Étape de préparation « Stock »** ajoutée (Sage → Stock → Site) : colonnes `stock_fait` / `stock_fait_date`, migration + backfill `user_version=2` (catalogue existant réputé en stock), partout dans la fiche œuvre + Suivi.
+- **Droplist médium partagé** : composant extrait dans `commun.js` (`champMedium`, `brancherDropdownMedium`, `chargerMediumsConnus`) et appliqué à la fiche œuvre, au calculateur (Outils) et aux cotes (fiche artiste) — code unique.
+- **Nouvelles demandes** : #19 sélecteur de taille de vignette, #20 inverser cartes Sujet/Commerce (form œuvre), #21 œuvres en préparation au tableau de bord (retirer le Résumé du catalogue).
+- **Prochaines étapes possibles** : #21 (tableau de bord), Section Documents (#15), Rapport journalier (#17), ou les polish #19/#20.
 
 ---
 
