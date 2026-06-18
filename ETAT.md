@@ -9,7 +9,9 @@
 
 ## En une phrase
 
-L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable et installée chez les parents. **v0.2.3 publiée** sur GitHub Releases (refonte bento des 7 pages + jalon 2 cotes). **v0.2.4 en cours sur la branche `claude/practical-payne-6f7562`** (non taggée) : jalon 3 (suivi cycle de vie + garde-fou Sage), champ Style, formulaires d'édition en bento, suivi inline-éditable, générateur de nomenclature. Reste le jalon 4 (pack de vente) et le jalon 5 (réorganisation/renommage des photos), plus les phases reportées (Sage, web, sécurité).
+L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable et installée chez les parents. **v0.2.4 publiée** sur GitHub Releases (jalon 3 cycle de vie + garde-fou Sage, champ Style, formulaires d'édition en bento, suivi inline-éditable, générateur de nomenclature), tout poussé sur `master` (`3639cfb`). Reste le jalon 4 (pack de vente) et le jalon 5 (réorganisation/renommage des photos), plus les phases reportées (Sage, web, sécurité).
+
+> ⚠️ **Important — déploiement chez les parents.** Ils sont encore sur la **0.2.0**, qui **ne contient pas** le module de mise à jour automatique (`electron-updater`, ajouté seulement en 0.2.1). Aucune des versions 0.2.1 → 0.2.4 ne leur est donc parvenue, et n'arrivera jamais par auto-update. **La prochaine livraison doit être une installation manuelle unique** du `Galeria Setup x.x.x.exe` (build complet, catalogue + photos). À partir de cette installation manuelle seulement, l'auto-update prend le relais pour toutes les versions suivantes. → Viser à leur livrer la version la plus à jour possible en une seule install manuelle (plutôt que la 0.2.4 maintenant puis re-livrer juste après). Et **tester la migration 0.2.0 → version-cible** (le saut est large : colonnes cycle de vie, cotes, style, archive, dimensions séparées, renommage dossier `GalerieApp`→`Galeria`, backfill Sage via `PRAGMA user_version`).
 
 ---
 
