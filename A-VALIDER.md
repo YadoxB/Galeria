@@ -88,3 +88,8 @@
 - Distinction Galeria (produit) / Galerie du Vieux Saint-Jean (marque).
 - Tout est local, Loi 25 respectée.
 - Auto-update via GitHub Releases (v0.2.1+).
+- **Dimensions incomplètes** (2026-06-18) : une H/L/P manquante est laissée **NULL** (« inconnu »), pas 0 — à la migration comme à la saisie.
+- **Statut de paiement** (2026-06-18) : reste à **3 choix** (À faire / Partiel / Reçu) ; « Partiel » couvre un plan en cours. Le suivi détaillé des versements échelonnés reste un chantier séparé (voir « Modes de paiement » plus haut).
+- **Extrants = retraits** (2026-06-18) : « retirer » une œuvre = la rendre à l'artiste (la sortir du catalogue actif), distinct d'une vente. « Retirer » remplace « Archiver » sur l'œuvre. Vendue = non retirable.
+- **Documents générés en format Lettre** (8.5×11) — standard pour tous les documents.
+- **Tableau de bord** (2026-06-18) : « Résumé du catalogue » (valeur cumulée) retiré au profit d'« Œuvres en préparation ».

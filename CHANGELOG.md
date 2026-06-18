@@ -8,6 +8,69 @@ identifiants.
 
 ---
 
+## [Non publié] — depuis 2026-06-18
+
+> Accumulé sur `master`, pas encore taggé ni publié. À livrer aux parents en
+> une **installation manuelle** (ils sont encore sur 0.2.0, sans auto-update).
+
+### Ajouté
+
+- **Section « Suivi »** (sidebar) — vue dédiée du cycle de vie complet : vue
+  **Actif** combinant *À préparer* (œuvres) et *Commandes en cours* (ventes),
+  onglet *Complétées*, bandeau de synthèse (files d'attente Préparation /
+  Expédition), **stepper inline-éditable** (icône + libellé + connecteurs),
+  paiement en **menu déroulant** (À faire / Partiel / Reçu), modales
+  « Confirmer la livraison » et « Revenir en arrière ».
+- **Étape de préparation « Stock »** (Sage → **Stock** → Site) partout (fiche
+  œuvre + Suivi + tableau de bord). Colonnes `stock_fait` / `stock_fait_date`,
+  backfill du catalogue existant (`PRAGMA user_version = 2`).
+- **Bloc « Œuvres en préparation »** au tableau de bord (remplace le « Résumé
+  du catalogue »). Rangée du bas réordonnée : Préparation · Réservées ·
+  Commandes non complétées.
+- **Section « Documents »** (sidebar) — index de tous les PDF produits
+  (certificats + factures artiste), groupés par année, filtrables par type,
+  recherchables, actions Voir / Dossier / Re-générer.
+- **Section « Rapport »** (sidebar) — journal d'une journée (sélecteur de
+  date) : tuiles, ventes détaillées (sous-total/TPS/TVQ/total),
+  intrants/extrants du jour, activité opérationnelle ; **+ suivi opérationnel**
+  (admissions en cours, ventes & livraisons en cours). **Export PDF format
+  Lettre** via gabarit autonome (`gabarit-rapport.html`, polices système).
+- **Retrait d'œuvres** — « Retirer » remplace « Archiver » sur l'œuvre :
+  bouton sur la fiche (modale date + motif), badge « Retirée », « Réintégrer »,
+  filtre « Inclure les retirées ». **Retrait en lot** via mode sélection sur la
+  liste (bouton « Retirer » près de « + Ajouter » ; œuvres vendues non
+  retirables). Colonnes `retrait_date` / `retrait_motif`.
+- **Droplist médium partagé** — composant unique (`commun.js`) appliqué à la
+  fiche œuvre, au calculateur (Outils) et aux cotes (fiche artiste).
+- **Sélecteur de taille de vignette** (Petit / Moyen / Grand) dans les listes
+  Artistes et Œuvres (vue grille), mémorisé en localStorage.
+- **Avancement du splash** au démarrage : barre de progression + libellé
+  d'étape ; le splash s'affiche **avant** les étapes longues ; copie des photos
+  rendue asynchrone pour que la barre avance réellement.
+- **Stepper étiqueté** pour le bloc « Commandes non complétées » du tableau de
+  bord (remplace les petits points).
+
+### Modifié
+
+- **Formulaire d'œuvre** réagencé : Caractéristiques (8) + Commerce et
+  localisation (4) ; Préparation (6) + Sujets (6).
+- **Dimensions des œuvres** : 498 fiches migrées du texte libre vers les
+  colonnes H/L/P (`scripts/separer-dimensions.js`), profondeur absente laissée
+  NULL, texte régénéré au format de l'app.
+
+### Corrigé
+
+- Mise en page du rapport (largeur pleine page à l'impression), format **Lettre**
+  garanti via `printToPDF` `pageSize: 'Letter'`.
+
+### Connu
+
+- Le visionneur **Acrobat** affiche une erreur « Font Capture » quelques
+  secondes après l'ouverture de **tout** PDF généré (certificats inclus) —
+  environnemental, le PDF reste valide. À investiguer séparément.
+
+---
+
 ## [0.2.4] — 2026-06-17
 
 ### Ajouté

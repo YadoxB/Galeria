@@ -9,7 +9,7 @@
 
 ## En une phrase
 
-L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable et installée chez les parents. **v0.2.4 publiée** sur GitHub Releases (jalon 3 cycle de vie + garde-fou Sage, champ Style, formulaires d'édition en bento, suivi inline-éditable, générateur de nomenclature), tout poussé sur `master` (`3639cfb`). Reste le jalon 4 (pack de vente) et le jalon 5 (réorganisation/renommage des photos), plus les phases reportées (Sage, web, sécurité).
+L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable et installée chez les parents. Dernière version **publiée** : v0.2.4. Depuis, beaucoup de travail accumulé sur `master` (**non encore taggé/publié**) : migration des dimensions H/L/P, stepper du tableau de bord, **section Suivi** (cycle de vie complet + étape Stock), **bloc Œuvres en préparation** à l'accueil, **droplist médium** partagé, **sélecteur de taille de vignette**, réagencement du formulaire d'œuvre, **avancement du splash**, **section Documents** (index des PDF), **section Rapport** (journal + suivi opérationnel, export PDF Lettre) et **mécanisme de retrait d'œuvres** (simple + en lot). Reste le jalon 4 (pack de vente, sauf retrait/commission), le jalon 5 (renommage des photos), plus les phases reportées (Sage, web, sécurité). **Prochaine étape opérationnelle : tagger + release une nouvelle version pour la livrer aux parents** (voir encadré ci-dessous).
 
 > ⚠️ **Important — déploiement chez les parents.** Ils sont encore sur la **0.2.0**, qui **ne contient pas** le module de mise à jour automatique (`electron-updater`, ajouté seulement en 0.2.1). Aucune des versions 0.2.1 → 0.2.4 ne leur est donc parvenue, et n'arrivera jamais par auto-update. **La prochaine livraison doit être une installation manuelle unique** du `Galeria Setup x.x.x.exe` (build complet, catalogue + photos). À partir de cette installation manuelle seulement, l'auto-update prend le relais pour toutes les versions suivantes. → Viser à leur livrer la version la plus à jour possible en une seule install manuelle (plutôt que la 0.2.4 maintenant puis re-livrer juste après). Et **tester la migration 0.2.0 → version-cible** (le saut est large : colonnes cycle de vie, cotes, style, archive, dimensions séparées, renommage dossier `GalerieApp`→`Galeria`, backfill Sage via `PRAGMA user_version`).
 
@@ -316,6 +316,21 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable e
 - **Droplist médium partagé** : composant extrait dans `commun.js` (`champMedium`, `brancherDropdownMedium`, `chargerMediumsConnus`) et appliqué à la fiche œuvre, au calculateur (Outils) et aux cotes (fiche artiste) — code unique.
 - **Nouvelles demandes** : #19 sélecteur de taille de vignette, #20 inverser cartes Sujet/Commerce (form œuvre), #21 œuvres en préparation au tableau de bord (retirer le Résumé du catalogue).
 - **Prochaines étapes possibles** : #21 (tableau de bord), Section Documents (#15), Rapport journalier (#17), ou les polish #19/#20.
+
+### Journal de session — 2026-06-18
+
+Grosse session de fonctionnalités, tout commité et fusionné sur `master`, **poussé sur GitHub** (origin/master à jour). Pas encore taggé/publié.
+
+- **#21 — Bloc « Œuvres en préparation »** au tableau de bord (remplace le « Résumé du catalogue »), rangée du bas réordonnée (Préparation · Réservées · Commandes).
+- **#19 — Sélecteur de taille de vignette** (Petit/Moyen/Grand) dans Artistes et Œuvres (grille), mémorisé.
+- **#20 — Formulaire d'œuvre réagencé** : Caractéristiques (8) + Commerce (4) ; Préparation (6) + Sujets (6).
+- **#18 — Avancement du splash** : barre + libellé d'étape, splash affiché avant les étapes longues, `seedPhotos` rendu asynchrone. Nouvelle image de splash (de Dave) commitée.
+- **#15 — Section Documents** : index des PDF produits (certificats + factures artiste), groupés par année, filtrables, actions Voir/Dossier/Re-générer.
+- **#17 — Section Rapport** : journal d'une journée (date) + **suivi opérationnel** (admissions en cours, ventes/livraisons en cours). **Export PDF Lettre** via gabarit autonome `gabarit-rapport.html`. #356 « Chrysalide » corrigée par Dave.
+- **Mécanisme de retrait d'œuvres** : « Retirer » remplace « Archiver » sur l'œuvre (date + motif, réversible « Réintégrer », badge « Retirée », filtre « Inclure les retirées »). **Retrait en lot** via mode sélection sur la liste (bouton « Retirer » près de « + Ajouter »). Œuvre vendue non retirable. Colonnes `retrait_date` / `retrait_motif`.
+- **Convention** : tous les documents générés sont en **format Lettre** (`printToPDF` `pageSize: 'Letter'`).
+- **Bug connu (hors périmètre)** : Acrobat plante (« Font Capture ») quelques secondes après l'ouverture de tout PDF généré (certificats inclus) — environnemental, PDF valide. Tâche de fond créée pour l'investiguer (tester un autre visionneur comme Edge).
+- **Prochaine étape recommandée** : **tagger + release** une nouvelle version (≥ v0.2.5) et la livrer aux parents en install manuelle (ils sont sur 0.2.0). Puis : commission par type d'œuvre, tutoriel de 1re ouverture, édition en batch, ou jalon 5 (photos).
 
 ---
 
