@@ -54,4 +54,23 @@ run('préparation des assets (catalogue + photos vides)',
 run('build + publication GitHub Releases',
     'electron-builder', ['--win', '--publish=always']);
 
-console.log('\n[release] ✓ Release publiée avec succès.\n');
+// 3. electron-builder crée la release en BROUILLON. On la publie (draft=false)
+//    pour qu'elle devienne visible et que l'auto-update la détecte. Sans cette
+//    étape, il fallait dé-brouillonner à la main après chaque release.
+const version = require('../package.json').version;
+const tag = `v${version}`;
+try {
+  console.log(`\n[release] publication de la release ${tag} (draft → public)…`);
+  execSync(`gh release edit ${tag} --draft=false`, { stdio: 'inherit', env });
+} catch (err) {
+  fail(
+    [
+      `La release ${tag} a été créée mais n'a pas pu être publiée automatiquement.`,
+      `Publie-la à la main :  gh release edit ${tag} --draft=false`,
+      '',
+      `Détail : ${err.message.split('\n')[0]}`,
+    ].join('\n'),
+  );
+}
+
+console.log(`\n[release] ✓ Release ${tag} publiée avec succès.\n`);
