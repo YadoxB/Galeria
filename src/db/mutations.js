@@ -538,6 +538,55 @@ function definirArchive(table, id, archive) {
   return { archive: valeur === 1 };
 }
 
+// Retrait d'une œuvre de la galerie (rendue à l'artiste). Remplace l'archivage
+// côté œuvre : réutilise la colonne `archive` (donc exclue des listes actives)
+// et enregistre date + motif pour le rapport journalier. Réversible.
+function definirRetraitOeuvre(id, data = {}) {
+  const idInt = entier(id);
+  if (idInt == null) throw new Error('Identifiant invalide.');
+  const db = openDatabase();
+  if (data.retire) {
+    const date = vide(data.date) || new Date().toISOString().slice(0, 10);
+    db.prepare(`
+      UPDATE oeuvres SET archive = 1, retrait_date = ?, retrait_motif = ?, modifie_le = datetime('now')
+      WHERE id = ?
+    `).run(date, vide(data.motif), idInt);
+  } else {
+    db.prepare(`
+      UPDATE oeuvres SET archive = 0, retrait_date = NULL, retrait_motif = NULL, modifie_le = datetime('now')
+      WHERE id = ?
+    `).run(idInt);
+  }
+  return obtenirOeuvre(idInt);
+}
+
+// Retrait en lot : retire plusieurs œuvres (rendues à l'artiste) en une fois.
+// Ignore les œuvres déjà vendues (non retirables). Renvoie le nombre retiré.
+function definirRetraitOeuvresLot(ids, data = {}) {
+  const liste = (Array.isArray(ids) ? ids : []).map(entier).filter((n) => n != null);
+  if (!liste.length) return { retirees: 0 };
+  const db = openDatabase();
+  const date = vide(data.date) || new Date().toISOString().slice(0, 10);
+  const motif = vide(data.motif);
+  const upd = db.prepare(`
+    UPDATE oeuvres SET archive = 1, retrait_date = ?, retrait_motif = ?, modifie_le = datetime('now')
+    WHERE id = ? AND statut <> 'vendu'
+  `);
+  let n = 0;
+  db.exec('BEGIN');
+  try {
+    for (const id of liste) {
+      const info = upd.run(date, motif, id);
+      n += info.changes;
+    }
+    db.exec('COMMIT');
+  } catch (e) {
+    db.exec('ROLLBACK');
+    throw e;
+  }
+  return { retirees: n };
+}
+
 // ===== Certificats =====
 
 const COLONNES_CERTIFICAT = [
@@ -610,4 +659,6 @@ module.exports = {
   apercuProchainNumeroInventaire, reserverProchainNumeroInventaire,
   formaterNumero,
   definirArchive,
+  definirRetraitOeuvre,
+  definirRetraitOeuvresLot,
 };

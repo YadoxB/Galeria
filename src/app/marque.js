@@ -24,6 +24,7 @@ function sectionDe(nomVue) {
   if (nomVue.startsWith('client'))  return 'clients';
   if (nomVue === 'suivi')            return 'suivi';
   if (nomVue === 'documents')        return 'documents';
+  if (nomVue === 'rapport')          return 'rapport';
   if (nomVue.startsWith('vente'))   return 'ventes';
   if (nomVue === 'outils')           return 'outils';
   if (nomVue === 'reglages')         return 'reglages';

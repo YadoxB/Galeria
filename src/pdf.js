@@ -262,4 +262,56 @@ async function genererFactureArtistePdf(venteId) {
   return { pdf_path: sortie, numero_facture_artiste: numeroFA };
 }
 
-module.exports = { genererCertificatPdf, genererFactureArtistePdf };
+// ===== Orchestrateur : rapport journalier =====
+
+const MOIS_RAP = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+function dateLongueRap(iso) {
+  const [y, m, j] = String(iso || '').slice(0, 10).split('-').map(Number);
+  if (!y) return '';
+  return new Date(y, m - 1, j).toLocaleDateString('fr-CA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
+function dateCourteRap(val) {
+  const [y, m, j] = String(val || '').slice(0, 10).split('-').map(Number);
+  if (!y) return '';
+  return `${j} ${MOIS_RAP[m - 1]} ${y}`;
+}
+
+function preparerDonneesRapport(rap, cfg, dateISO) {
+  const ventes = rap.ventes || [];
+  const sousTotal = ventes.reduce((s, v) => s + (Number(v.prix_vente) || 0), 0);
+  const tps = ventes.reduce((s, v) => s + (Number(v.tps) || 0), 0);
+  const tvq = ventes.reduce((s, v) => s + (Number(v.tvq) || 0), 0);
+  const su = rap.suivi || { admissionsEnCours: [], ventesEnCours: [] };
+  const admissionsEnCours = (su.admissionsEnCours || []).map((o) => ({ ...o, admission: dateCourteRap(o.cree_le) }));
+  const now = new Date();
+  return {
+    galerie: (cfg.galerie && cfg.galerie.nom) || 'La Galerie du Vieux Saint-Jean',
+    dateLongue: dateLongueRap(dateISO),
+    dateCourte: dateCourteRap(dateISO),
+    heure: `${now.getHours()} h ${String(now.getMinutes()).padStart(2, '0')}`,
+    oeuvresAjoutees: rap.oeuvresAjoutees || [],
+    artistesAjoutes: rap.artistesAjoutes || [],
+    oeuvresRetirees: rap.oeuvresRetirees || [],
+    ventes,
+    suivi: { admissionsEnCours, ventesEnCours: su.ventesEnCours || [] },
+    totaux: { sousTotal, tps, tvq, total: sousTotal + tps + tvq, nbIntrants: (rap.oeuvresAjoutees || []).length + (rap.artistesAjoutes || []).length },
+  };
+}
+
+async function genererRapportPdf(dateISO) {
+  const { rapportJournalier } = require('./db/requetes');
+  const rap = rapportJournalier(dateISO);
+  const cfg = obtenirConfig();
+  const donnees = preparerDonneesRapport(rap, cfg, dateISO);
+  const dossier = getDocumentsDirAnnee(anneeDe(dateISO));
+  // Horodatage dans le nom : évite le verrou EBUSY si un rapport précédent du
+  // même jour est encore ouvert dans le visionneur, et garde l'historique.
+  const n = new Date();
+  const p = (x) => String(x).padStart(2, '0');
+  const stamp = `${p(n.getHours())}h${p(n.getMinutes())}`;
+  const sortie = path.join(dossier, `Rapport_${dateISO}_${stamp}.pdf`);
+  await genererPdf({ gabaritNom: 'gabarit-rapport.html', donnees, sortie });
+  return sortie;
+}
+
+module.exports = { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf };

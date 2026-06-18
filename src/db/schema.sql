@@ -71,6 +71,8 @@ CREATE TABLE IF NOT EXISTS oeuvres (
   site_publie_date       TEXT,
   archive                INTEGER NOT NULL DEFAULT 0
                          CHECK (archive IN (0, 1)),
+  retrait_date           TEXT,
+  retrait_motif          TEXT,
   cree_le                TEXT NOT NULL DEFAULT (datetime('now')),
   modifie_le             TEXT NOT NULL DEFAULT (datetime('now'))
 );

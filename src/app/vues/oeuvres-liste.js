@@ -2,7 +2,7 @@ import { naviguer, remplacerCourant } from '../router.js';
 import {
   ech, sansAccents, formaterPrix, badgeStatut, pluriel, STATUTS, urlPhoto,
   gabaritEntetePage, gabaritBoutonFiltres, badgeArchive, nomComplet,
-  gabaritSelecteurTaille, TAILLES_VIGNETTE,
+  gabaritSelecteurTaille, TAILLES_VIGNETTE, nettoyerErreur,
 } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
 
@@ -181,6 +181,8 @@ export async function rendreOeuvresListe(contenu, params = {}) {
         titre,
         placeholder: 'Rechercher une œuvre, un artiste, un n° d\'inventaire…',
         boutonAjouterLibelle: '+ Ajouter une œuvre',
+        boutonSecondaireLibelle: 'Retirer',
+        idBoutonSecondaire: 'btn-retirer-lot',
       })}
       ${stats ? gabaritStatsOeuvres(stats) : ''}
       ${filtreActif}
@@ -216,6 +218,15 @@ export async function rendreOeuvresListe(contenu, params = {}) {
         </div>
       </div>
 
+      <div class="barre-selection cache" id="barre-selection">
+        <span id="selection-compteur">0 sélectionnée</span>
+        <button type="button" class="btn-lien" id="sel-tout">Tout sélectionner</button>
+        <button type="button" class="btn-lien" id="sel-aucun">Tout désélectionner</button>
+        <div class="barre-selection-actions">
+          <button type="button" class="btn-action btn-secondaire-action" id="sel-annuler">Annuler</button>
+          <button type="button" class="btn-action btn-principal" id="sel-retirer" disabled>Retirer la sélection</button>
+        </div>
+      </div>
       <div class="barre-recherche">
         <span class="compteur" id="compteur"></span>
       </div>
@@ -229,6 +240,10 @@ export async function rendreOeuvresListe(contenu, params = {}) {
   let typeFiltre = '';
   let formatsActifs = [];
   let stylesActifs = [];
+
+  // Mode sélection (retrait en lot)
+  let modeSelection = false;
+  const selection = new Set();
 
   const FORMATS_FILTRE = ['Petit', 'Moyen', 'Grand', 'Très grand'];
   const STYLES_FILTRE = ['Figuratif', 'Mi-Figuratif', 'Abstrait'];
@@ -334,7 +349,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
       <div class="groupe-filtre">
         <label class="case-archives">
           <input type="checkbox" id="panneau-case-archives" ${inclureArchives ? 'checked' : ''}>
-          <span>Inclure les archivées</span>
+          <span>Inclure les retirées</span>
         </label>
       </div>
     `;
@@ -493,7 +508,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
         </div>
         <div class="oeuvre-carte-corps">
           <div class="oeuvre-carte-ligne-titre">
-            <h3 class="oeuvre-carte-titre">${ech(o.titre)} ${o.archive ? badgeArchive() : ''}</h3>
+            <h3 class="oeuvre-carte-titre">${ech(o.titre)} ${o.archive ? '<span class="badge-archive">Retirée</span>' : ''}</h3>
             ${o.annee ? `<span class="oeuvre-carte-annee">${o.annee}</span>` : ''}
           </div>
           <p class="oeuvre-carte-artiste">${ech(o.artiste_nom)}</p>
@@ -514,7 +529,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
           ? `<div class="vignette avec-photo"><img src="${urlPhoto(o.image_path)}" loading="lazy" alt=""></div>`
           : `<div class="vignette"><span>&#9635;</span></div>`}
         <div class="info">
-          <p class="ligne-titre">${ech(o.titre)} ${o.archive ? badgeArchive() : ''}</p>
+          <p class="ligne-titre">${ech(o.titre)} ${o.archive ? '<span class="badge-archive">Retirée</span>' : ''}</p>
           <p class="ligne-meta">
             ${ech(o.artiste_nom)}
             ${o.numero_inventaire ? `&nbsp;&middot;&nbsp;${ech(o.numero_inventaire)}` : ''}
@@ -526,6 +541,86 @@ export async function rendreOeuvresListe(contenu, params = {}) {
         <span class="chevron">&rsaquo;</span>
       </button>
     `;
+  }
+
+  // ===== Mode sélection (retrait en lot) =====
+  const btnModeSelection = contenu.querySelector('#btn-retirer-lot');
+  const barreSelection = contenu.querySelector('#barre-selection');
+  const selectionCompteur = contenu.querySelector('#selection-compteur');
+  const btnSelRetirer = contenu.querySelector('#sel-retirer');
+
+  const estSelectionnable = (o) => !!o && o.statut !== 'vendu' && o.statut !== 'vendue' && !o.archive;
+
+  function majBarreSelection() {
+    selectionCompteur.textContent = pluriel(selection.size, 'sélectionnée');
+    btnSelRetirer.disabled = selection.size === 0;
+  }
+  function quitterModeSelection() {
+    modeSelection = false;
+    selection.clear();
+    barreSelection.classList.add('cache');
+    btnModeSelection.textContent = 'Retirer';
+    btnModeSelection.classList.remove('actif');
+    dessiner();
+  }
+  btnModeSelection.addEventListener('click', () => {
+    if (modeSelection) { quitterModeSelection(); return; }
+    modeSelection = true;
+    barreSelection.classList.remove('cache');
+    btnModeSelection.textContent = 'Quitter la sélection';
+    btnModeSelection.classList.add('actif');
+    majBarreSelection();
+    dessiner();
+  });
+  contenu.querySelector('#sel-annuler').addEventListener('click', quitterModeSelection);
+  contenu.querySelector('#sel-aucun').addEventListener('click', () => { selection.clear(); majBarreSelection(); dessiner(); });
+  contenu.querySelector('#sel-tout').addEventListener('click', () => {
+    conteneur.querySelectorAll('[data-id]').forEach((el) => {
+      const id = Number(el.dataset.id);
+      if (estSelectionnable(oeuvres.find((o) => o.id === id))) selection.add(id);
+    });
+    majBarreSelection();
+    dessiner();
+  });
+  btnSelRetirer.addEventListener('click', ouvrirRetraitLot);
+
+  function ouvrirRetraitLot() {
+    if (!selection.size) return;
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, '0');
+    const aujourdHui = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay-modale overlay-dialogue';
+    overlay.innerHTML = `
+      <div class="dialogue" role="dialog" aria-modal="true">
+        <div class="dialogue-entete"><h3 class="dialogue-titre">Retirer ${pluriel(selection.size, 'œuvre')}</h3></div>
+        <p class="dialogue-message">Ces œuvres seront retirées du catalogue actif (rendues à l'artiste). Les œuvres vendues sont ignorées. Réversible via « Réintégrer ».</p>
+        <div class="form-champ"><label for="lot-date">Date du retrait</label><input type="date" id="lot-date" value="${aujourdHui}"></div>
+        <div class="form-champ"><label for="lot-motif">Motif (optionnel)</label><input type="text" id="lot-motif" placeholder="Ex. reprise par l'artiste, fin d'exposition…" autocomplete="off"></div>
+        <div class="dialogue-actions">
+          <button type="button" class="btn-action btn-secondaire-action" id="lot-annuler">Annuler</button>
+          <button type="button" class="btn-action btn-principal" id="lot-ok">Retirer</button>
+        </div>
+      </div>`;
+    const fermer = () => overlay.remove();
+    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) fermer(); });
+    overlay.querySelector('#lot-annuler').addEventListener('click', fermer);
+    overlay.querySelector('#lot-ok').addEventListener('click', async () => {
+      const dateRetrait = overlay.querySelector('#lot-date').value || aujourdHui;
+      const motif = overlay.querySelector('#lot-motif').value.trim();
+      const ids = [...selection];
+      fermer();
+      try {
+        const res = await window.api.oeuvresRetraitLot(ids, { date: dateRetrait, motif });
+        oeuvres = await window.api.oeuvresListe(filtres);
+        quitterModeSelection();
+        await alerter({ type: 'succes', title: 'Retrait effectué', message: `${pluriel(res.retirees || 0, 'œuvre')} retirée(s) de la galerie.` });
+      } catch (err) {
+        await alerter({ type: 'error', title: 'Échec du retrait', message: nettoyerErreur(err) });
+      }
+    });
+    document.body.appendChild(overlay);
+    overlay.querySelector('#lot-date').focus();
   }
 
   function dessiner() {
@@ -556,14 +651,30 @@ export async function rendreOeuvresListe(contenu, params = {}) {
     }
 
     if (selecteurTaille) selecteurTaille.classList.toggle('cache', vueCourante !== 'grille');
+
+    // Bascule la sélection d'une œuvre (mode sélection).
+    const basculer = (id, el, oeu) => {
+      if (!estSelectionnable(oeu)) return;
+      if (selection.has(id)) selection.delete(id); else selection.add(id);
+      el.classList.toggle('selectionnee', selection.has(id));
+      majBarreSelection();
+    };
+
     if (vueCourante === 'grille') {
       conteneur.className = 'grille-oeuvres';
+      if (modeSelection) conteneur.classList.add('mode-selection');
       conteneur.style.setProperty('--vignette-min', TAILLES_VIGNETTE[tailleCourante]);
       conteneur.innerHTML = triees.map(carteGrille).join('');
       conteneur.querySelectorAll('.oeuvre-carte').forEach((carte) => {
         const id = Number(carte.dataset.id);
+        const oeu = triees.find((o) => o.id === id);
+        if (modeSelection) {
+          carte.classList.toggle('non-selectable', !estSelectionnable(oeu));
+          carte.classList.toggle('selectionnee', selection.has(id));
+        }
         carte.addEventListener('click', (e) => {
           if (e.target.closest('.btn-menu-oeuvre')) return;
+          if (modeSelection) { basculer(id, carte, oeu); return; }
           naviguer('oeuvre-fiche', { id });
         });
         carte.querySelector('.btn-menu-oeuvre').addEventListener('click', (e) => {
@@ -573,9 +684,19 @@ export async function rendreOeuvresListe(contenu, params = {}) {
       });
     } else {
       conteneur.className = 'liste';
+      if (modeSelection) conteneur.classList.add('mode-selection');
       conteneur.innerHTML = triees.map(ligneListe).join('');
       conteneur.querySelectorAll('.ligne-liste').forEach((btn) => {
-        btn.addEventListener('click', () => naviguer('oeuvre-fiche', { id: Number(btn.dataset.id) }));
+        const id = Number(btn.dataset.id);
+        const oeu = triees.find((o) => o.id === id);
+        if (modeSelection) {
+          btn.classList.toggle('non-selectable', !estSelectionnable(oeu));
+          btn.classList.toggle('selectionnee', selection.has(id));
+        }
+        btn.addEventListener('click', () => {
+          if (modeSelection) { basculer(id, btn, oeu); return; }
+          naviguer('oeuvre-fiche', { id });
+        });
       });
     }
   }

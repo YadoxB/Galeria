@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { openDatabase, closeDatabase, getStats } = require('./db/database');
-const { getPhotosDir, getDataDir } = require('./db/paths');
+const { getPhotosDir, getDataDir, getDocumentsDirAnnee } = require('./db/paths');
 const { seedPhotosIfNeeded } = require('./db/seedPhotos');
 const { choisirPhoto, effacerPhoto, lireFichierImage, lireOriginale, lirePourRecadrage, enregistrerImageRecadree } = require('./photos');
 const { obtenirConfig, mettreAJourConfig } = require('./config');
@@ -18,7 +18,7 @@ const {
   arreterSauvegardePeriodique,
 } = require('./db/backup');
 const { previewFile, importArtistes, importOeuvres } = require('./import/importer');
-const { genererCertificatPdf, genererFactureArtistePdf } = require('./pdf');
+const { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf } = require('./pdf');
 const {
   listerArtistes,
   obtenirArtiste,
@@ -52,6 +52,7 @@ const {
   oeuvresAPreparer,
   ventesSuivi,
   tousLesDocuments,
+  rapportJournalier,
   ventesParMois,
   statsTableauDeBord,
 } = require('./db/requetes');
@@ -64,7 +65,7 @@ const {
   creerCertificat, modifierCertificat, supprimerCertificat,
   apercuProchainNumeroCertificat, reserverProchainNumeroCertificat,
   apercuProchainNumeroInventaire, reserverProchainNumeroInventaire,
-  definirArchive,
+  definirArchive, definirRetraitOeuvre, definirRetraitOeuvresLot,
 } = require('./db/mutations');
 
 function createSplashWindow() {
@@ -489,6 +490,17 @@ app.whenReady().then(async () => {
     ventesParMois: ventesParMois(12),
   }));
   ipcMain.handle('documents:liste', () => tousLesDocuments());
+  ipcMain.handle('rapport:journalier', (_e, dateISO) => rapportJournalier(dateISO));
+  // Génère le PDF du rapport (format Lettre) via un gabarit autonome rendu
+  // dans une fenêtre isolée (polices système, aucun @font-face) — même
+  // mécanisme que les certificats, pour éviter le crash « Font Capture ».
+  ipcMain.handle('rapport:pdf', async (_e, dateISO) => {
+    const chemin = await genererRapportPdf(dateISO);
+    await shell.openPath(chemin);
+    return { path: chemin };
+  });
+  ipcMain.handle('oeuvres:retrait', (_e, id, data) => definirRetraitOeuvre(id, data));
+  ipcMain.handle('oeuvres:retrait-lot', (_e, ids, data) => definirRetraitOeuvresLot(ids, data));
   ipcMain.handle('suivi:donnees', () => ({
     preparation: oeuvresAPreparer(),
     ventes: ventesSuivi(),

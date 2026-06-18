@@ -194,7 +194,7 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable e
 - ~~**Section Suivi (#16)**~~ — **✓ Intégrée** : vue dédiée du cycle de vie complet (À préparer + Commandes en cours regroupés dans « Actif », onglet « Complétées »), bandeau de synthèse, stepper inline-éditable, paiement en menu déroulant, modales « Confirmer la livraison » / « Revenir en arrière ». Inclut l'étape de préparation **Stock** (Sage → Stock → Site).
 - **Œuvres en préparation sur le tableau de bord (#21)** — afficher les œuvres en préparation (Sage/Stock/Site) sur l'accueil, et **retirer le « Résumé du catalogue »** (valeur cumulée). Complète le bloc « Commandes non complétées ».
 - ~~**Section Documents (#15)**~~ — **✓ Livré** : section dédiée qui réunit tous les PDF produits (certificats + factures artiste), groupés par année, filtrables par type, recherchables, avec actions Voir / Dossier / Re-générer. Requête `tousLesDocuments` (sources `certificats.pdf_path` + `ventes.facture_artiste_path` ; prêt à accueillir factures client / lettres).
-- **Rapport journalier (#17)** — intrants (ajouts) / extrants (retraits, archivages) / ventes du jour. Format et plage à préciser (PDF ? dates configurables ?).
+- ~~**Rapport journalier (#17)**~~ — **✓ Livré** : section **Rapport** (sidebar) = journal d'une journée (sélecteur de date) — tuiles, ventes détaillées, intrants/extrants du jour, activité opérationnelle — **+ suivi opérationnel** (admissions en cours, ventes/livraisons en cours). **PDF Lettre** via gabarit autonome `gabarit-rapport.html` (IPC `rapport:pdf` → `printToPDF` 'Letter', polices système, fond blanc, nom horodaté). Inclut le **mécanisme de retrait** d'œuvres (remplace « Archiver » sur l'œuvre : bouton « Retirer » fiche + **retrait en lot** via mode sélection sur la liste ; vendues non retirables ; colonnes `retrait_date`/`retrait_motif`). ⚠️ **Connu (hors périmètre)** : le visionneur **Acrobat** affiche une erreur « Font Capture » quelques secondes après l'ouverture de **tout** PDF généré (certificats inclus) — environnemental, le PDF reste valide. À investiguer séparément.
 
 **Chantier 2 · Modèle économique** — *partie non bloquée du jalon 4*
 - **Commission par type d'œuvre** (50 % toiles / 33 % sculptures / 50 % repro après coûts) + champ **coûts de production** sur l'œuvre → branché sur la facture artiste. (Les % exacts et la saisie des coûts repro restent à confirmer — axe B.)
@@ -204,7 +204,7 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable e
 - ~~**Inverser les cartes Sujet et Commerce (#20)**~~ — **✓ Livré** : formulaire d'œuvre réagencé en Caractéristiques (8) + Commerce (4) ; Préparation (6) + Sujets (6).
 - ~~**Avancement du splash (#18)**~~ — **✓ Livré** : barre dorée + libellé d'étape sur le splash (Ouverture base → Préparation photos X/N → Chargement → Prêt). Le splash s'affiche **avant** les étapes longues ; `seedPhotos` rendu asynchrone par lots pour que la barre avance réellement. Progression poussée via `executeJavaScript`.
 - **Tutoriel de première ouverture (#13)** — overlay guidé au 1er lancement, accessible ensuite depuis Réglages/Aide.
-- **Correction #356 « Chrysalide 1/30 »** — dimensions illisibles dans la base, à saisir à la main (5 min).
+- ~~**Correction #356 « Chrysalide 1/30 »**~~ — **✓ Fait par Dave** (dimensions saisies à la main).
 - **Migration des 2 pseudonymes** — « LO (Laurent Torregrossa) », « Sofia (Sophie Lebeuf) » (5 min dans l'app).
 
 **Chantier 4 · Données & catalogue** — *gros ou risqué, à isoler*

@@ -35,6 +35,10 @@ const COLONNES_ATTENDUES = {
     ['site_publie_date', 'TEXT'],
     // Style : 'Figuratif' | 'Abstrait' | 'Mi-Figuratif' | NULL
     ['style', 'TEXT'],
+    // Retrait de la galerie (rendu à l'artiste) : remplace « Archiver » côté
+    // œuvre. S'appuie sur la colonne `archive` ; ajoute la date et le motif.
+    ['retrait_date', 'TEXT'],
+    ['retrait_motif', 'TEXT'],
   ],
   clients: [
     ['prenom', 'TEXT'],

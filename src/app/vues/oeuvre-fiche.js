@@ -440,13 +440,18 @@ export async function rendreOeuvreFiche(contenu, params) {
           <div class="prix-statut-bloc">
             ${prixBloc}
             ${badgeStatut(o.statut)}
+            ${o.archive ? '<span class="badge-archive">Retirée</span>' : ''}
           </div>
           ${o.url_site ? `<p class="zone-identite-lien"><button type="button" class="btn-lien" id="btn-voir-sur-site">Voir sur le site &rsaquo;</button></p>` : ''}
           ${venteLiee ? `<p class="zone-identite-lien"><button type="button" class="btn-lien" id="btn-voir-vente">Voir la vente ${venteLiee.numero_facture ? ech(venteLiee.numero_facture) + ' ' : ''}${clientNom ? '(' + ech(clientNom) + ') ' : ''}&rsaquo;</button></p>` : ''}
         </div>
         <div class="zone-identite-actions">
           <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
-          ${boutonArchive({ archive: o.archive })}
+          ${o.archive
+            ? `<button class="btn-action" id="btn-reintegrer">Réintégrer</button>`
+            : (o.statut !== 'vendu' && o.statut !== 'vendue'
+                ? `<button class="btn-action" id="btn-retirer">Retirer</button>`
+                : '')}
           <button class="btn-action" id="btn-modifier">Modifier</button>
           ${o.statut !== 'vendu' && o.statut !== 'vendue'
             ? `<button class="btn-action btn-principal" id="btn-vendre">Vendre</button>`
@@ -613,15 +618,74 @@ export async function rendreOeuvreFiche(contenu, params) {
 
     contenu.querySelector('#btn-modifier').addEventListener('click', entrerEdition);
     contenu.querySelector('#btn-supprimer').addEventListener('click', supprimer);
-    contenu.querySelector('#btn-archiver').addEventListener('click', async () => {
-      await basculerArchive({
-        table: 'oeuvres',
-        fiche: o,
-        libelleFiche: o.titre,
-        confirmer,
-        surFait: async () => { await rechargerBundle(); dessiner(); },
+    const btnRetirer = contenu.querySelector('#btn-retirer');
+    if (btnRetirer) {
+      btnRetirer.addEventListener('click', () => demanderRetrait());
+    }
+    const btnReintegrer = contenu.querySelector('#btn-reintegrer');
+    if (btnReintegrer) {
+      btnReintegrer.addEventListener('click', async () => {
+        const rep = await confirmer({
+          type: 'question',
+          title: "Réintégrer l'œuvre ?",
+          message: `Remettre « ${o.titre} » dans le catalogue actif ?`,
+          buttons: ['Réintégrer', 'Annuler'], defaultId: 0, cancelId: 1,
+        });
+        if (rep !== 0) return;
+        try {
+          o = await window.api.oeuvreRetrait(o.id, { retire: false });
+          await rechargerBundle();
+          dessiner();
+        } catch (err) {
+          await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) });
+        }
       });
-    });
+    }
+
+    // Modale de retrait : date (défaut aujourd'hui) + motif optionnel.
+    function demanderRetrait() {
+      const d = new Date();
+      const p = (n) => String(n).padStart(2, '0');
+      const aujourdHui = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay-modale overlay-dialogue';
+      overlay.innerHTML = `
+        <div class="dialogue" role="dialog" aria-modal="true">
+          <div class="dialogue-entete">
+            <h3 class="dialogue-titre">Retirer l'œuvre de la galerie</h3>
+          </div>
+          <p class="dialogue-message">« ${ech(o.titre)} » sera retirée du catalogue actif (rendue à l'artiste). Réversible plus tard via « Réintégrer ».</p>
+          <div class="form-champ">
+            <label for="retrait-date">Date du retrait</label>
+            <input type="date" id="retrait-date" value="${aujourdHui}">
+          </div>
+          <div class="form-champ">
+            <label for="retrait-motif">Motif (optionnel)</label>
+            <input type="text" id="retrait-motif" placeholder="Ex. reprise par l'artiste, fin d'exposition…" autocomplete="off">
+          </div>
+          <div class="dialogue-actions">
+            <button type="button" class="btn-action btn-secondaire-action" id="retrait-annuler">Annuler</button>
+            <button type="button" class="btn-action btn-principal" id="retrait-ok">Retirer</button>
+          </div>
+        </div>`;
+      const fermer = () => overlay.remove();
+      overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) fermer(); });
+      overlay.querySelector('#retrait-annuler').addEventListener('click', fermer);
+      overlay.querySelector('#retrait-ok').addEventListener('click', async () => {
+        const date = overlay.querySelector('#retrait-date').value || aujourdHui;
+        const motif = overlay.querySelector('#retrait-motif').value.trim();
+        fermer();
+        try {
+          o = await window.api.oeuvreRetrait(o.id, { retire: true, date, motif });
+          await rechargerBundle();
+          dessiner();
+        } catch (err) {
+          await alerter({ type: 'error', title: 'Échec du retrait', message: nettoyerErreur(err) });
+        }
+      });
+      document.body.appendChild(overlay);
+      overlay.querySelector('#retrait-date').focus();
+    }
     contenu.querySelector('#lien-artiste').addEventListener('click', () =>
       naviguer('artiste-fiche', { id: o.artiste_id })
     );

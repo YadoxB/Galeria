@@ -357,6 +357,98 @@ function tousLesDocuments() {
   return [...certificats, ...facturesArtiste];
 }
 
+// Rapport journalier — journal d'une journée donnée (YYYY-MM-DD) : intrants
+// (œuvres/artistes ajoutés), extrants (œuvres retirées ce jour), ventes du jour
+// et activité opérationnelle (événements du cycle de vie survenus ce jour).
+function rapportJournalier(dateISO) {
+  const db = openDatabase();
+  const oeuvresAjoutees = db.prepare(`
+    SELECT o.id, o.titre, o.numero_inventaire,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom
+    FROM oeuvres o JOIN artistes a ON a.id = o.artiste_id
+    WHERE date(o.cree_le) = ?
+    ORDER BY o.cree_le, o.id
+  `).all(dateISO);
+  const artistesAjoutes = db.prepare(`
+    SELECT id, TRIM(COALESCE(prenom || ' ', '') || nom) AS nom, type
+    FROM artistes WHERE date(cree_le) = ? ORDER BY cree_le, id
+  `).all(dateISO);
+  const oeuvresRetirees = db.prepare(`
+    SELECT o.id, o.titre, o.numero_inventaire, o.retrait_motif,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom
+    FROM oeuvres o JOIN artistes a ON a.id = o.artiste_id
+    WHERE o.retrait_date = ?
+    ORDER BY o.titre
+  `).all(dateISO);
+  const ventes = db.prepare(`
+    SELECT v.id, v.numero_facture, v.prix_vente, v.tps, v.tvq,
+           o.titre AS oeuvre_titre,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
+           TRIM(COALESCE(c.prenom || ' ', '') || c.nom) AS client_nom
+    FROM ventes v
+    JOIN oeuvres o ON o.id = v.oeuvre_id
+    JOIN artistes a ON a.id = o.artiste_id
+    JOIN clients c ON c.id = v.client_id
+    WHERE date(v.date_vente) = ?
+    ORDER BY v.id
+  `).all(dateISO);
+
+  // Activité opérationnelle : événements du cycle de vie survenus ce jour.
+  const evenementVente = (colDate, condSup = '') => db.prepare(`
+    SELECT v.id, v.numero_facture, v.prix_vente, v.tps, v.tvq,
+           o.titre AS oeuvre_titre,
+           TRIM(COALESCE(c.prenom || ' ', '') || c.nom) AS client_nom
+    FROM ventes v
+    JOIN oeuvres o ON o.id = v.oeuvre_id
+    JOIN clients c ON c.id = v.client_id
+    WHERE date(v.${colDate}) = ? ${condSup}
+    ORDER BY v.id
+  `).all(dateISO);
+  const certificatsProduits = db.prepare(`
+    SELECT c.numero_delivrance AS numero, o.titre AS oeuvre_titre
+    FROM certificats c JOIN oeuvres o ON o.id = c.oeuvre_id
+    WHERE date(c.cree_le) = ?
+    ORDER BY c.id
+  `).all(dateISO);
+  const activite = {
+    paiementsRecus: evenementVente('paiement_date', "AND v.paiement_statut = 'recu'"),
+    emballages: evenementVente('emballage_date'),
+    envois: evenementVente('envoi_date'),
+    livraisons: evenementVente('livraison_date'),
+    certificats: certificatsProduits,
+  };
+
+  // Suivi opérationnel (état courant, indépendant de la journée choisie) :
+  // admissions en cours (préparation incomplète) + ventes/livraisons en cours.
+  const admissionsEnCours = db.prepare(`
+    SELECT o.id, o.titre, o.cree_le, o.sage_cree, o.stock_fait, o.site_publie,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom
+    FROM oeuvres o JOIN artistes a ON a.id = o.artiste_id
+    WHERE o.archive = 0 AND o.statut <> 'vendu'
+      AND (o.sage_cree = 0 OR o.stock_fait = 0 OR o.site_publie = 0)
+    ORDER BY o.cree_le DESC, o.id DESC
+  `).all();
+  const ventesEnCours = db.prepare(`
+    SELECT v.id, v.numero_facture, v.prix_vente, v.date_vente,
+           v.paiement_statut, v.emballage_date, v.envoi_date, v.livraison_date,
+           o.titre AS oeuvre_titre,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
+           TRIM(COALESCE(c.prenom || ' ', '') || c.nom) AS client_nom
+    FROM ventes v
+    JOIN oeuvres o ON o.id = v.oeuvre_id
+    JOIN artistes a ON a.id = o.artiste_id
+    JOIN clients c ON c.id = v.client_id
+    WHERE v.paiement_statut IS NULL OR v.paiement_statut <> 'recu'
+       OR v.emballage_date IS NULL OR v.envoi_date IS NULL OR v.livraison_date IS NULL
+    ORDER BY v.date_vente DESC, v.id DESC
+  `).all();
+
+  return {
+    date: dateISO, oeuvresAjoutees, artistesAjoutes, oeuvresRetirees, ventes, activite,
+    suivi: { admissionsEnCours, ventesEnCours },
+  };
+}
+
 function oeuvresReservees(limite = 8) {
   const db = openDatabase();
   return db.prepare(`
@@ -653,6 +745,7 @@ module.exports = {
   oeuvresAPreparer,
   ventesSuivi,
   tousLesDocuments,
+  rapportJournalier,
   ventesParMois,
   statsTableauDeBord,
 };

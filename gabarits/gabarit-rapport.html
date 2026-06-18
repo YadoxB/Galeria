@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Rapport — Galeria</title>
+<style>
+  /* Polices SYSTÈME uniquement (aucun @font-face) : évite que printToPDF
+     embarque des polices et fasse planter le visionneur (« Font Capture »). */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif; color: #1c1a17; background: #fff; font-size: 13px; }
+  .page { padding: 12mm 14mm; }
+  .entete { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 4mm; border-bottom: 2px solid #900001; margin-bottom: 6mm; }
+  .entete img { height: 16mm; width: auto; }
+  .entete-texte { text-align: right; }
+  .titre-rap { font-size: 13pt; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; line-height: 1.1; }
+  .sous-titre { font-size: 8.5pt; color: #5a5248; margin-top: 2px; }
+  .date-rap { font-size: 8pt; color: #900001; margin-top: 3px; letter-spacing: .5px; text-transform: uppercase; }
+  .section { margin-bottom: 5mm; }
+  .section-titre { background: #900001; color: #fff; font-size: 8pt; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; padding: 1.4mm 3mm; border-radius: 3px; margin-bottom: 2.5mm; }
+  .vide { font-style: italic; color: #a09585; font-size: 8.5pt; padding: 1.5mm 1mm; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: #f5f0e8; }
+  thead th { font-size: 6.5pt; letter-spacing: .4px; text-transform: uppercase; color: #6b6253; font-weight: 600; padding: 1.2mm 3mm; text-align: left; border-bottom: 1px solid #d5cabb; line-height: 1.1; }
+  tbody tr { border-bottom: .5px solid #ece6da; }
+  tbody td { padding: 1.3mm 3mm; vertical-align: middle; font-size: 8.5pt; line-height: 1.25; }
+  th.num, td.num { text-align: right; white-space: nowrap; }
+  th.c, td.c { text-align: center; width: 13mm; }
+  tfoot td { border-top: 1.5px solid #d5cabb; font-weight: 700; }
+  .case { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 3px; font-size: 9px; font-weight: 700; line-height: 1; }
+  .ok { background: #e8f2e8; color: #3a6e3a; border: 1px solid #b0d4b0; }
+  .nok { background: #fdeaea; color: #900001; border: 1px solid #f0b8b8; }
+  .sous-liste { font-size: 8.5pt; color: #5a5248; margin-top: 2.5mm; }
+  .resume { border-top: 1.5px solid #900001; padding-top: 4mm; margin-top: 6mm; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6mm; }
+  .stats { display: flex; gap: 7mm; flex-wrap: wrap; }
+  .stat { text-align: center; }
+  .stat .n { font-size: 15pt; font-weight: 700; color: #900001; line-height: 1; }
+  .stat .l { font-size: 7pt; text-transform: uppercase; letter-spacing: .5px; color: #7a7060; }
+  .gen { font-size: 7.5pt; color: #a09585; font-style: italic; }
+</style>
+</head>
+<body>
+  <div class="page" id="page"></div>
+  <script>
+    function ech(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function prix(n) { return (Number(n) || 0).toLocaleString('fr-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $'; }
+    function caseP(ok) { return '<span class="case ' + (ok ? 'ok' : 'nok') + '">' + (ok ? '✓' : '✗') + '</span>'; }
+
+    function tableau(entetes, lignes, vide) {
+      if (!lignes.length) return '<p class="vide">' + vide + '</p>';
+      var th = entetes.map(function (h) {
+        return '<th' + (h.w ? ' style="width:' + h.w + '"' : '') + (h.cls ? ' class="' + h.cls + '"' : '') + '>' + h.t + '</th>';
+      }).join('');
+      return '<table><thead><tr>' + th + '</tr></thead><tbody>' + lignes.join('') + '</tbody></table>';
+    }
+
+    window.remplir = function (d) {
+      d = d || {};
+      var su = d.suivi || { admissionsEnCours: [], ventesEnCours: [] };
+      var t = d.totaux || {};
+      var html = '';
+
+      html += '<div class="entete">'
+        + '<img src="actifs/logo-gvsj.png" alt="">'
+        + '<div class="entete-texte">'
+        + '<div class="titre-rap">Rapport journalier</div>'
+        + '<div class="sous-titre">' + ech(d.galerie) + '</div>'
+        + '<div class="date-rap">' + ech(d.dateLongue) + '</div>'
+        + '</div></div>';
+
+      // Intrants
+      var intrants = tableau(
+        [{ t: 'Titre', w: '40%' }, { t: 'Artiste', w: '35%' }, { t: 'N° inventaire', w: '25%' }],
+        (d.oeuvresAjoutees || []).map(function (o) {
+          return '<tr><td><strong>' + ech(o.titre) + '</strong></td><td>' + ech(o.artiste_nom) + '</td><td>' + ech(o.numero_inventaire || '—') + '</td></tr>';
+        }),
+        'Aucune œuvre ajoutée.'
+      );
+      var artistes = (d.artistesAjoutes || []).length
+        ? '<p class="sous-liste"><strong>Artistes ajoutés :</strong> ' + d.artistesAjoutes.map(function (a) { return ech(a.nom); }).join(', ') + '</p>'
+        : '';
+      html += '<div class="section"><div class="section-titre">Intrants — Ajouts du jour</div>' + intrants + artistes + '</div>';
+
+      // Ventes
+      var ventes;
+      if ((d.ventes || []).length) {
+        var rows = d.ventes.map(function (v) {
+          var tot = (Number(v.prix_vente) || 0) + (Number(v.tps) || 0) + (Number(v.tvq) || 0);
+          return '<tr><td><strong>' + ech(v.oeuvre_titre) + '</strong></td><td>' + ech(v.artiste_nom) + '</td><td>' + ech(v.client_nom || '—') + '</td>'
+            + '<td class="num">' + prix(v.prix_vente) + '</td><td class="num">' + prix(v.tps) + '</td><td class="num">' + prix(v.tvq) + '</td><td class="num"><strong>' + prix(tot) + '</strong></td></tr>';
+        }).join('');
+        ventes = '<table><thead><tr><th style="width:26%">Titre</th><th style="width:18%">Artiste</th><th style="width:18%">Client</th><th class="num">Sous-total</th><th class="num">TPS</th><th class="num">TVQ</th><th class="num">Total</th></tr></thead>'
+          + '<tbody>' + rows + '</tbody>'
+          + '<tfoot><tr><td colspan="3">Totaux</td><td class="num">' + prix(t.sousTotal) + '</td><td class="num">' + prix(t.tps) + '</td><td class="num">' + prix(t.tvq) + '</td><td class="num">' + prix(t.total) + '</td></tr></tfoot></table>';
+      } else {
+        ventes = '<p class="vide">Aucune vente ce jour.</p>';
+      }
+      html += '<div class="section"><div class="section-titre">Ventes du jour</div>' + ventes + '</div>';
+
+      // Extrants
+      var extrants = tableau(
+        [{ t: 'Titre', w: '35%' }, { t: 'Artiste', w: '25%' }, { t: 'N° inventaire', w: '15%' }, { t: 'Raison', w: '25%' }],
+        (d.oeuvresRetirees || []).map(function (o) {
+          return '<tr><td><strong>' + ech(o.titre) + '</strong></td><td>' + ech(o.artiste_nom) + '</td><td>' + ech(o.numero_inventaire || '—') + '</td><td>' + ech(o.retrait_motif || '—') + '</td></tr>';
+        }),
+        'Aucune œuvre retirée.'
+      );
+      html += '<div class="section"><div class="section-titre">Extrants — Retraits du jour</div>' + extrants + '</div>';
+
+      // Suivi — Admissions en cours
+      var adm = tableau(
+        [{ t: 'Titre', w: '28%' }, { t: 'Artiste', w: '20%' }, { t: 'Admission', w: '15%' }, { t: 'Sage', cls: 'c' }, { t: 'Stock', cls: 'c' }, { t: 'Web', cls: 'c' }],
+        (su.admissionsEnCours || []).map(function (o) {
+          return '<tr><td><strong>' + ech(o.titre) + '</strong></td><td>' + ech(o.artiste_nom) + '</td><td>' + ech(o.admission || '') + '</td>'
+            + '<td class="c">' + caseP(o.sage_cree) + '</td><td class="c">' + caseP(o.stock_fait) + '</td><td class="c">' + caseP(o.site_publie) + '</td></tr>';
+        }),
+        'Aucune admission en cours.'
+      );
+      html += '<div class="section"><div class="section-titre">Suivi — Admissions en cours</div>' + adm + '</div>';
+
+      // Suivi — Ventes & livraisons en cours
+      var venc = tableau(
+        [{ t: 'Titre', w: '24%' }, { t: 'Artiste', w: '16%' }, { t: 'Client', w: '18%' }, { t: 'Prix', cls: 'num' }, { t: 'Paie.', cls: 'c' }, { t: 'Emb.', cls: 'c' }, { t: 'Exp.', cls: 'c' }, { t: 'Livr.', cls: 'c' }],
+        (su.ventesEnCours || []).map(function (v) {
+          return '<tr><td><strong>' + ech(v.oeuvre_titre) + '</strong></td><td>' + ech(v.artiste_nom) + '</td><td>' + ech(v.client_nom || '—') + '</td>'
+            + '<td class="num">' + prix(v.prix_vente) + '</td>'
+            + '<td class="c">' + caseP(v.paiement_statut === 'recu') + '</td><td class="c">' + caseP(!!v.emballage_date) + '</td><td class="c">' + caseP(!!v.envoi_date) + '</td><td class="c">' + caseP(!!v.livraison_date) + '</td></tr>';
+        }),
+        'Aucune vente ou livraison en cours.'
+      );
+      html += '<div class="section"><div class="section-titre">Suivi — Ventes &amp; livraisons en cours</div>' + venc + '</div>';
+
+      // Résumé
+      function stat(n, l) { return '<div class="stat"><div class="n">' + n + '</div><div class="l">' + l + '</div></div>'; }
+      html += '<div class="resume"><div class="stats">'
+        + stat(t.nbIntrants || 0, 'Intrant(s)')
+        + stat((d.oeuvresRetirees || []).length, 'Extrant(s)')
+        + stat((d.ventes || []).length, 'Vente(s)')
+        + stat(prix(t.total), 'Total des ventes')
+        + stat((su.admissionsEnCours || []).length, 'Admission(s)<br>en cours')
+        + stat((su.ventesEnCours || []).length, 'Livraison(s)<br>en cours')
+        + '</div><div class="gen">Rapport généré par Galeria · ' + ech(d.dateCourte) + ' à ' + ech(d.heure) + '</div></div>';
+
+      document.getElementById('page').innerHTML = html;
+    };
+  </script>
+</body>
+</html>

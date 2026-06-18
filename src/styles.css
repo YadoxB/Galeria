@@ -1170,6 +1170,26 @@ footer {
 }
 .taille-vue.cache { display: none; }
 
+/* ====== Mode sélection (retrait en lot) ====== */
+.barre-selection { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--gallery-navy); color: var(--soft-ivory); border-radius: 12px; padding: 10px 16px; margin-bottom: var(--s3); }
+.barre-selection.cache { display: none; }
+.barre-selection #selection-compteur { font-weight: 600; }
+.barre-selection .btn-lien { color: var(--soft-ivory); text-decoration: underline; }
+.barre-selection-actions { margin-left: auto; display: flex; gap: 8px; }
+#btn-mode-selection.actif { background: var(--gallery-navy); color: var(--soft-ivory); border-color: var(--gallery-navy); }
+
+.mode-selection .oeuvre-carte, .mode-selection .ligne-liste { position: relative; }
+.mode-selection .oeuvre-carte::after, .mode-selection .ligne-liste::after {
+  content: ''; position: absolute; top: 8px; left: 8px; width: 20px; height: 20px;
+  border-radius: 50%; border: 2px solid var(--mist); background: rgba(255,255,255,0.9); z-index: 3;
+}
+.mode-selection .oeuvre-carte.selectionnee, .mode-selection .ligne-liste.selectionnee { outline: 2px solid var(--warm-gold); outline-offset: 1px; }
+.mode-selection .oeuvre-carte.selectionnee::after, .mode-selection .ligne-liste.selectionnee::after {
+  background: var(--warm-gold); border-color: var(--warm-gold); content: '✓';
+  color: var(--soft-ivory); font-size: 13px; line-height: 18px; text-align: center; font-weight: 700;
+}
+.mode-selection .non-selectable { opacity: 0.45; pointer-events: none; }
+
 .oeuvre-carte {
   background: var(--porcelain);
   border: 1px solid var(--mist);
@@ -4686,3 +4706,103 @@ details.bloc.pliable > .bloc-corps {
 .suivi-menu-pop button.courant { font-weight: 600; }
 .suivi-menu-pop .coche { margin-left: auto; color: var(--succes); display: inline-flex; }
 .suivi-menu-pop .coche svg { width: 14px; height: 14px; }
+
+/* ====== Rapport journalier — vue écran (le journal) ====== */
+.vue-rapport { max-width: 1200px; margin: 0 auto; }
+.rap-controls { display: flex; align-items: center; gap: 16px; margin-bottom: 6px; }
+.rap-controls .entete-page-titre { flex-shrink: 0; margin: 0; }
+.rap-date { display: flex; align-items: center; gap: 8px; }
+.rap-date label { font-size: 13px; color: var(--slate); }
+.rap-date input { padding: 7px 12px; border: 1px solid var(--mist); border-radius: 10px; font-family: inherit; font-size: 14px; background: var(--porcelain); }
+.rap-date-titre { font-size: 14px; color: var(--slate); margin: 0 2px 18px; text-transform: capitalize; }
+.rap-tuiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+.rap-tuile { background: var(--porcelain); border: 1px solid var(--mist); border-radius: 14px; padding: 16px 18px; }
+.rap-tuile .v { font-family: var(--font-titre); font-size: 28px; line-height: 1; color: var(--ink); }
+.rap-tuile .l { font-size: 12px; color: var(--slate); margin-top: 6px; }
+.rap-tuile.intrants { border-top: 3px solid var(--succes); }
+.rap-tuile.extrants { border-top: 3px solid var(--terracotta); }
+.rap-tuile.ventes { border-top: 3px solid var(--warm-gold); }
+.rap-tuile.total { border-top: 3px solid var(--gallery-navy); }
+.rap-section { background: var(--porcelain); border: 1px solid var(--mist); border-radius: 16px; padding: 16px 20px; margin-bottom: 18px; }
+.rap-section > h3 { font-family: var(--font-titre); font-size: 22px; color: var(--gallery-navy); margin: 0 0 10px; }
+.rap-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 900px) { .rap-grid2 { grid-template-columns: 1fr; } }
+.rap-sous { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--stone); font-weight: 600; margin: 12px 0 4px; }
+.rap-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--mist); font-size: 14px; }
+.rap-row:last-child { border-bottom: 0; }
+.rap-row .pre { width: 30px; height: 30px; border-radius: 7px; background: var(--cloud); display: grid; place-items: center; color: var(--stone); flex-shrink: 0; font-size: 13px; font-family: var(--font-titre); }
+.rap-row .corps { flex: 1; min-width: 0; }
+.rap-row .corps .t { margin: 0; font-weight: 600; color: var(--ink); }
+.rap-row .corps .m { margin: 1px 0 0; font-size: 12px; color: var(--slate); }
+.rap-row .montant { font-weight: 600; color: var(--ink); }
+.rap-vide { color: var(--stone); font-size: 13px; font-style: italic; padding: 6px 0; margin: 0; }
+.rap-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.rap-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--stone); font-weight: 600; padding: 4px 10px; border-bottom: 1px solid var(--mist); }
+.rap-table td { padding: 9px 10px; border-bottom: 1px solid var(--mist); color: var(--ink); }
+.rap-table .num { text-align: right; white-space: nowrap; }
+.rap-table tfoot td { border-top: 2px solid var(--mist); border-bottom: 0; font-weight: 600; }
+.rap-fact { display: block; font-size: 11px; color: var(--stone); font-weight: 400; }
+.rap-act-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+.rap-act { border: 1px solid var(--mist); border-radius: 12px; padding: 10px 12px; background: var(--soft-ivory); }
+.rap-act-tete { display: flex; align-items: center; justify-content: space-between; font-weight: 600; color: var(--gallery-navy); font-size: 13px; margin-bottom: 4px; }
+.rap-act-n { background: var(--cloud); color: var(--slate); border-radius: 999px; padding: 0 8px; font-size: 12px; }
+.rap-act .rap-row { padding: 6px 0; font-size: 13px; }
+.rap-act .rap-row .pre { width: 24px; height: 24px; font-size: 11px; }
+.rap-table th.c, .rap-table td.c { text-align: center; width: 58px; }
+.etat-case { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 5px; font-size: 11px; font-weight: 700; }
+.etat-case.oui { background: var(--badge-disponible-fond); color: var(--succes); }
+.etat-case.non { background: #f4e3d8; color: var(--terracotta); }
+.rap-bloc-titre { font-family: var(--font-titre); font-size: 18px; color: var(--gallery-navy); margin: 26px 2px 12px; padding-top: 14px; border-top: 2px solid var(--mist); }
+
+/* ====== Version imprimable (document, inspirée du template fourni) ====== */
+.rapport-impression { display: none; }
+.rapport-doc {
+  background: #ffffff; color: #1c1a17; font-size: 13px;
+  /* Polices système uniquement : évite que printToPDF embarque les polices
+     personnalisées (Inter/Cormorant), qui font planter Acrobat (« Font Capture »). */
+  font-family: -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif;
+  border: 1px solid var(--mist); border-radius: 6px;
+  padding: 14mm 16mm 12mm; box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+.rapport-doc * { font-family: inherit; }
+.rapport-doc .entete { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 4mm; border-bottom: 2px solid #900001; margin-bottom: 6mm; }
+.rapport-doc .entete img { height: 16mm; }
+.rapport-doc .entete-texte { text-align: right; }
+.rapport-doc .titre-rap { font-size: 13pt; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #1c1a17; line-height: 1.1; }
+.rapport-doc .sous-titre { font-size: 8.5pt; color: #5a5248; margin-top: 2px; }
+.rapport-doc .date-rap { font-size: 8pt; color: #900001; margin-top: 3px; letter-spacing: .5px; text-transform: uppercase; }
+.rapport-doc .section { margin-bottom: 5mm; }
+/* Titre de section distinctif : bandeau rouge plein */
+.rapport-doc .section-titre { background: #900001; color: #fdfcf8; font-size: 8pt; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; padding: 1.4mm 3mm; border-radius: 3px; margin-bottom: 2.5mm; }
+.rapport-doc .vide { font-style: italic; color: #a09585; font-size: 8.5pt; padding: 1.5mm 1mm; }
+.rapport-doc table { width: 100%; border-collapse: collapse; }
+.rapport-doc thead tr { background: #f5f0e8; }
+.rapport-doc thead th { font-size: 6.5pt; letter-spacing: .4px; text-transform: uppercase; color: #6b6253; font-weight: 600; padding: 1.2mm 3mm; text-align: left; border-bottom: 1px solid #d5cabb; line-height: 1.1; }
+.rapport-doc tbody tr { border-bottom: .5px solid #ece6da; }
+.rapport-doc tbody tr:last-child { border-bottom: none; }
+.rapport-doc tbody td { padding: 1.3mm 3mm; vertical-align: middle; font-size: 8.5pt; line-height: 1.25; }
+.rapport-doc tbody td strong { color: #1c1a17; }
+.rapport-doc .case { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 3px; font-size: 10px; font-weight: 700; line-height: 1; }
+.rapport-doc .ok { background: #e8f2e8; color: #3a6e3a; border: 1px solid #b0d4b0; }
+.rapport-doc .nok { background: #fdeaea; color: #900001; border: 1px solid #f0b8b8; }
+.rapport-doc .spacer { min-height: 6mm; }
+.rapport-doc .resume { border-top: 1.5px solid #900001; padding-top: 4mm; margin-top: 4mm; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6mm; }
+.rapport-doc .resume .stats { display: flex; gap: 8mm; }
+.rapport-doc .resume .stat { text-align: center; }
+.rapport-doc .resume .stat .n { font-size: 15pt; font-weight: 700; color: #900001; line-height: 1; }
+.rapport-doc .resume .stat .l { font-size: 7pt; text-transform: uppercase; letter-spacing: .5px; color: #7a7060; }
+.rapport-doc .resume .gen { font-size: 7.5pt; color: #a09585; font-style: italic; }
+.rapport-doc .sous-liste { font-size: 8.5pt; color: #5a5248; margin-top: 2.5mm; }
+
+@media print {
+  #barre-laterale, .btn-retour-flottant, .rap-noprint, .rapport-ecran { display: none !important; }
+  /* Neutraliser la mise en page flex de l'app pour que le document occupe
+     toute la largeur de la feuille (sinon il reste écrasé à gauche). */
+  html, body { width: 100% !important; height: auto !important; background: #fff !important; }
+  #appli { display: block !important; height: auto !important; }
+  #contenu { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; }
+  .vue-rapport { display: block !important; width: 100% !important; max-width: none !important; margin: 0 !important; }
+  .rapport-impression { display: block !important; }
+  .rapport-doc { width: 100% !important; border: 0; border-radius: 0; box-shadow: none; padding: 12mm 14mm; }
+  @page { size: letter; margin: 0; }
+}
