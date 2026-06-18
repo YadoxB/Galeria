@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo section « Documents »</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <link rel="stylesheet" href="../src/styles.css">
+  <style>
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+    .demo-bar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px 20px; background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .note { font-size: 12px; color: rgba(255,255,255,.6); }
+    main { max-width: 1080px; margin: 0 auto; padding: 24px 32px 60px; }
+
+    /* Barre de filtres par type */
+    .doc-filtres { display: flex; align-items: center; gap: 8px; margin: 4px 0 18px; flex-wrap: wrap; }
+    .doc-chip { border: 1px solid var(--mist); background: var(--porcelain); color: var(--slate); border-radius: 999px; padding: 6px 14px; font-size: 13px; cursor: pointer; font-family: inherit; }
+    .doc-chip.actif { background: var(--gallery-navy); color: var(--soft-ivory); border-color: var(--gallery-navy); font-weight: 600; }
+    .doc-compteur { margin-left: auto; font-size: 12px; color: var(--stone); }
+
+    /* Groupes par année */
+    .doc-annee { font-family: var(--font-titre); font-size: 20px; color: var(--gallery-navy); margin: 24px 2px 10px; }
+    .doc-annee:first-of-type { margin-top: 4px; }
+
+    .doc-carte { background: var(--porcelain); border: 1px solid var(--mist); border-radius: 16px; overflow: hidden; }
+    .doc-ligne { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-bottom: 1px solid var(--mist); }
+    .doc-ligne:last-child { border-bottom: 0; }
+    .doc-ligne:hover { background: var(--cloud); }
+    .doc-actions .btn-action { padding: 6px 12px; font-size: 12px; }
+    .doc-vide { padding: 30px; text-align: center; color: var(--stone); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Section « Documents »</div>
+    <div class="note">CSS réel. Données fictives.</div>
+  </div>
+
+  <main>
+    <div class="entete-page entete-page--simple">
+      <h2 class="entete-page-titre">Documents</h2>
+      <div class="entete-page-recherche-wrap">
+        <div class="recherche-pillule">
+          <svg class="recherche-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+          <input type="search" id="rech" placeholder="Rechercher (numéro, œuvre, artiste, client)…" autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-filtres" id="filtres">
+      <button class="doc-chip actif" data-type="tous">Tous</button>
+      <button class="doc-chip" data-type="certificat">Certificats</button>
+      <button class="doc-chip" data-type="facture_artiste">Factures artiste</button>
+      <span class="doc-compteur" id="compteur"></span>
+    </div>
+
+    <div id="liste"></div>
+  </main>
+
+  <script>
+    // Documents = certificats (pdf_path) + factures artiste (ventes.facture_artiste_path).
+    // À terme aussi factures client et lettres de remerciement.
+    const DOCS = [
+      { type:'facture_artiste', numero:'A-2026-014', date:'2026-06-14', oeuvre:'Brume matinale', artiste:'Anne Dubé', client:'Jean Côté' },
+      { type:'certificat', numero:'C-2026-031', date:'2026-06-14', oeuvre:'Brume matinale', artiste:'Anne Dubé', client:'Jean Côté' },
+      { type:'certificat', numero:'C-2026-030', date:'2026-06-12', oeuvre:"L'aube se lève", artiste:'Sophie Lebeuf', client:'Marie Tremblay' },
+      { type:'facture_artiste', numero:'A-2026-010', date:'2026-06-12', oeuvre:"L'aube se lève", artiste:'Sophie Lebeuf', client:'Marie Tremblay' },
+      { type:'certificat', numero:'C-2026-028', date:'2026-05-30', oeuvre:'Le grand large', artiste:'Sophie Lebeuf', client:'Hélène Roy' },
+      { type:'facture_artiste', numero:'A-2025-088', date:'2025-12-18', oeuvre:'Nocturne', artiste:'Claude Lalonde', client:'Pierre Gagné' },
+      { type:'certificat', numero:'C-2025-201', date:'2025-12-18', oeuvre:'Nocturne', artiste:'Claude Lalonde', client:'Pierre Gagné' },
+    ];
+
+    const LIBELLE = { certificat: "Certificat d'authenticité", facture_artiste: 'Facture artiste' };
+    const moisFr = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+    function dateFr(iso) { const [a,m,j] = iso.split('-').map(Number); return `${j} ${moisFr[m-1]} ${a}`; }
+    function norm(s) { return (s||'').normalize('NFD').replace(/\p{Mn}/gu,'').toLowerCase(); }
+
+    let typeActif = 'tous';
+    let filtre = '';
+
+    function ligne(d) {
+      const estFacture = d.type === 'facture_artiste';
+      const lettre = estFacture ? 'A' : 'C';
+      return `
+        <div class="doc-ligne">
+          <div class="doc-icone ${estFacture ? 'doc-icone-facture' : ''}">${lettre}</div>
+          <div class="doc-info">
+            <p class="doc-titre">${d.numero} · ${LIBELLE[d.type]}</p>
+            <p class="doc-meta">${d.oeuvre} · ${d.artiste}${d.client ? ' · ' + d.client : ''} · ${dateFr(d.date)}</p>
+          </div>
+          <div class="doc-actions">
+            <button type="button" class="btn-action btn-secondaire-action">Voir</button>
+            <button type="button" class="btn-action btn-secondaire-action" title="Ouvrir le dossier">Dossier</button>
+          </div>
+        </div>`;
+    }
+
+    function rendre() {
+      let docs = DOCS.slice().sort((a,b) => b.date.localeCompare(a.date));
+      if (typeActif !== 'tous') docs = docs.filter((d) => d.type === typeActif);
+      if (filtre) docs = docs.filter((d) => norm([d.numero,d.oeuvre,d.artiste,d.client,LIBELLE[d.type]].join(' ')).includes(filtre));
+
+      document.getElementById('compteur').textContent = `${docs.length} document${docs.length>1?'s':''}`;
+      const zone = document.getElementById('liste');
+      if (!docs.length) { zone.innerHTML = `<div class="doc-carte"><div class="doc-vide">Aucun document ${filtre ? 'ne correspond à la recherche' : 'pour ce filtre'}.</div></div>`; return; }
+
+      // Groupé par année (les PDF sont rangés par année sur le disque)
+      const parAnnee = new Map();
+      for (const d of docs) { const a = d.date.slice(0,4); if (!parAnnee.has(a)) parAnnee.set(a, []); parAnnee.get(a).push(d); }
+      let html = '';
+      for (const [annee, liste] of parAnnee) {
+        html += `<h3 class="doc-annee">${annee}</h3><div class="doc-carte">${liste.map(ligne).join('')}</div>`;
+      }
+      zone.innerHTML = html;
+    }
+
+    document.querySelectorAll('#filtres .doc-chip').forEach((b) => b.addEventListener('click', () => {
+      document.querySelectorAll('#filtres .doc-chip').forEach((x) => x.classList.remove('actif'));
+      b.classList.add('actif'); typeActif = b.dataset.type; rendre();
+    }));
+    document.getElementById('rech').addEventListener('input', (e) => { filtre = norm(e.target.value); rendre(); });
+    rendre();
+  </script>
+</body>
+</html>

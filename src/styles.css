@@ -3552,6 +3552,23 @@ details.bloc.pliable > .bloc-corps {
   border: 1px solid var(--mist);
   border-radius: var(--r-btn);
 }
+/* ====== Section Documents ====== */
+.doc-filtres { display: flex; align-items: center; gap: 8px; margin: 4px 0 18px; flex-wrap: wrap; }
+.doc-chip {
+  border: 1px solid var(--mist); background: var(--porcelain); color: var(--slate);
+  border-radius: 999px; padding: 6px 14px; font-size: 13px; cursor: pointer; font-family: inherit;
+}
+.doc-chip:hover { background: var(--cloud); }
+.doc-chip.actif { background: var(--gallery-navy); color: var(--soft-ivory); border-color: var(--gallery-navy); font-weight: 600; }
+.doc-compteur { margin-left: auto; font-size: 12px; color: var(--stone); }
+.doc-annee { font-family: var(--font-titre); font-size: 20px; color: var(--gallery-navy); margin: 24px 2px 10px; }
+.doc-annee:first-of-type { margin-top: 4px; }
+.doc-carte { background: var(--porcelain); border: 1px solid var(--mist); border-radius: 16px; overflow: hidden; }
+.doc-ligne { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-bottom: 1px solid var(--mist); }
+.doc-ligne:last-child { border-bottom: 0; }
+.doc-ligne:hover { background: var(--cloud); }
+.doc-vide { padding: 30px; text-align: center; color: var(--stone); font-size: 13px; }
+
 .doc-icone {
   width: 40px;
   height: 40px;

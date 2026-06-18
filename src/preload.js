@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('api', {
   },
   accueilDonnees: () => ipcRenderer.invoke('accueil:donnees'),
   suiviDonnees: () => ipcRenderer.invoke('suivi:donnees'),
+  documentsListe: () => ipcRenderer.invoke('documents:liste'),
   appInfos: () => ipcRenderer.invoke('app:infos'),
   iaCopierPourChatGPT: (oeuvreId) => ipcRenderer.invoke('ia:copier-pour-chatgpt', oeuvreId),
   iaCopierPourChatGPTInline: (params) => ipcRenderer.invoke('ia:copier-pour-chatgpt-inline', params),

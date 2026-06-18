@@ -322,6 +322,41 @@ function ventesSuivi() {
   `).all();
 }
 
+// Section Documents — tous les PDF produits, réunis depuis leurs sources.
+// Aujourd'hui : certificats (certificats.pdf_path) + factures artiste
+// (ventes.facture_artiste_path). À étendre quand les factures client et les
+// lettres de remerciement (ventes.facture_client_path / lettre_path) seront
+// générées. `ref_id` = id à passer pour la re-génération (certificat ou vente).
+function tousLesDocuments() {
+  const db = openDatabase();
+  const certificats = db.prepare(`
+    SELECT 'certificat' AS type, c.id AS ref_id,
+           c.numero_delivrance AS numero, c.date_delivrance AS date, c.pdf_path AS pdf_path,
+           o.titre AS oeuvre_titre,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
+           TRIM(COALESCE(cl.prenom || ' ', '') || cl.nom) AS client_nom
+    FROM certificats c
+    JOIN oeuvres o ON o.id = c.oeuvre_id
+    JOIN artistes a ON a.id = o.artiste_id
+    LEFT JOIN ventes v ON v.id = c.vente_id
+    LEFT JOIN clients cl ON cl.id = v.client_id
+    WHERE c.pdf_path IS NOT NULL AND TRIM(c.pdf_path) <> ''
+  `).all();
+  const facturesArtiste = db.prepare(`
+    SELECT 'facture_artiste' AS type, v.id AS ref_id,
+           v.numero_facture_artiste AS numero, v.date_vente AS date, v.facture_artiste_path AS pdf_path,
+           o.titre AS oeuvre_titre,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
+           TRIM(COALESCE(cl.prenom || ' ', '') || cl.nom) AS client_nom
+    FROM ventes v
+    JOIN oeuvres o ON o.id = v.oeuvre_id
+    JOIN artistes a ON a.id = o.artiste_id
+    JOIN clients cl ON cl.id = v.client_id
+    WHERE v.facture_artiste_path IS NOT NULL AND TRIM(v.facture_artiste_path) <> ''
+  `).all();
+  return [...certificats, ...facturesArtiste];
+}
+
 function oeuvresReservees(limite = 8) {
   const db = openDatabase();
   return db.prepare(`
@@ -617,6 +652,7 @@ module.exports = {
   commandesNonCompletees,
   oeuvresAPreparer,
   ventesSuivi,
+  tousLesDocuments,
   ventesParMois,
   statsTableauDeBord,
 };

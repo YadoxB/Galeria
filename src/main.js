@@ -51,6 +51,7 @@ const {
   commandesNonCompletees,
   oeuvresAPreparer,
   ventesSuivi,
+  tousLesDocuments,
   ventesParMois,
   statsTableauDeBord,
 } = require('./db/requetes');
@@ -487,6 +488,7 @@ app.whenReady().then(async () => {
     oeuvresEnPreparation: oeuvresAPreparer().slice(0, 12),
     ventesParMois: ventesParMois(12),
   }));
+  ipcMain.handle('documents:liste', () => tousLesDocuments());
   ipcMain.handle('suivi:donnees', () => ({
     preparation: oeuvresAPreparer(),
     ventes: ventesSuivi(),

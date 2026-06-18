@@ -193,7 +193,7 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable e
 **Chantier 1 · Visibilité & navigation** — *prochain jalon « Visibilité » ; naît du jalon 3 + du stepper du tableau de bord*
 - ~~**Section Suivi (#16)**~~ — **✓ Intégrée** : vue dédiée du cycle de vie complet (À préparer + Commandes en cours regroupés dans « Actif », onglet « Complétées »), bandeau de synthèse, stepper inline-éditable, paiement en menu déroulant, modales « Confirmer la livraison » / « Revenir en arrière ». Inclut l'étape de préparation **Stock** (Sage → Stock → Site).
 - **Œuvres en préparation sur le tableau de bord (#21)** — afficher les œuvres en préparation (Sage/Stock/Site) sur l'accueil, et **retirer le « Résumé du catalogue »** (valeur cumulée). Complète le bloc « Commandes non complétées ».
-- **Section Documents (#15)** — index de tous les PDF générés (certificats, factures artiste, à terme factures client / lettres / présentations), classés et recherchables (type, date, œuvre/artiste/vente).
+- ~~**Section Documents (#15)**~~ — **✓ Livré** : section dédiée qui réunit tous les PDF produits (certificats + factures artiste), groupés par année, filtrables par type, recherchables, avec actions Voir / Dossier / Re-générer. Requête `tousLesDocuments` (sources `certificats.pdf_path` + `ventes.facture_artiste_path` ; prêt à accueillir factures client / lettres).
 - **Rapport journalier (#17)** — intrants (ajouts) / extrants (retraits, archivages) / ventes du jour. Format et plage à préciser (PDF ? dates configurables ?).
 
 **Chantier 2 · Modèle économique** — *partie non bloquée du jalon 4*
