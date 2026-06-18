@@ -105,6 +105,90 @@ export function datalist(id, valeurs) {
   return `<datalist id="${id}">${valeurs.map((v) => `<option value="${ech(v)}">`).join('')}</datalist>`;
 }
 
+// ===== Médium : champ texte libre + dropdown (même composant que les cotes) =====
+export const MEDIUMS_PAR_DEFAUT = ['Acrylique', 'Huile', 'Encaustique', 'Aquarelle', 'Pastel', 'Photographie', 'Mixte'];
+
+// Markup d'un champ médium avec label (pour les formulaires).
+export function champMedium({ nom = 'medium', libelle = 'Médium', valeur = '', id, placeholder = 'Médium' } = {}) {
+  const idAttr = id || `f-${nom}`;
+  return `
+    <div class="form-champ">
+      <label for="${idAttr}">${ech(libelle)}</label>
+      <div class="select-edit-wrap" data-medium-wrap>
+        <input type="text" id="${idAttr}" name="${nom}" class="champ-medium-input" placeholder="${ech(placeholder)}" value="${ech(valeur ?? '')}" autocomplete="off">
+        <button type="button" class="select-edit-toggle" aria-label="Voir les médiums" tabindex="-1">▾</button>
+      </div>
+    </div>
+  `;
+}
+
+// Charge la liste complète des médiums connus (base + valeurs par défaut), triée.
+export async function chargerMediumsConnus() {
+  try {
+    const dbMediums = await window.api.oeuvresMediums();
+    const set = new Set([...MEDIUMS_PAR_DEFAUT, ...dbMediums]);
+    return Array.from(set).sort((x, y) => x.localeCompare(y, 'fr', { sensitivity: 'base' }));
+  } catch {
+    return [...MEDIUMS_PAR_DEFAUT];
+  }
+}
+
+// Branche le dropdown sur un wrap `.select-edit-wrap[data-medium-wrap]`.
+// opts.getMediums() peut renvoyer { mediumsArtiste, mediumsConnus } à chaque
+// ouverture (pour refléter un artiste qui change) ; sinon on prend les tableaux
+// statiques opts.mediumsArtiste / opts.mediumsConnus.
+// inclureTous : épingle « Tous » en tête (utilisé par les cotes).
+export function brancherDropdownMedium(wrap, opts = {}) {
+  if (!wrap) return;
+  const input = wrap.querySelector('input');
+  const toggle = wrap.querySelector('.select-edit-toggle');
+  if (!input || !toggle) return;
+  const norm = (s) => (s || '').toString().normalize('NFD').replace(/\p{Mn}/gu, '').trim().toLowerCase();
+  let panneau = null;
+  const fermer = () => {
+    if (panneau) { panneau.remove(); panneau = null; }
+    document.removeEventListener('mousedown', onClicExt);
+  };
+  const onClicExt = (e) => { if (!wrap.contains(e.target)) fermer(); };
+  const optionsHtml = (vals) => vals
+    .map((v) => `<button type="button" class="select-edit-option">${ech(v)}</button>`)
+    .join('');
+  const ouvrir = () => {
+    if (panneau) return;
+    const src = opts.getMediums ? opts.getMediums() : opts;
+    const mediumsArtiste = src.mediumsArtiste || [];
+    const mediumsConnus = src.mediumsConnus || [];
+    const ensArtiste = new Set(mediumsArtiste.map(norm));
+    const autres = mediumsConnus.filter((m) => !ensArtiste.has(norm(m)) && norm(m) !== 'tous');
+    panneau = document.createElement('div');
+    panneau.className = 'select-edit-panel';
+    let html = opts.inclureTous ? `<button type="button" class="select-edit-option select-edit-option-tous">Tous</button>` : '';
+    if (mediumsArtiste.length) {
+      html += `<div class="select-edit-section">Médiums de cet artiste</div>` + optionsHtml(mediumsArtiste);
+    }
+    if (autres.length) {
+      html += `<div class="select-edit-section">${mediumsArtiste.length ? 'Autres médiums' : 'Médiums'}</div>` + optionsHtml(autres);
+    }
+    if (!html) html = `<div class="select-edit-section">Aucun médium connu</div>`;
+    panneau.innerHTML = html;
+    wrap.appendChild(panneau);
+    panneau.querySelectorAll('.select-edit-option').forEach((b) => {
+      b.addEventListener('click', () => {
+        input.value = b.textContent;
+        fermer();
+        input.focus();
+        if (opts.onChange) opts.onChange(input.value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    });
+    setTimeout(() => document.addEventListener('mousedown', onClicExt), 0);
+  };
+  toggle.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (panneau) fermer(); else ouvrir();
+  });
+}
+
 export const PROVINCES_CANADA = [
   'Québec', 'Ontario', 'Nouveau-Brunswick', 'Nouvelle-Écosse',
   'Île-du-Prince-Édouard', 'Terre-Neuve-et-Labrador',

@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('api', {
     return () => ipcRenderer.removeListener('updater:etat', handler);
   },
   accueilDonnees: () => ipcRenderer.invoke('accueil:donnees'),
+  suiviDonnees: () => ipcRenderer.invoke('suivi:donnees'),
   appInfos: () => ipcRenderer.invoke('app:infos'),
   iaCopierPourChatGPT: (oeuvreId) => ipcRenderer.invoke('ia:copier-pour-chatgpt', oeuvreId),
   iaCopierPourChatGPTInline: (params) => ipcRenderer.invoke('ia:copier-pour-chatgpt-inline', params),

@@ -63,6 +63,9 @@ CREATE TABLE IF NOT EXISTS oeuvres (
   sage_cree              INTEGER NOT NULL DEFAULT 0
                          CHECK (sage_cree IN (0, 1)),
   sage_cree_date         TEXT,
+  stock_fait             INTEGER NOT NULL DEFAULT 0
+                         CHECK (stock_fait IN (0, 1)),
+  stock_fait_date        TEXT,
   site_publie            INTEGER NOT NULL DEFAULT 0
                          CHECK (site_publie IN (0, 1)),
   site_publie_date       TEXT,

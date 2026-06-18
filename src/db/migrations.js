@@ -26,9 +26,11 @@ const COLONNES_ATTENDUES = {
     ['profondeur', 'REAL'],
     ['url_site', 'TEXT'],
     ['cote_hors_normes', 'INTEGER NOT NULL DEFAULT 0'],
-    // Jalon 3 — préparation (en amont de la vente)
+    // Jalon 3 — préparation (en amont de la vente) : Sage → Stock → Site
     ['sage_cree', 'INTEGER NOT NULL DEFAULT 0'],
     ['sage_cree_date', 'TEXT'],
+    ['stock_fait', 'INTEGER NOT NULL DEFAULT 0'],
+    ['stock_fait_date', 'TEXT'],
     ['site_publie', 'INTEGER NOT NULL DEFAULT 0'],
     ['site_publie_date', 'TEXT'],
     // Style : 'Figuratif' | 'Abstrait' | 'Mi-Figuratif' | NULL
@@ -91,6 +93,19 @@ function migrer(db) {
       db.exec(`UPDATE oeuvres SET site_publie = 1`);
     }
     db.exec('PRAGMA user_version = 1');
+  }
+
+  // 1c. Backfill du jalon « Visibilité » : ajout de l'étape « Stock » dans la
+  //     préparation (entre Sage et Site). Tout le catalogue existant est réputé
+  //     déjà en stock. Versionné à 2 pour ne s'exécuter qu'une fois.
+  if (versionBase < 2) {
+    const colsOeuvres = new Set(
+      db.prepare(`PRAGMA table_info(oeuvres)`).all().map((c) => c.name)
+    );
+    if (colsOeuvres.has('stock_fait')) {
+      db.exec(`UPDATE oeuvres SET stock_fait = 1`);
+    }
+    db.exec('PRAGMA user_version = 2');
   }
 
   // 2. Backfill : artistes.numero_taxes (TPS unique) → artistes.numeros_taxes (liste JSON)

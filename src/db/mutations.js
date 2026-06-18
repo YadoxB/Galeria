@@ -123,9 +123,11 @@ const COLONNES_OEUVRE = [
   ['exposition_actuelle', vide],
   ['url_site', vide],
   ['cote_hors_normes', bool],
-  // Jalon 3 — préparation
+  // Jalon 3 — préparation (Sage → Stock → Site)
   ['sage_cree', bool],
   ['sage_cree_date', vide],
+  ['stock_fait', bool],
+  ['stock_fait_date', vide],
   ['site_publie', bool],
   ['site_publie_date', vide],
 ];
@@ -217,11 +219,13 @@ function majPreparationOeuvre(id, data = {}) {
   db.prepare(`
     UPDATE oeuvres SET
       sage_cree = ?, sage_cree_date = ?,
+      stock_fait = ?, stock_fait_date = ?,
       site_publie = ?, site_publie_date = ?,
       modifie_le = datetime('now')
     WHERE id = ?
   `).run(
     bool(data.sage_cree), vide(data.sage_cree_date),
+    bool(data.stock_fait), vide(data.stock_fait_date),
     bool(data.site_publie), vide(data.site_publie_date),
     oid
   );

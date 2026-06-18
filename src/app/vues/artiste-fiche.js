@@ -2,6 +2,7 @@ import { naviguer, retour, poserGardien, leverGardien, modifierParamsCourants, r
 import {
   ech, initiales, pluriel,
   champTexte, champTextarea, champCheckbox, datalist,
+  brancherDropdownMedium, chargerMediumsConnus,
   champPays, champSubdivision, brancherChangementPays,
   parserNumerosTaxes, urlPhoto, sansAccents, nomComplet,
   badgeArchive, boutonArchive, basculerArchive, nettoyerErreur,
@@ -32,8 +33,6 @@ const GABARIT_VIDE = {
   nb_oeuvres: 0,
 };
 
-const MEDIUMS_PAR_DEFAUT = ['Acrylique', 'Huile', 'Encaustique', 'Aquarelle', 'Pastel', 'Photographie', 'Mixte'];
-
 export async function rendreArtisteFiche(contenu, params) {
   const estNouveau = !!params.nouveau;
   let a;
@@ -42,15 +41,8 @@ export async function rendreArtisteFiche(contenu, params) {
   // Liste des médiums : fusion de la base existante et de la liste par défaut.
   // On charge en plus les médiums propres à CET artiste pour les mettre en
   // tête du dropdown (très visible).
-  let mediumsConnus = [];
+  const mediumsConnus = await chargerMediumsConnus();
   let mediumsArtiste = [];
-  try {
-    const dbMediums = await window.api.oeuvresMediums();
-    const set = new Set([...MEDIUMS_PAR_DEFAUT, ...dbMediums]);
-    mediumsConnus = Array.from(set).sort((x, y) => x.localeCompare(y, 'fr', { sensitivity: 'base' }));
-  } catch {
-    mediumsConnus = [...MEDIUMS_PAR_DEFAUT];
-  }
   if (!estNouveau) {
     try {
       mediumsArtiste = await window.api.oeuvresMediumsArtiste(params.id);
@@ -797,58 +789,12 @@ export async function rendreArtisteFiche(contenu, params) {
         </div>
       `;
     }
-    // Dropdown custom pour les médiums : input texte libre + bouton ▾ qui
-    // affiche toute la liste, sans filtrage. Click outside pour fermer.
-    // Deux sections : médiums déjà utilisés par cet artiste (en haut),
-    // puis tous les autres médiums (le reste).
-    const normaliser = (s) => (s || '').toString().normalize('NFD').replace(/\p{Mn}/gu, '').trim().toLowerCase();
-    const ensembleArtiste = new Set(mediumsArtiste.map(normaliser));
-    const autresMediums = mediumsConnus.filter((m) => !ensembleArtiste.has(normaliser(m)) && normaliser(m) !== 'tous');
-
-    function brancherDropdownMedium(wrap) {
-      const input = wrap.querySelector('.cote-medium');
-      const toggle = wrap.querySelector('.select-edit-toggle');
-      let panneau = null;
-      const fermer = () => {
-        if (panneau) { panneau.remove(); panneau = null; }
-        document.removeEventListener('mousedown', onClicExt);
-      };
-      const onClicExt = (e) => {
-        if (!wrap.contains(e.target)) fermer();
-      };
-      const optionsHtml = (vals) => vals
-        .map((v) => `<button type="button" class="select-edit-option">${ech(v)}</button>`)
-        .join('');
-      const ouvrir = () => {
-        if (panneau) return;
-        panneau = document.createElement('div');
-        panneau.className = 'select-edit-panel';
-        let html = `<button type="button" class="select-edit-option select-edit-option-tous">Tous</button>`;
-        if (mediumsArtiste.length) {
-          html += `<div class="select-edit-section">Médiums de cet artiste</div>`;
-          html += optionsHtml(mediumsArtiste);
-        }
-        if (autresMediums.length) {
-          html += `<div class="select-edit-section">Autres médiums</div>`;
-          html += optionsHtml(autresMediums);
-        }
-        panneau.innerHTML = html;
-        wrap.appendChild(panneau);
-        panneau.querySelectorAll('.select-edit-option').forEach((b) => {
-          b.addEventListener('click', () => {
-            input.value = b.textContent;
-            modifie = true;
-            fermer();
-            input.focus();
-          });
-        });
-        setTimeout(() => document.addEventListener('mousedown', onClicExt), 0);
-      };
-      toggle.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (panneau) fermer(); else ouvrir();
-      });
-    }
+    // Dropdown des médiums (composant partagé, même que la fiche œuvre et le
+    // calculateur). « Tous » épinglé en tête, propre aux cotes.
+    const brancherMedium = (wrap) => brancherDropdownMedium(wrap, {
+      mediumsArtiste, mediumsConnus, inclureTous: true,
+      onChange: () => { modifie = true; },
+    });
 
     function rendreCotes(cotesArr) {
       const liste = Array.isArray(cotesArr) && cotesArr.length ? cotesArr : [];
@@ -857,7 +803,7 @@ export async function rendreArtisteFiche(contenu, params) {
       zoneCotes.querySelectorAll('.btn-supprimer-ligne').forEach((btn) => {
         btn.onclick = () => { btn.closest('.ligne-cote').remove(); modifie = true; };
       });
-      zoneCotes.querySelectorAll('[data-medium-wrap]').forEach(brancherDropdownMedium);
+      zoneCotes.querySelectorAll('[data-medium-wrap]').forEach(brancherMedium);
     }
     rendreCotes(parserCotes(a.cotes));
     contenu.querySelector('#btn-ajouter-cote').addEventListener('click', () => {
@@ -870,7 +816,7 @@ export async function rendreArtisteFiche(contenu, params) {
         nouvelle.querySelectorAll('.btn-supprimer-ligne').forEach((btn) => {
           btn.onclick = () => { btn.closest('.ligne-cote').remove(); modifie = true; };
         });
-        nouvelle.querySelectorAll('[data-medium-wrap]').forEach(brancherDropdownMedium);
+        nouvelle.querySelectorAll('[data-medium-wrap]').forEach(brancherMedium);
       }
       modifie = true;
       const dernierPrix = zoneCotes.querySelector('.ligne-cote:last-child .cote-prix');

@@ -2,6 +2,7 @@ import { naviguer, retour, poserGardien, leverGardien, modifierParamsCourants, r
 import {
   ech, formaterPrix, badgeStatut, STATUTS,
   champTexte, champTextarea, champSelect, champCheckbox, datalist, urlPhoto,
+  champMedium, brancherDropdownMedium, chargerMediumsConnus,
   formaterDate, nomComplet, sansAccents, nettoyerErreur,
   badgeArchive, boutonArchive, basculerArchive,
 } from '../commun.js';
@@ -545,6 +546,7 @@ export async function rendreOeuvreFiche(contenu, params) {
       <div class="carte zone-preparation">
         <h3>Préparation</h3>
         ${blocPrep('sage', 'Sage 50', o.sage_cree, o.sage_cree_date, 'Créée dans Sage', 'À créer dans Sage', 'Obligatoire avant la vente.')}
+        ${blocPrep('stock', 'Stock', o.stock_fait, o.stock_fait_date, 'Mise en stock', 'À mettre en stock', "Une fois l'œuvre reçue et inventoriée.")}
         ${blocPrep('site', 'Site web', o.site_publie, o.site_publie_date, 'Publiée sur le site', 'Non publiée', 'Facultatif.')}
       </div>
     `;
@@ -670,6 +672,8 @@ export async function rendreOeuvreFiche(contenu, params) {
         o = await window.api.oeuvreMajPreparation(o.id, {
           sage_cree: o.sage_cree,
           sage_cree_date: o.sage_cree_date,
+          stock_fait: o.stock_fait,
+          stock_fait_date: o.stock_fait_date,
           site_publie: o.site_publie,
           site_publie_date: o.site_publie_date,
         });
@@ -691,6 +695,9 @@ export async function rendreOeuvreFiche(contenu, params) {
         if (cle === 'sage') {
           o.sage_cree = fait ? 1 : 0;
           o.sage_cree_date = fait ? (o.sage_cree_date || aujourdHuiISO()) : null;
+        } else if (cle === 'stock') {
+          o.stock_fait = fait ? 1 : 0;
+          o.stock_fait_date = fait ? (o.stock_fait_date || aujourdHuiISO()) : null;
         } else {
           o.site_publie = fait ? 1 : 0;
           o.site_publie_date = fait ? (o.site_publie_date || aujourdHuiISO()) : null;
@@ -702,6 +709,7 @@ export async function rendreOeuvreFiche(contenu, params) {
       inp.addEventListener('change', () => {
         const cle = inp.dataset.prepDate;
         if (cle === 'sage') o.sage_cree_date = inp.value || null;
+        else if (cle === 'stock') o.stock_fait_date = inp.value || null;
         else o.site_publie_date = inp.value || null;
         sauverPreparation();
       });
@@ -808,7 +816,7 @@ export async function rendreOeuvreFiche(contenu, params) {
               <div class="sous-section">
                 <h4>Matériel et facture</h4>
                 <div class="grille-form">
-                  ${champTexte({ nom: 'medium', libelle: 'Médium', valeur: o.medium })}
+                  ${champMedium({ nom: 'medium', libelle: 'Médium', valeur: o.medium })}
                   ${champTexte({ nom: 'support', libelle: 'Support', valeur: o.support })}
                   ${champTexte({ nom: 'emplacement_signature', libelle: 'Emplacement de la signature', valeur: o.emplacement_signature })}
                 </div>
@@ -868,6 +876,13 @@ export async function rendreOeuvreFiche(contenu, params) {
                 <div class="grille-form">
                   ${champCheckbox({ nom: 'sage_cree', libelle: 'Créée dans Sage 50', valeur: !!o.sage_cree })}
                   ${champTexte({ nom: 'sage_cree_date', libelle: 'Date Sage', valeur: o.sage_cree_date, type: 'date' })}
+                </div>
+              </div>
+              <div class="sous-section">
+                <h4>Stock</h4>
+                <div class="grille-form">
+                  ${champCheckbox({ nom: 'stock_fait', libelle: 'Mise en stock', valeur: !!o.stock_fait })}
+                  ${champTexte({ nom: 'stock_fait_date', libelle: 'Date stock', valeur: o.stock_fait_date, type: 'date' })}
                 </div>
               </div>
               <div class="sous-section">
@@ -1120,6 +1135,28 @@ export async function rendreOeuvreFiche(contenu, params) {
     const elFormat = form.elements.format;
     const elArtiste = form.elements.artiste_id;
     const elInventaire = form.elements.numero_inventaire;
+
+    // ---- Dropdown médium (composant partagé, même que les cotes) ----
+    // dessinerEdition() n'est pas async : on remplit les listes via des
+    // promesses ; le dropdown les lit à l'ouverture (getMediums).
+    const wrapMedium = contenu.querySelector('[data-medium-wrap]');
+    if (wrapMedium) {
+      let mediumsConnus = [];
+      let mediumsArtiste = [];
+      chargerMediumsConnus().then((m) => { mediumsConnus = m; });
+      const majMediumsArtiste = (id) => {
+        if (!id) { mediumsArtiste = []; return; }
+        window.api.oeuvresMediumsArtiste(Number(id))
+          .then((m) => { mediumsArtiste = m; })
+          .catch(() => { mediumsArtiste = []; });
+      };
+      majMediumsArtiste(elArtiste && elArtiste.value);
+      brancherDropdownMedium(wrapMedium, {
+        getMediums: () => ({ mediumsArtiste, mediumsConnus }),
+        inclureTous: false,
+      });
+      if (elArtiste) elArtiste.addEventListener('change', () => { majMediumsArtiste(elArtiste.value); });
+    }
     // Auto-rafraîchir le numéro d'inventaire quand l'artiste change, à condition
     // que l'utilisateur n'ait pas déjà modifié manuellement le champ.
     if (nouveau && elArtiste && elInventaire) {
@@ -1200,6 +1237,7 @@ export async function rendreOeuvreFiche(contenu, params) {
       });
     }
     brancherAutoDate('sage_cree', 'sage_cree_date');
+    brancherAutoDate('stock_fait', 'stock_fait_date');
     brancherAutoDate('site_publie', 'site_publie_date');
 
     // ====== Prix suggéré à partir des cotes de l'artiste ======

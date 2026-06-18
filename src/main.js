@@ -49,6 +49,8 @@ const {
   ventesRecentes,
   oeuvresReservees,
   commandesNonCompletees,
+  oeuvresAPreparer,
+  ventesSuivi,
   ventesParMois,
   statsTableauDeBord,
 } = require('./db/requetes');
@@ -461,6 +463,10 @@ app.whenReady().then(() => {
     oeuvresReservees: oeuvresReservees(8),
     commandesNonCompletees: commandesNonCompletees(10),
     ventesParMois: ventesParMois(12),
+  }));
+  ipcMain.handle('suivi:donnees', () => ({
+    preparation: oeuvresAPreparer(),
+    ventes: ventesSuivi(),
   }));
   ipcMain.handle('ia:copier-pour-chatgpt', (_e, oeuvreId) => preparerCopiePourChatGPT(oeuvreId));
   ipcMain.handle('ia:copier-pour-chatgpt-inline', (_e, params) => preparerCopiePourChatGPTInline(params || {}));

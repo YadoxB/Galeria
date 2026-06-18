@@ -1,4 +1,4 @@
-import { ech, sansAccents, nomComplet } from '../commun.js';
+import { ech, sansAccents, nomComplet, brancherDropdownMedium, chargerMediumsConnus } from '../commun.js';
 import { calculerPrixSuggere, parserCotes, TAILLES_COTES } from '../calcul-prix.js';
 
 export async function rendreOutils(contenu) {
@@ -30,7 +30,10 @@ export async function rendreOutils(contenu) {
             </div>
             <div class="form-champ">
               <label for="calc-medium">Médium (optionnel)</label>
-              <input type="text" id="calc-medium" placeholder="Acrylique, encaustique…">
+              <div class="select-edit-wrap" data-medium-wrap>
+                <input type="text" id="calc-medium" placeholder="Acrylique, encaustique…" autocomplete="off">
+                <button type="button" class="select-edit-toggle" aria-label="Voir les médiums" tabindex="-1">▾</button>
+              </div>
             </div>
           </div>
 
@@ -70,14 +73,22 @@ export async function rendreOutils(contenu) {
   const zoneCotes = contenu.querySelector('#calc-cotes-artiste');
 
   let artisteCharge = null;
+  let mediumsArtisteCalc = [];
+  const mediumsConnus = await chargerMediumsConnus();
+  brancherDropdownMedium(contenu.querySelector('[data-medium-wrap]'), {
+    getMediums: () => ({ mediumsArtiste: mediumsArtisteCalc, mediumsConnus }),
+    inclureTous: false,
+  });
 
   async function chargerArtiste(id) {
-    if (!id) { artisteCharge = null; afficherCotesArtiste(); calculer(); return; }
+    if (!id) { artisteCharge = null; mediumsArtisteCalc = []; afficherCotesArtiste(); calculer(); return; }
     try {
       artisteCharge = await window.api.artisteGet(Number(id));
     } catch {
       artisteCharge = null;
     }
+    try { mediumsArtisteCalc = await window.api.oeuvresMediumsArtiste(Number(id)); }
+    catch { mediumsArtisteCalc = []; }
     afficherCotesArtiste();
     calculer();
   }

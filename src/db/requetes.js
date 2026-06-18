@@ -282,6 +282,46 @@ function commandesNonCompletees(limite = 10) {
   `).all(limite);
 }
 
+// Section Suivi — œuvres non vendues pas encore prêtes (à créer dans Sage
+// ou à publier sur le site). Le catalogue existant a été backfillé prêt,
+// donc cette liste ne contient que les œuvres ajoutées depuis.
+function oeuvresAPreparer() {
+  const db = openDatabase();
+  return db.prepare(`
+    SELECT o.id, o.titre, o.numero_inventaire, o.image_path, o.statut,
+           o.sage_cree, o.sage_cree_date, o.stock_fait, o.stock_fait_date,
+           o.site_publie, o.site_publie_date,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom
+    FROM oeuvres o
+    JOIN artistes a ON a.id = o.artiste_id
+    WHERE o.archive = 0
+      AND o.statut <> 'vendu'
+      AND (o.sage_cree = 0 OR o.stock_fait = 0 OR o.site_publie = 0)
+    ORDER BY o.cree_le DESC, o.id DESC
+  `).all();
+}
+
+// Section Suivi — toutes les ventes avec leurs champs de cycle de vie.
+// Le renderer sépare « en cours » et « complétées » côté affichage.
+function ventesSuivi() {
+  const db = openDatabase();
+  return db.prepare(`
+    SELECT v.id, v.date_vente, v.numero_facture,
+           v.prix_vente, v.tps, v.tvq,
+           v.paiement_statut, v.paiement_date,
+           v.emballage_date, v.envoi_date, v.livraison_date,
+           o.titre AS oeuvre_titre, o.image_path, o.numero_inventaire,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
+           c.id AS client_id,
+           TRIM(COALESCE(c.prenom || ' ', '') || c.nom) AS client_nom
+    FROM ventes v
+    JOIN oeuvres o ON o.id = v.oeuvre_id
+    JOIN artistes a ON a.id = o.artiste_id
+    JOIN clients c ON c.id = v.client_id
+    ORDER BY v.date_vente DESC, v.id DESC
+  `).all();
+}
+
 function oeuvresReservees(limite = 8) {
   const db = openDatabase();
   return db.prepare(`
@@ -575,6 +615,8 @@ module.exports = {
   ventesRecentes,
   oeuvresReservees,
   commandesNonCompletees,
+  oeuvresAPreparer,
+  ventesSuivi,
   ventesParMois,
   statsTableauDeBord,
 };
