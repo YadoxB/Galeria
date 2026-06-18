@@ -8,10 +8,11 @@ identifiants.
 
 ---
 
-## [Non publié] — depuis 2026-06-18
+## [0.2.5] — 2026-06-18
 
-> Accumulé sur `master`, pas encore taggé ni publié. À livrer aux parents en
-> une **installation manuelle** (ils sont encore sur 0.2.0, sans auto-update).
+> Publiée sur GitHub Releases. À livrer aux parents en une **installation
+> manuelle** du build **complet** (ils sont encore sur 0.2.0, sans auto-update) —
+> le build public publié ici a un catalogue/photos vides.
 
 ### Ajouté
 
