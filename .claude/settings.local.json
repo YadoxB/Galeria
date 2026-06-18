@@ -88,7 +88,12 @@
       "Bash(gh release *)",
       "PowerShell(gh release view v0.2.3 --repo YadoxB/Galeria 2>&1)",
       "Bash(python -c \"import json,sys; data=json.load\\(sys.stdin\\); r=next\\(\\(x for x in data if x['tag_name']=='v0.2.3'\\), None\\); print\\('ID:', r['id'] if r else None\\)\")",
-      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\", \"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\", \"User\"\\); gh --version 2>&1 | Select-Object -First 3)"
+      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\", \"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\", \"User\"\\); gh --version 2>&1 | Select-Object -First 3)",
+      "Bash(node --check src/db/mutations.js)",
+      "Bash(node --check src/db/migrations.js)",
+      "Bash(node --check src/db/requetes.js)",
+      "Bash(node -e \"require\\('./src/db/migrations.js'\\); require\\('./src/db/requetes.js'\\); require\\('./src/db/mutations.js'\\); console.log\\('modules backend valides'\\)\")",
+      "Bash(node --check src/db/nomenclature.js)"
     ]
   }
 }

@@ -1,6 +1,7 @@
 const { openDatabase } = require('./database');
 const { obtenirArtiste, obtenirOeuvre, obtenirClient, obtenirVente, obtenirCertificat } = require('./requetes');
 const { obtenirConfig, mettreAJourConfig } = require('../config');
+const { construireNomFichier } = require('./nomenclature');
 
 const vide = (v) => {
   if (v == null) return null;
@@ -111,6 +112,7 @@ const COLONNES_OEUVRE = [
   ['profondeur', nombre],
   ['format', vide],
   ['orientation', vide],
+  ['style', vide],
   ['sujets', vide],
   ['emplacement_signature', vide],
   ['particularite', vide],
@@ -121,6 +123,11 @@ const COLONNES_OEUVRE = [
   ['exposition_actuelle', vide],
   ['url_site', vide],
   ['cote_hors_normes', bool],
+  // Jalon 3 — préparation
+  ['sage_cree', bool],
+  ['sage_cree_date', vide],
+  ['site_publie', bool],
+  ['site_publie_date', vide],
 ];
 
 function modifierArtiste(id, data) {
@@ -201,6 +208,26 @@ function supprimerOeuvre(id) {
   return { supprime: info.changes > 0 };
 }
 
+// Jalon 3 — mise à jour partielle des statuts de préparation (sans passer par
+// le formulaire complet). Met à jour seulement les colonnes sage/site.
+function majPreparationOeuvre(id, data = {}) {
+  const oid = entier(id);
+  if (!oid) throw new Error('Identifiant invalide.');
+  const db = openDatabase();
+  db.prepare(`
+    UPDATE oeuvres SET
+      sage_cree = ?, sage_cree_date = ?,
+      site_publie = ?, site_publie_date = ?,
+      modifie_le = datetime('now')
+    WHERE id = ?
+  `).run(
+    bool(data.sage_cree), vide(data.sage_cree_date),
+    bool(data.site_publie), vide(data.site_publie_date),
+    oid
+  );
+  return obtenirOeuvre(oid);
+}
+
 const normaliserTelephone = (v) => {
   const s = vide(v);
   if (!s) return null;
@@ -274,6 +301,12 @@ const COLONNES_VENTE = [
   ['mode_paiement', vide],
   ['numero_facture', vide],
   ['notes', vide],
+  // Jalon 3 — suivi cycle de vie post-vente
+  ['paiement_statut', vide],
+  ['paiement_date', vide],
+  ['emballage_date', vide],
+  ['envoi_date', vide],
+  ['livraison_date', vide],
 ];
 
 function formaterNumero(prefixe, n) {
@@ -367,10 +400,19 @@ function creerVente(data) {
   db.exec('BEGIN');
   try {
     // Vérifier que l'œuvre existe et n'est pas déjà vendue
-    const oeuvre = db.prepare('SELECT id, statut FROM oeuvres WHERE id = ?').get(oeuvreId);
+    const oeuvre = db.prepare('SELECT id, statut, sage_cree FROM oeuvres WHERE id = ?').get(oeuvreId);
     if (!oeuvre) throw new Error("Œuvre introuvable.");
     if (oeuvre.statut === 'vendu') {
       throw new Error("Cette œuvre est déjà marquée comme vendue. Vérifie la liste des ventes existantes.");
+    }
+    if (!oeuvre.sage_cree) {
+      const nomFichier = construireNomFichier(obtenirOeuvre(oeuvreId));
+      const ref = nomFichier ? `\n\nNom de référence (= item Sage / nom de fichier photo) :\n${nomFichier}` : '';
+      throw new Error(
+        "Cette œuvre n'a pas été créée dans Sage 50. "
+        + "Crée-la dans Sage, puis coche « Créée dans Sage » sur sa fiche avant d'enregistrer la vente."
+        + ref
+      );
     }
 
     const colNames = cols.join(', ');
@@ -385,6 +427,26 @@ function creerVente(data) {
     db.exec('ROLLBACK');
     throw err;
   }
+}
+
+// Jalon 3 — mise à jour partielle des statuts post-vente (sans passer par le
+// formulaire complet). Met à jour seulement les colonnes du cycle de vie.
+function majCycleVente(id, data = {}) {
+  const vid = entier(id);
+  if (!vid) throw new Error('Identifiant invalide.');
+  const db = openDatabase();
+  db.prepare(`
+    UPDATE ventes SET
+      paiement_statut = ?, paiement_date = ?,
+      emballage_date = ?, envoi_date = ?, livraison_date = ?,
+      modifie_le = datetime('now')
+    WHERE id = ?
+  `).run(
+    vide(data.paiement_statut), vide(data.paiement_date),
+    vide(data.emballage_date), vide(data.envoi_date), vide(data.livraison_date),
+    vid
+  );
+  return obtenirVente(vid);
 }
 
 function modifierVente(id, data) {
@@ -533,9 +595,9 @@ function supprimerCertificat(id) {
 
 module.exports = {
   modifierArtiste, creerArtiste, supprimerArtiste,
-  modifierOeuvre, creerOeuvre, supprimerOeuvre,
+  modifierOeuvre, creerOeuvre, supprimerOeuvre, majPreparationOeuvre,
   modifierClient, creerClient, supprimerClient,
-  creerVente, modifierVente, supprimerVente,
+  creerVente, modifierVente, supprimerVente, majCycleVente,
   apercuProchainNumeroFacture, reserverProchainNumeroFacture,
   apercuProchainNumeroFactureArtiste, reserverProchainNumeroFactureArtiste,
   obtenirOuReserverNumeroFactureArtisteVente,

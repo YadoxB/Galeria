@@ -48,14 +48,15 @@ const {
   oeuvresRecentes,
   ventesRecentes,
   oeuvresReservees,
+  commandesNonCompletees,
   ventesParMois,
   statsTableauDeBord,
 } = require('./db/requetes');
 const {
   modifierArtiste, creerArtiste, supprimerArtiste,
-  modifierOeuvre, creerOeuvre, supprimerOeuvre,
+  modifierOeuvre, creerOeuvre, supprimerOeuvre, majPreparationOeuvre,
   modifierClient, creerClient, supprimerClient,
-  creerVente, modifierVente, supprimerVente,
+  creerVente, modifierVente, supprimerVente, majCycleVente,
   apercuProchainNumeroFacture, reserverProchainNumeroFacture,
   creerCertificat, modifierCertificat, supprimerCertificat,
   apercuProchainNumeroCertificat, reserverProchainNumeroCertificat,
@@ -458,6 +459,7 @@ app.whenReady().then(() => {
     oeuvresRecentes: oeuvresRecentes(6),
     ventesRecentes: ventesRecentes(6),
     oeuvresReservees: oeuvresReservees(8),
+    commandesNonCompletees: commandesNonCompletees(10),
     ventesParMois: ventesParMois(12),
   }));
   ipcMain.handle('ia:copier-pour-chatgpt', (_e, oeuvreId) => preparerCopiePourChatGPT(oeuvreId));
@@ -518,6 +520,11 @@ app.whenReady().then(() => {
   ipcMain.handle('oeuvres:modifier', (_e, id, data) => modifierOeuvre(id, data));
   ipcMain.handle('oeuvres:creer', (_e, data) => creerOeuvre(data));
   ipcMain.handle('oeuvres:supprimer', (_e, id) => supprimerOeuvre(id));
+  ipcMain.handle('oeuvres:maj-preparation', (_e, id, data) => majPreparationOeuvre(id, data));
+  ipcMain.handle('oeuvres:nom-fichier', (_e, id) => {
+    const { construireNomFichier } = require('./db/nomenclature');
+    return construireNomFichier(obtenirOeuvre(id));
+  });
   ipcMain.handle('photo:choisir', (e, opts) => choisirPhoto(e.sender, opts));
   ipcMain.handle('photo:effacer', (_e, opts) => effacerPhoto(opts));
   ipcMain.handle('photo:lire-fichier', (e) => lireFichierImage(e.sender));
@@ -558,6 +565,7 @@ app.whenReady().then(() => {
   ipcMain.handle('ventes:voisins', (_e, id) => voisinsVente(id));
   ipcMain.handle('ventes:creer', (_e, data) => creerVente(data));
   ipcMain.handle('ventes:modifier', (_e, id, data) => modifierVente(id, data));
+  ipcMain.handle('ventes:maj-cycle', (_e, id, data) => majCycleVente(id, data));
   ipcMain.handle('ventes:supprimer', (_e, id) => supprimerVente(id));
   ipcMain.handle('ventes:apercu-numero-facture', () => apercuProchainNumeroFacture());
   ipcMain.handle('oeuvres:apercu-numero-inventaire', (_e, artisteId) => apercuProchainNumeroInventaire(artisteId));

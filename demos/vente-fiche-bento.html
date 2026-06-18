@@ -216,6 +216,108 @@
       padding: var(--s3); text-align: center; font-size: 13px;
     }
 
+    /* ===== Cycle de vie (Jalon 3, inline-éditable) ===== */
+    .zone-cycle { grid-column: span 12; padding: var(--s3) var(--s4); }
+    .cycle-corps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--s2);
+    }
+    .cycle-bloc {
+      background: var(--soft-ivory);
+      border: 1px solid var(--mist);
+      border-radius: var(--r-btn);
+      padding: var(--s3);
+    }
+    .cycle-bloc h4 {
+      margin: 0 0 var(--s2);
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--slate);
+    }
+    .cycle-pastille {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: var(--r-badge);
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .cycle-pastille-fait {
+      background: var(--badge-disponible-fond);
+      color: var(--badge-disponible-texte);
+    }
+    .cycle-pastille-attente {
+      background: var(--badge-reservee-fond);
+      color: var(--badge-reservee-texte);
+    }
+    .cycle-pastille-partiel {
+      background: rgba(185, 86, 47, 0.15);
+      color: var(--terracotta);
+    }
+    .cycle-pastille-info { background: var(--cloud); color: var(--slate); }
+    .cycle-select {
+      display: block;
+      width: 100%;
+      height: 32px;
+      padding: 0 8px;
+      margin-bottom: 6px;
+      border: 1px solid var(--mist);
+      border-radius: 6px;
+      background: var(--porcelain);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .cycle-date {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      color: var(--slate);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      background: transparent;
+      display: inline-block;
+    }
+    .cycle-date:hover { background: var(--cloud); border-color: var(--mist); }
+    .cycle-action {
+      display: inline-block;
+      width: 100%;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 10px;
+      margin-top: 4px;
+      border-radius: var(--r-btn);
+      border: 1px solid var(--mist);
+      background: var(--porcelain);
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .cycle-action:hover { background: var(--cloud); }
+    .cycle-action-fait {
+      background: var(--warm-gold);
+      color: var(--soft-ivory);
+      border-color: var(--warm-gold);
+    }
+    .cycle-action-annuler {
+      background: transparent;
+      border: 0;
+      color: var(--erreur);
+      padding: 4px;
+      width: auto;
+      font-size: 11px;
+      display: inline;
+      margin-top: 0;
+    }
+
     /* ===== Notes ===== */
     .zone-notes { grid-column: span 12; padding: var(--s3) var(--s4); }
     .zone-notes .corps { font-size: 14px; color: var(--ink); line-height: 1.6; }
@@ -268,6 +370,12 @@
           certificats: [{ num: 'C-2026-008', date: '14 mars 2026', valeur: 4200 }],
         },
         notes: '',
+        cycle: {
+          paiement_statut: 'recu', paiement_date: '14 mars 2026',
+          emballage_date: '15 mars 2026',
+          envoi_date: '16 mars 2026',
+          livraison_date: '',  // en attente
+        },
       },
       rabais: {
         numero: 'F-2025-024',
@@ -281,6 +389,12 @@
           certificats: [{ num: 'C-2025-024', date: '12 juin 2025', valeur: 4000 }],
         },
         notes: "Rabais artiste de 200 $ accordé à la demande de l'artiste, pour faciliter la vente à un collectionneur de longue date.",
+        cycle: {
+          paiement_statut: 'partiel', paiement_date: '20 juin 2025',
+          emballage_date: '12 juin 2025',
+          envoi_date: '',
+          livraison_date: '',
+        },
       },
       fraiche: {
         numero: 'F-2026-004',
@@ -291,6 +405,10 @@
         montants: { sousTotal: 3200, rabaisArt: 0, rabaisGal: 0, tps: 160, tvq: 319.20 },
         documents: { factureArtiste: null, certificats: [] },
         notes: '',
+        cycle: {
+          paiement_statut: null, paiement_date: '',
+          emballage_date: '', envoi_date: '', livraison_date: '',
+        },
       },
       sansfacture: {
         numero: '',
@@ -301,6 +419,12 @@
         montants: { sousTotal: 2900, rabaisArt: 0, rabaisGal: 0, tps: 145, tvq: 289.28 },
         documents: { factureArtiste: null, certificats: [{ num: 'C-2024-002', date: '14 jan 2024', valeur: 2900 }] },
         notes: '',
+        cycle: {
+          paiement_statut: 'recu', paiement_date: '14 jan 2024',
+          emballage_date: '14 jan 2024',
+          envoi_date: '14 jan 2024',
+          livraison_date: '14 jan 2024',
+        },
       },
     };
 
@@ -423,6 +547,24 @@
             </div>
           </div>
 
+          <div class="carte zone-cycle">
+            <h3>Suivi cycle de vie</h3>
+            <div class="cycle-corps">
+              <div class="cycle-bloc">
+                <h4>Paiement</h4>
+                <select class="cycle-select" data-cycle="paiement_statut">
+                  <option value="" ${v.cycle.paiement_statut === null ? 'selected' : ''}>En attente</option>
+                  <option value="partiel" ${v.cycle.paiement_statut === 'partiel' ? 'selected' : ''}>Partiel</option>
+                  <option value="recu" ${v.cycle.paiement_statut === 'recu' ? 'selected' : ''}>Reçu</option>
+                </select>
+                ${v.cycle.paiement_date ? `<button class="cycle-date">le ${ech(v.cycle.paiement_date)} ✎</button>` : ''}
+              </div>
+              ${cycleBloc('Emballage', 'emballage', v.cycle.emballage_date, 'À emballer')}
+              ${cycleBloc('Envoi', 'envoi', v.cycle.envoi_date, 'À envoyer')}
+              ${cycleBloc('Livraison', 'livraison', v.cycle.livraison_date, 'À livrer')}
+            </div>
+          </div>
+
           ${v.notes ? `
             <div class="carte zone-notes">
               <h3>Notes internes</h3>
@@ -431,6 +573,45 @@
           ` : ''}
         </div>
       `;
+
+      // Branche les toggles inline de la carte Suivi cycle de vie.
+      const profilActuel = profil;
+      document.querySelectorAll('[data-cycle]').forEach((el) => {
+        const action = el.dataset.cycle;  // 'paiement_statut' ou 'emballage'/'envoi'/'livraison'
+        const c = PROFILS[profilActuel].cycle;
+        const today = new Date().toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
+        if (el.tagName === 'SELECT') {
+          el.addEventListener('change', () => {
+            const v = el.value;
+            c.paiement_statut = v ? v : null;
+            if (v === 'recu' && !c.paiement_date) c.paiement_date = today;
+            if (!v) c.paiement_date = '';
+            rendre(profilActuel);
+          });
+        } else {
+          el.addEventListener('click', () => {
+            const cle = action + '_date';
+            c[cle] = c[cle] ? '' : today;
+            rendre(profilActuel);
+          });
+        }
+      });
+    }
+
+    function cycleBloc(titre, cle, date, libelleAttente) {
+      if (date) {
+        return `<div class="cycle-bloc">
+          <h4>${titre}</h4>
+          <span class="cycle-pastille cycle-pastille-fait">✓ Fait</span>
+          <button class="cycle-date">le ${date} ✎</button>
+          <button class="cycle-action cycle-action-annuler" data-cycle="${cle}">Annuler</button>
+        </div>`;
+      }
+      return `<div class="cycle-bloc">
+        <h4>${titre}</h4>
+        <span class="cycle-pastille cycle-pastille-attente">${libelleAttente}</span>
+        <button class="cycle-action cycle-action-fait" data-cycle="${cle}">✓ Marquer aujourd'hui</button>
+      </div>`;
     }
 
     document.querySelectorAll('#switch-profil button').forEach((btn) => {

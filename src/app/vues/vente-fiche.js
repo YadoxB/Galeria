@@ -1,9 +1,9 @@
 import { naviguer, retour, poserGardien, leverGardien, remplacerCourant } from '../router.js';
 import {
   ech, sansAccents, pluriel,
-  champTexte, champTextarea, champCheckbox,
+  champTexte, champTextarea, champCheckbox, champSelect,
   champPays, champSubdivision, brancherChangementPays,
-  formaterPrix, formaterDate, nomComplet, urlPhoto,
+  formaterPrix, formaterDate, nomComplet, urlPhoto, nettoyerErreur,
 } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
 import { chargerConfig } from '../marque.js';
@@ -138,7 +138,7 @@ export async function rendreVenteFiche(contenu, params) {
       leverGardien();
       retour();
     } catch (err) {
-      await alerter({ type: 'error', title: 'Suppression échouée', message: err.message });
+      await alerter({ type: 'error', title: 'Suppression échouée', message: nettoyerErreur(err) });
     }
   }
 
@@ -202,7 +202,7 @@ export async function rendreVenteFiche(contenu, params) {
           await window.api.certificatSupprimer(id);
           await rafraichirCertificatsVente();
         } catch (err) {
-          await alerter({ type: 'error', title: 'Suppression échouée', message: err.message });
+          await alerter({ type: 'error', title: 'Suppression échouée', message: nettoyerErreur(err) });
         }
       });
     });
@@ -215,7 +215,7 @@ export async function rendreVenteFiche(contenu, params) {
         try {
           await window.api.pdfOuvrir(cert.pdf_path);
         } catch (err) {
-          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le PDF', message: err.message });
+          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le PDF', message: nettoyerErreur(err) });
         }
       });
     });
@@ -228,7 +228,7 @@ export async function rendreVenteFiche(contenu, params) {
         try {
           await window.api.pdfRevelerDansExplorateur(cert.pdf_path);
         } catch (err) {
-          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le dossier', message: err.message });
+          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le dossier', message: nettoyerErreur(err) });
         }
       });
     });
@@ -243,7 +243,7 @@ export async function rendreVenteFiche(contenu, params) {
         await window.api.pdfCertificatGenerer(id);
         await rafraichirCertificatsVente();
       } catch (err) {
-        await alerter({ type: 'error', title: 'Génération échouée', message: err.message });
+        await alerter({ type: 'error', title: 'Génération échouée', message: nettoyerErreur(err) });
         btn.disabled = false;
         btn.textContent = ancien;
       }
@@ -381,6 +381,58 @@ export async function rendreVenteFiche(contenu, params) {
       </div>
     `;
 
+    // === Suivi cycle de vie (Jalon 3) ===
+    const formaterDateCourt = (d) => {
+      if (!d) return '';
+      try {
+        const dt = new Date(d);
+        if (Number.isNaN(dt.getTime())) return ech(d);
+        return dt.toLocaleDateString('fr-CA', { year: 'numeric', month: 'short', day: 'numeric' });
+      } catch { return ech(d); }
+    };
+    // Bloc d'une étape datée (emballage / envoi / livraison), inline-éditable.
+    const etapeBloc = (cle, titre, date, libelleEnAttente) => {
+      if (date) {
+        return `<div class="sous-section">
+          <h4>${ech(titre)}</h4>
+          <div class="inline-prep">
+            <span class="pastille-bento pastille-bento-positive">✓ Fait</span>
+            <input type="date" class="inline-date" data-cycle-date="${cle}" value="${ech(date)}">
+            <button type="button" class="inline-annuler" data-cycle-toggle="${cle}" data-cycle-on="0" title="Annuler">Annuler</button>
+          </div>
+        </div>`;
+      }
+      return `<div class="sous-section">
+        <h4>${ech(titre)}</h4>
+        <div class="inline-prep">
+          <span class="pastille-bento">${ech(libelleEnAttente)}</span>
+          <button type="button" class="inline-marquer" data-cycle-toggle="${cle}" data-cycle-on="1">✓ Marquer aujourd'hui</button>
+        </div>
+      </div>`;
+    };
+    // Paiement : select toujours visible + date du versement.
+    const statutPaiement = v.paiement_statut || '';
+    const paiementSousSection = `<div class="sous-section">
+      <h4>Paiement</h4>
+      <div class="inline-prep">
+        <select class="inline-select" data-cycle-paiement>
+          <option value="" ${statutPaiement === '' ? 'selected' : ''}>En attente</option>
+          <option value="partiel" ${statutPaiement === 'partiel' ? 'selected' : ''}>Partiel</option>
+          <option value="recu" ${statutPaiement === 'recu' ? 'selected' : ''}>Reçu</option>
+        </select>
+        ${statutPaiement ? `<input type="date" class="inline-date" data-cycle-date="paiement" value="${ech(v.paiement_date || '')}">` : ''}
+      </div>
+    </div>`;
+    const zoneCycle = `
+      <div class="carte zone-cycle-vie">
+        <h3>Suivi cycle de vie</h3>
+        ${paiementSousSection}
+        ${etapeBloc('emballage', 'Emballage', v.emballage_date, 'À emballer')}
+        ${etapeBloc('envoi', 'Envoi', v.envoi_date, 'À envoyer')}
+        ${etapeBloc('livraison', 'Livraison', v.livraison_date, 'À livrer')}
+      </div>
+    `;
+
     // === Notes ===
     const zoneNotes = v.notes ? `
       <div class="carte zone-notes-bento">
@@ -420,6 +472,7 @@ export async function rendreVenteFiche(contenu, params) {
           ${zoneClient}
           ${zoneDetails}
           ${zoneDocuments}
+          ${zoneCycle}
           ${zoneNotes}
         </div>
       </div>
@@ -471,7 +524,7 @@ export async function rendreVenteFiche(contenu, params) {
         // Re-rendre pour exposer Voir/Re-générer
         dessiner();
       } catch (err) {
-        await alerter({ type: 'error', title: 'Génération échouée', message: err.message });
+        await alerter({ type: 'error', title: 'Génération échouée', message: nettoyerErreur(err) });
         btn.disabled = false;
         btn.textContent = ancien;
       }
@@ -485,7 +538,7 @@ export async function rendreVenteFiche(contenu, params) {
         try {
           await window.api.pdfOuvrir(v.facture_artiste_path);
         } catch (err) {
-          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le PDF', message: err.message });
+          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le PDF', message: nettoyerErreur(err) });
         }
       });
     }
@@ -495,10 +548,57 @@ export async function rendreVenteFiche(contenu, params) {
         try {
           await window.api.pdfRevelerDansExplorateur(v.facture_artiste_path);
         } catch (err) {
-          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le dossier', message: err.message });
+          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le dossier', message: nettoyerErreur(err) });
         }
       });
     }
+
+    // === Suivi cycle de vie inline-éditable (sans passer par Modifier) ===
+    async function sauverCycle() {
+      try {
+        v = await window.api.venteMajCycle(v.id, {
+          paiement_statut: v.paiement_statut,
+          paiement_date: v.paiement_date,
+          emballage_date: v.emballage_date,
+          envoi_date: v.envoi_date,
+          livraison_date: v.livraison_date,
+        });
+        await rechargerBundle();
+        dessiner();
+      } catch (err) {
+        await alerter({ type: 'error', title: 'Mise à jour échouée', message: nettoyerErreur(err) });
+      }
+    }
+    const aujourdHuiISOv = () => {
+      const d = new Date();
+      const p = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    };
+    const selPaiement = contenu.querySelector('[data-cycle-paiement]');
+    if (selPaiement) {
+      selPaiement.addEventListener('change', () => {
+        const val = selPaiement.value || null;
+        v.paiement_statut = val;
+        if (val && !v.paiement_date) v.paiement_date = aujourdHuiISOv();
+        if (!val) v.paiement_date = null;
+        sauverCycle();
+      });
+    }
+    contenu.querySelectorAll('[data-cycle-toggle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const cle = btn.dataset.cycleToggle; // emballage | envoi | livraison
+        const on = btn.dataset.cycleOn === '1';
+        v[`${cle}_date`] = on ? aujourdHuiISOv() : null;
+        sauverCycle();
+      });
+    });
+    contenu.querySelectorAll('[data-cycle-date]').forEach((inp) => {
+      inp.addEventListener('change', () => {
+        const cle = inp.dataset.cycleDate; // paiement | emballage | envoi | livraison
+        v[`${cle}_date`] = inp.value || null;
+        sauverCycle();
+      });
+    });
 
     contenu.querySelectorAll('.btn-voisin-prec').forEach((btn) => {
       if (voisins.precedent) {
@@ -579,6 +679,24 @@ export async function rendreVenteFiche(contenu, params) {
           </section>
 
           <section class="bloc">
+            <h3>Suivi cycle de vie</h3>
+            <p class="aide-champ" style="margin-top:0;">Les statuts post-vente. Une commande est <strong>complétée</strong> quand le paiement est reçu et que les 3 dates (emballage / envoi / livraison) sont remplies. Les commandes non complétées apparaissent sur le tableau de bord.</p>
+            <div class="grille-form">
+              ${champSelect({ nom: 'paiement_statut', libelle: 'Statut paiement', valeur: v.paiement_statut, options: [
+                { valeur: '', libelle: 'En attente' },
+                { valeur: 'partiel', libelle: 'Partiel' },
+                { valeur: 'recu', libelle: 'Reçu en totalité' },
+              ]})}
+              ${champTexte({ nom: 'paiement_date', libelle: 'Date paiement', valeur: v.paiement_date, type: 'date' })}
+            </div>
+            <div class="grille-form">
+              ${champTexte({ nom: 'emballage_date', libelle: 'Date emballage', valeur: v.emballage_date, type: 'date' })}
+              ${champTexte({ nom: 'envoi_date', libelle: "Date d'envoi", valeur: v.envoi_date, type: 'date' })}
+              ${champTexte({ nom: 'livraison_date', libelle: 'Date livraison', valeur: v.livraison_date, type: 'date' })}
+            </div>
+          </section>
+
+          <section class="bloc">
             ${champTextarea({ nom: 'notes', libelle: 'Notes', valeur: v.notes, lignes: 3 })}
           </section>
 
@@ -653,6 +771,12 @@ export async function rendreVenteFiche(contenu, params) {
         mode_paiement: val('mode_paiement'),
         numero_facture: val('numero_facture'),
         notes: val('notes'),
+        // Jalon 3 — suivi cycle de vie
+        paiement_statut: val('paiement_statut') || null,
+        paiement_date: val('paiement_date') || null,
+        emballage_date: val('emballage_date') || null,
+        envoi_date: val('envoi_date') || null,
+        livraison_date: val('livraison_date') || null,
       };
 
       try {
@@ -683,7 +807,7 @@ export async function rendreVenteFiche(contenu, params) {
           sortirEdition();
         }
       } catch (err) {
-        await alerter({ type: 'error', title: 'Enregistrement échoué', message: err.message });
+        await alerter({ type: 'error', title: 'Enregistrement échoué', message: nettoyerErreur(err) });
       }
     });
   }
@@ -768,7 +892,7 @@ export async function rendreVenteFiche(contenu, params) {
         `).join('');
 
       res.querySelectorAll('.ligne-vente').forEach((btn) => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
           const o = oeuvres.find((x) => x.id === Number(btn.dataset.id));
           if (!o) return;
           v.oeuvre_id = o.id;
@@ -777,6 +901,7 @@ export async function rendreVenteFiche(contenu, params) {
           v.artiste_nom = o.artiste_nom;
           v.numero_inventaire = o.numero_inventaire;
           v.oeuvre_prix = o.prix;
+          v.oeuvre_sage_cree = o.sage_cree;
           // Pré-remplir le prix de vente s'il était vide
           const champPrix = contenu.querySelector('#f-prix_vente');
           if (champPrix && (!champPrix.value || Number(champPrix.value) === 0) && o.prix != null) {
@@ -785,6 +910,20 @@ export async function rendreVenteFiche(contenu, params) {
           modifie = true;
           dessinerSelecteurOeuvre();
           recalculerTotal();
+          // Garde-fou Sage : avertir dès la sélection si l'œuvre n'est pas
+          // encore créée dans Sage, en donnant le nom de référence complet
+          // (= item Sage / nom de fichier photo).
+          if (!o.sage_cree) {
+            let nomFichier = '';
+            try { nomFichier = await window.api.oeuvreNomFichier(o.id); } catch {}
+            const ref = nomFichier ? `\n\nNom de référence (= item Sage / nom de fichier photo) :\n${nomFichier}` : '';
+            await alerter({
+              type: 'warning',
+              title: 'Œuvre pas encore dans Sage 50',
+              message: `« ${o.titre} » n'a pas été créée dans Sage 50. Tu ne pourras pas enregistrer la vente tant que ce ne sera pas fait.`,
+              detail: `Crée l'œuvre dans Sage, puis coche « Créée dans Sage » sur sa fiche.${ref}`,
+            });
+          }
         });
       });
     }
@@ -1043,7 +1182,7 @@ function ouvrirCreationClient() {
         const cree = await window.api.clientCreer(data);
         fermer(cree);
       } catch (err) {
-        await alerter({ type: 'error', title: 'Création échouée', message: err.message });
+        await alerter({ type: 'error', title: 'Création échouée', message: nettoyerErreur(err) });
       }
     });
 

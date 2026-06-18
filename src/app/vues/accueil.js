@@ -74,23 +74,12 @@ export async function rendreAccueil(contenu) {
           <div class="dashboard-bloc-corps" id="dashboard-ventes"></div>
         </section>
 
-        <section class="dashboard-bloc bloc-agenda">
+        <section class="dashboard-bloc bloc-commandes">
           <header class="dashboard-bloc-entete">
-            <h2>Agenda</h2>
-            <span class="dashboard-bloc-aide">à venir</span>
+            <h2>Commandes non complétées</h2>
+            <span class="dashboard-bloc-aide">à compléter</span>
           </header>
-          <div class="dashboard-bloc-corps">
-            <div class="dashboard-placeholder">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="3" y="4.5" width="18" height="16" rx="2"/>
-                <line x1="3" y1="9" x2="21" y2="9"/>
-                <line x1="8" y1="3" x2="8" y2="6"/>
-                <line x1="16" y1="3" x2="16" y2="6"/>
-              </svg>
-              <p>Intégration calendrier à venir.</p>
-              <p class="dashboard-placeholder-aide">L'agenda affichera les rendez-vous, vernissages, livraisons et encadrements.</p>
-            </div>
-          </div>
+          <div class="dashboard-bloc-corps" id="dashboard-commandes"></div>
         </section>
 
         <section class="dashboard-bloc bloc-reservees">
@@ -125,6 +114,7 @@ export async function rendreAccueil(contenu) {
     remplirStats(contenu, d.stats);
     remplirOeuvresRecentes(contenu, d.oeuvresRecentes);
     remplirVentesRecentes(contenu, d.ventesRecentes);
+    remplirCommandesNonCompletees(contenu, d.commandesNonCompletees);
     remplirReservees(contenu, d.oeuvresReservees);
     remplirCatalogue(contenu, d.stats, d.ventesParMois);
   } catch (err) {
@@ -234,6 +224,49 @@ function remplirVentesRecentes(contenu, ventes) {
         <div class="dashboard-ligne-droite">
           <p class="dashboard-ligne-montant">${formaterMontantCourt(total)}</p>
           <p class="dashboard-ligne-date">${ech(formaterDate(v.date_vente))}</p>
+        </div>
+      </button>
+    `;
+  }).join('')}</div>`;
+  zone.querySelectorAll('.dashboard-ligne').forEach((btn) => {
+    btn.addEventListener('click', () => naviguer('vente-fiche', { id: Number(btn.dataset.id) }));
+  });
+}
+
+function remplirCommandesNonCompletees(contenu, commandes) {
+  const zone = contenu.querySelector('#dashboard-commandes');
+  if (!zone) return;
+  if (!commandes || !commandes.length) {
+    zone.innerHTML = `<p class="dashboard-vide">Toutes les commandes sont complétées 🎉</p>`;
+    return;
+  }
+  const pastille = (etat) => {
+    const classe = etat === 'fait' ? 'pastille-etape pastille-etape-fait'
+                 : etat === 'partiel' ? 'pastille-etape pastille-etape-partiel'
+                 : 'pastille-etape';
+    return `<span class="${classe}"></span>`;
+  };
+  zone.innerHTML = `<div class="dashboard-liste-compacte">${commandes.map((v) => {
+    const client = v.client_nom || '—';
+    const etatPaiement = v.paiement_statut === 'recu' ? 'fait'
+                       : v.paiement_statut === 'partiel' ? 'partiel'
+                       : 'attente';
+    return `
+      <button class="dashboard-ligne dashboard-ligne-commande" data-id="${v.id}" title="Voir la vente">
+        <div class="dashboard-ligne-vignette">
+          ${v.image_path
+            ? `<img src="${urlPhoto(v.image_path)}" loading="lazy" alt="">`
+            : `<span>&#9635;</span>`}
+        </div>
+        <div class="dashboard-ligne-corps">
+          <p class="dashboard-ligne-titre">${ech(v.oeuvre_titre)}</p>
+          <p class="dashboard-ligne-meta">${ech(client)}${v.numero_facture ? ' · ' + ech(v.numero_facture) : ''}</p>
+        </div>
+        <div class="commande-etapes" aria-label="Étapes restantes">
+          ${pastille(etatPaiement)}
+          ${pastille(v.emballage_date ? 'fait' : 'attente')}
+          ${pastille(v.envoi_date ? 'fait' : 'attente')}
+          ${pastille(v.livraison_date ? 'fait' : 'attente')}
         </div>
       </button>
     `;

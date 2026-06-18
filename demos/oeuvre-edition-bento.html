@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo édition œuvre (bento)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+
+    .demo-bar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: var(--s3);
+      padding: var(--s2) var(--s4);
+      background: var(--deep-navy); color: var(--soft-ivory);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .switch { display: flex; gap: 4px; background: rgba(255,255,255,0.06); padding: 4px; border-radius: 999px; }
+    .demo-bar .switch button {
+      background: transparent; color: var(--soft-ivory);
+      border: 0; padding: 6px 14px; border-radius: 999px;
+      font-family: var(--font-ui); font-size: 13px; cursor: pointer;
+    }
+    .demo-bar .switch button:hover { background: rgba(255,255,255,0.06); }
+    .demo-bar .switch button.actif {
+      background: var(--warm-gold); color: var(--soft-ivory); font-weight: 500;
+    }
+
+    main { max-width: 1400px; margin: 0 auto; padding: var(--s5) var(--s4) calc(var(--s6) * 2); }
+
+    .page-entete { margin-bottom: var(--s4); }
+    .page-entete h1 {
+      margin: 0;
+      font-family: var(--font-titre);
+      font-weight: 500;
+      font-size: 38px;
+      line-height: 1.1;
+      color: var(--ink);
+    }
+    .page-entete .meta {
+      margin: var(--s2) 0 0;
+      color: var(--slate);
+      font-size: 14px;
+    }
+
+    .grille-bento {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: var(--s3);
+    }
+    .carte {
+      background: var(--porcelain);
+      border: 1px solid var(--mist);
+      border-radius: var(--r-carte);
+      box-shadow: var(--ombre-carte);
+      padding: var(--s3) var(--s4);
+    }
+    .carte > h3 {
+      font-family: var(--font-titre);
+      font-size: 24px;
+      color: var(--gallery-navy);
+      margin: 0 0 var(--s3);
+      font-weight: 500;
+    }
+    .span-12 { grid-column: span 12; }
+    .span-9 { grid-column: span 9; }
+    .span-8 { grid-column: span 8; }
+    .span-6 { grid-column: span 6; }
+    .span-4 { grid-column: span 4; }
+    .span-3 { grid-column: span 3; }
+
+    /* Sous-sections (encarts soft-ivory comme dans les fiches en lecture) */
+    .sous-section {
+      background: var(--soft-ivory);
+      border: 1px solid var(--mist);
+      border-radius: var(--r-btn);
+      padding: var(--s3);
+      margin-bottom: var(--s2);
+    }
+    .sous-section:last-of-type { margin-bottom: 0; }
+    .sous-section h4 {
+      margin: 0 0 var(--s2);
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--slate);
+    }
+
+    /* Champs */
+    .grille-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--s2) var(--s3);
+    }
+    .form-champ { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--s2); }
+    .form-champ.pleine { grid-column: 1 / -1; }
+    .form-champ label {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--slate);
+    }
+    .form-champ input[type=text],
+    .form-champ input[type=number],
+    .form-champ input[type=url],
+    .form-champ input[type=date],
+    .form-champ select,
+    .form-champ textarea {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      padding: 0 12px;
+      height: 36px;
+      border: 1px solid var(--mist);
+      border-radius: var(--r-btn);
+      background: var(--porcelain);
+      color: var(--ink);
+      width: 100%;
+    }
+    .form-champ textarea {
+      padding: 8px 12px;
+      height: auto;
+      min-height: 120px;
+      resize: vertical;
+    }
+    .form-champ.checkbox {
+      flex-direction: row;
+      align-items: center;
+      gap: var(--s2);
+    }
+    .form-champ.checkbox input { width: 18px; height: 18px; margin: 0; }
+    .form-champ.checkbox label { font-size: 13px; color: var(--ink); }
+    .aide {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: var(--slate);
+      line-height: 1.5;
+    }
+    .aide strong { color: var(--ink); }
+
+    /* Image (compacte avec actions overlay) */
+    .image-edition {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      background: var(--cloud);
+      border-radius: var(--r-btn);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--stone);
+      font-family: var(--font-titre);
+      font-size: 56px;
+      overflow: hidden;
+    }
+    .image-edition.avec-photo {
+      background: linear-gradient(135deg, #6e8492 0%, #9aa7b0 50%, #c8b89a 100%);
+    }
+    .image-actions-overlay {
+      position: absolute;
+      top: 8px; right: 8px;
+      display: flex;
+      gap: 4px;
+    }
+    .image-action-btn {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(7, 26, 47, 0.65);
+      backdrop-filter: blur(8px);
+      color: var(--soft-ivory);
+      display: flex; align-items: center; justify-content: center;
+      border: 0;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .image-action-btn:hover { background: var(--warm-gold); }
+    .image-action-btn.btn-supprimer:hover { background: var(--erreur); }
+    .image-action-btn svg { width: 16px; height: 16px; }
+    /* Si pas encore d'image (nouveau), gros bouton central « Choisir » */
+    .image-choisir {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--s2);
+      cursor: pointer;
+      background: transparent;
+      border: 0;
+      color: var(--slate);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      text-align: center;
+    }
+    .image-choisir svg { width: 32px; height: 32px; opacity: 0.6; }
+    .image-choisir:hover { color: var(--warm-gold); }
+
+    /* Trio dimensions */
+    .dim-trio {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+    }
+    .dim-trio .form-champ { margin-bottom: 0; }
+
+    /* Boutons */
+    .btn {
+      font-family: var(--font-ui); font-size: 13px; font-weight: 500;
+      padding: 8px 14px; border-radius: var(--r-btn);
+      border: 1px solid var(--mist);
+      background: var(--porcelain); color: var(--ink);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-primaire { background: var(--warm-gold); color: var(--soft-ivory); border-color: var(--warm-gold); }
+    .btn-danger { background: var(--porcelain); color: var(--erreur); border-color: rgba(182,66,60,0.4); }
+    .btn-chatgpt {
+      background: transparent;
+      border: 1px solid var(--warm-gold);
+      color: var(--warm-gold);
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: var(--r-btn);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Chips de sujets (toggleables) */
+    .chip-zone {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: var(--s2);
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 14px;
+      border-radius: var(--r-badge);
+      border: 1px solid var(--mist);
+      background: var(--porcelain);
+      color: var(--slate);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.12s;
+    }
+    .chip:hover { background: var(--cloud); border-color: var(--stone); }
+    .chip-actif {
+      background: var(--warm-gold);
+      color: var(--soft-ivory);
+      border-color: var(--warm-gold);
+    }
+    .chip-actif:hover { background: var(--warm-gold-hover); border-color: var(--warm-gold-hover); }
+    .chip-ajouter {
+      background: transparent;
+      border: 1px dashed var(--mist);
+      color: var(--warm-gold);
+    }
+    .chip-ajouter:hover {
+      background: var(--cloud);
+      border-style: solid;
+      border-color: var(--warm-gold);
+    }
+
+    /* Prix suggéré (rappel) */
+    .prix-suggere {
+      background: var(--soft-ivory);
+      border: 1px solid var(--warm-gold);
+      border-radius: var(--r-btn);
+      padding: var(--s2) var(--s3);
+      margin-top: var(--s2);
+      font-size: 13px;
+      color: var(--slate);
+    }
+    .prix-suggere strong { color: var(--warm-gold); font-family: var(--font-titre); font-size: 18px; }
+
+    /* Barre actions */
+    .barre-actions {
+      position: sticky; bottom: 0;
+      margin-top: var(--s4);
+      padding: var(--s3) var(--s4);
+      background: rgba(252, 250, 244, 0.92);
+      backdrop-filter: blur(6px);
+      border-top: 1px solid var(--mist);
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--s2);
+      border-radius: var(--r-carte);
+    }
+
+    .demo-pied {
+      max-width: 1400px; margin: var(--s5) auto var(--s4);
+      padding: 0 var(--s4);
+      color: var(--slate); font-size: 12px; line-height: 1.6;
+    }
+    .demo-pied strong { color: var(--ink); }
+    .demo-pied ul { padding-left: 18px; margin: 6px 0 0; }
+  </style>
+</head>
+<body>
+
+  <header class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Démo édition œuvre (bento)</div>
+    <div class="switch" id="switch-mode">
+      <button data-mode="modification" class="actif">Modification</button>
+      <button data-mode="nouveau">Nouveau</button>
+    </div>
+  </header>
+
+  <main id="contenu"></main>
+
+  <div class="demo-pied">
+    <strong>Notes</strong>
+    <ul>
+      <li>Maquette statique — pas de sauvegarde réelle.</li>
+      <li>L'image est toujours visible (4 col à gauche) que ce soit nouveau ou modification : en nouveau, l'utilisateur peut quand même choisir une image avant de save (stockée temporairement).</li>
+      <li>Caractéristiques (8 col) + Sujets (4 col) côte à côte sur la row 2.</li>
+      <li>Préparation et Commerce/localisation en 6/6 sur la row 3.</li>
+      <li>Description pleine largeur avec le bouton « Copier pour ChatGPT » intégré dans la carte.</li>
+    </ul>
+  </div>
+
+  <script>
+    const SUJETS_PREDEFINIS = ['Marine', 'Portrait', 'Paysage', 'Nature morte', 'Abstraction', 'Coucher de soleil', 'Forêt', 'Côte', 'Urbain', 'Fleurs', 'Animaux', 'Symbolique', 'Argentique', 'Bois', 'Métal', 'Verre'];
+    let sujetsActifs = new Set();
+    let sujetsAjoutes = [];
+    let dernierMode = null;
+
+    function rendre(mode) {
+      const nouveau = mode === 'nouveau';
+      // Réinit des sujets quand le mode change
+      if (mode !== dernierMode) {
+        sujetsActifs = new Set(nouveau ? [] : ['Marine', 'Coucher de soleil', 'Côte']);
+        sujetsAjoutes = [];
+        dernierMode = mode;
+      }
+      const tousSujets = [...new Set([...SUJETS_PREDEFINIS, ...sujetsAjoutes, ...sujetsActifs])];
+      const chipsHtml = tousSujets.map(s => `
+        <button type="button" class="chip ${sujetsActifs.has(s) ? 'chip-actif' : ''}" data-sujet="${s.replace(/"/g, '&quot;')}">${s}</button>
+      `).join('') + `<button type="button" class="chip chip-ajouter" id="chip-ajouter">+ Ajouter un sujet</button>`;
+
+      document.getElementById('contenu').innerHTML = `
+        <div class="page-entete">
+          <h1>${nouveau ? 'Nouvelle œuvre' : 'Modifier « Marée du soir »'}</h1>
+          <p class="meta">${nouveau ? "Tu peux choisir une image dès maintenant ; elle s'enregistre quand l'œuvre est créée." : "Toutes les modifications sont enregistrées à la sauvegarde globale."}</p>
+        </div>
+
+        <div class="grille-bento">
+
+          <div class="carte span-3" style="padding: var(--s2);">
+            <div class="image-edition ${nouveau ? '' : 'avec-photo'}">
+              ${nouveau
+                ? `<button class="image-choisir">
+                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 16l-5-5L5 21"/></svg>
+                     Choisir une image…
+                   </button>`
+                : `<div class="image-actions-overlay">
+                     <button class="image-action-btn" title="Remplacer l'image">
+                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                     </button>
+                     <button class="image-action-btn" title="Recadrer">
+                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"/><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"/></svg>
+                     </button>
+                     <button class="image-action-btn btn-supprimer" title="Retirer l'image">
+                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                     </button>
+                   </div>`}
+            </div>
+          </div>
+
+          <div class="carte span-9">
+            <h3>Identité</h3>
+            <div class="grille-form">
+              <div class="form-champ">
+                <label>Titre *</label>
+                <input type="text" value="${nouveau ? '' : 'Marée du soir'}">
+              </div>
+              <div class="form-champ">
+                <label>Artiste *</label>
+                <select><option selected>Claude Lefebvre-Dubé</option><option>Jean Tremblay</option><option>+ Nouvel artiste…</option></select>
+              </div>
+              <div class="form-champ">
+                <label>Type</label>
+                <input type="text" value="${nouveau ? '' : 'Toile'}" placeholder="Peinture, Sculpture, Photographie…">
+              </div>
+              <div class="form-champ">
+                <label>Année</label>
+                <input type="number" value="${nouveau ? '' : '2023'}" min="1000" max="2999">
+              </div>
+              <div class="form-champ">
+                <label>N° d'inventaire</label>
+                <input type="text" value="${nouveau ? 'CLD1992' : 'CLD-2023-014'}">
+              </div>
+              <div class="form-champ">
+                <label>N° de délivrance</label>
+                <input type="text" value="${nouveau ? '' : 'C-2024-031'}">
+              </div>
+            </div>
+          </div>
+
+          <div class="carte span-8">
+            <h3>Caractéristiques</h3>
+
+            <div class="sous-section">
+              <h4>Matériel et facture</h4>
+              <div class="grille-form">
+                <div class="form-champ">
+                  <label>Médium</label>
+                  <input type="text" value="${nouveau ? '' : 'Acrylique'}">
+                </div>
+                <div class="form-champ">
+                  <label>Support</label>
+                  <input type="text" value="${nouveau ? '' : 'Toile montée'}">
+                </div>
+                <div class="form-champ">
+                  <label>Emplacement signature</label>
+                  <input type="text" value="${nouveau ? '' : 'Bas droite'}">
+                </div>
+              </div>
+            </div>
+
+            <div class="sous-section">
+              <h4>Dimensions (en pouces)</h4>
+              <div class="dim-trio">
+                <div class="form-champ">
+                  <label>Hauteur</label>
+                  <input type="number" value="${nouveau ? '' : '24'}" step="0.1">
+                </div>
+                <div class="form-champ">
+                  <label>Largeur</label>
+                  <input type="number" value="${nouveau ? '' : '36'}" step="0.1">
+                </div>
+                <div class="form-champ">
+                  <label>Profondeur</label>
+                  <input type="number" value="" step="0.1" placeholder="optionnel">
+                </div>
+              </div>
+              <p class="aide">${nouveau ? 'Dimensions enregistrées : —' : 'Dimensions enregistrées : <strong>24 × 36 po</strong>'}</p>
+              <div class="grille-form" style="margin-top:8px;">
+                <div class="form-champ">
+                  <label>Format</label>
+                  <select><option>Petit</option><option>Moyen</option><option ${nouveau ? '' : 'selected'}>Grand</option><option>Très grand</option></select>
+                </div>
+                <div class="form-champ">
+                  <label>Orientation</label>
+                  <select><option ${nouveau ? '' : 'selected'}>Horizontale</option><option>Verticale</option><option>Carrée</option></select>
+                </div>
+              </div>
+              <p class="aide">Format et orientation se calculent automatiquement à partir des dimensions. Tu peux les forcer.</p>
+            </div>
+
+            <div class="sous-section">
+              <h4>Particularité</h4>
+              <div class="form-champ">
+                <input type="text" value="${nouveau ? '' : 'Signée et titrée au verso'}" placeholder="Ex. signée au verso, dédicacée à…">
+              </div>
+            </div>
+          </div>
+
+          <div class="carte span-4">
+            <h3>Sujets</h3>
+            <p class="aide" style="margin-top:0;">Clique sur les sujets pour les activer ou les désactiver. Ils alimentent les filtres et la recherche.</p>
+            <div class="chip-zone">${chipsHtml}</div>
+          </div>
+
+          <div class="carte span-6">
+            <h3>Préparation</h3>
+            <p class="aide" style="margin-top:0;"><strong>Sage est obligatoire</strong> avant la vente. Le site est facultatif.</p>
+            <div class="sous-section">
+              <h4>Sage 50</h4>
+              <div class="grille-form">
+                <div class="form-champ checkbox">
+                  <input type="checkbox" id="sage" ${nouveau ? '' : 'checked'}>
+                  <label for="sage">Créée dans Sage 50</label>
+                </div>
+                <div class="form-champ">
+                  <label>Date Sage</label>
+                  <input type="date" value="${nouveau ? '' : '2023-09-15'}">
+                </div>
+              </div>
+            </div>
+            <div class="sous-section">
+              <h4>Site web</h4>
+              <div class="grille-form">
+                <div class="form-champ checkbox">
+                  <input type="checkbox" id="site" ${nouveau ? '' : 'checked'}>
+                  <label for="site">Publiée sur le site</label>
+                </div>
+                <div class="form-champ">
+                  <label>Date site</label>
+                  <input type="date" value="${nouveau ? '' : '2023-09-20'}">
+                </div>
+              </div>
+            </div>
+            <p class="aide">Les dates se remplissent à aujourd'hui automatiquement à la coche si elles sont vides.</p>
+          </div>
+
+          <div class="carte span-6">
+            <h3>Commerce et localisation</h3>
+            <div class="grille-form">
+              <div class="form-champ">
+                <label>Prix régulier ($)</label>
+                <input type="number" value="${nouveau ? '' : '4200'}" step="0.01" min="0">
+              </div>
+              <div class="form-champ">
+                <label>Statut</label>
+                <select><option ${nouveau ? 'selected' : ''}>Disponible</option><option>Réservée</option><option ${nouveau ? '' : 'selected'}>Vendue</option><option>Prêtée</option></select>
+              </div>
+              <div class="form-champ">
+                <label>Emplacement (galerie)</label>
+                <input type="text" value="${nouveau ? '' : 'Salle principale'}">
+              </div>
+              <div class="form-champ">
+                <label>Exposition actuelle</label>
+                <input type="text" value="${nouveau ? '' : 'Vernissage du 12 mai 2024'}">
+              </div>
+            </div>
+            ${!nouveau ? `
+              <div class="prix-suggere">
+                Prix courant suggéré : <strong>4 200 $</strong> · Préférentiel : 3 940 $
+                <br><span style="font-size:11px;">Cote Acrylique Grand · 28 $/po lin × (24+36) = 1 680 $ + frais d'encadrement</span>
+              </div>
+            ` : ''}
+            <div class="form-champ checkbox" style="margin-top: var(--s3);">
+              <input type="checkbox" id="hors">
+              <label for="hors">Cote hors-normes (œuvre exceptionnelle, prix saisi à la main)</label>
+            </div>
+            <div class="form-champ">
+              <label>URL de la fiche sur le site web</label>
+              <input type="url" value="${nouveau ? '' : 'https://galerievieuxstjean.com/produit/maree-du-soir'}" placeholder="https://...">
+            </div>
+          </div>
+
+          <div class="carte span-12">
+            <h3>Description</h3>
+            <div class="form-champ">
+              <textarea rows="6">${nouveau ? '' : "Une marée basse capturée à l'heure dorée, où le ciel et le sable se confondent dans une orchestration de tons chauds. L'artiste superpose des couches successives d'acrylique transparent..."}</textarea>
+            </div>
+            <div style="display: flex; align-items: center; gap: var(--s3); margin-top: var(--s2);">
+              <button class="btn-chatgpt">✦ Copier pour ChatGPT</button>
+              <p class="aide" style="margin:0;">Copie le prompt assemblé (consignes galerie + consignes artiste + caractéristiques) et la photo dans le presse-papier, puis ouvre ChatGPT.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="barre-actions">
+          <button class="btn">Annuler</button>
+          <button class="btn btn-primaire">${nouveau ? 'Créer' : 'Enregistrer'}</button>
+        </div>
+      `;
+    }
+
+    function brancherChips() {
+      document.querySelectorAll('[data-sujet]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const s = btn.dataset.sujet;
+          if (sujetsActifs.has(s)) sujetsActifs.delete(s);
+          else sujetsActifs.add(s);
+          rendre(dernierMode);
+          brancherChips();
+        });
+      });
+      const ajouter = document.getElementById('chip-ajouter');
+      if (ajouter) {
+        ajouter.addEventListener('click', () => {
+          const nv = prompt('Nouveau sujet :');
+          if (nv && nv.trim()) {
+            const t = nv.trim();
+            if (!sujetsAjoutes.includes(t) && !SUJETS_PREDEFINIS.includes(t)) {
+              sujetsAjoutes.push(t);
+            }
+            sujetsActifs.add(t);
+            rendre(dernierMode);
+            brancherChips();
+          }
+        });
+      }
+    }
+
+    document.querySelectorAll('#switch-mode button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#switch-mode button').forEach((b) => b.classList.remove('actif'));
+        btn.classList.add('actif');
+        rendre(btn.dataset.mode);
+        brancherChips();
+      });
+    });
+
+    rendre('modification');
+    brancherChips();
+  </script>
+</body>
+</html>

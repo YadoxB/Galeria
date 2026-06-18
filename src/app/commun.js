@@ -12,6 +12,16 @@ export function sansAccents(s) {
   return (s ?? '').toString().normalize('NFD').replace(/\p{Mn}/gu, '').toLowerCase();
 }
 
+// Electron préfixe les rejets d'IPC par « Error invoking remote method
+// 'canal:methode': Error: <vrai message> ». On retire ce préfixe technique
+// pour n'afficher que le message métier dans les dialogues.
+export function nettoyerErreur(err) {
+  const brut = (err && err.message) ? String(err.message) : String(err || 'Erreur inconnue');
+  const m = brut.match(/Error invoking remote method '[^']*':\s*(?:Error:\s*)?([\s\S]*)$/);
+  const propre = (m ? m[1] : brut).trim();
+  return propre || 'Une erreur est survenue.';
+}
+
 export function formaterPrix(n) {
   if (n == null || n === '') return '—';
   const num = Number(n);

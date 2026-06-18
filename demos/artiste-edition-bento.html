@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo édition artiste (bento)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+
+    .demo-bar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: var(--s3);
+      padding: var(--s2) var(--s4);
+      background: var(--deep-navy); color: var(--soft-ivory);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .switch { display: flex; gap: 4px; background: rgba(255,255,255,0.06); padding: 4px; border-radius: 999px; }
+    .demo-bar .switch button {
+      background: transparent; color: var(--soft-ivory);
+      border: 0; padding: 6px 14px; border-radius: 999px;
+      font-family: var(--font-ui); font-size: 13px; cursor: pointer;
+    }
+    .demo-bar .switch button:hover { background: rgba(255,255,255,0.06); }
+    .demo-bar .switch button.actif {
+      background: var(--warm-gold); color: var(--soft-ivory); font-weight: 500;
+    }
+
+    main { max-width: 1400px; margin: 0 auto; padding: var(--s5) var(--s4) calc(var(--s6) * 2); }
+
+    .page-entete { margin-bottom: var(--s4); }
+    .page-entete h1 {
+      margin: 0;
+      font-family: var(--font-titre);
+      font-weight: 500;
+      font-size: 38px;
+      line-height: 1.1;
+      color: var(--ink);
+    }
+    .page-entete .meta {
+      margin: var(--s2) 0 0;
+      color: var(--slate);
+      font-size: 14px;
+    }
+
+    .grille-bento {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: var(--s3);
+    }
+    .carte {
+      background: var(--porcelain);
+      border: 1px solid var(--mist);
+      border-radius: var(--r-carte);
+      box-shadow: var(--ombre-carte);
+      padding: var(--s3) var(--s4);
+    }
+    .carte > h3 {
+      font-family: var(--font-titre);
+      font-size: 24px;
+      color: var(--gallery-navy);
+      margin: 0 0 var(--s3);
+      font-weight: 500;
+    }
+    .span-12 { grid-column: span 12; }
+    .span-9  { grid-column: span 9; }
+    .span-8  { grid-column: span 8; }
+    .span-6  { grid-column: span 6; }
+    .span-4  { grid-column: span 4; }
+    .span-3  { grid-column: span 3; }
+
+    /* Champs */
+    .grille-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--s2) var(--s3);
+    }
+    .form-champ { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--s2); }
+    .form-champ.pleine { grid-column: 1 / -1; }
+    .form-champ label {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--slate);
+    }
+    .form-champ input[type=text],
+    .form-champ input[type=tel],
+    .form-champ input[type=email],
+    .form-champ input[type=number],
+    .form-champ select,
+    .form-champ textarea {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      padding: 0 12px;
+      height: 36px;
+      border: 1px solid var(--mist);
+      border-radius: var(--r-btn);
+      background: var(--porcelain);
+      color: var(--ink);
+      width: 100%;
+    }
+    .form-champ textarea {
+      padding: 8px 12px;
+      height: auto;
+      min-height: 100px;
+      resize: vertical;
+    }
+    .form-champ.checkbox {
+      flex-direction: row;
+      align-items: center;
+      gap: var(--s2);
+    }
+    .form-champ.checkbox input { width: 18px; height: 18px; margin: 0; }
+    .form-champ.checkbox label { font-size: 13px; color: var(--ink); }
+    .aide {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: var(--slate);
+      line-height: 1.5;
+    }
+    .aide strong { color: var(--ink); }
+
+    /* Sous-titres dans une carte */
+    .sous-titre {
+      margin: var(--s3) 0 var(--s2);
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--slate);
+    }
+    .sous-titre:first-child { margin-top: 0; }
+
+    /* Photo (compacte avec actions overlay) */
+    .photo-edition {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      background: var(--deep-navy);
+      border-radius: var(--r-btn);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--warm-gold);
+      font-family: var(--font-titre);
+      font-size: 56px;
+      overflow: hidden;
+    }
+    .photo-actions-overlay {
+      position: absolute;
+      top: 8px; right: 8px;
+      display: flex;
+      gap: 4px;
+    }
+    .photo-action-btn {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(7, 26, 47, 0.65);
+      backdrop-filter: blur(8px);
+      color: var(--soft-ivory);
+      display: flex; align-items: center; justify-content: center;
+      border: 0;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .photo-action-btn:hover { background: var(--warm-gold); }
+    .photo-action-btn.btn-supprimer:hover { background: var(--erreur); }
+    .photo-action-btn svg { width: 16px; height: 16px; }
+    /* Placeholder « Choisir une photo » en mode nouveau */
+    .photo-choisir {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--s2);
+      cursor: pointer;
+      background: transparent;
+      border: 0;
+      color: var(--soft-ivory);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      text-align: center;
+    }
+    .photo-choisir svg { width: 32px; height: 32px; opacity: 0.75; }
+    .photo-choisir:hover { color: var(--warm-gold); }
+
+    /* Cotes */
+    .cotes-grille {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1.2fr 1fr auto;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: var(--slate);
+      font-weight: 500;
+    }
+    .cotes-ligne {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1.2fr 1fr auto;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .cotes-ligne input, .cotes-ligne select {
+      height: 36px;
+      padding: 0 10px;
+      border: 1px solid var(--mist);
+      border-radius: var(--r-btn);
+      background: var(--porcelain);
+      color: var(--ink);
+      font-size: 14px;
+      font-family: var(--font-ui);
+    }
+    .btn-suppr-ligne {
+      width: 36px; height: 36px;
+      background: var(--porcelain);
+      border: 1px solid var(--mist);
+      border-radius: var(--r-btn);
+      cursor: pointer;
+      color: var(--slate);
+    }
+
+    /* Lignes de taxes */
+    .ligne-taxe {
+      display: grid;
+      grid-template-columns: 1fr 2fr auto;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .ligne-taxe input {
+      height: 36px;
+      padding: 0 10px;
+      border: 1px solid var(--mist);
+      border-radius: var(--r-btn);
+      background: var(--porcelain);
+      font-family: var(--font-ui);
+      font-size: 14px;
+    }
+
+    .btn {
+      font-family: var(--font-ui); font-size: 13px; font-weight: 500;
+      padding: 8px 14px; border-radius: var(--r-btn);
+      border: 1px solid var(--mist);
+      background: var(--porcelain); color: var(--ink);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-primaire { background: var(--warm-gold); color: var(--soft-ivory); border-color: var(--warm-gold); }
+    .btn-danger { background: var(--porcelain); color: var(--erreur); border-color: rgba(182,66,60,0.4); }
+    .btn-ajouter {
+      background: transparent;
+      border: 1px dashed var(--mist);
+      color: var(--warm-gold);
+      width: 100%;
+      padding: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      border-radius: var(--r-btn);
+    }
+
+    /* Barre Annuler/Enregistrer en pied */
+    .barre-actions {
+      position: sticky; bottom: 0;
+      margin-top: var(--s4);
+      padding: var(--s3) var(--s4);
+      background: rgba(252, 250, 244, 0.92);
+      backdrop-filter: blur(6px);
+      border-top: 1px solid var(--mist);
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--s2);
+      border-radius: var(--r-carte);
+    }
+
+    .demo-pied {
+      max-width: 1400px; margin: var(--s5) auto var(--s4);
+      padding: 0 var(--s4);
+      color: var(--slate); font-size: 12px; line-height: 1.6;
+    }
+    .demo-pied strong { color: var(--ink); }
+    .demo-pied ul { padding-left: 18px; margin: 6px 0 0; }
+  </style>
+</head>
+<body>
+
+  <header class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Démo édition artiste (bento)</div>
+    <div class="switch" id="switch-mode">
+      <button data-mode="modification" class="actif">Modification</button>
+      <button data-mode="nouveau">Nouveau</button>
+    </div>
+  </header>
+
+  <main id="contenu"></main>
+
+  <div class="demo-pied">
+    <strong>Notes</strong>
+    <ul>
+      <li>Maquette statique — pas de logique de sauvegarde.</li>
+      <li>En mode <em>Nouveau</em>, la carte Photo disparaît (l'image se charge après la création). Identité passe en pleine largeur.</li>
+      <li>Présentation (Bio/Démarche/CV) garde les 3 textareas <strong>empilées</strong> dans la même carte, pas d'onglets (visibilité totale en édition).</li>
+      <li>L'éditeur de Cotes pleine largeur garde son fonctionnement actuel (lignes dynamiques avec ligne d'en-tête).</li>
+    </ul>
+  </div>
+
+  <script>
+    function rendre(mode) {
+      const nouveau = mode === 'nouveau';
+      const photoHtml = `
+        <div class="carte span-3" style="padding: var(--s2);">
+          <div class="photo-edition">
+            ${nouveau
+              ? `<button class="photo-choisir">
+                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+                   Choisir une photo
+                 </button>`
+              : `CL
+                 <div class="photo-actions-overlay">
+                   <button class="photo-action-btn" title="Remplacer la photo">
+                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                   </button>
+                   <button class="photo-action-btn" title="Recadrer">
+                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"/><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"/></svg>
+                   </button>
+                   <button class="photo-action-btn btn-supprimer" title="Retirer la photo">
+                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                   </button>
+                 </div>`}
+          </div>
+        </div>
+      `;
+      const identiteSpan = 'span-9';
+
+      document.getElementById('contenu').innerHTML = `
+        <div class="page-entete">
+          <h1>${nouveau ? 'Nouvel artiste' : 'Modifier « Claude Lefebvre-Dubé »'}</h1>
+          <p class="meta">${nouveau ? "Crée d'abord la fiche, puis tu pourras ajouter la photo et chaîner la création des œuvres." : "Modifications enregistrées globalement à la sauvegarde."}</p>
+        </div>
+
+        <div class="grille-bento">
+
+          ${photoHtml}
+
+          <div class="carte ${identiteSpan}">
+            <h3>Identité</h3>
+            <div class="grille-form">
+              <div class="form-champ">
+                <label>Prénom</label>
+                <input type="text" value="${nouveau ? '' : 'Claude'}">
+              </div>
+              <div class="form-champ">
+                <label>Nom de famille *</label>
+                <input type="text" value="${nouveau ? '' : 'Lefebvre-Dubé'}">
+              </div>
+              <div class="form-champ">
+                <label>Type</label>
+                <input type="text" value="${nouveau ? '' : 'Peintre'}" placeholder="Peintre, Sculpteur, Photographe…">
+              </div>
+              <div class="form-champ">
+                <label>Préfixe d'inventaire</label>
+                <input type="text" value="${nouveau ? '' : 'CLD'}" maxlength="10">
+              </div>
+              <div class="form-champ">
+                <label>Langue</label>
+                <input type="text" value="${nouveau ? '' : 'Français'}" placeholder="Français, Anglais, Bilingue">
+              </div>
+            </div>
+            ${nouveau ? '<p class="aide">Le préfixe se calcule automatiquement à partir des deux premières lettres du prénom et de la première du nom (ex. Joe Untel → JOU). Modifiable.</p>' : ''}
+          </div>
+
+          <div class="carte span-6">
+            <h3>Contact</h3>
+            <div class="grille-form">
+              <div class="form-champ">
+                <label>Courriel</label>
+                <input type="email" value="${nouveau ? '' : 'claude.lfd@exemple.ca'}">
+              </div>
+              <div class="form-champ">
+                <label>Téléphone</label>
+                <input type="tel" value="${nouveau ? '' : '450 555-0142'}">
+              </div>
+              <div class="form-champ pleine">
+                <label>Adresse</label>
+                <textarea rows="2">${nouveau ? '' : '142 rue Saint-Charles\\nSaint-Lambert, QC J3B 2K7'}</textarea>
+              </div>
+              <div class="form-champ">
+                <label>Pays</label>
+                <select><option selected>Canada</option><option>États-Unis</option></select>
+              </div>
+              <div class="form-champ">
+                <label>Province</label>
+                <select><option selected>Québec</option><option>Ontario</option></select>
+              </div>
+            </div>
+          </div>
+
+          <div class="carte span-6">
+            <h3>Présentation</h3>
+            <div class="form-champ">
+              <label>Biographie</label>
+              <textarea rows="3">${nouveau ? '' : "Née à Saint-Hyacinthe en 1972, étudie la gravure à l'UQAM…"}</textarea>
+            </div>
+            <div class="form-champ">
+              <label>Démarche</label>
+              <textarea rows="3">${nouveau ? '' : "Travaille la matière en couches successives…"}</textarea>
+            </div>
+            <div class="form-champ">
+              <label>Curriculum</label>
+              <textarea rows="3">${nouveau ? '' : "2023 — Solo, Galerie du Vieux Saint-Jean…"}</textarea>
+            </div>
+          </div>
+
+          <div class="carte span-12">
+            <h3>Cotes (calcul de prix)</h3>
+            <p class="aide" style="margin-top:0;">Tarif <strong>préférentiel</strong> (sans encadrement) appliqué selon le médium et la taille. La version <strong>courante</strong> ajoute automatiquement 2 $ à la cote.</p>
+            <div class="cotes-grille">
+              <div>Médium</div>
+              <div>Taille</div>
+              <div>Unité</div>
+              <div style="text-align:right;">Prix</div>
+              <div></div>
+            </div>
+            ${nouveau ? '<p class="aide" style="margin: 8px 0;">Aucune cote définie. Ajoute-en une pour activer le calcul automatique du prix.</p>' : `
+              <div class="cotes-ligne">
+                <input type="text" value="Acrylique">
+                <select><option selected>Tous</option><option>Petit</option><option>Moyen</option><option>Grand</option><option>Très grand</option></select>
+                <select><option selected>$/po linéaire</option><option>$/po²</option></select>
+                <input type="number" value="28">
+                <button class="btn-suppr-ligne">×</button>
+              </div>
+              <div class="cotes-ligne">
+                <input type="text" value="Acrylique">
+                <select><option>Tous</option><option>Petit</option><option>Moyen</option><option>Grand</option><option selected>Très grand</option></select>
+                <select><option selected>$/po linéaire</option><option>$/po²</option></select>
+                <input type="number" value="35">
+                <button class="btn-suppr-ligne">×</button>
+              </div>
+              <div class="cotes-ligne">
+                <input type="text" value="Encaustique">
+                <select><option selected>Tous</option><option>Petit</option><option>Moyen</option><option>Grand</option><option>Très grand</option></select>
+                <select><option>$/po linéaire</option><option selected>$/po²</option></select>
+                <input type="number" value="2.20">
+                <button class="btn-suppr-ligne">×</button>
+              </div>
+            `}
+            <button class="btn-ajouter">+ Ajouter une cote</button>
+          </div>
+
+          <div class="carte span-6">
+            <h3>Fiscalité</h3>
+            <div class="form-champ checkbox">
+              <input type="checkbox" id="percoit" ${nouveau ? '' : 'checked'}>
+              <label for="percoit">Perçoit les taxes</label>
+            </div>
+            <p class="sous-titre">Numéros de taxes</p>
+            ${nouveau ? '' : `
+              <div class="ligne-taxe">
+                <input type="text" value="TPS">
+                <input type="text" value="123 456 789 RT0001">
+                <button class="btn-suppr-ligne">×</button>
+              </div>
+              <div class="ligne-taxe">
+                <input type="text" value="TVQ">
+                <input type="text" value="1234 567 890 TQ0001">
+                <button class="btn-suppr-ligne">×</button>
+              </div>
+            `}
+            <button class="btn-ajouter">+ Ajouter un numéro de taxe</button>
+          </div>
+
+          <div class="carte span-6">
+            <h3>Aide à la description IA</h3>
+            <div class="form-champ">
+              <label>Consignes pour ChatGPT spécifiques à cet artiste</label>
+              <textarea rows="4">${nouveau ? '' : 'Ton accessible, vocabulaire artistique sans grandiloquence…'}</textarea>
+            </div>
+            <div class="form-champ">
+              <label>Lien vers le GPT personnalisé</label>
+              <input type="text" value="${nouveau ? '' : 'https://chatgpt.com/g/g-xxx-claude'}" placeholder="https://chatgpt.com/g/g-xxx-mon-artiste">
+            </div>
+            <p class="aide">Si l'artiste a son propre GPT, le bouton « Copier pour ChatGPT » ouvrira directement ce lien.</p>
+          </div>
+
+          <div class="carte span-12">
+            <h3>Notes internes</h3>
+            <textarea rows="3">${nouveau ? '' : "Aime être prévenue 48h à l'avance des vernissages. Préfère le téléphone."}</textarea>
+          </div>
+
+        </div>
+
+        <div class="barre-actions">
+          <button class="btn">Annuler</button>
+          ${nouveau
+            ? '<button class="btn">Créer seulement</button><button class="btn btn-primaire">Créer + ajouter les œuvres</button>'
+            : '<button class="btn btn-primaire">Enregistrer</button>'}
+        </div>
+      `;
+    }
+
+    document.querySelectorAll('#switch-mode button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#switch-mode button').forEach((b) => b.classList.remove('actif'));
+        btn.classList.add('actif');
+        rendre(btn.dataset.mode);
+      });
+    });
+
+    rendre('modification');
+  </script>
+</body>
+</html>

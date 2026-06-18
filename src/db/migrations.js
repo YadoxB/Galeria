@@ -26,6 +26,13 @@ const COLONNES_ATTENDUES = {
     ['profondeur', 'REAL'],
     ['url_site', 'TEXT'],
     ['cote_hors_normes', 'INTEGER NOT NULL DEFAULT 0'],
+    // Jalon 3 — préparation (en amont de la vente)
+    ['sage_cree', 'INTEGER NOT NULL DEFAULT 0'],
+    ['sage_cree_date', 'TEXT'],
+    ['site_publie', 'INTEGER NOT NULL DEFAULT 0'],
+    ['site_publie_date', 'TEXT'],
+    // Style : 'Figuratif' | 'Abstrait' | 'Mi-Figuratif' | NULL
+    ['style', 'TEXT'],
   ],
   clients: [
     ['prenom', 'TEXT'],
@@ -42,6 +49,12 @@ const COLONNES_ATTENDUES = {
     ['numero_facture_artiste', 'TEXT'],
     ['rabais_artiste', 'REAL NOT NULL DEFAULT 0'],
     ['rabais_galerie', 'REAL NOT NULL DEFAULT 0'],
+    // Jalon 3 — suivi cycle de vie post-vente
+    ['paiement_statut', 'TEXT'],    // 'en_attente' | 'partiel' | 'recu' | NULL
+    ['paiement_date', 'TEXT'],
+    ['emballage_date', 'TEXT'],
+    ['envoi_date', 'TEXT'],
+    ['livraison_date', 'TEXT'],
   ],
 };
 
@@ -57,6 +70,27 @@ function migrer(db) {
         db.exec(`ALTER TABLE ${table} ADD COLUMN ${nom} ${type}`);
       }
     }
+  }
+
+  // 1b. Backfill ponctuel du jalon 3, versionné via PRAGMA user_version pour
+  //     s'exécuter exactement une fois par base — même si la colonne avait été
+  //     ajoutée lors d'un démarrage antérieur (cas des bases de dev déjà
+  //     migrées). Tout le catalogue qui existait au moment de la mise à jour
+  //     est réputé déjà créé dans Sage et publié sur le site (confirmé par la
+  //     galerie). Les œuvres créées APRÈS partent à 0 et déclenchent le
+  //     garde-fou Sage normalement.
+  const versionBase = db.prepare('PRAGMA user_version').get().user_version || 0;
+  if (versionBase < 1) {
+    const colsOeuvres = new Set(
+      db.prepare(`PRAGMA table_info(oeuvres)`).all().map((c) => c.name)
+    );
+    if (colsOeuvres.has('sage_cree')) {
+      db.exec(`UPDATE oeuvres SET sage_cree = 1`);
+    }
+    if (colsOeuvres.has('site_publie')) {
+      db.exec(`UPDATE oeuvres SET site_publie = 1`);
+    }
+    db.exec('PRAGMA user_version = 1');
   }
 
   // 2. Backfill : artistes.numero_taxes (TPS unique) → artistes.numeros_taxes (liste JSON)

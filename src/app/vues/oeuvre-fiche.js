@@ -2,7 +2,7 @@ import { naviguer, retour, poserGardien, leverGardien, modifierParamsCourants, r
 import {
   ech, formaterPrix, badgeStatut, STATUTS,
   champTexte, champTextarea, champSelect, champCheckbox, datalist, urlPhoto,
-  formaterDate, nomComplet, sansAccents,
+  formaterDate, nomComplet, sansAccents, nettoyerErreur,
   badgeArchive, boutonArchive, basculerArchive,
 } from '../commun.js';
 import { calculerPrixSuggere } from '../calcul-prix.js';
@@ -13,6 +13,13 @@ import { ouvrirCreationCertificat } from './certificat-creation.js';
 const TYPES_OEUVRE = ['Peinture', 'Sculpture', 'Reproduction', 'Photographie', 'Dessin', 'Estampe', 'Mixte'];
 const ORIENTATIONS = ['Horizontale', 'Verticale', 'Carrée'];
 const FORMATS = ['Petit', 'Moyen', 'Grand', 'Très grand'];
+const STYLES = ['Figuratif', 'Abstrait', 'Mi-Figuratif'];
+const SUJETS_PREDEFINIS = ['Marine', 'Portrait', 'Paysage', 'Nature morte', 'Abstraction', 'Coucher de soleil', 'Forêt', 'Côte', 'Urbain', 'Fleurs', 'Animaux', 'Symbolique', 'Argentique', 'Bois', 'Métal', 'Verre'];
+
+function parserSujets(brut) {
+  if (!brut) return [];
+  return String(brut).split(',').map((s) => s.trim()).filter(Boolean);
+}
 
 const GABARIT_VIDE = {
   id: null,
@@ -22,7 +29,7 @@ const GABARIT_VIDE = {
   type: null, numero_inventaire: null, numero_delivrance: null,
   annee: null, medium: null, support: null, dimensions: null,
   hauteur: null, largeur: null, profondeur: null,
-  format: null, orientation: null, sujets: null,
+  format: null, orientation: null, style: null, sujets: null,
   cote_hors_normes: 0,
   emplacement_signature: null, particularite: null, description: null,
   prix: null, statut: 'disponible',
@@ -260,7 +267,7 @@ export async function rendreOeuvreFiche(contenu, params) {
       await confirmer({
         type: 'error',
         title: 'Suppression échouée',
-        message: err.message,
+        message: nettoyerErreur(err),
         buttons: ['OK'],
       });
     }
@@ -329,7 +336,7 @@ export async function rendreOeuvreFiche(contenu, params) {
           await window.api.certificatSupprimer(id);
           await rafraichirCertificats();
         } catch (err) {
-          await alerter({ type: 'error', title: 'Suppression échouée', message: err.message });
+          await alerter({ type: 'error', title: 'Suppression échouée', message: nettoyerErreur(err) });
         }
       });
     });
@@ -342,7 +349,7 @@ export async function rendreOeuvreFiche(contenu, params) {
         try {
           await window.api.pdfOuvrir(cert.pdf_path);
         } catch (err) {
-          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le PDF', message: err.message });
+          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le PDF', message: nettoyerErreur(err) });
         }
       });
     });
@@ -355,7 +362,7 @@ export async function rendreOeuvreFiche(contenu, params) {
         try {
           await window.api.pdfRevelerDansExplorateur(cert.pdf_path);
         } catch (err) {
-          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le dossier', message: err.message });
+          await alerter({ type: 'error', title: 'Impossible d\'ouvrir le dossier', message: nettoyerErreur(err) });
         }
       });
     });
@@ -370,7 +377,7 @@ export async function rendreOeuvreFiche(contenu, params) {
         await window.api.pdfCertificatGenerer(id);
         await rafraichirCertificats();
       } catch (err) {
-        await alerter({ type: 'error', title: 'Génération échouée', message: err.message });
+        await alerter({ type: 'error', title: 'Génération échouée', message: nettoyerErreur(err) });
         btn.disabled = false;
         btn.textContent = ancien;
       }
@@ -472,6 +479,7 @@ export async function rendreOeuvreFiche(contenu, params) {
             ${champ('Dimensions', o.dimensions)}
             ${champ('Format', o.format)}
             ${champ('Orientation', o.orientation)}
+            ${champ('Style', o.style)}
             ${champ('Empl. signature', o.emplacement_signature)}
           </div>
           ${particulariteHtml}
@@ -499,6 +507,45 @@ export async function rendreOeuvreFiche(contenu, params) {
           <h4>Sujets</h4>
           <div class="sujets-zone">${sujetsHtml}</div>
         </div>
+      </div>
+    `;
+
+    // === Préparation (Jalon 3 — Sage + site) ===
+    const formaterDateLecture = (d) => {
+      if (!d) return '';
+      try {
+        const dt = new Date(d);
+        if (Number.isNaN(dt.getTime())) return ech(d);
+        return dt.toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+      } catch { return ech(d); }
+    };
+    const blocPrep = (cle, titre, fait, dateVal, libelleFait, libelleAFaire, aideAFaire) => {
+      if (fait) {
+        return `
+          <div class="sous-section">
+            <h4>${titre}</h4>
+            <div class="inline-prep">
+              <span class="pastille-bento pastille-bento-positive">✓ ${libelleFait}</span>
+              <input type="date" class="inline-date" data-prep-date="${cle}" value="${ech(dateVal || '')}">
+              <button type="button" class="inline-annuler" data-prep-toggle="${cle}" data-prep-fait="0" title="Annuler">Annuler</button>
+            </div>
+          </div>`;
+      }
+      return `
+        <div class="sous-section">
+          <h4>${titre}</h4>
+          <div class="inline-prep">
+            <span class="pastille-bento ${cle === 'sage' ? 'pastille-bento-warn' : ''}">${libelleAFaire}</span>
+            <button type="button" class="inline-marquer" data-prep-toggle="${cle}" data-prep-fait="1">✓ Marquer fait</button>
+          </div>
+          <div class="sous-section-ligne sous-section-libelle">${aideAFaire}</div>
+        </div>`;
+    };
+    const zonePreparation = `
+      <div class="carte zone-preparation">
+        <h3>Préparation</h3>
+        ${blocPrep('sage', 'Sage 50', o.sage_cree, o.sage_cree_date, 'Créée dans Sage', 'À créer dans Sage', 'Obligatoire avant la vente.')}
+        ${blocPrep('site', 'Site web', o.site_publie, o.site_publie_date, 'Publiée sur le site', 'Non publiée', 'Facultatif.')}
       </div>
     `;
 
@@ -555,6 +602,7 @@ export async function rendreOeuvreFiche(contenu, params) {
           ${zoneIdentite}
           ${zoneCarac}
           ${zoneLocalisation}
+          ${zonePreparation}
           ${zoneDescription}
           ${zoneCertificats}
         </div>
@@ -615,6 +663,50 @@ export async function rendreOeuvreFiche(contenu, params) {
     });
 
     brancherActionsCertificats();
+
+    // === Préparation inline-éditable (sans passer par Modifier) ===
+    async function sauverPreparation() {
+      try {
+        o = await window.api.oeuvreMajPreparation(o.id, {
+          sage_cree: o.sage_cree,
+          sage_cree_date: o.sage_cree_date,
+          site_publie: o.site_publie,
+          site_publie_date: o.site_publie_date,
+        });
+        await rechargerBundle();
+        dessiner();
+      } catch (err) {
+        await alerter({ type: 'error', title: 'Mise à jour échouée', message: nettoyerErreur(err) });
+      }
+    }
+    const aujourdHuiISO = () => {
+      const d = new Date();
+      const p = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    };
+    contenu.querySelectorAll('[data-prep-toggle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const cle = btn.dataset.prepToggle;
+        const fait = btn.dataset.prepFait === '1';
+        if (cle === 'sage') {
+          o.sage_cree = fait ? 1 : 0;
+          o.sage_cree_date = fait ? (o.sage_cree_date || aujourdHuiISO()) : null;
+        } else {
+          o.site_publie = fait ? 1 : 0;
+          o.site_publie_date = fait ? (o.site_publie_date || aujourdHuiISO()) : null;
+        }
+        sauverPreparation();
+      });
+    });
+    contenu.querySelectorAll('[data-prep-date]').forEach((inp) => {
+      inp.addEventListener('change', () => {
+        const cle = inp.dataset.prepDate;
+        if (cle === 'sage') o.sage_cree_date = inp.value || null;
+        else o.site_publie_date = inp.value || null;
+        sauverPreparation();
+      });
+    });
+
     contenu.querySelectorAll('.btn-voisin-prec').forEach((btn) => {
       if (voisins.precedent) {
         btn.addEventListener('click', () =>
@@ -657,113 +749,168 @@ export async function rendreOeuvreFiche(contenu, params) {
          </div>`
       : '';
 
+    // === SVG des icônes overlay sur l'image ===
+    const svgRemplacer = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>`;
+    const svgSupprimer = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>`;
+    const svgImageVide = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 16l-5-5L5 21"/></svg>`;
+
+    const aImageInitiale = !!(o.image_path || imagePendingDataUrl);
+    const urlImageInitiale = imagePendingDataUrl || (o.image_path ? urlPhoto(o.image_path) : '');
+    const imageHtmlInitial = aImageInitiale
+      ? `<img src="${urlImageInitiale}" alt="">
+         <div class="image-actions-overlay">
+           <button type="button" class="image-action-btn" id="btn-choisir-photo" title="Remplacer l'image">${svgRemplacer}</button>
+           <button type="button" class="image-action-btn btn-supprimer" id="btn-effacer-photo" title="Retirer l'image">${svgSupprimer}</button>
+         </div>`
+      : `<button type="button" class="image-choisir" id="btn-choisir-photo">${svgImageVide}Choisir une image…</button>`;
+
+    // === Sujets en chips ===
+    const sujetsActuels = parserSujets(o.sujets);
+    const tousSujets = Array.from(new Set([...SUJETS_PREDEFINIS, ...sujetsActuels])).sort((a, b) => sansAccents(a).localeCompare(sansAccents(b)));
+    const sujetsActifsInit = new Set(sujetsActuels.map((s) => s));
+    const chipsHtml = tousSujets.map((s) => `
+      <button type="button" class="chip ${sujetsActifsInit.has(s) ? 'chip-actif' : ''}" data-sujet="${ech(s)}">${ech(s)}</button>
+    `).join('') + `<button type="button" class="chip chip-ajouter" id="btn-sujet-ajouter">+ Ajouter un sujet</button>`;
+
     contenu.innerHTML = `
-      <div class="vue-fiche">
+      <div class="vue-fiche vue-fiche-bento">
         <h2 class="titre-formulaire">${titrePage}</h2>
         ${banniere}
         ${datalist('types-oeuvre', TYPES_OEUVRE)}
         ${datalist('formats', FORMATS)}
         ${datalist('orientations', ORIENTATIONS)}
         <form id="formulaire" class="formulaire" novalidate>
-          <section class="bloc">
-            <h3>Identité</h3>
-            <div class="grille-form">
-              ${champTexte({ nom: 'titre', libelle: 'Titre', valeur: o.titre, requis: true })}
-              ${champSelect({ nom: 'artiste_id', libelle: 'Artiste', valeur: o.artiste_id, options: artistesOptions })}
-              ${champTexte({ nom: 'type', libelle: 'Type', valeur: o.type, liste: 'types-oeuvre' })}
-              ${champTexte({ nom: 'annee', libelle: 'Année', valeur: o.annee, type: 'number', attributs: 'min="1000" max="2999"' })}
-              ${champTexte({ nom: 'numero_inventaire', libelle: "Numéro d'inventaire", valeur: o.numero_inventaire })}
-              ${champTexte({ nom: 'numero_delivrance', libelle: 'Numéro de délivrance', valeur: o.numero_delivrance })}
-            </div>
-          </section>
+          <div class="grille-bento">
 
-          <section class="bloc">
-            <h3>Matériel et facture</h3>
-            <div class="grille-form">
-              ${champTexte({ nom: 'medium', libelle: 'Médium', valeur: o.medium })}
-              ${champTexte({ nom: 'support', libelle: 'Support', valeur: o.support })}
-              ${champTexte({ nom: 'emplacement_signature', libelle: 'Emplacement de la signature', valeur: o.emplacement_signature })}
-            </div>
-
-            <div class="form-champ">
-              <label>Dimensions (pouces)</label>
-              <div class="dim-trio">
-                <div class="dim-champ">
-                  <input type="number" id="f-hauteur" name="hauteur" value="${o.hauteur ?? ''}" min="0" step="0.1" placeholder="0">
-                  <span class="dim-libelle">Hauteur</span>
-                </div>
-                <span class="dim-mult">×</span>
-                <div class="dim-champ">
-                  <input type="number" id="f-largeur" name="largeur" value="${o.largeur ?? ''}" min="0" step="0.1" placeholder="0">
-                  <span class="dim-libelle">Largeur</span>
-                </div>
-                <span class="dim-mult">×</span>
-                <div class="dim-champ">
-                  <input type="number" id="f-profondeur" name="profondeur" value="${o.profondeur ?? ''}" min="0" step="0.1" placeholder="0">
-                  <span class="dim-libelle">Profondeur</span>
-                </div>
-                <span class="dim-unite">pouces</span>
+            <!-- Image (3 col) -->
+            <div class="carte zone-image-edition">
+              <div class="image-edition-bento ${aImageInitiale ? 'avec-image' : ''}" id="zone-image-overlay">
+                ${imageHtmlInitial}
               </div>
-              <p class="aide-champ" id="dim-apercu">${o.dimensions ? `Saisie héritée : <em>${ech(o.dimensions)}</em>` : 'La profondeur est facultative.'}</p>
             </div>
 
-            <div class="grille-form">
-              ${champTexte({ nom: 'format', libelle: 'Format', valeur: o.format, liste: 'formats' })}
-              ${champTexte({ nom: 'orientation', libelle: 'Orientation', valeur: o.orientation, liste: 'orientations' })}
+            <!-- Identité (9 col) -->
+            <div class="carte span-9">
+              <h3>Identité</h3>
+              <div class="grille-form">
+                ${champTexte({ nom: 'titre', libelle: 'Titre', valeur: o.titre, requis: true })}
+                ${champSelect({ nom: 'artiste_id', libelle: 'Artiste', valeur: o.artiste_id, options: artistesOptions })}
+                ${champTexte({ nom: 'type', libelle: 'Type', valeur: o.type, liste: 'types-oeuvre' })}
+                ${champTexte({ nom: 'annee', libelle: 'Année', valeur: o.annee, type: 'number', attributs: 'min="1000" max="2999"' })}
+                ${champTexte({ nom: 'numero_inventaire', libelle: "Numéro d'inventaire", valeur: o.numero_inventaire })}
+                ${champTexte({ nom: 'numero_delivrance', libelle: 'Numéro de délivrance', valeur: o.numero_delivrance })}
+              </div>
             </div>
-            <p class="aide-champ">Format et orientation se calculent automatiquement à partir des dimensions. Tu peux les modifier à la main.</p>
 
-            ${champTexte({ nom: 'particularite', libelle: 'Particularité', valeur: o.particularite })}
-            ${champTexte({ nom: 'sujets', libelle: 'Sujets (séparés par des virgules)', valeur: o.sujets })}
-          </section>
+            <!-- Caractéristiques (8 col) -->
+            <div class="carte span-8">
+              <h3>Caractéristiques</h3>
+              <div class="sous-section">
+                <h4>Matériel et facture</h4>
+                <div class="grille-form">
+                  ${champTexte({ nom: 'medium', libelle: 'Médium', valeur: o.medium })}
+                  ${champTexte({ nom: 'support', libelle: 'Support', valeur: o.support })}
+                  ${champTexte({ nom: 'emplacement_signature', libelle: 'Emplacement de la signature', valeur: o.emplacement_signature })}
+                </div>
+              </div>
+              <div class="sous-section">
+                <h4>Dimensions (en pouces)</h4>
+                <div class="form-champ">
+                  <div class="dim-trio">
+                    <div class="dim-champ">
+                      <input type="number" id="f-hauteur" name="hauteur" value="${o.hauteur ?? ''}" min="0" step="0.1" placeholder="0">
+                      <span class="dim-libelle">Hauteur</span>
+                    </div>
+                    <span class="dim-mult">×</span>
+                    <div class="dim-champ">
+                      <input type="number" id="f-largeur" name="largeur" value="${o.largeur ?? ''}" min="0" step="0.1" placeholder="0">
+                      <span class="dim-libelle">Largeur</span>
+                    </div>
+                    <span class="dim-mult">×</span>
+                    <div class="dim-champ">
+                      <input type="number" id="f-profondeur" name="profondeur" value="${o.profondeur ?? ''}" min="0" step="0.1" placeholder="0">
+                      <span class="dim-libelle">Profondeur</span>
+                    </div>
+                    <span class="dim-unite">pouces</span>
+                  </div>
+                  <p class="aide-champ" id="dim-apercu">${o.dimensions ? `Saisie héritée : <em>${ech(o.dimensions)}</em>` : 'La profondeur est facultative.'}</p>
+                </div>
+                <div class="grille-form">
+                  ${champTexte({ nom: 'format', libelle: 'Format', valeur: o.format, liste: 'formats' })}
+                  ${champTexte({ nom: 'orientation', libelle: 'Orientation', valeur: o.orientation, liste: 'orientations' })}
+                  ${champSelect({ nom: 'style', libelle: 'Style', valeur: o.style, options: [
+                    { valeur: '', libelle: '— Non précisé —' },
+                    ...STYLES.map((s) => ({ valeur: s, libelle: s })),
+                  ]})}
+                </div>
+                <p class="aide-champ">Format et orientation se calculent automatiquement à partir des dimensions. Le style est à saisir à la main.</p>
+              </div>
+              <div class="sous-section">
+                <h4>Particularité</h4>
+                ${champTexte({ nom: 'particularite', libelle: '', valeur: o.particularite, attributs: 'placeholder="Ex. signée au verso, dédicacée à…"' })}
+              </div>
+            </div>
+
+            <!-- Sujets en chips (4 col) -->
+            <div class="carte span-4">
+              <h3>Sujets</h3>
+              <p class="aide-champ" style="margin-top:0;">Clique pour activer ou désactiver. Alimentent les filtres et la recherche.</p>
+              <div class="chip-zone" id="zone-sujets">${chipsHtml}</div>
+              <input type="hidden" name="sujets" id="f-sujets" value="${ech(o.sujets || '')}">
+            </div>
+
+            <!-- Préparation (6 col) -->
+            <div class="carte span-6">
+              <h3>Préparation</h3>
+              <p class="aide-champ" style="margin-top:0;"><strong>Sage est obligatoire</strong> avant la vente. Le site est facultatif.</p>
+              <div class="sous-section">
+                <h4>Sage 50</h4>
+                <div class="grille-form">
+                  ${champCheckbox({ nom: 'sage_cree', libelle: 'Créée dans Sage 50', valeur: !!o.sage_cree })}
+                  ${champTexte({ nom: 'sage_cree_date', libelle: 'Date Sage', valeur: o.sage_cree_date, type: 'date' })}
+                </div>
+              </div>
+              <div class="sous-section">
+                <h4>Site web</h4>
+                <div class="grille-form">
+                  ${champCheckbox({ nom: 'site_publie', libelle: 'Publiée sur le site', valeur: !!o.site_publie })}
+                  ${champTexte({ nom: 'site_publie_date', libelle: 'Date site', valeur: o.site_publie_date, type: 'date' })}
+                </div>
+              </div>
+              <p class="aide-champ">Les dates s'auto-remplissent à aujourd'hui à la coche si vides.</p>
+            </div>
+
+            <!-- Commerce et localisation (6 col) -->
+            <div class="carte span-6">
+              <h3>Commerce et localisation</h3>
+              <div class="grille-form">
+                ${champTexte({ nom: 'prix', libelle: 'Prix régulier ($)', valeur: o.prix, type: 'number', attributs: 'step="0.01" min="0"' })}
+                ${champSelect({ nom: 'statut', libelle: 'Statut', valeur: o.statut, options: statutsOptions })}
+                ${champTexte({ nom: 'emplacement', libelle: 'Emplacement (galerie)', valeur: o.emplacement })}
+                ${champTexte({ nom: 'exposition_actuelle', libelle: 'Exposition actuelle', valeur: o.exposition_actuelle })}
+              </div>
+              <div id="zone-prix-suggere"></div>
+              ${champCheckbox({ nom: 'cote_hors_normes', libelle: 'Cote hors-normes (œuvre exceptionnelle, prix saisi à la main)', valeur: !!o.cote_hors_normes })}
+              ${champTexte({ nom: 'url_site', libelle: "URL de la fiche sur le site web", valeur: o.url_site, type: 'url', attributs: 'placeholder="https://galerievieuxstjean.com/produit/…"' })}
+            </div>
+
+            <!-- Description (12 col) -->
+            <div class="carte span-12">
+              <h3>Description</h3>
+              ${champTextarea({ nom: 'description', libelle: '', valeur: o.description, lignes: 5 })}
+              <div class="actions-ia">
+                <button type="button" class="btn-action btn-secondaire-action" id="btn-copier-chatgpt">
+                  <span class="ia-icone" aria-hidden="true">✦</span>
+                  Copier pour ChatGPT
+                </button>
+                <p class="aide-champ">Copie le prompt assemblé (consignes galerie + consignes artiste + caractéristiques) et la photo dans le presse-papier, puis ouvre ChatGPT.</p>
+              </div>
+            </div>
+
+          </div>
 
           <!-- dimensions texte synchronisé en coulisse -->
           <input type="hidden" name="dimensions" id="f-dimensions" value="${ech(o.dimensions || '')}">
-
-          <section class="bloc">
-            <h3>Image</h3>
-            <div class="zone-photo-edition">
-              <div class="apercu-photo apercu-oeuvre">
-                ${imagePendingDataUrl
-                  ? `<img src="${imagePendingDataUrl}" alt="">`
-                  : (o.image_path
-                      ? `<img src="${urlPhoto(o.image_path)}" alt="">`
-                      : '<span class="apercu-vide">Aucune image</span>')}
-              </div>
-              <div class="actions-photo">
-                <button type="button" class="btn-action" id="btn-choisir-photo">${(o.image_path || imagePendingDataUrl) ? "Remplacer l'image…" : 'Choisir une image…'}</button>
-                <button type="button" class="btn-action btn-danger" id="btn-effacer-photo" style="${(o.image_path || imagePendingDataUrl) ? '' : 'display:none'}">Retirer l'image</button>
-              </div>
-            </div>
-            <p class="aide-champ">${nouveau
-              ? "L'image sera enregistrée dans <code>Documents\\Galeria\\Photos\\oeuvres\\</code> lors de la création de l'œuvre."
-              : "Le fichier est copié dans <code>Documents\\Galeria\\Photos\\oeuvres\\</code>. Ton original reste intact."}</p>
-          </section>
-
-          <section class="bloc">
-            <h3>Description</h3>
-            ${champTextarea({ nom: 'description', libelle: 'Description', valeur: o.description, lignes: 5 })}
-            <div class="actions-ia">
-              <button type="button" class="btn-action btn-secondaire-action" id="btn-copier-chatgpt">
-                <span class="ia-icone" aria-hidden="true">✦</span>
-                Copier pour ChatGPT
-              </button>
-              <p class="aide-champ">Copie le prompt assemblé (instructions galerie + instructions artiste + caractéristiques de l'œuvre) et la photo dans le presse-papier, puis ouvre ChatGPT. Tu colles, tu obtiens la suggestion, tu colles dans Description ci-dessus.</p>
-            </div>
-          </section>
-
-          <section class="bloc">
-            <h3>Commerce et localisation</h3>
-            <div class="grille-form">
-              ${champTexte({ nom: 'prix', libelle: 'Prix régulier ($)', valeur: o.prix, type: 'number', attributs: 'step="0.01" min="0"' })}
-              ${champSelect({ nom: 'statut', libelle: 'Statut', valeur: o.statut, options: statutsOptions })}
-              ${champTexte({ nom: 'emplacement', libelle: 'Emplacement (gallerie)', valeur: o.emplacement })}
-              ${champTexte({ nom: 'exposition_actuelle', libelle: 'Exposition actuelle', valeur: o.exposition_actuelle })}
-            </div>
-            <div id="zone-prix-suggere"></div>
-            ${champCheckbox({ nom: 'cote_hors_normes', libelle: 'Cote hors-normes (œuvre exceptionnelle, prix saisi à la main)', valeur: !!o.cote_hors_normes })}
-            ${champTexte({ nom: 'url_site', libelle: "URL de la fiche sur le site web", valeur: o.url_site, type: 'url', attributs: 'placeholder="https://galerievieuxstjean.com/produit/…"' })}
-          </section>
 
           <div class="form-actions">
             <button type="button" class="btn-action btn-secondaire-action" id="btn-annuler">Annuler</button>
@@ -778,82 +925,123 @@ export async function rendreOeuvreFiche(contenu, params) {
 
     const form = contenu.querySelector('#formulaire');
 
-    function majPreviewPhoto() {
-      const apercu = contenu.querySelector('.apercu-photo');
-      if (apercu) {
-        apercu.innerHTML = imagePendingDataUrl
-          ? `<img src="${imagePendingDataUrl}" alt="">`
-          : (o.image_path
-              ? `<img src="${urlPhoto(o.image_path)}" alt="">`
-              : '<span class="apercu-vide">Aucune image</span>');
-      }
+    function rendreImageZone() {
+      const zone = contenu.querySelector('#zone-image-overlay');
+      if (!zone) return;
       const aImg = !!(o.image_path || imagePendingDataUrl);
-      const btnChoisir = contenu.querySelector('#btn-choisir-photo');
-      if (btnChoisir) btnChoisir.textContent = aImg ? "Remplacer l'image…" : 'Choisir une image…';
-      const btnEffacer = contenu.querySelector('#btn-effacer-photo');
-      if (btnEffacer) btnEffacer.style.display = aImg ? '' : 'none';
+      const urlImg = imagePendingDataUrl || (o.image_path ? urlPhoto(o.image_path) : '');
+      zone.classList.toggle('avec-image', aImg);
+      zone.innerHTML = aImg
+        ? `<img src="${urlImg}" alt="">
+           <div class="image-actions-overlay">
+             <button type="button" class="image-action-btn" id="btn-choisir-photo" title="Remplacer l'image">${svgRemplacer}</button>
+             <button type="button" class="image-action-btn btn-supprimer" id="btn-effacer-photo" title="Retirer l'image">${svgSupprimer}</button>
+           </div>`
+        : `<button type="button" class="image-choisir" id="btn-choisir-photo">${svgImageVide}Choisir une image…</button>`;
+      brancherBoutonsImage();
     }
+    const majPreviewPhoto = rendreImageZone;
 
-    const btnChoisirPhoto = contenu.querySelector('#btn-choisir-photo');
-    if (btnChoisirPhoto) {
-      btnChoisirPhoto.addEventListener('click', async () => {
-        btnChoisirPhoto.disabled = true;
-        try {
-          if (nouveau) {
-            // Œuvre pas encore créée : on garde l'image en mémoire jusqu'au save
-            const r = await window.api.photoLireFichier();
-            if (r && !r.cancelled && r.dataUrl) {
-              imagePendingDataUrl = r.dataUrl;
-              modifie = true;
-              majPreviewPhoto();
+    function brancherBoutonsImage() {
+      const btnChoisirPhoto = contenu.querySelector('#btn-choisir-photo');
+      if (btnChoisirPhoto) {
+        btnChoisirPhoto.addEventListener('click', async () => {
+          btnChoisirPhoto.disabled = true;
+          try {
+            if (nouveau) {
+              const r = await window.api.photoLireFichier();
+              if (r && !r.cancelled && r.dataUrl) {
+                imagePendingDataUrl = r.dataUrl;
+                modifie = true;
+                rendreImageZone();
+              }
+            } else {
+              const result = await window.api.photoChoisir('oeuvres', o.id);
+              if (result && result.path !== undefined) {
+                o.image_path = result.path;
+                rendreImageZone();
+              }
             }
-          } else {
-            const result = await window.api.photoChoisir('oeuvres', o.id);
-            if (result && result.path !== undefined) {
-              o.image_path = result.path;
-              majPreviewPhoto();
-            }
+          } catch (err) {
+            await confirmer({
+              type: 'error', title: 'Image non chargée',
+              message: nettoyerErreur(err), buttons: ['OK'],
+            });
+          } finally {
+            btnChoisirPhoto.disabled = false;
           }
-        } catch (err) {
-          await confirmer({
-            type: 'error', title: 'Image non chargée',
-            message: err.message, buttons: ['OK'],
-          });
-        } finally {
-          btnChoisirPhoto.disabled = false;
-        }
-      });
-    }
-
-    const btnEffacerPhoto = contenu.querySelector('#btn-effacer-photo');
-    if (btnEffacerPhoto) {
-      btnEffacerPhoto.addEventListener('click', async () => {
-        if (nouveau) {
-          // Annule simplement la sélection en mémoire, pas d'opération disque
-          imagePendingDataUrl = null;
-          modifie = true;
-          majPreviewPhoto();
-          return;
-        }
-        const reponse = await confirmer({
-          type: 'warning', title: 'Retirer cette image ?',
-          message: "L'image sera effacée définitivement du dossier de la galerie.",
-          buttons: ['Retirer', 'Annuler'],
-          defaultId: 1, cancelId: 1,
         });
-        if (reponse !== 0) return;
-        try {
-          await window.api.photoEffacer('oeuvres', o.id);
-          o.image_path = null;
-          majPreviewPhoto();
-        } catch (err) {
-          await confirmer({
-            type: 'error', title: 'Suppression échouée',
-            message: err.message, buttons: ['OK'],
+      }
+      const btnEffacerPhoto = contenu.querySelector('#btn-effacer-photo');
+      if (btnEffacerPhoto) {
+        btnEffacerPhoto.addEventListener('click', async () => {
+          if (nouveau) {
+            imagePendingDataUrl = null;
+            modifie = true;
+            rendreImageZone();
+            return;
+          }
+          const reponse = await confirmer({
+            type: 'warning', title: 'Retirer cette image ?',
+            message: "L'image sera effacée définitivement du dossier de la galerie.",
+            buttons: ['Retirer', 'Annuler'],
+            defaultId: 1, cancelId: 1,
           });
-        }
-      });
+          if (reponse !== 0) return;
+          try {
+            await window.api.photoEffacer('oeuvres', o.id);
+            o.image_path = null;
+            rendreImageZone();
+          } catch (err) {
+            await confirmer({
+              type: 'error', title: 'Suppression échouée',
+              message: nettoyerErreur(err), buttons: ['OK'],
+            });
+          }
+        });
+      }
     }
+    brancherBoutonsImage();
+
+    // === Sujets en chips (toggle + ajouter) ===
+    const sujetsActifs = new Set(sujetsActifsInit);
+    function majChampSujets() {
+      const champ = contenu.querySelector('#f-sujets');
+      if (champ) champ.value = Array.from(sujetsActifs).join(', ');
+    }
+    function rendreChips() {
+      const zone = contenu.querySelector('#zone-sujets');
+      if (!zone) return;
+      const liste = Array.from(new Set([...SUJETS_PREDEFINIS, ...sujetsActifs])).sort((a, b) => sansAccents(a).localeCompare(sansAccents(b)));
+      zone.innerHTML = liste.map((s) => `
+        <button type="button" class="chip ${sujetsActifs.has(s) ? 'chip-actif' : ''}" data-sujet="${ech(s)}">${ech(s)}</button>
+      `).join('') + `<button type="button" class="chip chip-ajouter" id="btn-sujet-ajouter">+ Ajouter un sujet</button>`;
+      brancherChips();
+    }
+    function brancherChips() {
+      contenu.querySelectorAll('[data-sujet]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const s = btn.dataset.sujet;
+          if (sujetsActifs.has(s)) sujetsActifs.delete(s);
+          else sujetsActifs.add(s);
+          majChampSujets();
+          modifie = true;
+          btn.classList.toggle('chip-actif');
+        });
+      });
+      const btnAjouter = contenu.querySelector('#btn-sujet-ajouter');
+      if (btnAjouter) {
+        btnAjouter.addEventListener('click', async () => {
+          const nv = (window.prompt('Nouveau sujet :') || '').trim();
+          if (!nv) return;
+          sujetsActifs.add(nv);
+          majChampSujets();
+          modifie = true;
+          rendreChips();
+        });
+      }
+    }
+    brancherChips();
 
     form.addEventListener('input', () => { modifie = true; });
     form.addEventListener('change', () => { modifie = true; });
@@ -917,7 +1105,7 @@ export async function rendreOeuvreFiche(contenu, params) {
           await alerter({
             type: 'error',
             title: 'Préparation du presse-papier échouée',
-            message: err.message,
+            message: nettoyerErreur(err),
           });
         } finally {
           btnCopierChatGPT.disabled = false;
@@ -994,6 +1182,25 @@ export async function rendreOeuvreFiche(contenu, params) {
       el.addEventListener('input', majDimensions);
     });
     majDimensions();
+
+    // ====== Auto-date pour Sage et site (Jalon 3 — préparation) ======
+    function aujourdhuiISO() {
+      const d = new Date();
+      const p = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    }
+    function brancherAutoDate(nomCase, nomDate) {
+      const elCase = form.elements[nomCase];
+      const elDate = form.elements[nomDate];
+      if (!elCase || !elDate) return;
+      elCase.addEventListener('change', () => {
+        if (elCase.checked && !elDate.value) {
+          elDate.value = aujourdhuiISO();
+        }
+      });
+    }
+    brancherAutoDate('sage_cree', 'sage_cree_date');
+    brancherAutoDate('site_publie', 'site_publie_date');
 
     // ====== Prix suggéré à partir des cotes de l'artiste ======
     const zonePrixSuggere = contenu.querySelector('#zone-prix-suggere');
@@ -1179,7 +1386,7 @@ export async function rendreOeuvreFiche(contenu, params) {
         await confirmer({
           type: 'error',
           title: "Impossible d'enregistrer",
-          message: err.message,
+          message: nettoyerErreur(err),
           buttons: ['OK'],
         });
       }

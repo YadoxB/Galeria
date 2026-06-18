@@ -224,8 +224,10 @@ export async function rendreOeuvresListe(contenu, params = {}) {
   let artisteIdFiltre = '';
   let typeFiltre = '';
   let formatsActifs = [];
+  let stylesActifs = [];
 
   const FORMATS_FILTRE = ['Petit', 'Moyen', 'Grand', 'Très grand'];
+  const STYLES_FILTRE = ['Figuratif', 'Mi-Figuratif', 'Abstrait'];
 
   const recherche = contenu.querySelector('#recherche');
   const conteneur = contenu.querySelector('#conteneur-oeuvres');
@@ -303,6 +305,17 @@ export async function rendreOeuvresListe(contenu, params = {}) {
         </div>
       </div>
       <div class="groupe-filtre">
+        <h4>Style</h4>
+        <div class="groupe-formats" id="panneau-styles" style="margin:0;padding:0;">
+          ${STYLES_FILTRE.map((s) => `
+            <label class="chip-statut">
+              <input type="checkbox" value="${ech(s)}" ${stylesActifs.includes(s) ? 'checked' : ''}>
+              <span class="chip-libelle chip-format">${ech(s)}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+      <div class="groupe-filtre">
         <label class="case-archives">
           <input type="checkbox" id="panneau-case-archives" ${inclureArchives ? 'checked' : ''}>
           <span>Inclure les archivées</span>
@@ -324,6 +337,12 @@ export async function rendreOeuvresListe(contenu, params = {}) {
     panneauFiltres.querySelectorAll('#panneau-formats input[type="checkbox"]').forEach((c) => {
       c.addEventListener('change', () => {
         formatsActifs = Array.from(panneauFiltres.querySelectorAll('#panneau-formats input:checked')).map((x) => x.value);
+        dessiner();
+      });
+    });
+    panneauFiltres.querySelectorAll('#panneau-styles input[type="checkbox"]').forEach((c) => {
+      c.addEventListener('change', () => {
+        stylesActifs = Array.from(panneauFiltres.querySelectorAll('#panneau-styles input:checked')).map((x) => x.value);
         dessiner();
       });
     });
@@ -501,6 +520,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
       if (artisteIdFiltre && String(o.artiste_id) !== artisteIdFiltre) return false;
       if (typeFiltre && o.type !== typeFiltre) return false;
       if (formatsActifs.length > 0 && !formatsActifs.includes(o.format)) return false;
+      if (stylesActifs.length > 0 && !stylesActifs.includes(o.style)) return false;
       if (motRecherche) {
         const cible = sansAccents(
           [o.titre, o.artiste_nom, o.numero_inventaire, o.numero_delivrance].filter(Boolean).join(' ')

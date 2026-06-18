@@ -4,7 +4,7 @@ import {
   champTexte, champTextarea, champCheckbox, datalist,
   champPays, champSubdivision, brancherChangementPays,
   parserNumerosTaxes, urlPhoto, sansAccents, nomComplet,
-  badgeArchive, boutonArchive, basculerArchive,
+  badgeArchive, boutonArchive, basculerArchive, nettoyerErreur,
 } from '../commun.js';
 import { parserCotes, TAILLES_COTES, formaterMontant } from '../calcul-prix.js';
 import { recadrerCarre } from '../recadrage.js';
@@ -88,6 +88,8 @@ export async function rendreArtisteFiche(contenu, params) {
   let mode = estNouveau ? 'edition' : 'lecture';
   let modifie = false;
   let nouveau = estNouveau;
+  let photoPendingDataUrl = null;        // dataUrl déjà recadrée carrée
+  let photoPendingOriginaleDataUrl = null; // dataUrl originale pleine résolution
 
   if (nouveau) poserGardien(gardienChangements);
 
@@ -151,7 +153,7 @@ export async function rendreArtisteFiche(contenu, params) {
       await confirmer({
         type: 'error',
         title: 'Suppression échouée',
-        message: err.message,
+        message: nettoyerErreur(err),
         buttons: ['OK'],
       });
     }
@@ -494,110 +496,125 @@ export async function rendreArtisteFiche(contenu, params) {
     const nomAffichage = nomComplet(a) || a.nom || '';
     const titrePage = nouveau ? 'Nouvel artiste' : `Modifier « ${ech(nomAffichage)} »`;
 
+    // === SVG des icônes overlay ===
+    const svgRemplacer = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>`;
+    const svgRecadrer = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"/><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"/></svg>`;
+    const svgSupprimer = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>`;
+    const svgPersonne = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>`;
+
+    const aPhotoInitiale = !!(a.photo_path || photoPendingDataUrl);
+    const urlPhotoInitiale = photoPendingDataUrl || (a.photo_path ? urlPhoto(a.photo_path) : '');
+    const photoOverlayInit = aPhotoInitiale
+      ? `<img src="${urlPhotoInitiale}" alt="">
+         <div class="photo-actions-overlay">
+           <button type="button" class="photo-action-btn" id="btn-choisir-photo" title="Remplacer la photo">${svgRemplacer}</button>
+           ${nouveau ? '' : `<button type="button" class="photo-action-btn" id="btn-recadrer-photo" title="Recadrer">${svgRecadrer}</button>`}
+           <button type="button" class="photo-action-btn btn-supprimer" id="btn-effacer-photo" title="Retirer la photo">${svgSupprimer}</button>
+         </div>`
+      : `<button type="button" class="photo-choisir" id="btn-choisir-photo">${svgPersonne}Choisir une photo</button>`;
+
     contenu.innerHTML = `
-      <div class="vue-fiche">
+      <div class="vue-fiche vue-fiche-bento">
         <h2 class="titre-formulaire">${titrePage}</h2>
         ${datalist('types-artiste', TYPES_ARTISTE)}
         ${datalist('langues', LANGUES)}
         ${datalist('etiquettes-taxes', ETIQUETTES_TAXES_COURANTES)}
         <form id="formulaire" class="formulaire" novalidate>
-          <section class="bloc">
-            <h3>Identité</h3>
-            <div class="grille-form">
-              ${champTexte({ nom: 'prenom', libelle: 'Prénom', valeur: a.prenom })}
-              ${champTexte({ nom: 'nom', libelle: 'Nom de famille', valeur: a.nom, requis: true })}
-            </div>
-            <div class="grille-form">
-              ${champTexte({ nom: 'type', libelle: 'Type', valeur: a.type, liste: 'types-artiste' })}
-              ${champTexte({ nom: 'prefixe_inventaire', libelle: "Préfixe d'inventaire", valeur: a.prefixe_inventaire, attributs: 'maxlength="10"' })}
-              ${champTexte({ nom: 'langue', libelle: 'Langue', valeur: a.langue, liste: 'langues' })}
-            </div>
-            ${nouveau ? '<p class="aide-champ">Le préfixe se calcule automatiquement à partir des deux premières lettres du prénom et de la première du nom de famille (ex. Joe Untel → JOU). Tu peux le modifier au besoin.</p>' : ''}
-          </section>
+          <div class="grille-bento">
 
-          ${nouveau ? '' : `
-          <section class="bloc">
-            <h3>Photo</h3>
-            <div class="zone-photo-edition">
-              <div class="apercu-photo">
-                ${a.photo_path
-                  ? `<img src="${urlPhoto(a.photo_path)}" alt="">`
-                  : '<span class="apercu-vide">Aucune photo</span>'}
-              </div>
-              <div class="actions-photo">
-                <button type="button" class="btn-action" id="btn-choisir-photo">${a.photo_path ? 'Remplacer la photo…' : 'Choisir une photo…'}</button>
-                <button type="button" class="btn-action" id="btn-recadrer-photo" style="${a.photo_path ? '' : 'display:none'}">Recadrer</button>
-                <button type="button" class="btn-action btn-danger" id="btn-effacer-photo" style="${a.photo_path ? '' : 'display:none'}">Retirer la photo</button>
+            <!-- Photo (3 col) -->
+            <div class="carte zone-photo-edition">
+              <div class="photo-edition-bento" id="zone-photo-overlay">
+                ${photoOverlayInit}
               </div>
             </div>
-            <p class="aide-champ">Le fichier est copié dans <code>Documents\\GalerieApp\\Photos\\artistes\\</code>. Ton original reste intact.</p>
-          </section>
-          `}
 
-          <section class="bloc">
-            <h3>Contact</h3>
-            <div class="grille-form">
-              ${champTexte({ nom: 'courriel', libelle: 'Courriel', valeur: a.courriel, type: 'email' })}
-              ${champTexte({ nom: 'telephone', libelle: 'Téléphone', valeur: a.telephone, type: 'tel' })}
+            <!-- Identité (9 col) -->
+            <div class="carte span-9">
+              <h3>Identité</h3>
+              <div class="grille-form">
+                ${champTexte({ nom: 'prenom', libelle: 'Prénom', valeur: a.prenom })}
+                ${champTexte({ nom: 'nom', libelle: 'Nom de famille', valeur: a.nom, requis: true })}
+              </div>
+              <div class="grille-form">
+                ${champTexte({ nom: 'type', libelle: 'Type', valeur: a.type, liste: 'types-artiste' })}
+                ${champTexte({ nom: 'prefixe_inventaire', libelle: "Préfixe d'inventaire", valeur: a.prefixe_inventaire, attributs: 'maxlength="10"' })}
+                ${champTexte({ nom: 'langue', libelle: 'Langue', valeur: a.langue, liste: 'langues' })}
+              </div>
+              ${nouveau ? '<p class="aide-champ">Le préfixe se calcule automatiquement à partir des deux premières lettres du prénom et de la première du nom de famille (ex. Joe Untel → JOU). Tu peux le modifier au besoin.</p>' : ''}
             </div>
-            ${champTextarea({ nom: 'adresse', libelle: 'Adresse', valeur: a.adresse, lignes: 2 })}
-            <div class="grille-form">
-              ${champPays({ nom: 'pays', valeur: a.pays || 'Canada' })}
-              <div id="zone-province-artiste">
-                ${champSubdivision({ nom: 'province', pays: a.pays || 'Canada', valeur: a.province })}
+
+            <!-- Contact (6 col) -->
+            <div class="carte span-6">
+              <h3>Contact</h3>
+              <div class="grille-form">
+                ${champTexte({ nom: 'courriel', libelle: 'Courriel', valeur: a.courriel, type: 'email' })}
+                ${champTexte({ nom: 'telephone', libelle: 'Téléphone', valeur: a.telephone, type: 'tel' })}
+              </div>
+              ${champTextarea({ nom: 'adresse', libelle: 'Adresse', valeur: a.adresse, lignes: 2 })}
+              <div class="grille-form">
+                ${champPays({ nom: 'pays', valeur: a.pays || 'Canada' })}
+                <div id="zone-province-artiste">
+                  ${champSubdivision({ nom: 'province', pays: a.pays || 'Canada', valeur: a.province })}
+                </div>
               </div>
             </div>
-          </section>
 
-          <section class="bloc">
-            <h3>Présentation</h3>
-            ${champTextarea({ nom: 'biographie', libelle: 'Biographie', valeur: a.biographie, lignes: 5 })}
-            ${champTextarea({ nom: 'demarche', libelle: 'Démarche', valeur: a.demarche, lignes: 5 })}
-            ${champTextarea({ nom: 'curriculum', libelle: 'Curriculum', valeur: a.curriculum, lignes: 5 })}
-          </section>
-
-          <section class="bloc">
-            <h3>Fiscalité</h3>
-            ${champCheckbox({ nom: 'percoit_taxes', libelle: 'Perçoit les taxes', valeur: !!a.percoit_taxes })}
-            <div class="form-champ">
-              <label>Numéros de taxes</label>
-              <div id="zone-taxes">${lignesTaxesHtml}</div>
-              <button type="button" id="btn-ajouter-taxe" class="btn-ajouter">+ Ajouter un numéro de taxe</button>
-              <p class="aide-champ">Une ligne par numéro. Étiquettes courantes : TPS, TVQ, TVH. Tu peux mettre n'importe quel libellé.</p>
+            <!-- Présentation (6 col) -->
+            <div class="carte span-6">
+              <h3>Présentation</h3>
+              ${champTextarea({ nom: 'biographie', libelle: 'Biographie', valeur: a.biographie, lignes: 4 })}
+              ${champTextarea({ nom: 'demarche', libelle: 'Démarche', valeur: a.demarche, lignes: 4 })}
+              ${champTextarea({ nom: 'curriculum', libelle: 'Curriculum', valeur: a.curriculum, lignes: 4 })}
             </div>
-          </section>
 
-          <section class="bloc">
-            <h3>Notes</h3>
-            ${champTextarea({ nom: 'notes', libelle: 'Notes internes', valeur: a.notes, lignes: 3 })}
-          </section>
+            <!-- Cotes (12 col) -->
+            <div class="carte span-12">
+              <h3>Cotes (calcul de prix)</h3>
+              <p class="aide-champ">Tarif <strong>préférentiel</strong> (sans encadrement) appliqué selon le médium et la taille de l'œuvre. La version <strong>courante</strong> ajoute automatiquement 2 $ à la cote.</p>
+              <div id="zone-cotes"></div>
+              <button type="button" id="btn-ajouter-cote" class="btn-ajouter">+ Ajouter une cote</button>
+              <details class="aide-priorite-cotes" style="margin-top:12px;">
+                <summary>Ordre de priorité (cliquer pour déplier)</summary>
+                <p class="aide-champ" style="margin-top:8px;">Quand plusieurs cotes pourraient s'appliquer à une œuvre, Galeria prend toujours la <strong>plus précise</strong> :</p>
+                <ol class="aide-champ" style="margin:6px 0 8px 1.4em; padding:0;">
+                  <li>Médium <em>exact</em> + taille <em>exacte</em></li>
+                  <li>Médium « Tous » + taille <em>exacte</em></li>
+                  <li>Médium <em>exact</em> + taille « Tous »</li>
+                  <li>Médium « Tous » + taille « Tous » (fallback général)</li>
+                </ol>
+                <p class="aide-champ" style="margin-top:8px;"><strong>Exemple.</strong> Tu veux 30 $ partout sauf 35 $ en très grand : 1 cote « Tous / Tous = 30 » + 1 cote « Tous / Très grand = 35 » suffit.</p>
+                <p class="aide-champ"><strong>À noter.</strong> Le médium est insensible à la casse et aux accents.</p>
+              </details>
+            </div>
 
-          <section class="bloc">
-            <h3>Cotes (calcul de prix)</h3>
-            <p class="aide-champ">Tarif <strong>préférentiel</strong> (sans encadrement) appliqué selon le médium et la taille de l'œuvre. La version <strong>courante</strong> ajoute automatiquement 2 $ à la cote (= prix avec encadrement). Si aucune cote ne correspond, le prix de l'œuvre reste saisi à la main.</p>
-            <div id="zone-cotes"></div>
-            <button type="button" id="btn-ajouter-cote" class="btn-ajouter">+ Ajouter une cote</button>
-            <details class="aide-priorite-cotes" style="margin-top:12px;">
-              <summary>Ordre de priorité (cliquer pour déplier)</summary>
-              <p class="aide-champ" style="margin-top:8px;">Quand plusieurs cotes pourraient s'appliquer à une œuvre, Galeria prend toujours la <strong>plus précise</strong> :</p>
-              <ol class="aide-champ" style="margin:6px 0 8px 1.4em; padding:0;">
-                <li>Médium <em>exact</em> + taille <em>exacte</em></li>
-                <li>Médium « Tous » + taille <em>exacte</em></li>
-                <li>Médium <em>exact</em> + taille « Tous »</li>
-                <li>Médium « Tous » + taille « Tous » (fallback général)</li>
-              </ol>
-              <p class="aide-champ" style="margin-top:8px;"><strong>Exemple.</strong> Tu veux 30 $ partout sauf 35 $ en très grand : 1 cote « Tous / Tous = 30 » + 1 cote « Tous / Très grand = 35 » suffit. Pas besoin de répéter pour Petit / Moyen / Grand.</p>
-              <p class="aide-champ"><strong>À noter.</strong> Le médium est insensible à la casse et aux accents : « Acrylique », « acrylique » et « ACRYLIQUE » sont équivalents.</p>
-            </details>
-          </section>
+            <!-- Fiscalité (6 col) -->
+            <div class="carte span-6">
+              <h3>Fiscalité</h3>
+              ${champCheckbox({ nom: 'percoit_taxes', libelle: 'Perçoit les taxes', valeur: !!a.percoit_taxes })}
+              <div class="form-champ">
+                <label>Numéros de taxes</label>
+                <div id="zone-taxes">${lignesTaxesHtml}</div>
+                <button type="button" id="btn-ajouter-taxe" class="btn-ajouter">+ Ajouter un numéro de taxe</button>
+                <p class="aide-champ">Une ligne par numéro. Étiquettes courantes : TPS, TVQ, TVH.</p>
+              </div>
+            </div>
 
-          <section class="bloc">
-            <h3>Aide à la description IA</h3>
-            ${champTextarea({ nom: 'instructions_ia', libelle: "Consignes pour ChatGPT spécifiques à cet artiste", valeur: a.instructions_ia, lignes: 6 })}
-            <p class="aide-champ">Ce texte sera inclus dans le prompt généré par le bouton « Copier pour ChatGPT » sur les fiches d'œuvres de cet artiste. Tu peux y coller le système prompt de son GPT personnalisé : style à adopter, mots-clés à privilégier, termes à éviter, longueur cible, exemples, etc.</p>
-            ${champTexte({ nom: 'lien_chatgpt', libelle: 'Lien vers le GPT personnalisé de cet artiste', valeur: a.lien_chatgpt, attributs: 'placeholder="https://chatgpt.com/g/g-xxx-mon-artiste"' })}
-            <p class="aide-champ">Si l'artiste a son propre GPT, colle l'URL ici. Le bouton « Copier pour ChatGPT » ouvrira directement ce lien plutôt que ChatGPT générique.</p>
-          </section>
+            <!-- Aide IA (6 col) -->
+            <div class="carte span-6">
+              <h3>Aide à la description IA</h3>
+              ${champTextarea({ nom: 'instructions_ia', libelle: "Consignes pour ChatGPT spécifiques", valeur: a.instructions_ia, lignes: 4 })}
+              <p class="aide-champ">Inclus dans le prompt assemblé par « Copier pour ChatGPT » sur les œuvres de cet artiste.</p>
+              ${champTexte({ nom: 'lien_chatgpt', libelle: 'Lien vers son GPT personnalisé', valeur: a.lien_chatgpt, attributs: 'placeholder="https://chatgpt.com/g/g-xxx-mon-artiste"' })}
+            </div>
+
+            <!-- Notes (12 col) -->
+            <div class="carte span-12">
+              <h3>Notes</h3>
+              ${champTextarea({ nom: 'notes', libelle: '', valeur: a.notes, lignes: 3 })}
+            </div>
+
+          </div>
 
           <div class="form-actions">
             <button type="button" class="btn-action btn-secondaire-action" id="btn-annuler">Annuler</button>
@@ -613,110 +630,129 @@ export async function rendreArtisteFiche(contenu, params) {
     const form = contenu.querySelector('#formulaire');
     const zoneTaxes = contenu.querySelector('#zone-taxes');
 
-    function majPreviewPhoto() {
-      const apercu = contenu.querySelector('.apercu-photo');
-      if (apercu) {
-        apercu.innerHTML = a.photo_path
-          ? `<img src="${urlPhoto(a.photo_path)}" alt="">`
-          : '<span class="apercu-vide">Aucune photo</span>';
-      }
-      const btnChoisir = contenu.querySelector('#btn-choisir-photo');
-      if (btnChoisir) btnChoisir.textContent = a.photo_path ? 'Remplacer la photo…' : 'Choisir une photo…';
-      const btnEffacer = contenu.querySelector('#btn-effacer-photo');
-      if (btnEffacer) btnEffacer.style.display = a.photo_path ? '' : 'none';
-      const btnRecadrer = contenu.querySelector('#btn-recadrer-photo');
-      if (btnRecadrer) btnRecadrer.style.display = a.photo_path ? '' : 'none';
+    function rendrePhotoZone() {
+      const zone = contenu.querySelector('#zone-photo-overlay');
+      if (!zone) return;
+      const aPhoto = !!(a.photo_path || photoPendingDataUrl);
+      const urlImg = photoPendingDataUrl || (a.photo_path ? urlPhoto(a.photo_path) : '');
+      zone.innerHTML = aPhoto
+        ? `<img src="${urlImg}" alt="">
+           <div class="photo-actions-overlay">
+             <button type="button" class="photo-action-btn" id="btn-choisir-photo" title="Remplacer la photo">${svgRemplacer}</button>
+             ${nouveau ? '' : `<button type="button" class="photo-action-btn" id="btn-recadrer-photo" title="Recadrer">${svgRecadrer}</button>`}
+             <button type="button" class="photo-action-btn btn-supprimer" id="btn-effacer-photo" title="Retirer la photo">${svgSupprimer}</button>
+           </div>`
+        : `<button type="button" class="photo-choisir" id="btn-choisir-photo">${svgPersonne}Choisir une photo</button>`;
+      brancherBoutonsPhoto();
     }
+    const majPreviewPhoto = rendrePhotoZone;
 
-    const btnChoisirPhoto = contenu.querySelector('#btn-choisir-photo');
-    if (btnChoisirPhoto) {
-      btnChoisirPhoto.addEventListener('click', async () => {
-        btnChoisirPhoto.disabled = true;
-        try {
-          const lecture = await window.api.photoLireFichier();
-          if (!lecture || lecture.cancelled) return;
-          const dataUrlRecadree = await recadrerCarre(lecture.dataUrl);
-          if (!dataUrlRecadree) return;
-          const result = await window.api.photoEnregistrerRecadree(
-            'artistes', a.id, dataUrlRecadree, lecture.dataUrl
-          );
-          if (result && result.path !== undefined) {
-            a.photo_path = result.path;
-            a.photo_originale_path = (await window.api.artisteGet(a.id)).photo_originale_path;
-            majPreviewPhoto();
-          }
-        } catch (err) {
-          await confirmer({
-            type: 'error', title: 'Photo non chargée',
-            message: err.message, buttons: ['OK'],
-          });
-        } finally {
-          btnChoisirPhoto.disabled = false;
-        }
-      });
-    }
-
-    const btnRecadrerPhoto = contenu.querySelector('#btn-recadrer-photo');
-    if (btnRecadrerPhoto) {
-      btnRecadrerPhoto.addEventListener('click', async () => {
-        btnRecadrerPhoto.disabled = true;
-        try {
-          const lecture = await window.api.photoLirePourRecadrage('artistes', a.id);
-          if (!lecture || !lecture.dataUrl) return;
-          if (!lecture.depuisOriginale) {
-            const reponse = await confirmer({
-              type: 'info',
-              title: 'Pas d\'original conservé',
-              message: 'Cette photo a été ajoutée avant que la conservation des originaux ne soit en place. Le recadrage partira de la version déjà recadrée (résolution moindre).',
-              detail: 'Pour partir d\'une pleine résolution, utilise plutôt « Remplacer la photo… » avec le fichier d\'origine.',
-              buttons: ['Continuer quand même', 'Annuler'],
-              defaultId: 0, cancelId: 1,
+    function brancherBoutonsPhoto() {
+      const btnChoisirPhoto = contenu.querySelector('#btn-choisir-photo');
+      if (btnChoisirPhoto) {
+        btnChoisirPhoto.addEventListener('click', async () => {
+          btnChoisirPhoto.disabled = true;
+          try {
+            const lecture = await window.api.photoLireFichier();
+            if (!lecture || lecture.cancelled) return;
+            const dataUrlRecadree = await recadrerCarre(lecture.dataUrl);
+            if (!dataUrlRecadree) return;
+            if (nouveau) {
+              photoPendingDataUrl = dataUrlRecadree;
+              photoPendingOriginaleDataUrl = lecture.dataUrl;
+              modifie = true;
+              rendrePhotoZone();
+            } else {
+              const result = await window.api.photoEnregistrerRecadree(
+                'artistes', a.id, dataUrlRecadree, lecture.dataUrl
+              );
+              if (result && result.path !== undefined) {
+                a.photo_path = result.path;
+                a.photo_originale_path = (await window.api.artisteGet(a.id)).photo_originale_path;
+                rendrePhotoZone();
+              }
+            }
+          } catch (err) {
+            await confirmer({
+              type: 'error', title: 'Photo non chargée',
+              message: nettoyerErreur(err), buttons: ['OK'],
             });
-            if (reponse !== 0) return;
+          } finally {
+            btnChoisirPhoto.disabled = false;
           }
-          const dataUrlRecadree = await recadrerCarre(lecture.dataUrl);
-          if (!dataUrlRecadree) return;
-          const result = await window.api.photoEnregistrerRecadree(
-            'artistes', a.id, dataUrlRecadree, null
-          );
-          if (result && result.path !== undefined) {
-            a.photo_path = result.path;
-            majPreviewPhoto();
-          }
-        } catch (err) {
-          await confirmer({
-            type: 'error', title: 'Recadrage impossible',
-            message: err.message, buttons: ['OK'],
-          });
-        } finally {
-          btnRecadrerPhoto.disabled = false;
-        }
-      });
-    }
-
-    const btnEffacerPhoto = contenu.querySelector('#btn-effacer-photo');
-    if (btnEffacerPhoto) {
-      btnEffacerPhoto.addEventListener('click', async () => {
-        const reponse = await confirmer({
-          type: 'warning', title: 'Retirer la photo ?',
-          message: 'La photo (recadrée et originale) sera effacée définitivement du dossier de la galerie.',
-          buttons: ['Retirer', 'Annuler'],
-          defaultId: 1, cancelId: 1,
         });
-        if (reponse !== 0) return;
-        try {
-          await window.api.photoEffacer('artistes', a.id);
-          a.photo_path = null;
-          a.photo_originale_path = null;
-          majPreviewPhoto();
-        } catch (err) {
-          await confirmer({
-            type: 'error', title: 'Suppression échouée',
-            message: err.message, buttons: ['OK'],
+      }
+
+      const btnRecadrerPhoto = contenu.querySelector('#btn-recadrer-photo');
+      if (btnRecadrerPhoto) {
+        btnRecadrerPhoto.addEventListener('click', async () => {
+          btnRecadrerPhoto.disabled = true;
+          try {
+            const lecture = await window.api.photoLirePourRecadrage('artistes', a.id);
+            if (!lecture || !lecture.dataUrl) return;
+            if (!lecture.depuisOriginale) {
+              const reponse = await confirmer({
+                type: 'info',
+                title: 'Pas d\'original conservé',
+                message: 'Cette photo a été ajoutée avant que la conservation des originaux ne soit en place. Le recadrage partira de la version déjà recadrée (résolution moindre).',
+                detail: 'Pour partir d\'une pleine résolution, utilise plutôt « Remplacer la photo » avec le fichier d\'origine.',
+                buttons: ['Continuer quand même', 'Annuler'],
+                defaultId: 0, cancelId: 1,
+              });
+              if (reponse !== 0) return;
+            }
+            const dataUrlRecadree = await recadrerCarre(lecture.dataUrl);
+            if (!dataUrlRecadree) return;
+            const result = await window.api.photoEnregistrerRecadree(
+              'artistes', a.id, dataUrlRecadree, null
+            );
+            if (result && result.path !== undefined) {
+              a.photo_path = result.path;
+              rendrePhotoZone();
+            }
+          } catch (err) {
+            await confirmer({
+              type: 'error', title: 'Recadrage impossible',
+              message: nettoyerErreur(err), buttons: ['OK'],
+            });
+          } finally {
+            btnRecadrerPhoto.disabled = false;
+          }
+        });
+      }
+
+      const btnEffacerPhoto = contenu.querySelector('#btn-effacer-photo');
+      if (btnEffacerPhoto) {
+        btnEffacerPhoto.addEventListener('click', async () => {
+          if (nouveau) {
+            photoPendingDataUrl = null;
+            photoPendingOriginaleDataUrl = null;
+            modifie = true;
+            rendrePhotoZone();
+            return;
+          }
+          const reponse = await confirmer({
+            type: 'warning', title: 'Retirer la photo ?',
+            message: 'La photo (recadrée et originale) sera effacée définitivement du dossier de la galerie.',
+            buttons: ['Retirer', 'Annuler'],
+            defaultId: 1, cancelId: 1,
           });
-        }
-      });
+          if (reponse !== 0) return;
+          try {
+            await window.api.photoEffacer('artistes', a.id);
+            a.photo_path = null;
+            a.photo_originale_path = null;
+            rendrePhotoZone();
+          } catch (err) {
+            await confirmer({
+              type: 'error', title: 'Suppression échouée',
+              message: nettoyerErreur(err), buttons: ['OK'],
+            });
+          }
+        });
+      }
     }
+    brancherBoutonsPhoto();
 
     function brancherSuppressions() {
       zoneTaxes.querySelectorAll('.btn-supprimer-ligne').forEach((btn) => {
@@ -901,6 +937,25 @@ export async function rendreArtisteFiche(contenu, params) {
         if (nouveau) {
           a = await window.api.artisteCreer(data);
           modifierParamsCourants({ id: a.id, nouveau: false });
+          // Photo choisie en amont (mode nouveau) : on l'enregistre maintenant que l'ID existe
+          if (photoPendingDataUrl) {
+            try {
+              const r = await window.api.photoEnregistrerRecadree(
+                'artistes', a.id, photoPendingDataUrl, photoPendingOriginaleDataUrl
+              );
+              if (r && r.path) a.photo_path = r.path;
+            } catch (errPhoto) {
+              await confirmer({
+                type: 'warning',
+                title: 'Artiste créé, photo non enregistrée',
+                message: "L'artiste a été créé mais la photo n'a pas pu être enregistrée.",
+                detail: errPhoto.message + "\n\nTu peux ré-essayer depuis la fiche de l'artiste.",
+                buttons: ['OK'],
+              });
+            }
+            photoPendingDataUrl = null;
+            photoPendingOriginaleDataUrl = null;
+          }
         } else {
           a = await window.api.artisteModifier(a.id, data);
         }
@@ -921,7 +976,7 @@ export async function rendreArtisteFiche(contenu, params) {
         await confirmer({
           type: 'error',
           title: "Impossible d'enregistrer",
-          message: err.message,
+          message: nettoyerErreur(err),
           buttons: ['OK'],
         });
       }

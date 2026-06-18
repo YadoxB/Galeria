@@ -99,8 +99,8 @@ function listerOeuvres(filtres = {}) {
   const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
   return db.prepare(`
     SELECT o.id, o.titre, o.numero_inventaire, o.numero_delivrance,
-           o.type, o.annee, o.medium, o.support, o.dimensions, o.format,
-           o.prix, o.statut, o.image_path, o.archive,
+           o.type, o.annee, o.medium, o.support, o.dimensions, o.format, o.style,
+           o.prix, o.statut, o.image_path, o.archive, o.sage_cree,
            a.id AS artiste_id, TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom
     FROM oeuvres o
     JOIN artistes a ON a.id = o.artiste_id
@@ -251,6 +251,32 @@ function ventesRecentes(limite = 6) {
     JOIN oeuvres o ON o.id = v.oeuvre_id
     JOIN artistes a ON a.id = o.artiste_id
     JOIN clients c ON c.id = v.client_id
+    ORDER BY v.date_vente DESC, v.id DESC
+    LIMIT ?
+  `).all(limite);
+}
+
+// Jalon 3 — ventes dont au moins une étape post-vente n'est pas complétée :
+// paiement non reçu, ou emballage/envoi/livraison sans date.
+function commandesNonCompletees(limite = 10) {
+  const db = openDatabase();
+  return db.prepare(`
+    SELECT v.id, v.date_vente, v.numero_facture,
+           v.prix_vente, v.tps, v.tvq,
+           v.paiement_statut, v.paiement_date,
+           v.emballage_date, v.envoi_date, v.livraison_date,
+           o.titre AS oeuvre_titre, o.image_path, o.numero_inventaire,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
+           c.id AS client_id,
+           TRIM(COALESCE(c.prenom || ' ', '') || c.nom) AS client_nom
+    FROM ventes v
+    JOIN oeuvres o ON o.id = v.oeuvre_id
+    JOIN artistes a ON a.id = o.artiste_id
+    JOIN clients c ON c.id = v.client_id
+    WHERE v.paiement_statut IS NULL OR v.paiement_statut != 'recu'
+       OR v.emballage_date IS NULL
+       OR v.envoi_date IS NULL
+       OR v.livraison_date IS NULL
     ORDER BY v.date_vente DESC, v.id DESC
     LIMIT ?
   `).all(limite);
@@ -548,6 +574,7 @@ module.exports = {
   oeuvresRecentes,
   ventesRecentes,
   oeuvresReservees,
+  commandesNonCompletees,
   ventesParMois,
   statsTableauDeBord,
 };

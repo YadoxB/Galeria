@@ -9,7 +9,7 @@
 
 ## En une phrase
 
-L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable et installée chez les parents (v0.2.2 sur GitHub Releases avec auto-update). Les jalons 1 et 2 de la roadmap post-tests sont livrés (polish UX + cotes & calculateur de prix). **La v0.2.3 est taggée localement** : elle contient le jalon 2 + une refonte bento complète des 7 pages principales (Artiste, Œuvre, Client, Vente, Réglages, Profil galerie, Outils) — reste à pousser le tag et publier la release. Ensuite les jalons 3 (cycle de vie), 4 (pack de vente) et 5 (réorganisation photos), plus les phases reportées (Sage, web, sécurité).
+L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable et installée chez les parents. **v0.2.3 publiée** sur GitHub Releases (refonte bento des 7 pages + jalon 2 cotes). **v0.2.4 en cours sur la branche `claude/practical-payne-6f7562`** (non taggée) : jalon 3 (suivi cycle de vie + garde-fou Sage), champ Style, formulaires d'édition en bento, suivi inline-éditable, générateur de nomenclature. Reste le jalon 4 (pack de vente) et le jalon 5 (réorganisation/renommage des photos), plus les phases reportées (Sage, web, sécurité).
 
 ---
 
@@ -341,10 +341,11 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 
 | Priorité | Tâche | Note |
 |---|---|---|
-| **Reco** | **Pousser le tag v0.2.3 + release GitHub** | Le tag est créé localement (jalon 2 + refonte bento complète). Reste `git push --tags origin claude/practical-payne-6f7562` puis `npm run release` (nouveau GH_TOKEN à demander) pour publier sur GitHub Releases et déclencher l'auto-update chez les parents. |
-| **Reco** | **Jalon 3 — Suivi cycle de vie** | Statuts manuels de préparation et post-vente + bloc « Commandes non complétées » sur le tableau de bord. Détaillé plus haut. |
+| **Reco** | **Tag + release v0.2.4** | La branche `claude/practical-payne-6f7562` contient le jalon 3 + Style + formulaires bento + nomenclature, commités mais pas taggés. Une fois Dave satisfait, bumper `package.json` en `0.2.4`, `git tag v0.2.4`, pousser, puis `npm run release` (gh CLI déjà configuré → plus de token à gérer). |
+| **Reco** | **Jalon 4 — Pack de vente** | Présentation artiste PDF, catalogue artiste PDF, lettre de remerciement par méthode d'achat, commission par type d'œuvre, bundle PDF de vente. Détaillé plus bas. En attente de templates/textes des parents pour certains documents. |
+| | **Jalon 5 — Renommage des photos** | Le générateur de nom est **déjà fait** (`src/db/nomenclature.js`, testé). Reste : sous-dossiers par artiste (décidé) + renommage physique des fichiers existants avec sauvegarde préalable. Risqué — à faire isolément. |
 | | **#13 Tutoriel de première ouverture** | Overlay guidé qui présente les sections au 1er lancement. Quelques décisions de design. |
-| | **#2 Édition en batch** (vue tableau) | Gros morceau qu'on a reporté à deux reprises. Toujours là. |
+| | **#2 Édition en batch** (vue tableau) | Gros morceau qu'on a reporté plusieurs fois. Toujours là. |
 | | **Migration manuelle des 2 pseudonymes** | « LO (Laurent Torregrossa) » et « Sofia (Sophie Lebeuf) » dans les fiches artistes — 5 minutes dans l'app. |
 
 ### En attente d'input externe
@@ -377,8 +378,15 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 - **Tester les commandes avec la formule courante en po²** : valider avec les parents que `(prix_pref + 2) × surface` est la bonne formule, ou si pour le carré c'est plutôt `(prix_pref × surface) + 2 × (H+L)`. Voir `A-VALIDER.md`.
 
 **Recommandation pour la prochaine session :**
-1. **Pousser le tag v0.2.3 et publier la release GitHub** pour que les parents reçoivent l'auto-update (jalon 2 cotes + refonte bento complète).
-2. Puis attaquer le **jalon 3 — cycle de vie** : un bon morceau autonome qui apporte de la valeur visible (commandes non complétées sur le tableau de bord).
+1. **Tag + release v0.2.4** pour livrer aux parents le jalon 3 (suivi cycle de vie + garde-fou Sage), le champ Style et les formulaires bento. Le workflow release est maintenant `npm run release` via gh CLI (aucun token à manipuler — voir Notes techniques).
+2. Puis attaquer le **jalon 4 — pack de vente** (documents PDF, commission par type), ou le **jalon 5 — renommage des photos** (le générateur de nom est déjà fait, reste le déplacement physique).
+
+**État de la session 2026-06-17 (suite) :**
+- Jalon 3 livré et testé chez Dave : cartes Préparation (œuvre) et Suivi cycle de vie (vente) **éditables en place** sans passer par « Modifier », bloc « Commandes non complétées » sur le tableau de bord.
+- Garde-fou Sage : la vente d'une œuvre non créée dans Sage est refusée, avec un message qui donne le **nom de référence complet** (nomenclature). Le catalogue existant a été backfillé (`sage_cree = 1`, `site_publie = 1`) via `PRAGMA user_version`.
+- Champ Style (Figuratif / Abstrait / Mi-Figuratif) ajouté partout (form, lecture, filtre).
+- Formulaires d'édition artiste + œuvre passés en bento, photo compacte à icônes, sujets en chips, photo ajoutable dès la création d'artiste.
+- À reconfirmer avec les parents : la nomenclature sur de vraies œuvres (codes-lettres médium/support/signature corrects ?), et la proposition pour dimensions incomplètes (0 en remplacement d'une H/L manquante).
 
 ---
 
@@ -397,5 +405,10 @@ WordPress + WooCommerce. Voir CLAUDE.md section 7.
 - **Variables visuelles** : toutes dans `src/theme.css`. Aucune valeur en dur dans `styles.css`.
 - **Polices** : embarquées dans `src/fonts/`. Déclarées via `@font-face` au sommet de `theme.css`.
 - **Préférences UI persistées** (vue grille/liste, tri) : `localStorage` (clés `oeuvres-vue`, `oeuvres-tri`, `artistes-vue`, `artistes-tri`).
+- **Release** : `npm run release` (script `scripts/release.js`) récupère le token via `gh auth token` (GitHub CLI installé + `gh auth login` fait une fois), bâtit le public et publie sur GitHub Releases. **Plus aucun token à manipuler.** Bumper `package.json` + `git tag` + push avant.
+- **Nomenclature des fichiers photo** : `src/db/nomenclature.js` → `construireNomFichier(oeuvre)`. Forme `(numéro_inventaire)-(titre slug)-(formatL)(HxLxP)-(médiumL)(supportL)-(signatureL)(année)`. Codes = 1re lettre de chaque mot sans accent. Utilisé par le garde-fou Sage ; à réutiliser pour le déplacement physique des photos (Jalon 5).
+- **Bento (fiches + formulaires)** : grille `.grille-bento` (12 col) + cartes `.carte` avec spans `.span-N`. Les cartes de formulaire ont leur padding via `.formulaire .grille-bento > .carte`. Photo/image d'édition : `.zone-photo-edition` / `.zone-image-edition` (3 col) avec overlay d'icônes `.photo-action-btn`.
+- **Suivi cycle de vie inline** : IPC `oeuvreMajPreparation(id, data)` et `venteMajCycle(id, data)` font un UPDATE partiel ; le renderer recharge le bundle et redessine après chaque changement.
+- **Migrations versionnées** : `PRAGMA user_version` sert maintenant de marqueur pour les backfills ponctuels (version 1 = backfill Sage/site du jalon 3). Incrémenter pour un nouveau backfill unique.
 - **Git** : 3 commits sur master. Branche `sauvegarde-avant-ui` (`57d95b0`) comme point de retour pour annuler la refonte en cas de besoin (`git checkout sauvegarde-avant-ui`).
 - **Mémoires importantes** déjà enregistrées dans `C:\Users\Dave\.claude\projects\F--Galerie-Automatisation-GalerieApp\memory\` (rôle Dave, modèle déploiement, catalogue pré-construit, actifs de marque, choix SQLite).

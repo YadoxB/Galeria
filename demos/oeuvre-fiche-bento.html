@@ -195,6 +195,91 @@
       font-size: 13px;
     }
 
+    /* ===== Préparation (Jalon 3, inline-éditable) ===== */
+    .zone-preparation { grid-column: span 12; padding: var(--s3) var(--s4); }
+    .preparation-corps {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--s3);
+    }
+    .prep-bloc {
+      background: var(--soft-ivory);
+      border: 1px solid var(--mist);
+      border-radius: var(--r-btn);
+      padding: var(--s3);
+    }
+    .prep-bloc h4 {
+      margin: 0 0 var(--s2);
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--slate);
+    }
+    .prep-ligne {
+      display: flex;
+      align-items: center;
+      gap: var(--s2);
+      flex-wrap: wrap;
+    }
+    .prep-pastille {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: var(--r-badge);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .prep-pastille-fait {
+      background: var(--badge-disponible-fond);
+      color: var(--badge-disponible-texte);
+    }
+    .prep-pastille-attente {
+      background: var(--badge-reservee-fond);
+      color: var(--badge-reservee-texte);
+    }
+    .prep-pastille-info { background: var(--cloud); color: var(--slate); }
+    .prep-date {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      color: var(--slate);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: transparent;
+    }
+    .prep-date:hover {
+      background: var(--cloud);
+      border-color: var(--mist);
+    }
+    .prep-action {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 10px;
+      border-radius: var(--r-btn);
+      border: 1px solid var(--mist);
+      background: var(--porcelain);
+      color: var(--ink);
+      cursor: pointer;
+      margin-left: auto;
+    }
+    .prep-action:hover { background: var(--cloud); }
+    .prep-action-fait {
+      background: var(--warm-gold);
+      color: var(--soft-ivory);
+      border-color: var(--warm-gold);
+    }
+    .prep-aide {
+      font-size: 11px;
+      color: var(--slate);
+      margin-top: 6px;
+      font-style: italic;
+    }
+
     /* ===== Description ===== */
     .zone-description { grid-column: span 12; padding: var(--s3) var(--s4); }
     .zone-description .corps {
@@ -291,6 +376,8 @@
           { num: 'C-2024-031', date: '12 mai 2024', valeur: '4 200 $', signataire: 'Joanne Boucher, Galeriste' }
         ],
         vente: null,
+        sage_cree: true, sage_cree_date: '15 sept 2023',
+        site_publie: true, site_publie_date: '20 sept 2023',
       },
       vendue: {
         titre: "Souche I",
@@ -319,6 +406,8 @@
           { num: 'C-2023-018', date: '03 sept 2023', valeur: '2 800 $', signataire: 'Joanne Boucher, Galeriste' }
         ],
         vente: { numero: 'F-2023-042', date: '03 sept 2023', client: 'Pierre et Marie Côté' },
+        sage_cree: true, sage_cree_date: '12 juillet 2023',
+        site_publie: false, site_publie_date: '',
       },
       minimal: {
         titre: "Sans titre",
@@ -345,6 +434,8 @@
         description: '',
         certificats: [],
         vente: null,
+        sage_cree: false, sage_cree_date: '',
+        site_publie: false, site_publie_date: '',
       },
       archive: {
         titre: "Quai du matin",
@@ -372,6 +463,8 @@
         certificats: [
           { num: 'C-2020-023', date: '14 oct 2020', valeur: '1 850 $', signataire: 'Joanne Boucher, Galeriste' }
         ],
+        sage_cree: true, sage_cree_date: '10 oct 2020',
+        site_publie: true, site_publie_date: '12 oct 2020',
         vente: { numero: 'F-2020-038', date: '14 oct 2020', client: 'François Bellemare' },
       }
     };
@@ -484,6 +577,40 @@
             </div>
           </div>
 
+          <div class="carte zone-preparation">
+            <h3>Préparation</h3>
+            <div class="preparation-corps">
+              <div class="prep-bloc">
+                <h4>Sage 50</h4>
+                ${o.sage_cree
+                  ? `<div class="prep-ligne">
+                       <span class="prep-pastille prep-pastille-fait">✓ Créée dans Sage</span>
+                       <button class="prep-date">le ${ech(o.sage_cree_date)} ✎</button>
+                       <button class="prep-action" data-toggle="sage">Annuler</button>
+                     </div>`
+                  : `<div class="prep-ligne">
+                       <span class="prep-pastille prep-pastille-attente">À créer dans Sage</span>
+                       <button class="prep-action prep-action-fait" data-toggle="sage">✓ Marquer fait</button>
+                     </div>
+                     <p class="prep-aide">Obligatoire avant la vente.</p>`}
+              </div>
+              <div class="prep-bloc">
+                <h4>Site web</h4>
+                ${o.site_publie
+                  ? `<div class="prep-ligne">
+                       <span class="prep-pastille prep-pastille-fait">✓ Publiée sur le site</span>
+                       <button class="prep-date">le ${ech(o.site_publie_date)} ✎</button>
+                       <button class="prep-action" data-toggle="site">Annuler</button>
+                     </div>`
+                  : `<div class="prep-ligne">
+                       <span class="prep-pastille prep-pastille-info">Non publiée</span>
+                       <button class="prep-action prep-action-fait" data-toggle="site">✓ Marquer publiée</button>
+                     </div>
+                     <p class="prep-aide">Facultatif.</p>`}
+              </div>
+            </div>
+          </div>
+
           <div class="carte zone-description">
             <h3>Description</h3>
             ${o.description
@@ -501,6 +628,24 @@
           </div>
         </div>
       `;
+
+      // Branche les toggles inline de la carte Préparation.
+      const profilActuel = profil;
+      document.querySelectorAll('[data-toggle]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const cle = btn.dataset.toggle; // 'sage' ou 'site'
+          const p = PROFILS[profilActuel];
+          const today = new Date().toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
+          if (cle === 'sage') {
+            p.sage_cree = !p.sage_cree;
+            p.sage_cree_date = p.sage_cree ? today : '';
+          } else if (cle === 'site') {
+            p.site_publie = !p.site_publie;
+            p.site_publie_date = p.site_publie ? today : '';
+          }
+          rendre(profilActuel);
+        });
+      });
     }
 
     document.querySelectorAll('#switch-profil button').forEach((btn) => {

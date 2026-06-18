@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS oeuvres (
                          CHECK (statut IN ('disponible', 'reserve', 'vendu', 'pretee')),
   format                 TEXT,
   orientation            TEXT,
+  style                  TEXT,
   sujets                 TEXT,
   emplacement_signature  TEXT,
   particularite          TEXT,
@@ -59,6 +60,12 @@ CREATE TABLE IF NOT EXISTS oeuvres (
   url_site               TEXT,
   cote_hors_normes       INTEGER NOT NULL DEFAULT 0
                          CHECK (cote_hors_normes IN (0, 1)),
+  sage_cree              INTEGER NOT NULL DEFAULT 0
+                         CHECK (sage_cree IN (0, 1)),
+  sage_cree_date         TEXT,
+  site_publie            INTEGER NOT NULL DEFAULT 0
+                         CHECK (site_publie IN (0, 1)),
+  site_publie_date       TEXT,
   archive                INTEGER NOT NULL DEFAULT 0
                          CHECK (archive IN (0, 1)),
   cree_le                TEXT NOT NULL DEFAULT (datetime('now')),
@@ -109,6 +116,11 @@ CREATE TABLE IF NOT EXISTS ventes (
   exporte_sage         INTEGER NOT NULL DEFAULT 0
                        CHECK (exporte_sage IN (0, 1)),
   exporte_sage_date    TEXT,
+  paiement_statut      TEXT,        -- 'en_attente' | 'partiel' | 'recu' | NULL
+  paiement_date        TEXT,
+  emballage_date       TEXT,
+  envoi_date           TEXT,
+  livraison_date       TEXT,
   notes                TEXT,
   cree_le              TEXT NOT NULL DEFAULT (datetime('now')),
   modifie_le           TEXT NOT NULL DEFAULT (datetime('now'))

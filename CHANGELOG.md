@@ -8,6 +8,71 @@ identifiants.
 
 ---
 
+## [Non publié] — 0.2.4 (en cours)
+
+### Ajouté
+
+- **Jalon 3 — Suivi du cycle de vie.** Nouvelles colonnes sur les œuvres
+  (`sage_cree`, `site_publie` + dates) et sur les ventes (`paiement_statut`,
+  `paiement_date`, `emballage_date`, `envoi_date`, `livraison_date`).
+  - **Carte « Préparation »** sur la fiche œuvre : statut Sage 50 (obligatoire
+    avant la vente) et Site web (facultatif), **éditables en place** sans
+    passer par « Modifier » (boutons « Marquer fait » / « Annuler », dates
+    inline). Sauvegarde immédiate.
+  - **Carte « Suivi cycle de vie »** sur la fiche vente : paiement (En
+    attente / Partiel / Reçu) + emballage / envoi / livraison, eux aussi
+    **éditables en place**.
+  - **Bloc « Commandes non complétées »** sur le tableau de bord (remplace le
+    placeholder Agenda) : liste des ventes dont une étape post-vente n'est pas
+    terminée, avec 4 pastilles d'avancement (Paiement / Emballage / Envoi /
+    Livraison) et clic vers la fiche.
+- **Garde-fou Sage à la vente.** Impossible d'enregistrer la vente d'une
+  œuvre qui n'est pas marquée « Créée dans Sage 50 ». L'avertissement
+  apparaît **dès la sélection de l'œuvre** dans le formulaire de vente, et le
+  backend refuse en dernier recours. Le message indique le **nom de
+  référence complet** (= numéro d'item Sage = nom de fichier photo), généré
+  selon la nomenclature de la galerie.
+- **Générateur de nomenclature** (`src/db/nomenclature.js`) : construit le nom
+  normalisé d'une œuvre — `(code)-(titre slug)-(formatL)(HxLxP)-(médiumL)
+  (supportL)-(signatureL)(année)`, ex. `CLD1992-Entre-le-vent-et-la-mer-
+  M30x30x0.75-AT-BD2023`. Réutilisable pour le renommage physique des photos
+  (Jalon 5, non encore implémenté). Codes-lettres = première lettre de chaque
+  mot, sans accent.
+- **Champ « Style »** sur les œuvres (Figuratif / Abstrait / Mi-Figuratif) :
+  dans le formulaire, sur la fiche en lecture, et comme **filtre** dans la
+  liste des œuvres.
+- **Formulaires d'édition en bento** (artiste + œuvre) : mise en grille comme
+  les fiches en lecture. Photo / image **compacte** (3 col) avec actions en
+  **icônes superposées** (remplacer ↑ / recadrer ⊡ / retirer 🗑) au lieu de
+  boutons texte. La photo peut désormais être ajoutée **dès la création** d'un
+  artiste (avant, il fallait créer puis ré-ouvrir la fiche).
+- **Sujets en chips** dans le formulaire d'œuvre : pastilles cliquables
+  (activer/désactiver) + bouton « + Ajouter un sujet ».
+
+### Modifié
+
+- **Catalogue existant réputé déjà dans Sage et sur le site.** Backfill unique
+  (via `PRAGMA user_version`) au premier démarrage de cette version :
+  toutes les œuvres existantes passent à `sage_cree = 1` et
+  `site_publie = 1`. Les œuvres créées ensuite partent à 0 et déclenchent le
+  garde-fou normalement.
+- **Messages d'erreur nettoyés** : le préfixe technique d'Electron
+  (« Error invoking remote method '…': Error: ») est retiré des dialogues
+  d'erreur (helper `nettoyerErreur`).
+
+### Corrigé
+
+- Le **filtre Style** de la liste des œuvres ne renvoyait rien : la colonne
+  `style` manquait dans la requête `listerOeuvres` (corrigé, `o.style`
+  ajouté).
+- L'**ajout de photo sur un nouvel artiste** était bloqué : une ancienne règle
+  CSS `.zone-photo-edition { display:flex }` faisait s'effondrer la zone photo
+  à une taille nulle (bouton incliquable). Règles mortes supprimées.
+- `champSelect` n'était pas importé dans `vente-fiche.js` : tous les
+  formulaires de vente plantaient au rendu (« champSelect is not defined »).
+
+---
+
 ## [0.2.3] — 2026-06-17
 
 ### Ajouté

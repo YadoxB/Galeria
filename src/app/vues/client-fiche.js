@@ -4,7 +4,7 @@ import {
   champTexte, champTextarea, champCheckbox,
   champPays, champSubdivision, brancherChangementPays,
   formaterPrix, formaterDate, formaterTelephone, nomComplet, urlPhoto,
-  badgeArchive, boutonArchive, basculerArchive,
+  badgeArchive, boutonArchive, basculerArchive, nettoyerErreur,
 } from '../commun.js';
 import { confirmer } from '../dialogue.js';
 
@@ -115,7 +115,7 @@ export async function rendreClientFiche(contenu, params) {
     } catch (err) {
       await confirmer({
         type: 'error', title: 'Suppression échouée',
-        message: err.message, buttons: ['OK'],
+        message: nettoyerErreur(err), buttons: ['OK'],
       });
     }
   }
@@ -446,7 +446,7 @@ export async function rendreClientFiche(contenu, params) {
       } catch (err) {
         await confirmer({
           type: 'error', title: "Impossible d'enregistrer",
-          message: err.message, buttons: ['OK'],
+          message: nettoyerErreur(err), buttons: ['OK'],
         });
       }
     });
