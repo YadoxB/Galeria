@@ -502,10 +502,9 @@ function supprimerVente(id) {
     const vente = db.prepare('SELECT oeuvre_id FROM ventes WHERE id = ?').get(id);
     if (!vente) throw new Error('Vente introuvable.');
 
-    const nbCerts = db.prepare('SELECT COUNT(*) AS n FROM certificats WHERE vente_id = ?').get(id).n;
-    if (nbCerts > 0) {
-      throw new Error(`Impossible de supprimer cette vente : ${nbCerts} certificat(s) y sont liés. Supprime d'abord les certificats.`);
-    }
+    // Détacher les certificats liés (ils restent dans l'historique de l'œuvre)
+    // plutôt que de bloquer la suppression de la vente.
+    db.prepare('UPDATE certificats SET vente_id = NULL WHERE vente_id = ?').run(id);
 
     db.prepare('DELETE FROM ventes WHERE id = ?').run(id);
 

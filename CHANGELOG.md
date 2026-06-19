@@ -20,8 +20,23 @@ identifiants.
   attribution alignée à droite ; espacement français des guillemets automatique.
   **Mise en cache** : le PDF n'est régénéré que si le profil de l'artiste a
   changé (signature des champs), sinon la dernière version est réutilisée.
-- **Champs de vente pour la pochette** : type d'achat (en personne / web),
-  achat-cadeau, langue (FR / EN) — serviront à choisir la lettre de remerciement.
+- **Pochette de vente** — bouton **« Produire la pochette de vente »** sur la
+  fiche de vente (proposé aussi automatiquement juste après l'enregistrement
+  d'une vente). Rassemble dans un dossier par client/facture
+  (`Documents\{année}\Pochettes\{client}\{facture}\`) : **lettre de remerciement
+  + fiche de l'œuvre** (1 des 8 variantes selon type d'achat / cadeau / langue),
+  **certificat d'authenticité** (produit automatiquement s'il manque),
+  **présentation de l'artiste** (réutilisée du cache) et le **guide de
+  l'acheteur** (PDF fixe). La lettre est garantie sur une page (texte réduit au
+  besoin). Les documents apparaissent sur la fiche de vente (Voir / Dossier).
+- **Champs de vente** : type d'achat (en personne / web), achat-cadeau, langue
+  (FR / EN) — choisissent la lettre de remerciement de la pochette.
+- **« Version modifiée » de n'importe quel document** — ouvre le document dans
+  une fenêtre **éditable (WYSIWYG)** : on modifie le texte directement (ex.
+  retirer une ligne du CV) puis on enregistre en PDF, **sans toucher aux données
+  ni au cache**. Disponible pour la lettre, le certificat, la présentation, la
+  facture artiste, le catalogue et l'annexe. Pour un document de pochette, la
+  version modifiée remplace le fichier correspondant dans le dossier de la pochette.
 - **Annexe A — dépôt / retrait d'œuvres (PDF)** — document signé artiste +
   galeriste confirmant la consignation (dépôt) ou la reprise (retrait) des
   œuvres. Format Lettre paysage, tableau des œuvres (n° inv, titre, format,
@@ -54,6 +69,13 @@ identifiants.
 
 - **Documents générés sur fond blanc** (présentation, catalogue, annexes) — pas
   d'aplat de couleur à l'impression ; les accents rouge/bleu sont conservés.
+- **Certificat d'authenticité** : son PDF officiel (nom à nomenclature) est
+  désormais rangé **dans le dossier de la pochette** quand il est lié à une vente
+  (au lieu du dossier `Certificats\`).
+- **Suppression d'une vente** : n'est plus **bloquée** par les certificats liés
+  (ils sont détachés et conservés dans l'historique de l'œuvre) ; l'app **propose
+  d'effacer le dossier de pochette** associé — et, dans ce cas, supprime aussi
+  les certificats qu'il contenait. Le dossier **Pochettes** est sous l'année.
 - **Classement des documents générés** : rangés par **type dans l'année**
   (`Documents\{année}\Certificats\`, `…\Factures artiste\`, `…\Catalogues\`,
   `…\Annexes\`, `…\Rapports\`) au lieu d'un seul dossier annuel. S'applique aux

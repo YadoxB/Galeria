@@ -2437,6 +2437,28 @@ details.bloc.pliable > .bloc-corps {
   margin-top: var(--s3);
   flex-wrap: wrap;
 }
+/* Bas de la carte identité : actions de fiche puis, séparément, les documents */
+.zone-identite-bas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+.zone-identite-docs {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  margin-top: var(--s2);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--mist);
+}
+.zone-docs-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--stone);
+  margin-right: 2px;
+}
 
 /* --- Stats (2×2 mini-cartes à droite) --- */
 .zone-stats {
@@ -3649,6 +3671,24 @@ details.bloc.pliable > .bloc-corps {
   background: var(--warm-gold);
   color: var(--soft-ivory);
 }
+.doc-icone-pochette {
+  background: #8a5a3c;
+  color: var(--soft-ivory);
+}
+.doc-icone-cert {
+  background: var(--gallery-navy);
+  color: var(--soft-ivory);
+}
+.doc-icone-presentation {
+  background: #5a6b4a;
+  color: var(--soft-ivory);
+}
+
+/* Bouton « Produire la pochette » : prééminent, pleine largeur ; les actions
+   secondaires (certificat seul, facture artiste) en dessous, discrètes. */
+.btn-pochette { flex: 1 1 100%; justify-content: center; padding: 12px; font-size: 1rem; }
+.documents-actions > .aide-champ { flex-basis: 100%; }
+.documents-actions-sec { display: flex; gap: var(--s2); flex: 1 1 100%; }
 .doc-info { flex: 1; min-width: 0; }
 .doc-info .doc-titre {
   margin: 0;

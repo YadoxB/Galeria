@@ -8,6 +8,7 @@ import {
 import { confirmer, alerter } from '../dialogue.js';
 import { chargerConfig } from '../marque.js';
 import { ouvrirCreationCertificat } from './certificat-creation.js';
+import { lancerEditionDocument } from '../editer-document.js';
 
 const MODES_PAIEMENT = ['Comptant', 'Chèque', 'Carte de crédit', 'Interac', 'Virement bancaire'];
 
@@ -78,6 +79,26 @@ export async function rendreVenteFiche(contenu, params) {
     }
   }
 
+  // Produit la pochette d'une vente et propose d'ouvrir son dossier.
+  async function produirePochette(venteId, { recharger = true } = {}) {
+    const res = await window.api.pdfPochetteGenerer(venteId);
+    const lignes = res.fichiers
+      .map((f) => (f.present ? '✓ ' : '— ') + f.label + (f.note ? ' (' + f.note + ')' : ''))
+      .join('\n');
+    if (recharger) { try { await rechargerBundle(); dessiner(); } catch {} }
+    const rep = await confirmer({
+      type: 'succes',
+      title: 'Pochette de vente produite',
+      message: 'Documents rassemblés dans un dossier prêt à imprimer :',
+      detail: lignes + '\n\n' + res.dossier,
+      buttons: ['Ouvrir le dossier', 'Fermer'],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (rep === 0) { try { await window.api.ouvrirDossier(res.dossier); } catch {} }
+    return res;
+  }
+
   let mode = estNouveau ? 'edition' : 'lecture';
   let modifie = false;
   let nouveau = estNouveau;
@@ -123,6 +144,12 @@ export async function rendreVenteFiche(contenu, params) {
   }
 
   async function supprimer() {
+    // Le dossier de la pochette doit être récupéré AVANT la suppression
+    // (ensuite la vente n'existe plus pour calculer le chemin).
+    let infosPochette = { dossier: null, existe: false };
+    try { infosPochette = await window.api.pdfPochetteDossierInfos(v.id); } catch {}
+    const certIds = (certificats || []).map((c) => c.id);
+
     const reponse = await confirmer({
       type: 'warning', title: 'Supprimer cette vente ?',
       message: v.numero_facture
@@ -135,6 +162,26 @@ export async function rendreVenteFiche(contenu, params) {
     if (reponse !== 0) return;
     try {
       await window.api.venteSupprimer(v.id);
+      // Propose de supprimer aussi le dossier des documents (pochette) lié.
+      if (infosPochette.existe && infosPochette.dossier) {
+        const rep2 = await confirmer({
+          type: 'question',
+          title: 'Supprimer aussi les documents ?',
+          message: 'Cette vente a un dossier de pochette (lettre, certificat, présentation, guide).',
+          detail: 'Supprimer ce dossier et les certificats qu\'il contient ?\n\n' + infosPochette.dossier,
+          buttons: ['Supprimer le dossier', 'Conserver'],
+          defaultId: 1, cancelId: 1,
+        });
+        if (rep2 === 0) {
+          try {
+            await window.api.pdfPochetteDossierSupprimer(infosPochette.dossier);
+            // Le certificat vit dans la pochette : on efface aussi ses enregistrements.
+            for (const cid of certIds) { try { await window.api.certificatSupprimer(cid); } catch {} }
+          } catch (err) {
+            await alerter({ type: 'error', title: 'Suppression du dossier échouée', message: nettoyerErreur(err) });
+          }
+        }
+      }
       leverGardien();
       retour();
     } catch (err) {
@@ -150,31 +197,25 @@ export async function rendreVenteFiche(contenu, params) {
     if (!liste || liste.length === 0) {
       return `<p class="liste-vide">Aucun certificat émis pour cette vente.</p>`;
     }
-    return `
-      <div class="historique-ventes">
-        ${liste.map((c) => `
-          <div class="ligne-certificat" data-id="${c.id}">
-            <div class="info">
-              <p class="ligne-titre">${ech(c.numero_delivrance || '—')}</p>
-              <p class="ligne-meta">
-                ${formaterDate(c.date_delivrance)}
-                ${c.valeur != null ? `&nbsp;&middot;&nbsp;${formaterPrix(c.valeur)}` : ''}
-                ${c.signataire ? `&nbsp;&middot;&nbsp;${ech(c.signataire)}` : ''}
-              </p>
-              ${c.particularite ? `<p class="ligne-meta"><em>${ech(c.particularite)}</em></p>` : ''}
-            </div>
-            <div class="actions-certif">
-              ${c.pdf_path
-                ? `<button type="button" class="btn-action btn-secondaire-action btn-voir-pdf-vente">Voir le PDF</button>
-                   <button type="button" class="btn-action btn-secondaire-action btn-ouvrir-dossier-vente" title="Ouvrir le dossier">Ouvrir le dossier</button>
-                   <button type="button" class="btn-action btn-secondaire-action btn-regen-pdf-vente">Re-générer</button>`
-                : `<button type="button" class="btn-action btn-principal btn-gen-pdf-vente">Générer le PDF</button>`}
-              <button type="button" class="btn-action btn-danger btn-suppr-certif-vente">Supprimer</button>
-            </div>
-          </div>
-        `).join('')}
+    return liste.map((c) => `
+      <div class="doc-ligne ligne-certificat" data-id="${c.id}">
+        <div class="doc-icone doc-icone-cert">C</div>
+        <div class="doc-info">
+          <p class="doc-titre">Certificat d'authenticité</p>
+          <p class="doc-meta">${ech(c.numero_delivrance || '—')}${c.date_delivrance ? `&nbsp;&middot;&nbsp;${formaterDate(c.date_delivrance)}` : ''}${c.valeur != null ? `&nbsp;&middot;&nbsp;${formaterPrix(c.valeur)}` : ''}</p>
+          ${c.particularite ? `<p class="doc-meta"><em>${ech(c.particularite)}</em></p>` : ''}
+        </div>
+        <div class="doc-actions actions-certif">
+          ${c.pdf_path
+            ? `<button type="button" class="btn-action btn-secondaire-action btn-voir-pdf-vente">Voir le PDF</button>
+               <button type="button" class="btn-action btn-secondaire-action btn-ouvrir-dossier-vente" title="Ouvrir le dossier">Dossier</button>
+               <button type="button" class="btn-action btn-secondaire-action btn-regen-pdf-vente">Re-générer</button>`
+            : `<button type="button" class="btn-action btn-principal btn-gen-pdf-vente">Générer le PDF</button>`}
+          <button type="button" class="btn-action btn-secondaire-action btn-certif-modifie" title="Certificat — version modifiée">Version modifiée…</button>
+          <button type="button" class="btn-action btn-danger btn-suppr-certif-vente">Supprimer</button>
+        </div>
       </div>
-    `;
+    `).join('');
   }
 
   async function rafraichirCertificatsVente() {
@@ -186,6 +227,13 @@ export async function rendreVenteFiche(contenu, params) {
 
   function brancherActionsCertificatsVente() {
     const idDeLigne = (e) => Number(e.currentTarget.closest('.ligne-certificat')?.dataset.id);
+
+    contenu.querySelectorAll('.btn-certif-modifie').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const id = idDeLigne(e);
+        if (id) lancerEditionDocument({ type: 'certificat', certificat_id: id });
+      });
+    });
 
     contenu.querySelectorAll('.btn-suppr-certif-vente').forEach((btn) => {
       btn.addEventListener('click', async (e) => {
@@ -213,6 +261,7 @@ export async function rendreVenteFiche(contenu, params) {
         const cert = certificats.find((c) => c.id === id);
         if (!cert?.pdf_path) return;
         try {
+          // Le PDF du certificat vit dans la pochette (s'il est lié à une vente).
           await window.api.pdfOuvrir(cert.pdf_path);
         } catch (err) {
           await alerter({ type: 'error', title: 'Impossible d\'ouvrir le PDF', message: nettoyerErreur(err) });
@@ -359,9 +408,39 @@ export async function rendreVenteFiche(contenu, params) {
           <button type="button" class="btn-action btn-secondaire-action" id="btn-voir-facture-artiste">Voir le PDF</button>
           <button type="button" class="btn-action btn-secondaire-action" id="btn-ouvrir-dossier-facture-artiste" title="Ouvrir le dossier">Dossier</button>
           <button type="button" class="btn-action btn-secondaire-action" id="btn-regen-facture-artiste">Re-générer</button>
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-facture-modifiee" title="Facture artiste — version modifiée">Version modifiée…</button>
         </div>
       </div>
     ` : '';
+
+    const pochetteHTML = v.lettre_path ? `
+      <div class="doc-ligne">
+        <div class="doc-icone doc-icone-pochette">✉</div>
+        <div class="doc-info">
+          <p class="doc-titre">Lettre de remerciement</p>
+          <p class="doc-meta">+ fiche de l'œuvre · dans la pochette</p>
+        </div>
+        <div class="doc-actions">
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-voir-lettre">Voir la lettre</button>
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-ouvrir-dossier-pochette" title="Ouvrir le dossier de la pochette">Dossier</button>
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-lettre-modifiee" title="Lettre — version modifiée">Version modifiée…</button>
+        </div>
+      </div>
+    ` : '';
+
+    const presentationHTML = `
+      <div class="doc-ligne">
+        <div class="doc-icone doc-icone-presentation">P</div>
+        <div class="doc-info">
+          <p class="doc-titre">Présentation de l'artiste</p>
+          <p class="doc-meta">${ech(v.artiste_nom || '')}</p>
+        </div>
+        <div class="doc-actions">
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-voir-presentation">Voir</button>
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-presentation-modifiee-vente">Version modifiée…</button>
+        </div>
+      </div>
+    `;
 
     const zoneDocuments = `
       <div class="carte zone-documents-vente">
@@ -369,12 +448,19 @@ export async function rendreVenteFiche(contenu, params) {
           <h3>Documents ${certificats.length > 0 ? `<span class="compteur-inline">(${certificats.length} certificat${certificats.length > 1 ? 's' : ''})</span>` : ''}</h3>
         </div>
         <div class="documents-actions">
-          <button type="button" class="btn-action" id="btn-produire-certificat-vente">+ Produire un certificat</button>
-          ${!v.facture_artiste_path ? '<button type="button" class="btn-action btn-principal" id="btn-gen-facture-artiste">+ Produire la facture artiste</button>' : ''}
+          <button type="button" class="btn-action btn-principal btn-pochette" id="btn-produire-pochette">Produire la pochette de vente</button>
+          ${v.lettre_path ? '<button type="button" class="btn-action btn-secondaire-action" id="btn-ouvrir-pochette-dossier" style="flex:1 1 100%;justify-content:center;">📂 Ouvrir le dossier de la pochette</button>' : ''}
+          <p class="aide-champ" style="margin:6px 0 0;">Tous les documents du client (lettre + fiche de l'œuvre, certificat, présentation, guide) dans un dossier prêt à imprimer.</p>
+          <div class="documents-actions-sec">
+            <button type="button" class="btn-action btn-secondaire-action" id="btn-produire-certificat-vente">Certificat seul</button>
+            ${!v.facture_artiste_path ? '<button type="button" class="btn-action btn-secondaire-action" id="btn-gen-facture-artiste">Facture artiste</button>' : ''}
+          </div>
         </div>
         <div class="documents-liste">
+          ${pochetteHTML}
+          ${presentationHTML}
           ${factureArtisteHTML}
-          <div id="liste-certificats-vente">
+          <div id="liste-certificats-vente" class="documents-liste">
             ${dessinerListeCertificatsVente(certificats)}
           </div>
         </div>
@@ -550,6 +636,79 @@ export async function rendreVenteFiche(contenu, params) {
         } catch (err) {
           await alerter({ type: 'error', title: 'Impossible d\'ouvrir le dossier', message: nettoyerErreur(err) });
         }
+      });
+    }
+
+    const btnPochette = contenu.querySelector('#btn-produire-pochette');
+    if (btnPochette) {
+      btnPochette.addEventListener('click', async () => {
+        const ancien = btnPochette.textContent;
+        btnPochette.disabled = true;
+        btnPochette.textContent = 'Génération…';
+        try {
+          await produirePochette(v.id, { recharger: true });
+        } catch (err) {
+          await alerter({ type: 'error', title: 'Génération échouée', message: nettoyerErreur(err) });
+          btnPochette.disabled = false;
+          btnPochette.textContent = ancien;
+        }
+      });
+    }
+
+    const btnOuvrirPochetteDossier = contenu.querySelector('#btn-ouvrir-pochette-dossier');
+    if (btnOuvrirPochetteDossier && v.lettre_path) {
+      btnOuvrirPochetteDossier.addEventListener('click', async () => {
+        const dossier = v.lettre_path.replace(/[\\/][^\\/]*$/, '');
+        try { await window.api.ouvrirDossier(dossier); }
+        catch (err) { await alerter({ type: 'error', title: "Impossible d'ouvrir le dossier", message: nettoyerErreur(err) }); }
+      });
+    }
+
+    const btnVoirPresentation = contenu.querySelector('#btn-voir-presentation');
+    if (btnVoirPresentation) {
+      btnVoirPresentation.addEventListener('click', async () => {
+        const t = btnVoirPresentation.textContent;
+        btnVoirPresentation.disabled = true;
+        btnVoirPresentation.textContent = '…';
+        try {
+          // Ouvre la présentation de la pochette (donc la version modifiée si
+          // elle existe) ; sinon, produit/ouvre la présentation standard.
+          let chemin = await window.api.pdfPochetteFichier(v.id, 'presentation');
+          if (!chemin) { const r = await window.api.pdfPresentationGenerer(v.artiste_id); chemin = r.pdf_path; }
+          await window.api.pdfOuvrir(chemin);
+        } catch (err) {
+          await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) });
+        } finally {
+          btnVoirPresentation.disabled = false;
+          btnVoirPresentation.textContent = t;
+        }
+      });
+    }
+    const btnPresModVente = contenu.querySelector('#btn-presentation-modifiee-vente');
+    if (btnPresModVente) {
+      btnPresModVente.addEventListener('click', () => lancerEditionDocument({ type: 'presentation', artiste_id: v.artiste_id, vente_id: v.id }));
+    }
+    const btnLettreMod = contenu.querySelector('#btn-lettre-modifiee');
+    if (btnLettreMod) {
+      btnLettreMod.addEventListener('click', () => lancerEditionDocument({ type: 'lettre', vente_id: v.id }));
+    }
+    const btnFactureMod = contenu.querySelector('#btn-facture-modifiee');
+    if (btnFactureMod) {
+      btnFactureMod.addEventListener('click', () => lancerEditionDocument({ type: 'facture-artiste', vente_id: v.id }));
+    }
+
+    const btnVoirLettre = contenu.querySelector('#btn-voir-lettre');
+    if (btnVoirLettre && v.lettre_path) {
+      btnVoirLettre.addEventListener('click', async () => {
+        try { await window.api.pdfOuvrir(v.lettre_path); }
+        catch (err) { await alerter({ type: 'error', title: "Impossible d'ouvrir le PDF", message: nettoyerErreur(err) }); }
+      });
+    }
+    const btnDossierPochette = contenu.querySelector('#btn-ouvrir-dossier-pochette');
+    if (btnDossierPochette && v.lettre_path) {
+      btnDossierPochette.addEventListener('click', async () => {
+        try { await window.api.pdfRevelerDansExplorateur(v.lettre_path); }
+        catch (err) { await alerter({ type: 'error', title: "Impossible d'ouvrir le dossier", message: nettoyerErreur(err) }); }
       });
     }
 
@@ -815,6 +974,18 @@ export async function rendreVenteFiche(contenu, params) {
             message: `La vente ${resultat.numero_facture || ''} a été enregistrée.`,
             detail: "L'œuvre est maintenant marquée comme vendue.",
           });
+          // Suggérer tout de suite la production de la pochette de vente.
+          const repPochette = await confirmer({
+            type: 'question',
+            title: 'Produire la pochette de vente ?',
+            message: "Produire maintenant la pochette pour le client (lettre, fiche de l'œuvre, certificat, présentation, guide) ?",
+            buttons: ['Produire la pochette', 'Plus tard'],
+            defaultId: 0, cancelId: 1,
+          });
+          if (repPochette === 0) {
+            try { await produirePochette(resultat.id, { recharger: false }); }
+            catch (err) { await alerter({ type: 'error', title: 'Génération échouée', message: nettoyerErreur(err) }); }
+          }
           // Remplacer la pile par la fiche en lecture
           await remplacerCourant('vente-fiche', { id: resultat.id });
         } else {

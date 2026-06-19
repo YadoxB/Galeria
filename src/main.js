@@ -18,7 +18,7 @@ const {
   arreterSauvegardePeriodique,
 } = require('./db/backup');
 const { previewFile, importArtistes, importOeuvres } = require('./import/importer');
-const { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf } = require('./pdf');
+const { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPresentationPersonnalisee, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette } = require('./pdf');
 const {
   listerArtistes,
   obtenirArtiste,
@@ -631,6 +631,12 @@ app.whenReady().then(async () => {
   ipcMain.handle('pdf:catalogue-generer', (_e, artisteId) => genererCataloguePdf(artisteId));
   ipcMain.handle('pdf:annexe-generer', (_e, payload) => genererAnnexePdf(payload));
   ipcMain.handle('pdf:presentation-generer', (_e, artisteId) => genererPresentationPdf(artisteId));
+  ipcMain.handle('pdf:presentation-personnalisee', (_e, artisteId, overrides) => genererPresentationPersonnalisee(artisteId, overrides));
+  ipcMain.handle('pdf:pochette-generer', (_e, venteId) => genererPochette(venteId));
+  ipcMain.handle('pdf:editer-document', (_e, spec) => editerDocument(spec));
+  ipcMain.handle('pdf:pochette-fichier', (_e, venteId, type) => cheminPochetteSiExiste(venteId, type));
+  ipcMain.handle('pdf:pochette-dossier-infos', (_e, venteId) => infosDossierPochette(venteId));
+  ipcMain.handle('pdf:pochette-dossier-supprimer', (_e, chemin) => supprimerDossierPochette(chemin));
   ipcMain.handle('pdf:ouvrir', async (_e, cheminPdf) => {
     const erreur = await shell.openPath(cheminPdf);
     if (erreur) throw new Error(erreur);

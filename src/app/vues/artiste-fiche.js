@@ -181,13 +181,18 @@ export async function rendreArtisteFiche(contenu, params) {
             &middot; ${pluriel(a.nb_oeuvres, 'œuvre')} au catalogue
           </p>
         </div>
-        <div class="zone-identite-actions">
-          <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
-          ${boutonArchive({ archive: a.archive })}
-          <button class="btn-action btn-secondaire" id="btn-annexe">Annexe A…</button>
-          <button class="btn-action btn-secondaire" id="btn-presentation-pdf">Présentation PDF</button>
-          <button class="btn-action btn-secondaire" id="btn-catalogue-pdf">Catalogue PDF</button>
-          <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
+        <div class="zone-identite-bas">
+          <div class="zone-identite-actions">
+            <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
+            ${boutonArchive({ archive: a.archive })}
+            <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
+          </div>
+          <div class="zone-identite-docs">
+            <span class="zone-docs-label">Documents</span>
+            <button class="btn-action btn-secondaire" id="btn-presentation-pdf">Présentation PDF</button>
+            <button class="btn-action btn-secondaire" id="btn-catalogue-pdf">Catalogue PDF</button>
+            <button class="btn-action btn-secondaire" id="btn-annexe">Annexe A…</button>
+          </div>
         </div>
       </div>
     `;

@@ -1,11 +1,11 @@
-const { BrowserWindow } = require('electron');
+const { BrowserWindow, ipcMain } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { openDatabase } = require('./db/database');
 const { getDocumentsDirAnnee, getPhotosDir } = require('./db/paths');
-const { obtenirCertificat, obtenirVente, obtenirArtiste, oeuvresPourCatalogue } = require('./db/requetes');
-const { obtenirOuReserverNumeroFactureArtisteVente, enregistrerAnnexe, majAnnexePdfPath, majPresentationArtiste } = require('./db/mutations');
+const { obtenirCertificat, obtenirVente, obtenirArtiste, oeuvresPourCatalogue, listerCertificatsParVente } = require('./db/requetes');
+const { obtenirOuReserverNumeroFactureArtisteVente, enregistrerAnnexe, majAnnexePdfPath, majPresentationArtiste, creerCertificat, reserverProchainNumeroCertificat } = require('./db/mutations');
 const { obtenirConfig } = require('./config');
 
 // ===== Helpers =====
@@ -201,6 +201,12 @@ async function genererPdf({ gabaritNom, donnees, sortie, paysage = false }) {
       Promise.all([fontsP, ...imgPromises]).then(settle, settle);
     })`);
 
+    // Hook d'ajustement optionnel (ex. lettre : réduire le texte pour tenir sur
+    // une page). Exécuté une fois polices et images chargées, avant le rendu.
+    await win.webContents.executeJavaScript(
+      'if (typeof window.ajusterApresRendu === "function") { window.ajusterApresRendu(); } true;'
+    );
+
     const pdfBuffer = await win.webContents.printToPDF({
       pageSize: 'Letter',
       landscape: !!paysage,
@@ -216,6 +222,94 @@ async function genererPdf({ gabaritNom, donnees, sortie, paysage = false }) {
   }
 }
 
+// ===== Éditeur de document (« version modifiée », WYSIWYG) =====
+
+// Script injecté dans la fenêtre d'édition : rend le document éditable et ajoute
+// une barre d'outils (non imprimée) avec Enregistrer / Annuler.
+const INJECT_EDIT_JS = `(function(){
+  var style = document.createElement('style');
+  style.textContent = '.editeur-barre{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;align-items:center;gap:12px;padding:10px 16px;background:#1c1a17;color:#fff;font-family:-apple-system,Segoe UI,Arial,sans-serif;}'
+    + '.editeur-barre .info{flex:1;opacity:.85;font-size:12.5px;}'
+    + '.editeur-barre button{border:0;border-radius:7px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}'
+    + '#ed-annuler{background:#3a3631;color:#fff;}#ed-ok{background:#900001;color:#fff;}'
+    + 'body{padding-top:58px;}'
+    + '[contenteditable=true]:focus-within, [contenteditable=true]:focus{outline:none;}'
+    + '@media print{.editeur-barre{display:none!important;}body{padding-top:0!important;}}';
+  document.head.appendChild(style);
+  var bar = document.createElement('div');
+  bar.className = 'editeur-barre';
+  bar.setAttribute('contenteditable','false');
+  bar.innerHTML = '<span class="info">Mode édition — clique dans le document pour modifier le texte, puis enregistre.</span>'
+    + '<button type="button" id="ed-annuler">Annuler</button>'
+    + '<button type="button" id="ed-ok">Enregistrer en PDF</button>';
+  document.body.appendChild(bar);
+  document.body.setAttribute('contenteditable','true');
+  bar.setAttribute('contenteditable','false');
+  document.getElementById('ed-ok').addEventListener('click', function(){ window.editeur && window.editeur.enregistrer(); });
+  document.getElementById('ed-annuler').addEventListener('click', function(){ window.editeur && window.editeur.annuler(); });
+})();`;
+
+// Ouvre le document dans une fenêtre éditable ; l'utilisateur modifie le texte
+// puis exporte en PDF. Retourne le chemin du PDF, ou null si annulé.
+function ouvrirEditeurDocument({ gabaritNom, donnees, sortie, paysage = false, titre }) {
+  return new Promise((resolve, reject) => {
+    const gabaritPath = path.join(__dirname, '..', 'gabarits', gabaritNom);
+    if (!fs.existsSync(gabaritPath)) { reject(new Error(`Gabarit introuvable : ${gabaritNom}`)); return; }
+
+    const win = new BrowserWindow({
+      show: true,
+      width: paysage ? 1400 : 1024,
+      height: 900,
+      title: titre || 'Version modifiée',
+      autoHideMenuBar: true,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload-editeur.js'),
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
+      },
+    });
+
+    let fini = false;
+    const onSave = async (e) => {
+      if (e.sender !== win.webContents || fini) return;
+      try {
+        const pdfBuffer = await win.webContents.printToPDF({
+          pageSize: 'Letter', landscape: !!paysage, printBackground: true, margins: { marginType: 'none' },
+        });
+        fs.mkdirSync(path.dirname(sortie), { recursive: true });
+        fs.writeFileSync(sortie, pdfBuffer);
+        fini = true; nettoyer(); if (!win.isDestroyed()) win.close(); resolve(sortie);
+      } catch (err) {
+        fini = true; nettoyer(); if (!win.isDestroyed()) win.close(); reject(err);
+      }
+    };
+    const onCancel = (e) => {
+      if (e.sender !== win.webContents || fini) return;
+      fini = true; nettoyer(); if (!win.isDestroyed()) win.close(); resolve(null);
+    };
+    function nettoyer() {
+      ipcMain.removeListener('editeur:enregistrer', onSave);
+      ipcMain.removeListener('editeur:annuler', onCancel);
+    }
+    ipcMain.on('editeur:enregistrer', onSave);
+    ipcMain.on('editeur:annuler', onCancel);
+    win.on('closed', () => { if (!fini) { fini = true; nettoyer(); resolve(null); } });
+
+    (async () => {
+      try {
+        await win.loadFile(gabaritPath);
+        await win.webContents.executeJavaScript(`(function(){ try{ remplir(${JSON.stringify(donnees)}); }catch(e){ throw e; } })();`);
+        await win.webContents.executeJavaScript(`new Promise((r)=>{ const s=()=>requestAnimationFrame(()=>requestAnimationFrame(r)); const imgs=Array.from(document.images||[]); const ip=imgs.map(im=>im.complete?Promise.resolve():new Promise(rr=>{im.addEventListener('load',rr,{once:true});im.addEventListener('error',rr,{once:true});})); const fp=(document.fonts&&document.fonts.ready)?document.fonts.ready:Promise.resolve(); Promise.all([fp,...ip]).then(s,s); })`);
+        await win.webContents.executeJavaScript('if (typeof window.ajusterApresRendu === "function") { window.ajusterApresRendu(); } true;');
+        await win.webContents.executeJavaScript(INJECT_EDIT_JS);
+      } catch (err) {
+        if (!fini) { fini = true; nettoyer(); if (!win.isDestroyed()) win.close(); reject(err); }
+      }
+    })();
+  });
+}
+
 // ===== Orchestrateurs : certificat =====
 
 async function genererCertificatPdf(certificatId) {
@@ -223,11 +317,8 @@ async function genererCertificatPdf(certificatId) {
   if (!cert) throw new Error('Certificat introuvable.');
   const cfg = obtenirConfig();
   const donnees = preparerDonneesCertificat(cert, cfg);
-  const annee = anneeDe(cert.date_delivrance);
-  const dossier = path.join(getDocumentsDirAnnee(annee), 'Certificats');
-  const slugTitre = slug(cert.oeuvre_titre);
-  const nomFichier = `Certificat_${slug(cert.numero_delivrance, 30)}${slugTitre ? '_' + slugTitre : ''}.pdf`;
-  const sortie = path.join(dossier, nomFichier);
+  // Le certificat officiel vit dans la pochette de la vente (s'il y en a une).
+  const sortie = cheminCertificatOfficiel(cert);
 
   await genererPdf({ gabaritNom: 'gabarit-certificat.html', donnees, sortie, paysage: true });
 
@@ -373,7 +464,7 @@ async function genererCataloguePdf(artisteId) {
 
 // Les lignes d'œuvres (codes + prix par cotes) sont préparées côté renderer et
 // passées telles quelles ; le main numérote, enregistre et rend le PDF.
-async function genererAnnexePdf({ type, artiste_id, artisteId, oeuvres = [], oeuvreIds = null }) {
+async function genererAnnexePdf({ type, artiste_id, artisteId, oeuvres = [], oeuvreIds = null, editer = false }) {
   artisteId = artiste_id != null ? artiste_id : artisteId;
   const artiste = obtenirArtiste(artisteId);
   if (!artiste) throw new Error('Artiste introuvable.');
@@ -404,6 +495,11 @@ async function genererAnnexePdf({ type, artiste_id, artisteId, oeuvres = [], oeu
   const nomFichier = `Annexe_${t === 'retrait' ? 'Retrait' : 'Depot'}_${slug(enr.numero, 30)}${slugArt ? '_' + slugArt : ''}.pdf`;
   const sortie = path.join(dossier, nomFichier);
 
+  if (editer) {
+    const pdf = await ouvrirEditeurDocument({ gabaritNom: gabarit, donnees, sortie, paysage: true, titre: 'Annexe A — version modifiée' });
+    if (pdf) majAnnexePdfPath(enr.id, pdf);
+    return { pdf_path: pdf, numero: enr.numero, type: t };
+  }
   await genererPdf({ gabaritNom: gabarit, donnees, sortie, paysage: true });
   majAnnexePdfPath(enr.id, sortie);
   return { pdf_path: sortie, numero: enr.numero, type: t };
@@ -477,4 +573,300 @@ async function genererPresentationPdf(artisteId, { forcer = false } = {}) {
   return { pdf_path: sortie, reutilise: false };
 }
 
-module.exports = { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf };
+// Présentation « version modifiée » : applique des textes édités (biographie /
+// démarche / curriculum) le temps d'un document, SANS toucher au profil de
+// l'artiste ni au cache. Toujours un nouveau fichier.
+async function genererPresentationPersonnalisee(artisteId, overrides) {
+  const artiste = obtenirArtiste(artisteId);
+  if (!artiste) throw new Error('Artiste introuvable.');
+  const a = { ...artiste };
+  overrides = overrides || {};
+  if (typeof overrides.biographie === 'string') a.biographie = overrides.biographie;
+  if (typeof overrides.demarche === 'string') a.demarche = overrides.demarche;
+  if (typeof overrides.curriculum === 'string') a.curriculum = overrides.curriculum;
+
+  const cfg = obtenirConfig();
+  const donnees = preparerDonneesPresentation(a, cfg);
+  const dossier = path.join(getDocumentsDirAnnee(new Date().getFullYear()), 'Présentations');
+  const slugArt = slug([artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom);
+  const n = new Date();
+  const p = (x) => String(x).padStart(2, '0');
+  const stamp = `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}-${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`;
+  const sortie = path.join(dossier, `Presentation_${slugArt || 'artiste'}_modifiee_${stamp}.pdf`);
+  await genererPdf({ gabaritNom: 'gabarit-presentation.html', donnees, sortie });
+  return { pdf_path: sortie };
+}
+
+// ===== Orchestrateur : pochette de vente (lettre + œuvre + présentation…) =====
+
+const MOIS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function dateLettre(iso, langue) {
+  const [y, m, j] = String(iso || '').slice(0, 10).split('-').map(Number);
+  if (!y) return '';
+  if (langue === 'EN') return `${MOIS_EN[m - 1]} ${j}, ${y}`;
+  return `${j} ${MOIS_RAP[m - 1]} ${y}`;
+}
+
+function preparerDonneesLettre(vente, cert, cfg) {
+  const g = donneesGalerie(cfg);
+  g.site_web = (cfg.galerie && cfg.galerie.site_web) || '';
+  g.logo = 'actifs/logo-gvsj.png';
+  return {
+    galerie: g,
+    date: dateLettre(vente.date_vente, vente.langue),
+    langue: vente.langue || 'FR',
+    type_achat: vente.type_achat || 'personne',
+    est_cadeau: !!vente.est_cadeau,
+    client: { prenom: vente.client_prenom || '', nom: vente.client_nom || '' },
+    artiste: { nom: vente.artiste_nom || '' },
+    signataire: (cfg.documents && cfg.documents.signataire_certificat) || 'Joanne Boucher',
+    oeuvre: {
+      titre: vente.oeuvre_titre || '',
+      photo: photoEnDataUrl(vente.image_path),
+      annee: vente.annee || '',
+      medium: vente.medium || '',
+      support: vente.support || '',
+      dimensions: vente.dimensions || '',
+      valeur: formaterValeurCa(vente.prix_vente != null ? vente.prix_vente : vente.oeuvre_prix),
+      numero_delivrance: cert ? cert.numero_delivrance : '',
+    },
+  };
+}
+
+// Nom de fichier convivial : retire les caractères interdits, garde accents/espaces.
+function nomSur(s) {
+  return String(s || '').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// Dossier de la pochette d'une vente : Documents\{année}\Pochettes\{client}\{facture}\.
+function dossierPochetteVente(vente) {
+  const cli = nomSur(`${vente.client_prenom || ''} ${vente.client_nom || ''}`.trim()) || ('client-' + vente.client_id);
+  const facture = nomSur(vente.numero_facture || '') || ('vente-' + vente.id);
+  return path.join(getDocumentsDirAnnee(anneeDe(vente.date_vente)), 'Pochettes', cli, facture);
+}
+
+// Chemin du PDF officiel d'un certificat : dans la pochette si le certificat est
+// lié à une vente, sinon dans le dossier Certificats de l'année.
+function cheminCertificatOfficiel(cert) {
+  const slugTitre = slug(cert.oeuvre_titre);
+  const nom = `Certificat_${slug(cert.numero_delivrance || '', 30)}${slugTitre ? '_' + slugTitre : ''}.pdf`;
+  if (cert.vente_id) {
+    const vente = obtenirVente(cert.vente_id);
+    if (vente) return path.join(dossierPochetteVente(vente), nom);
+  }
+  return path.join(getDocumentsDirAnnee(anneeDe(cert.date_delivrance)), 'Certificats', nom);
+}
+
+// Chemin d'un document dans le dossier de la pochette d'une vente, s'il existe
+// (sert à « Voir » : on ouvre la version de la pochette, donc modifiée le cas
+// échéant). Retourne null si absent.
+function cheminPochetteSiExiste(venteId, type) {
+  const vente = obtenirVente(venteId);
+  if (!vente) return null;
+  const nom = nomFichierPochette(type, vente);
+  if (!nom) return null;
+  const p = path.join(dossierPochetteVente(vente), nom);
+  return fs.existsSync(p) ? p : null;
+}
+
+// Dossier de la pochette d'une vente + s'il existe (à récupérer AVANT de
+// supprimer la vente, car ensuite elle n'est plus en base).
+function infosDossierPochette(venteId) {
+  const vente = obtenirVente(venteId);
+  if (!vente) return { dossier: null, existe: false };
+  const dossier = dossierPochetteVente(vente);
+  return { dossier, existe: fs.existsSync(dossier) };
+}
+
+// Suppression sécurisée d'un dossier de pochette : refuse tout chemin qui n'est
+// pas un sous-dossier de Documents\Pochettes (garde-fou anti-effacement).
+function supprimerDossierPochette(chemin) {
+  const baseDocs = path.resolve(path.dirname(getDocumentsDirAnnee(new Date().getFullYear())));
+  const cible = path.resolve(chemin || '');
+  // Garde-fou : sous le dossier Documents ET dans un sous-dossier « Pochettes ».
+  if (!cible.startsWith(baseDocs + path.sep) || !cible.includes(path.sep + 'Pochettes' + path.sep)) {
+    throw new Error('Chemin non autorisé.');
+  }
+  if (fs.existsSync(cible)) fs.rmSync(cible, { recursive: true, force: true });
+  return { ok: true };
+}
+
+// Nom de fichier (convivial) d'un document dans la pochette, par type. Doit
+// rester identique à ce que produit genererPochette pour que la « version
+// modifiée » remplace bien le bon fichier. Retourne null si hors pochette.
+function nomFichierPochette(type, vente) {
+  if (type === 'lettre') {
+    const cli = nomSur(`${vente.client_prenom || ''} ${vente.client_nom || ''}`.trim());
+    return 'Lettre de remerciement' + (cli ? ' - ' + cli : '') + '.pdf';
+  }
+  if (type === 'presentation') {
+    const art = nomSur(vente.artiste_nom || '');
+    return "Présentation de l'artiste" + (art ? ' - ' + art : '') + '.pdf';
+  }
+  return null;
+}
+
+// Génère le PDF « lettre de remerciement + fiche de l'œuvre » d'une vente.
+async function genererLettrePochettePdf(venteId, dossier, nomFichier) {
+  const vente = obtenirVente(venteId);
+  if (!vente) throw new Error('Vente introuvable.');
+  const cfg = obtenirConfig();
+  const certs = listerCertificatsParVente(venteId);
+  const cert = certs && certs[0] ? certs[0] : null;
+  const donnees = preparerDonneesLettre(vente, cert, cfg);
+
+  const annee = anneeDe(vente.date_vente);
+  const dest = dossier || path.join(getDocumentsDirAnnee(annee), 'Lettres');
+  const slugCli = slug(`${vente.client_prenom || ''} ${vente.client_nom || ''}`.trim()) || 'client';
+  const n = new Date();
+  const p = (x) => String(x).padStart(2, '0');
+  const stamp = `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}-${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`;
+  const sortie = path.join(dest, nomFichier || `Lettre_${slug(vente.numero_facture || '', 30) || slugCli}_${stamp}.pdf`);
+
+  await genererPdf({ gabaritNom: 'gabarit-lettre.html', donnees, sortie });
+  const db = openDatabase();
+  db.prepare('UPDATE ventes SET lettre_path = ? WHERE id = ?').run(sortie, venteId);
+  return { pdf_path: sortie };
+}
+
+// Assemble tous les documents de la pochette dans un dossier par vente.
+async function genererPochette(venteId) {
+  const vente = obtenirVente(venteId);
+  if (!vente) throw new Error('Vente introuvable.');
+  const cfg = obtenirConfig();
+  const dossier = dossierPochetteVente(vente);
+  fs.mkdirSync(dossier, { recursive: true });
+
+  const fichiers = [];
+
+  // 1. Lettre + fiche de l'œuvre.
+  const lettre = await genererLettrePochettePdf(venteId, dossier, nomFichierPochette('lettre', vente));
+  fichiers.push({ label: "Lettre de remerciement + fiche de l'œuvre", path: lettre.pdf_path, present: true });
+
+  // 2. Certificat d'authenticité — produit dans le workflow s'il n'existe pas
+  //    encore (valeurs par défaut : valeur = prix de vente, signataire des réglages).
+  let cert = (listerCertificatsParVente(venteId) || [])[0];
+  if (!cert) {
+    const today = new Date();
+    const pad = (x) => String(x).padStart(2, '0');
+    const dateISO = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+    cert = creerCertificat({
+      oeuvre_id: vente.oeuvre_id,
+      vente_id: venteId,
+      numero_delivrance: reserverProchainNumeroCertificat(),
+      date_delivrance: dateISO,
+      valeur: vente.prix_vente != null ? vente.prix_vente : vente.oeuvre_prix,
+      signataire: (cfg.documents && cfg.documents.signataire_certificat) || 'Joanne Boucher',
+      particularite: null,
+      pdf_path: null,
+    });
+  }
+  if (cert && (!cert.pdf_path || !fs.existsSync(cert.pdf_path))) {
+    const gen = await genererCertificatPdf(cert.id); // écrit directement dans la pochette
+    cert.pdf_path = gen.pdf_path;
+  }
+  if (cert && cert.pdf_path && fs.existsSync(cert.pdf_path)) {
+    fichiers.push({ label: "Certificat d'authenticité", path: cert.pdf_path, present: true });
+  } else {
+    fichiers.push({ label: "Certificat d'authenticité", path: null, present: false, note: 'à produire' });
+  }
+
+  // 3. Présentation de l'artiste (réutilisée via le cache) → copie.
+  try {
+    const pres = await genererPresentationPdf(vente.artiste_id);
+    const dest = path.join(dossier, nomFichierPochette('presentation', vente));
+    fs.copyFileSync(pres.pdf_path, dest);
+    fichiers.push({ label: "Présentation de l'artiste", path: dest, present: true });
+  } catch (e) {
+    fichiers.push({ label: "Présentation de l'artiste", path: null, present: false, note: e.message });
+  }
+
+  // 4. Guide de l'acheteur (actif fixe) → copie.
+  const guideSrc = path.join(__dirname, '..', 'gabarits', 'actifs', 'guide_certificat.pdf');
+  if (fs.existsSync(guideSrc)) {
+    const dest = path.join(dossier, "Guide de l'acheteur.pdf");
+    fs.copyFileSync(guideSrc, dest);
+    fichiers.push({ label: "Guide de l'acheteur", path: dest, present: true });
+  }
+
+  return { dossier, fichiers };
+}
+
+// Dispatcher « version modifiée » pour les documents pilotés par un id.
+async function editerDocument(spec) {
+  const cfg = obtenirConfig();
+  const an = new Date();
+  const p = (x) => String(x).padStart(2, '0');
+  const stamp = `${an.getFullYear()}${p(an.getMonth() + 1)}${p(an.getDate())}-${p(an.getHours())}${p(an.getMinutes())}${p(an.getSeconds())}`;
+  const dossierAnnee = getDocumentsDirAnnee(an.getFullYear());
+  let gabaritNom, donnees, paysage = false, sortie, titre;
+
+  // Contexte de vente : si le document appartient à une pochette, la version
+  // modifiée ira dans le dossier de cette pochette (en remplaçant le standard).
+  let venteCtx = null;
+  if ((spec.type === 'lettre' || spec.type === 'facture-artiste' || spec.type === 'presentation') && spec.vente_id) {
+    venteCtx = obtenirVente(spec.vente_id);
+  } else if (spec.type === 'certificat') {
+    const c0 = obtenirCertificat(spec.certificat_id);
+    if (c0 && c0.vente_id) venteCtx = obtenirVente(c0.vente_id);
+  }
+
+  if (spec.type === 'presentation') {
+    const artiste = obtenirArtiste(spec.artiste_id);
+    if (!artiste) throw new Error('Artiste introuvable.');
+    const sa = slug([artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom) || 'artiste';
+    gabaritNom = 'gabarit-presentation.html';
+    donnees = preparerDonneesPresentation(artiste, cfg);
+    sortie = path.join(dossierAnnee, 'Présentations', `Presentation_${sa}_modifiee_${stamp}.pdf`);
+    titre = 'Présentation — version modifiée';
+  } else if (spec.type === 'catalogue') {
+    const artiste = obtenirArtiste(spec.artiste_id);
+    if (!artiste) throw new Error('Artiste introuvable.');
+    const sa = slug([artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom) || 'artiste';
+    gabaritNom = 'gabarit-catalogue.html';
+    donnees = preparerDonneesCatalogue(artiste, oeuvresPourCatalogue(spec.artiste_id));
+    sortie = path.join(dossierAnnee, 'Catalogues', `Catalogue_${sa}_modifie_${stamp}.pdf`);
+    titre = 'Catalogue — version modifiée';
+  } else if (spec.type === 'lettre') {
+    const vente = obtenirVente(spec.vente_id);
+    if (!vente) throw new Error('Vente introuvable.');
+    const cert = (listerCertificatsParVente(spec.vente_id) || [])[0] || null;
+    gabaritNom = 'gabarit-lettre.html';
+    donnees = preparerDonneesLettre(vente, cert, cfg);
+    sortie = path.join(dossierAnnee, 'Lettres', `Lettre_modifiee_${stamp}.pdf`);
+    titre = 'Lettre — version modifiée';
+  } else if (spec.type === 'certificat') {
+    const cert = obtenirCertificat(spec.certificat_id);
+    if (!cert) throw new Error('Certificat introuvable.');
+    gabaritNom = 'gabarit-certificat.html';
+    donnees = preparerDonneesCertificat(cert, cfg);
+    paysage = true;
+    // On édite le PDF officiel du certificat lui-même (qui vit dans la pochette
+    // s'il est lié à une vente).
+    sortie = cert.pdf_path || cheminCertificatOfficiel(cert);
+    titre = 'Certificat — version modifiée';
+  } else if (spec.type === 'facture-artiste') {
+    const vente = obtenirVente(spec.vente_id);
+    if (!vente) throw new Error('Vente introuvable.');
+    const artiste = obtenirArtiste(vente.artiste_id);
+    const num = obtenirOuReserverNumeroFactureArtisteVente(spec.vente_id);
+    vente.numero_facture_artiste = num;
+    gabaritNom = 'gabarit-facture-artiste.html';
+    donnees = preparerDonneesFactureArtiste(vente, artiste, cfg, num);
+    sortie = path.join(dossierAnnee, 'Factures artiste', `FactureArtiste_${slug(num || '', 30)}_modifiee_${stamp}.pdf`);
+    titre = 'Facture artiste — version modifiée';
+  } else {
+    throw new Error('Type de document inconnu : ' + spec.type);
+  }
+
+  // Documents de pochette liés à une vente : remplacer le fichier de la pochette
+  // (même nom) au lieu de créer un fichier séparé.
+  if (venteCtx && (spec.type === 'lettre' || spec.type === 'presentation')) {
+    sortie = path.join(dossierPochetteVente(venteCtx), nomFichierPochette(spec.type, venteCtx));
+  }
+
+  const pdf = await ouvrirEditeurDocument({ gabaritNom, donnees, sortie, paysage, titre });
+  return { pdf_path: pdf };
+}
+
+module.exports = { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPresentationPersonnalisee, genererLettrePochettePdf, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette };

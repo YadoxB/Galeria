@@ -54,14 +54,16 @@ export function construireLignesAnnexe(artiste, oeuvres) {
 }
 
 // Génère l'annexe (IPC) puis propose d'ouvrir le PDF. Retourne le résultat IPC.
-export async function produireAnnexe({ artiste, oeuvres, type }) {
+export async function produireAnnexe({ artiste, oeuvres, type, editer = false }) {
   const rows = construireLignesAnnexe(artiste, oeuvres);
   const res = await window.api.pdfAnnexeGenerer({
     type,
     artiste_id: artiste.id,
     oeuvres: rows,
     oeuvreIds: rows.map((r) => r.id),
+    editer,
   });
+  if (!res || !res.pdf_path) return null; // édition annulée
   const rep = await confirmer({
     type: 'succes',
     title: 'Annexe produite',
@@ -132,6 +134,7 @@ export function ouvrirAnnexeModale({ artiste, oeuvres, type = 'depot' }) {
         <div class="annexe-liste">${lignesHtml || '<p class="aide-champ" style="margin:0;">Aucune œuvre pour cet artiste.</p>'}</div>
         <div class="dialogue-actions">
           <button type="button" class="btn-action btn-secondaire-action" id="annexe-annuler">Annuler</button>
+          <button type="button" class="btn-action btn-secondaire-action" id="annexe-produire-mod">Version modifiée…</button>
           <button type="button" class="btn-action btn-principal" id="annexe-produire">Produire l'annexe</button>
         </div>
       </div>`;
@@ -166,25 +169,30 @@ export function ouvrirAnnexeModale({ artiste, oeuvres, type = 'depot' }) {
     });
     overlay.querySelector('#annexe-annuler').addEventListener('click', () => fermer(null));
 
-    overlay.querySelector('#annexe-produire').addEventListener('click', async (e) => {
+    async function lancer(editer, btn) {
       const ids = new Set(cases().filter((c) => c.checked).map((c) => Number(c.value)));
       const choisies = oeuvres.filter((o) => ids.has(o.id));
       if (!choisies.length) {
         await confirmer({ type: 'warning', title: 'Aucune œuvre', message: 'Coche au moins une œuvre.', buttons: ['OK'] });
         return;
       }
-      const btn = e.currentTarget;
+      const libelle = btn.textContent;
       btn.disabled = true;
       btn.textContent = 'Génération…';
       try {
-        const res = await produireAnnexe({ artiste, oeuvres: choisies, type: typeCourant });
-        fermer(res);
+        const res = await produireAnnexe({ artiste, oeuvres: choisies, type: typeCourant, editer });
+        if (res) { fermer(res); return; }
+        // édition annulée : on rouvre la modale telle quelle
+        btn.disabled = false;
+        btn.textContent = libelle;
       } catch (err) {
         btn.disabled = false;
-        btn.textContent = "Produire l'annexe";
+        btn.textContent = libelle;
         await confirmer({ type: 'error', title: 'Échec', message: (err && err.message) || String(err), buttons: ['OK'] });
       }
-    });
+    }
+    overlay.querySelector('#annexe-produire').addEventListener('click', (e) => lancer(false, e.currentTarget));
+    overlay.querySelector('#annexe-produire-mod').addEventListener('click', (e) => lancer(true, e.currentTarget));
 
     majCompte();
   });

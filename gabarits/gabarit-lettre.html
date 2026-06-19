@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>Lettre de remerciement · La Galerie du Vieux Saint-Jean</title>
+<style>
+@font-face{font-family:'G';font-weight:400;font-style:normal;src:url(actifs/garamond-regular.woff2) format('woff2');}
+@font-face{font-family:'G';font-weight:600;font-style:normal;src:url(actifs/garamond-semibold.woff2) format('woff2');}
+@font-face{font-family:'G';font-weight:400;font-style:italic;src:url(actifs/garamond-italic.woff2) format('woff2');}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html{background:#fff;}
+body{font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#1c1a17;}
+@media screen{
+  html{background:#e8e3db;}
+  body{padding:18px;}
+  .feuille{box-shadow:0 6px 30px rgba(0,0,0,.16);margin:0 auto 24px;}
+}
+@media print{ @page{size:letter;margin:0;} }
+/* Pages à hauteur fixe : la lettre est forcée sur UNE page (le texte est
+   réduit au besoin par window.ajusterApresRendu). */
+.feuille{width:8.5in;height:11in;background:#fff;padding:16mm 18mm;margin:0 auto;
+         overflow:hidden;page-break-after:always;}
+.feuille:last-child{page-break-after:auto;}
+
+/* ── En-tête ── */
+.entete{display:flex;justify-content:space-between;align-items:flex-start;gap:12mm;
+        padding-bottom:4mm;border-bottom:2px solid #900001;margin-bottom:8mm;}
+.entete img{height:16mm;}
+.entete-droite{text-align:right;font-size:9pt;line-height:1.5;color:#4a443a;}
+.entete-droite .nom{font-family:'G';font-size:13pt;color:#1c1a17;margin-bottom:1mm;}
+.entete-droite .date{margin-top:2mm;color:#6b6253;}
+
+/* ── Corps de la lettre (Garamond) ── */
+.lettre{font-family:'G';font-size:var(--lettre-fs,12.5pt);line-height:1.7;color:#1c1a17;}
+.lettre p{margin-bottom:0.85em;text-align:justify;}
+.lettre em{font-style:italic;}
+.cloture{margin-top:6mm;}
+.signature{margin-top:5mm;font-family:'G';}
+.signature .sig-nom{font-size:12.5pt;font-weight:600;}
+.signature .sig-role{font-size:11pt;color:#6b6253;}
+.signature .sig-contact{font-size:9.5pt;color:#4a443a;line-height:1.5;margin-top:2mm;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;}
+.pied{margin-top:9mm;padding-top:2.5mm;border-top:.5px solid #e0d8cc;
+      text-align:center;font-size:8pt;color:#9a8f78;}
+
+/* ── Page 2 : l'œuvre ── */
+.oeuvre-titre-sec{font-family:'G';font-size:11pt;letter-spacing:3px;text-transform:uppercase;
+                  color:#900001;margin-bottom:6mm;}
+.oeuvre-photo{text-align:center;margin-bottom:7mm;}
+.oeuvre-photo img{max-width:100%;max-height:120mm;object-fit:contain;
+                  border:.5px solid #e0d8cc;}
+.oeuvre-fiche{max-width:130mm;margin:0 auto;}
+.oeuvre-ligne{display:grid;grid-template-columns:38mm 1fr;gap:4mm;
+              padding:2.2mm 0;border-bottom:.4px solid #efe9dd;font-size:10.5pt;}
+.oeuvre-ligne .lbl{font-size:8pt;letter-spacing:1px;text-transform:uppercase;
+                   color:#900001;font-weight:700;align-self:center;}
+.oeuvre-ligne .val{color:#1c1a17;}
+.oeuvre-ligne .val em{font-style:italic;}
+</style></head>
+<body>
+<div class="doc" id="doc"></div>
+
+<script>
+function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// Les 8 lettres (placeholders {{client_prenom}} {{titre}} {{artiste_nom}}).
+const LETTRES = {
+'FR-A':
+`Bonjour {{client_prenom}},
+
+Félicitations pour l'acquisition de {{titre}}, une création originale de {{artiste_nom}} ! C'est une occasion spéciale et passionnante.
+
+L'art peut apporter tant de beauté et d'inspiration dans nos vies. Que cette nouvelle pièce embellisse votre environnement et vous procure de la joie et de l'inspiration chaque jour. Profitez-en pleinement !
+
+Ce fut un réel plaisir de vous avoir rencontré et de partager avec vous notre passion de l'art. Vous trouverez dans cette pochette le certificat d'authenticité qui accompagne l'œuvre, gage de son originalité et de sa provenance directe de l'artiste, ainsi qu'une présentation de {{artiste_nom}} pour mieux connaître l'artiste dont vous avez choisi d'accueillir le travail.
+
+N'hésitez pas à nous contacter à tout moment si vous avez des questions, des suggestions ou si vous avez besoin d'informations supplémentaires. Nous sommes là pour vous aider.
+
+Pour rester au courant de nos dernières actualités, nous vous invitons à visiter notre site internet et à vous inscrire à l'infolettre, ainsi qu'à nous suivre sur Facebook et Instagram où vous pourrez découvrir de nouvelles œuvres et événements.
+
+Encore une fois, merci pour votre confiance et votre soutien. Nous espérons que votre nouvelle acquisition vous apportera de la joie et de l'inspiration pendant de nombreuses années à venir.`,
+'FR-B':
+`Bonjour {{client_prenom}},
+
+Félicitations pour votre choix ! Offrir {{titre}}, une création originale de {{artiste_nom}}, c'est offrir quelque chose d'unique et de durable — un geste qui marque.
+
+L'art peut apporter tant de beauté et d'inspiration dans nos vies. Que cette œuvre embellisse l'environnement de la personne choyée et lui procure de la joie et de l'inspiration chaque jour.
+
+Ce fut un réel plaisir de vous avoir rencontré et de partager avec vous notre passion de l'art. Vous trouverez dans cette pochette le certificat d'authenticité qui accompagne l'œuvre, gage de son originalité et de sa provenance directe de l'artiste, ainsi qu'une présentation de {{artiste_nom}} pour que la personne qui recevra ce beau cadeau puisse mieux connaître l'artiste dont elle accueillera le travail.
+
+N'hésitez pas à nous contacter à tout moment si vous avez des questions ou si vous avez besoin d'informations supplémentaires. Nous sommes là pour vous aider.
+
+Pour rester au courant de nos dernières actualités, nous vous invitons à visiter notre site internet et à vous inscrire à l'infolettre, ainsi qu'à nous suivre sur Facebook et Instagram où vous pourrez découvrir de nouvelles œuvres et événements.
+
+Encore une fois, merci pour votre confiance et votre soutien. Nous espérons que ce cadeau saura toucher le cœur de qui le recevra.`,
+'FR-C':
+`Bonjour {{client_prenom}},
+
+Félicitations pour l'acquisition de {{titre}}, une création originale de {{artiste_nom}} ! C'est une occasion spéciale et passionnante.
+
+L'art peut apporter tant de beauté et d'inspiration dans nos vies. Que cette nouvelle pièce embellisse votre environnement et vous procure de la joie et de l'inspiration chaque jour. Profitez-en pleinement !
+
+Veuillez trouver dans cette pochette le certificat d'authenticité qui accompagne l'œuvre, gage de son originalité et de sa provenance directe de l'artiste, ainsi qu'une présentation de {{artiste_nom}} pour mieux connaître l'artiste dont vous avez choisi d'accueillir le travail.
+
+Nous vous remercions sincèrement pour votre confiance et votre intérêt envers notre galerie et les artistes que nous représentons. N'hésitez pas à nous contacter si vous avez des questions ou si vous souhaitez en apprendre davantage sur nos expositions, nouveaux arrivages ou services personnalisés.
+
+Pour rester au courant de nos dernières actualités, nous vous invitons à visiter notre site internet et à vous inscrire à l'infolettre, ainsi qu'à nous suivre sur Facebook et Instagram où vous pourrez découvrir de nouvelles œuvres et événements.
+
+Merci encore de faire partie de cette belle aventure artistique ! Nous espérons que votre nouvelle acquisition vous apportera de la joie et de l'inspiration pendant de nombreuses années à venir.`,
+'FR-D':
+`Bonjour {{client_prenom}},
+
+Félicitations pour votre choix ! Offrir {{titre}}, une création originale de {{artiste_nom}}, c'est offrir quelque chose d'unique et de durable — un geste qui marque.
+
+L'art peut apporter tant de beauté et d'inspiration dans nos vies. Que cette œuvre embellisse l'environnement de la personne choyée et lui procure de la joie et de l'inspiration chaque jour.
+
+Veuillez trouver dans cette pochette le certificat d'authenticité qui accompagne l'œuvre, gage de son originalité et de sa provenance directe de l'artiste, ainsi qu'une présentation de {{artiste_nom}} pour que la personne qui recevra ce beau cadeau puisse mieux connaître l'artiste dont elle accueillera le travail.
+
+Nous vous remercions sincèrement pour votre confiance et votre intérêt envers notre galerie et les artistes que nous représentons. N'hésitez pas à nous contacter pour toute question.
+
+Pour rester au courant de nos dernières actualités, nous vous invitons à visiter notre site internet et à vous inscrire à l'infolettre, ainsi qu'à nous suivre sur Facebook et Instagram où vous pourrez découvrir de nouvelles œuvres et événements.
+
+Merci encore de faire partie de cette belle aventure artistique ! Nous espérons que ce cadeau saura toucher le cœur de qui le recevra.`,
+'EN-A':
+`Hello {{client_prenom}},
+
+Congratulations on the acquisition of {{titre}}, an original work by {{artiste_nom}}! This is a special and exciting occasion.
+
+Art can bring so much beauty and inspiration into our lives. May this new piece brighten your space and bring you joy and inspiration every day. Enjoy it to the fullest!
+
+It was a true pleasure to meet you and share our passion for art with you. In this packet you will find the certificate of authenticity accompanying the artwork — a testament to its originality and its direct provenance from the artist — as well as a presentation of {{artiste_nom}}, so that you may come to know the artist whose work you have welcomed into your space.
+
+Please do not hesitate to contact us at any time if you have questions, suggestions, or need any additional information. We are here to help.
+
+To stay up to date with our latest news, we invite you to visit our website and subscribe to our newsletter, and to follow us on Facebook and Instagram where you will discover new artworks and events.
+
+Once again, thank you for your trust and support. We hope your new acquisition will bring you joy and inspiration for many years to come.`,
+'EN-B':
+`Hello {{client_prenom}},
+
+Congratulations on your wonderful choice! Giving {{titre}}, an original work by {{artiste_nom}}, is giving something truly unique and lasting — a gesture that truly stands out.
+
+Art can bring so much beauty and inspiration into our lives. May this work brighten the space of the lucky recipient and bring them joy and inspiration every day.
+
+It was a true pleasure to meet you and share our passion for art with you. In this packet you will find the certificate of authenticity accompanying the artwork — a testament to its originality and its direct provenance from the artist — as well as a presentation of {{artiste_nom}}, so that the person receiving this beautiful gift may come to know the artist whose work they are welcoming.
+
+Please do not hesitate to contact us at any time if you have questions or need any additional information. We are here to help.
+
+To stay up to date with our latest news, we invite you to visit our website and subscribe to our newsletter, and to follow us on Facebook and Instagram where you will discover new artworks and events.
+
+Once again, thank you for your trust and support. We hope this gift will touch the heart of whoever receives it.`,
+'EN-C':
+`Hello {{client_prenom}},
+
+Congratulations on the acquisition of {{titre}}, an original work by {{artiste_nom}}! This is a special and exciting occasion.
+
+Art can bring so much beauty and inspiration into our lives. May this new piece brighten your space and bring you joy and inspiration every day. Enjoy it to the fullest!
+
+Enclosed in this packet you will find the certificate of authenticity accompanying the artwork — a testament to its originality and its direct provenance from the artist — as well as a presentation of {{artiste_nom}}, so that you may come to know the artist whose work you have welcomed into your home.
+
+We sincerely thank you for your trust and your interest in our gallery and the artists we represent. Please do not hesitate to contact us if you have any questions or would like to learn more about our exhibitions, new arrivals, or personalized services.
+
+To stay up to date with our latest news, we invite you to visit our website and subscribe to our newsletter, and to follow us on Facebook and Instagram where you will discover new artworks and events.
+
+Thank you for being part of this wonderful artistic journey! We hope your new acquisition will bring you joy and inspiration for many years to come.`,
+'EN-D':
+`Hello {{client_prenom}},
+
+Congratulations on your wonderful choice! Giving {{titre}}, an original work by {{artiste_nom}}, is giving something truly unique and lasting — a gesture that truly stands out.
+
+Art can bring so much beauty and inspiration into our lives. May this work brighten the space of the lucky recipient and bring them joy and inspiration every day.
+
+Enclosed in this packet you will find the certificate of authenticity accompanying the artwork — a testament to its originality and its direct provenance from the artist — as well as a presentation of {{artiste_nom}}, so that the person receiving this beautiful gift may come to know the artist whose work they are welcoming.
+
+We sincerely thank you for your trust and your interest in our gallery and the artists we represent. Please do not hesitate to contact us if you have any questions.
+
+To stay up to date with our latest news, we invite you to visit our website and subscribe to our newsletter, and to follow us on Facebook and Instagram where you will discover new artworks and events.
+
+Thank you for being part of this wonderful artistic journey! We hope this gift will touch the heart of whoever receives it.`,
+};
+
+function choisirLettre(langue, typeAchat, estCadeau){
+  const L = (langue === 'EN') ? 'EN' : 'FR';
+  let v;
+  if(typeAchat === 'web'){ v = estCadeau ? 'D' : 'C'; }
+  else { v = estCadeau ? 'B' : 'A'; }
+  return LETTRES[L + '-' + v];
+}
+
+function corpsLettre(texte, vars){
+  let html = escHtml(texte)
+    .replace(/\{\{client_prenom\}\}/g, escHtml(vars.client_prenom))
+    .replace(/\{\{artiste_nom\}\}/g, escHtml(vars.artiste_nom))
+    .replace(/\{\{titre\}\}/g, '<em>'+escHtml(vars.titre)+'</em>');
+  return html.split(/\n\s*\n/).map(function(p){
+    return '<p>'+p.trim().replace(/\n/g,'<br>')+'</p>';
+  }).join('');
+}
+
+function ligneOeuvre(lbl, val){
+  if(!val) return '';
+  return '<div class="oeuvre-ligne"><span class="lbl">'+escHtml(lbl)+'</span><span class="val">'+val+'</span></div>';
+}
+
+function remplir(data){
+  data = data || {};
+  const g = data.galerie || {};
+  const o = data.oeuvre || {};
+  const langue = (data.langue === 'EN') ? 'EN' : 'FR';
+  const cloture = (langue === 'EN') ? 'Warm regards,' : 'Cordialement,';
+
+  const corps = corpsLettre(
+    choisirLettre(langue, data.type_achat, data.est_cadeau),
+    { client_prenom: data.client && data.client.prenom || '', titre: o.titre || '', artiste_nom: (data.artiste && data.artiste.nom) || '' }
+  );
+
+  const contact = [g.telephone ? ('Téléphone : ' + escHtml(g.telephone)) : '', escHtml(g.courriel), escHtml(g.site_web)].filter(Boolean).join('<br>');
+  const adresse = [g.adresse_ligne1, g.adresse_ligne2].filter(Boolean).map(escHtml).join(', ');
+  const piedParts = [escHtml(g.nom), adresse].filter(Boolean).join(' · ');
+
+  const titreOeuvreItal = o.titre ? '<em>'+escHtml(o.titre)+'</em>' : '';
+  const ficheOeuvre =
+    ligneOeuvre('Titre', titreOeuvreItal) +
+    ligneOeuvre('Artiste', escHtml((data.artiste && data.artiste.nom) || '')) +
+    ligneOeuvre('Année', escHtml(o.annee)) +
+    ligneOeuvre('Médium', escHtml(o.medium)) +
+    ligneOeuvre('Support', escHtml(o.support)) +
+    ligneOeuvre('Dimensions', escHtml(o.dimensions)) +
+    ligneOeuvre('Valeur', escHtml(o.valeur)) +
+    ligneOeuvre('N° de délivrance', escHtml(o.numero_delivrance));
+
+  document.getElementById('doc').innerHTML =
+    // PAGE 1 — lettre
+    '<div class="feuille" id="page1">' +
+    '<div class="entete">' +
+      (g.logo ? '<img src="'+g.logo+'" alt="">' : '<span></span>') +
+      '<div class="entete-droite">' +
+        '<div class="nom">'+escHtml(g.nom)+'</div>' +
+        (adresse ? adresse+'<br>' : '') +
+        (g.telephone ? escHtml(g.telephone)+'<br>' : '') +
+        escHtml(g.courriel) +
+        '<div class="date">'+escHtml(data.date)+'</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="lettre">' + corps +
+      '<div class="cloture">'+cloture+'</div>' +
+      '<div class="signature">' +
+        '<div class="sig-nom">'+escHtml(data.signataire || 'Joanne Boucher')+'</div>' +
+        '<div class="sig-role">'+(langue==='EN'?'Gallery owner':'Galeriste')+'</div>' +
+        (contact ? '<div class="sig-contact">'+contact+'</div>' : '') +
+      '</div>' +
+    '</div>' +
+    (piedParts ? '<div class="pied">'+piedParts+'</div>' : '') +
+    '</div>' +
+    // PAGE 2 — l'œuvre
+    '<div class="feuille">' +
+      '<div class="oeuvre-titre-sec">'+(langue==='EN'?'The artwork':"L'œuvre")+'</div>' +
+      (o.photo ? '<div class="oeuvre-photo"><img src="'+o.photo+'" alt=""></div>' : '') +
+      '<div class="oeuvre-fiche">'+ficheOeuvre+'</div>' +
+    '</div>';
+}
+
+// Réduit le texte de la lettre jusqu'à ce que la page 1 tienne sur une seule page.
+window.ajusterApresRendu = function(){
+  const page1 = document.getElementById('page1');
+  if(!page1) return;
+  let fs = 12.5, guard = 0;
+  page1.style.setProperty('--lettre-fs', fs + 'pt');
+  while(page1.scrollHeight > page1.clientHeight + 1 && fs > 8.5 && guard < 60){
+    fs -= 0.25;
+    page1.style.setProperty('--lettre-fs', fs + 'pt');
+    guard++;
+  }
+};
+</script>
+</body></html>
