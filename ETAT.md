@@ -341,7 +341,7 @@ Nouveau train de fonctionnalités planifié avec Dave, organisé en **lots**. Te
 - **Lot 2** : Annexe A **dépôt** (rouge) + **retrait** (bleu `#2a5c8a`) + **catalogue artiste** (portrait, 6 œuvres/page).
 - **Lot 3** : **pochette de vente** (lettre de remerciement — 8 variantes FR/EN × personne/web × cadeau — + fiche œuvre + présentation artiste) **fusionnée avec la modale post-vente** « Produire un rapport ». Nécessite 3 champs de vente (`type_achat`, `est_cadeau`, `langue`), un champ artiste « distinctions », et `guide_certificat.pdf` en actif fixe.
 - **Lot 4** : refonte de la section **Documents** (tous types, rangement clair).
-- **Lot 5** : refonte de la **hiérarchie de la sidebar** (brief + maquette fournis ; ranger la section Rapport sous ARCHIVES).
+- **Lot 5** (✓ fait) : refonte de la **hiérarchie de la sidebar** — Accueil détaché + groupes Catalogue (Artistes, Œuvres) / Ventes (Clients, Ventes, Suivi) / Archives (Documents, Rapport). Markup + CSS seulement (`src/index.html`, `src/styles.css`) ; `majSidebarActif` intact (cible `.entree-sidebar[data-vue]`, ignore les intitulés `<div>`). Maquette : `demos/sidebar-hierarchie.html`. **Retrait** des cartes de stats en haut de la liste des Œuvres (au passage).
 
 **Lot 0 livré et testé par Dave (OK dans l'app) :**
 

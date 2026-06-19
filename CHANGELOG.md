@@ -28,6 +28,12 @@ identifiants.
 - **Certificat d'authenticité** : l'accent **doré (#b9912f)** passe au **rouge
   GVSJ #900001**, amorçant l'identité visuelle rouge commune à tous les
   documents générés.
+- **Hiérarchie de la sidebar** : **Accueil** détaché en tête (porte d'entrée),
+  puis trois groupes intitulés — **Catalogue** (Artistes, Œuvres), **Ventes**
+  (Clients, Ventes, Suivi) et **Archives** (Documents, Rapport). Bloc bas
+  (Outils, Réglages) et bloc profil inchangés. Markup + CSS uniquement, aucune
+  logique de navigation modifiée.
+- **Cartes de statistiques retirées** du haut de la liste des Œuvres.
 
 ---
 

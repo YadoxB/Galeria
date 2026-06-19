@@ -95,6 +95,19 @@ body { user-select: none; }
   flex: 1;
 }
 
+/* Intitulés de groupe (Catalogue / Ventes / Archives) — séparateurs visuels */
+.menu-groupe-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: rgba(217, 182, 107, 0.62); /* doré atténué : ne concurrence pas l'actif */
+  padding: 0 var(--s2);
+  margin: var(--s3) 0 4px;
+}
+/* Accueil détaché en tête, porte d'entrée (écho au logo cliquable au-dessus) */
+.menu-accueil-detache { margin-bottom: 4px; }
+
 /* Bloc bas de la sidebar : Outils + Réglages, ancré en bas */
 .menu-sidebar-bas {
   flex: 0 0 auto;
