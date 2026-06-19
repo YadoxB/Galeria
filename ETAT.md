@@ -200,9 +200,9 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable e
 - **Lot 4 — refonte de la section Documents** — la Section Documents (#15) ne liste que certificats + factures artiste. **Étendre** pour regrouper et ranger clairement **tous les types** maintenant produits : certificats, factures artiste, **catalogues**, **annexes A**, **rapports**, **pochettes** (lettre + fiche œuvre + présentation + guide). À l'origine « Lot 4 » du train de documents 2026-06-18/19. Démo HTML d'abord (préférence Dave).
 
 **Chantier 2 · Modèle économique** — *partie non bloquée du jalon 4*
-- **Lot 1 — calculateur de commission** — projection du **net versé à l'artiste après TPS/TVQ** (à partir du prix de vente, de la cote et du régime fiscal de l'artiste). À l'origine « Lot 1 » du train de documents. Autonome, s'appuie sur la facture artiste et les cotes déjà en place. *Prochain candidat de dev recommandé.*
+- ~~**Lot 1 — calculateur de commission**~~ — **✓ Livré** : outil dans la page **Outils** qui projette le **net versé à l'artiste après TPS/TVQ** (mêmes formules que la facture artiste). Sélecteur **Type d'œuvre** portant la cote (**Peinture 50 %**, **Sculpture 33 %**, **Reproduction 50 % après frais de production**, **Autre** = % libre) ; cases TPS/TVQ (taux depuis la config) ; rabais optionnels ; résultat = tuile « Montant versé à l'artiste » + détail + note commission galerie. **Reproduction** : la galerie récupère ses frais avant le partage 50/50 du net. Carte de référence « Commissions par type » à côté. (`src/app/vues/outils.js`, `src/styles.css`, démo `demos/calculateur-commission.html`.)
 - **Nomenclature des factures** — définir le format des numéros de facture (basé sur la formule des images d'inventaire). **Dépend de Dave** (il apporte la formule) ; ensuite changement ciblé, numérotation reconfigurable, aucune migration de fond (cf. décision #16). Recoupe le point « format final des numéros (#7) » de l'axe B.
-- **Commission par type d'œuvre** (50 % toiles / 33 % sculptures / 50 % repro après coûts) + champ **coûts de production** sur l'œuvre → branché sur la facture artiste. (Les % exacts et la saisie des coûts repro restent à confirmer — axe B.)
+- **Commission par type d'œuvre — branchement sur la facture artiste** — les % sont **confirmés** (Peinture 50 / Sculpture 33 / Reproduction 50 après frais) et déjà appliqués dans le **calculateur** ci-dessus. Reste à : appliquer la cote par type à la **vraie facture artiste** (aujourd'hui cote globale unique) et prévoir un **champ coûts de production persistant** (fiche œuvre ou vente) pour les reproductions, à rapatrier dans la facture. *(Où saisir les frais reste à trancher — voir A-VALIDER.)*
 
 **Chantier 3 · Polish & onboarding**
 - ~~**Sélecteur de taille de vignette (#19)**~~ — **✓ Livré** : segmenté Petit/Moyen/Grand (190/240/300 px) dans Artistes et Œuvres (vue grille), mémorisé en localStorage (`oeuvres-taille`, `artistes-taille`). Composant partagé `gabaritSelecteurTaille` + variable CSS `--vignette-min`.
@@ -381,6 +381,17 @@ Grosse session « documents ». **Tout commité localement** sur `claude/interes
 2. **Nomenclature des factures** — Dave doit donner la formule (basée sur celle des images d'inventaire).
 3. **Lot 1** — calculateur de commission (net artiste après TPS/TVQ).
 4. **Lot 4** — refonte de la **section Documents** (regrouper certificats, factures, catalogues, annexes, rapports, **pochettes**).
+
+### Journal de session — 2026-06-19 (suite — Lot 1 + ménage du plan)
+
+Reprise dans le worktree `angry-heyrovsky-02b716` (mis à niveau sur `master` par fast-forward). Commits sur `claude/angry-heyrovsky-02b716`, **en avance sur `master`** (à fusionner) — rien de poussé ni publié.
+
+- **Ménage du plan structuré (ETAT)** : chantiers qui ne vivaient que dans les journaux remontés dans le plan (Lot 1, Lot 4, nomenclature des factures, bug Acrobat) ; **#21 marqué livré** (était listé à faire) ; en-tête « Historique » corrigé v0.2.4 → v0.3.0.
+- **Trois chantiers consignés** (demande de Dave) : **#22 Section d'aide** (nouveau), **#13 Tutoriel 1ʳᵉ ouverture**, **#2 Édition en batch** — tous axe A, démo HTML d'abord.
+- **Lot 1 — calculateur de commission ✓** : nouvel outil dans la page **Outils** (net versé à l'artiste après TPS/TVQ, mêmes formules que la facture artiste). Sélecteur **Type d'œuvre** portant la cote (Peinture 50 / Sculpture 33 / Reproduction 50 après frais / Autre), cases TPS/TVQ depuis la config, rabais optionnels, tuile « Montant versé à l'artiste » + détail + note commission. Carte de référence « Commissions par type ». Démo `demos/calculateur-commission.html`. **Décisions tranchées** (A-VALIDER) : % par type ; pour la reproduction, **la galerie récupère ses frais avant le partage 50/50** ; type d'œuvre pré-rempli depuis `artiste.type`.
+- **Note technique** : un champ `.form-champ` avec l'attribut `hidden` restait visible (le `display:flex` de `.form-champ` écrasait `hidden`) → règle `.form-champ[hidden] { display:none }` ajoutée. À garder en tête pour tout champ masqué conditionnellement.
+
+**Reste à reprendre :** nomenclature des factures (formule de Dave) ; brancher la **cote par type sur la vraie facture artiste** + champ **coûts de production persistant** (repro) ; livraison manuelle v0.3.0 aux parents ; Lot 4 ; chantiers #22/#13/#2.
 
 ---
 

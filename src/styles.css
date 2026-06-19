@@ -4015,6 +4015,10 @@ details.bloc.pliable > .bloc-corps {
   margin-bottom: var(--s3);
 }
 
+/* L'attribut hidden doit l'emporter sur le display:flex ci-dessus
+   (sinon un champ marqué hidden reste visible — ex. frais de production). */
+.form-champ[hidden] { display: none; }
+
 .form-champ label {
   font-family: var(--font-ui);
   font-size: 13px;
