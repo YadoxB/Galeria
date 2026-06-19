@@ -18,13 +18,15 @@ const {
   arreterSauvegardePeriodique,
 } = require('./db/backup');
 const { previewFile, importArtistes, importOeuvres } = require('./import/importer');
-const { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf } = require('./pdf');
+const { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf } = require('./pdf');
 const {
   listerArtistes,
   obtenirArtiste,
   obtenirFicheArtisteBundle,
   voisinsArtiste,
   listerOeuvres,
+  oeuvresDetailArtiste,
+  oeuvresParIds,
   obtenirOeuvre,
   obtenirFicheOeuvreBundle,
   voisinsOeuvre,
@@ -558,6 +560,8 @@ app.whenReady().then(async () => {
   ipcMain.handle('artistes:supprimer', (_e, id) => supprimerArtiste(id));
   ipcMain.handle('oeuvres:liste', (_e, filtres) => listerOeuvres(filtres));
   ipcMain.handle('oeuvres:get', (_e, id) => obtenirOeuvre(id));
+  ipcMain.handle('oeuvres:detail-artiste', (_e, artisteId) => oeuvresDetailArtiste(artisteId));
+  ipcMain.handle('oeuvres:par-ids', (_e, ids) => oeuvresParIds(ids));
   ipcMain.handle('oeuvres:fiche-bundle', (_e, id) => obtenirFicheOeuvreBundle(id));
   ipcMain.handle('oeuvres:voisins', (_e, id) => voisinsOeuvre(id));
   ipcMain.handle('oeuvres:modifier', (_e, id, data) => modifierOeuvre(id, data));
@@ -625,6 +629,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('pdf:certificat-generer', (_e, id) => genererCertificatPdf(id));
   ipcMain.handle('pdf:facture-artiste-generer', (_e, venteId) => genererFactureArtistePdf(venteId));
   ipcMain.handle('pdf:catalogue-generer', (_e, artisteId) => genererCataloguePdf(artisteId));
+  ipcMain.handle('pdf:annexe-generer', (_e, payload) => genererAnnexePdf(payload));
   ipcMain.handle('pdf:ouvrir', async (_e, cheminPdf) => {
     const erreur = await shell.openPath(cheminPdf);
     if (erreur) throw new Error(erreur);

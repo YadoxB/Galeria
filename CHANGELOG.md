@@ -12,6 +12,17 @@ identifiants.
 
 ### Ajouté
 
+- **Annexe A — dépôt / retrait d'œuvres (PDF)** — document signé artiste +
+  galeriste confirmant la consignation (dépôt) ou la reprise (retrait) des
+  œuvres. Format Lettre paysage, tableau des œuvres (n° inv, titre, format,
+  H/L/P, codes médium/support/signature, année, prix **sans cadre/avec cadre**
+  calculés via les cotes) + blocs de signature. **Dépôt en rouge `#900001`**,
+  **retrait en bleu `#2a5c8a`**. Numérotation séquentielle **par artiste**
+  (`A-{préfixe}-001`), enregistrée dans une nouvelle table `annexes`.
+  Production : bouton **« Annexe A… »** sur la fiche artiste (sélection des
+  œuvres) **et** invites automatiques dans les flux — après l'ajout d'œuvres
+  (dépôt, à la fin d'un chaînage ou pour une œuvre seule) et après un retrait
+  (œuvre seule ou en lot, une annexe par artiste).
 - **Catalogue d'artiste imprimable (PDF)** — bouton **« Catalogue PDF »** sur la
   fiche artiste : génère un PDF portrait Lettre, **6 œuvres par page** (grille
   2×3, identité rouge GVSJ #900001, sauts de page automatiques). Sous chaque
@@ -31,6 +42,10 @@ identifiants.
 
 ### Modifié
 
+- **Classement des documents générés** : rangés par **type dans l'année**
+  (`Documents\{année}\Certificats\`, `…\Factures artiste\`, `…\Catalogues\`,
+  `…\Annexes\`, `…\Rapports\`) au lieu d'un seul dossier annuel. S'applique aux
+  nouveaux documents ; les anciens restent en place.
 - **Certificat d'authenticité** : l'accent **doré (#b9912f)** passe au **rouge
   GVSJ #900001**, amorçant l'identité visuelle rouge commune à tous les
   documents générés.

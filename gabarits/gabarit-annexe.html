@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>Annexe A · La Galerie du Vieux Saint-Jean</title>
+<style>
+:root{ --accent:#900001; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
+     background:#e8e3db;color:#1c1a17;}
+.page{width:11in;min-height:8.5in;background:#fdfcf8;
+      padding:10mm 13mm 9mm;margin:0 auto;display:flex;flex-direction:column;}
+@media screen{.page{box-shadow:0 4px 24px rgba(0,0,0,.14);margin:18px auto;}
+  body{padding:12px;}}
+@media print{
+  @page{size:letter landscape;margin:0;}
+  body{background:#fff;}
+  .page{box-shadow:none;margin:0;}
+  table.oeuvres tr{page-break-inside:avoid;}
+}
+
+/* ── En-tête ── */
+.head{display:flex;justify-content:space-between;align-items:flex-start;
+      padding-bottom:4mm;border-bottom:2px solid var(--accent);margin-bottom:4mm;}
+.head img{height:13mm;}
+.head-centre{text-align:center;flex:1;padding:0 10mm;}
+.doc-titre{font-size:14pt;font-weight:700;letter-spacing:.5px;
+           text-transform:uppercase;color:#1c1a17;line-height:1.2;}
+.doc-sous{font-size:8.5pt;color:var(--accent);letter-spacing:2px;
+          text-transform:uppercase;margin-top:1.5mm;}
+.head-right{text-align:right;min-width:62mm;}
+.head-right .label{font-size:7pt;letter-spacing:1.5px;text-transform:uppercase;
+                    color:var(--accent);font-weight:700;}
+.head-right .valeur{font-size:10pt;font-weight:600;color:#1c1a17;}
+.head-right .row{margin-bottom:1.5mm;}
+
+/* ── Info artiste ── */
+.info-art{display:flex;gap:6mm;margin-bottom:3.5mm;padding-bottom:3mm;
+          border-bottom:.5px solid #e0d8cc;font-size:10pt;}
+.info-art .bloc{display:flex;align-items:baseline;gap:2mm;}
+.info-art .lbl{font-size:7pt;letter-spacing:1.5px;text-transform:uppercase;
+               color:var(--accent);font-weight:700;white-space:nowrap;}
+.info-art .val{font-weight:600;color:#1c1a17;}
+.info-art .val-lg{font-size:11pt;font-weight:700;}
+
+/* ── Tableau ── */
+table.oeuvres{width:100%;border-collapse:collapse;font-size:9pt;}
+table.oeuvres thead tr.row1{background:#f5f0e8;border-top:.8px solid #c8bfa8;}
+table.oeuvres thead tr.row2{background:#f5f0e8;border-bottom:.8px solid #c8bfa8;}
+table.oeuvres thead th{padding:1.5mm 1.5mm;text-align:center;
+                        font-size:7pt;letter-spacing:.5px;text-transform:uppercase;
+                        color:#6b6253;font-weight:700;border:.3px solid #d5cabb;}
+table.oeuvres thead th.gauche{text-align:left;}
+table.oeuvres thead th.group{background:#ede7da;font-size:7pt;letter-spacing:1px;
+                              color:var(--accent);border:.3px solid #c8bfa8;}
+table.oeuvres thead th .legend{font-weight:400;font-size:6.5pt;
+                                color:#9a8f78;letter-spacing:0;display:block;}
+table.oeuvres tbody tr{border-bottom:.3px solid #ece6da;}
+table.oeuvres tbody tr:nth-child(even){background:#faf6f0;}
+table.oeuvres tbody td{padding:2mm 1.5mm;vertical-align:middle;
+                        border:.3px solid #ece6da;font-size:9pt;}
+table.oeuvres tbody td.num{text-align:center;color:#7a7060;font-size:8pt;}
+table.oeuvres tbody td.centre{text-align:center;}
+table.oeuvres tfoot td{padding:2mm 1.5mm;font-size:8.5pt;font-weight:600;
+                        border-top:.8px solid #c8bfa8;background:#f5f0e8;
+                        border:.3px solid #d5cabb;}
+
+/* ── Signatures ── */
+.sign-zone{display:flex;gap:10mm;margin-top:auto;padding-top:3mm;}
+.sign-bloc{flex:1;}
+.sign-lbl{font-size:7pt;letter-spacing:1.5px;text-transform:uppercase;
+          color:var(--accent);font-weight:700;margin-bottom:2.5mm;}
+.sign-ligne{border-top:.8px solid #1c1a17;margin-bottom:1.5mm;}
+.sign-nom{font-size:10pt;font-weight:600;}
+.sign-role{font-size:8.5pt;color:#7a7060;}
+.sign-date{display:flex;align-items:center;gap:2mm;margin-top:2.5mm;font-size:9pt;}
+.sign-date .dl{flex:1;border-bottom:.5px solid #aaa;height:4.5mm;}
+
+/* ── Pied ── */
+.pied{border-top:.5px solid #e0d8cc;padding-top:2mm;margin-top:3mm;
+      text-align:center;font-size:7pt;color:#9a8f78;letter-spacing:.3px;}
+</style></head>
+<body>
+<div id="doc"></div>
+
+<script>
+function escHtml(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function remplir(data){
+  data = data || {};
+  const retrait = data.type === 'retrait';
+  document.documentElement.style.setProperty('--accent', retrait ? '#2a5c8a' : '#900001');
+
+  const g = data.galerie || {};
+  const art = data.artiste || {};
+  const oeuvres = data.oeuvres || [];
+  const total = data.total != null ? data.total : oeuvres.length;
+
+  const titre = retrait ? 'Annexe A — Retrait d’œuvres' : 'Annexe A — Dépôt d’œuvres';
+  const sous = (retrait ? 'Suivi des œuvres retirées' : 'Suivi des œuvres consignées')
+    + ' · ' + escHtml(g.nom || 'La Galerie du Vieux Saint-Jean');
+  const totalLbl = retrait
+    ? `Total — ${total} œuvre(s) retirée(s)`
+    : `Total — ${total} œuvre(s) consignée(s)`;
+  const lblArtiste = retrait
+    ? 'L’artiste — Je confirme avoir repris les œuvres ci-dessus'
+    : 'L’artiste';
+  const lblGalerie = retrait ? 'La galerie — Remis en mains propres' : 'La galerie';
+
+  const lignes = oeuvres.map((o, i) => `
+    <tr>
+      <td class="num">${i + 1}</td>
+      <td>${escHtml(o.inv)}</td>
+      <td>${escHtml(o.titre)}</td>
+      <td class="centre">${escHtml(o.format)}</td>
+      <td class="centre">${escHtml(o.h)}</td>
+      <td class="centre">${escHtml(o.l)}</td>
+      <td class="centre">${escHtml(o.p)}</td>
+      <td class="centre">${escHtml(o.medium)}</td>
+      <td class="centre">${escHtml(o.support)}</td>
+      <td class="centre">${escHtml(o.signature)}</td>
+      <td class="centre">${escHtml(o.annee)}</td>
+      <td class="centre">${escHtml(o.prix_sans_cadre)}</td>
+      <td class="centre">${escHtml(o.prix_cadre)}</td>
+      <td>${escHtml(o.remarque)}</td>
+    </tr>`).join('');
+
+  const logo = data.logo || 'actifs/logo-gvsj.png';
+  const adresse = [g.adresse_ligne1, g.adresse_ligne2].filter(Boolean).join(', ');
+  const piedParts = [g.nom, adresse, g.telephone, g.courriel].filter(Boolean).map(escHtml);
+
+  document.getElementById('doc').innerHTML = `
+    <div class="page">
+      <div class="head">
+        <img src="${logo}" alt="">
+        <div class="head-centre">
+          <div class="doc-titre">${titre}</div>
+          <div class="doc-sous">${sous}</div>
+        </div>
+        <div class="head-right">
+          <div class="row"><span class="label">Identifiant&nbsp;</span><span class="valeur">${escHtml(data.identifiant)}</span></div>
+          <div class="row"><span class="label">Date&nbsp;</span><span class="valeur">${escHtml(data.date)}</span></div>
+          <div class="row"><span class="label">Annexe n°&nbsp;</span><span class="valeur">${escHtml(data.numero)}</span></div>
+        </div>
+      </div>
+
+      <div class="info-art">
+        <div class="bloc"><span class="lbl">Artiste&nbsp;</span><span class="val val-lg">${escHtml(art.nom)}</span></div>
+        ${art.telephone ? `<div class="bloc"><span class="lbl">Tél.&nbsp;</span><span class="val">${escHtml(art.telephone)}</span></div>` : ''}
+        ${art.courriel ? `<div class="bloc"><span class="lbl">Courriel&nbsp;</span><span class="val">${escHtml(art.courriel)}</span></div>` : ''}
+      </div>
+
+      <table class="oeuvres">
+        <thead>
+          <tr class="row1">
+            <th rowspan="2" style="width:3%">#</th>
+            <th rowspan="2" style="width:7%" class="gauche">No. Inv.</th>
+            <th rowspan="2" style="width:16%" class="gauche">Titre de l'œuvre<br><span class="legend">(ou identifiant)</span></th>
+            <th colspan="4" class="group">Dimensions</th>
+            <th rowspan="2" style="width:6%">Médium<span class="legend">A·E·F·H·M</span></th>
+            <th rowspan="2" style="width:5%">Support<span class="legend">B·P·T</span></th>
+            <th rowspan="2" style="width:6%">Signature<span class="legend">BD·BG·EA·HC</span></th>
+            <th rowspan="2" style="width:5%">Année</th>
+            <th colspan="2" class="group">Prix ($)</th>
+            <th rowspan="2" style="width:7%" class="gauche">Remarque</th>
+          </tr>
+          <tr class="row2">
+            <th style="width:5%">Format<span class="legend">P·M·G</span></th>
+            <th style="width:5%">Haut.<span class="legend">(po)</span></th>
+            <th style="width:5%">Larg.<span class="legend">(po)</span></th>
+            <th style="width:5%">Prof.<span class="legend">(po)</span></th>
+            <th style="width:8%">Sans cadre<span class="legend">(préférentiel)</span></th>
+            <th style="width:8%">Cadre inclus</th>
+          </tr>
+        </thead>
+        <tbody>${lignes}</tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" style="text-align:right;color:#5a5248;">${totalLbl}</td>
+            <td colspan="11"></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div style="flex:1;min-height:10mm;"></div>
+      <div style="page-break-inside:avoid;">
+        <div class="sign-zone">
+          <div class="sign-bloc">
+            <div class="sign-lbl">${lblArtiste}</div>
+            <div style="height:14mm;"></div>
+            <div class="sign-ligne"></div>
+            <div class="sign-nom">${escHtml(art.nom)}</div>
+            <div class="sign-role">Artiste</div>
+            <div class="sign-date">Date&nbsp;<div class="dl"></div></div>
+          </div>
+          <div class="sign-bloc">
+            <div class="sign-lbl">${lblGalerie}</div>
+            <div style="height:14mm;"></div>
+            <div class="sign-ligne"></div>
+            <div class="sign-nom">${escHtml(data.signataire || 'Joanne Boucher')}</div>
+            <div class="sign-role">Galeriste · ${escHtml(g.nom || 'La Galerie du Vieux Saint-Jean')}</div>
+            <div class="sign-date">Date&nbsp;<div class="dl"></div></div>
+          </div>
+          <div class="sign-bloc" style="flex:0.6;">
+            <div class="sign-lbl">Réglé</div>
+            <div class="sign-ligne"></div>
+            <div style="height:8mm;"></div>
+          </div>
+        </div>
+        <div class="pied">${piedParts.join(' · ')}</div>
+      </div>
+    </div>`;
+}
+</script>
+</body></html>

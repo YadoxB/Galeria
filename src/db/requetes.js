@@ -725,10 +725,45 @@ function oeuvresPourCatalogue(artisteId) {
   `).all(artisteId);
 }
 
+// Œuvres d'un artiste avec tous les champs utiles à une Annexe A (dépôt/retrait) :
+// dimensions séparées, codes (médium/support/signature), prix, statut. Exclut
+// les archivées.
+function oeuvresDetailArtiste(artisteId) {
+  const db = openDatabase();
+  return db.prepare(`
+    SELECT o.id, o.numero_inventaire, o.titre, o.format,
+           o.hauteur, o.largeur, o.profondeur,
+           o.medium, o.support, o.emplacement_signature, o.annee,
+           o.prix, o.statut, o.retrait_date
+    FROM oeuvres o
+    WHERE o.artiste_id = ? AND o.archive = 0
+    ORDER BY o.numero_inventaire COLLATE NOCASE, o.titre COLLATE NOCASE
+  `).all(artisteId);
+}
+
+// Œuvres par liste d'IDs, avec les champs utiles à une Annexe A. Sans filtre
+// d'archive : nécessaire pour le retrait, qui met archive = 1 sur l'œuvre.
+function oeuvresParIds(ids) {
+  if (!Array.isArray(ids) || !ids.length) return [];
+  const db = openDatabase();
+  const ph = ids.map(() => '?').join(',');
+  return db.prepare(`
+    SELECT o.id, o.numero_inventaire, o.titre, o.format,
+           o.hauteur, o.largeur, o.profondeur,
+           o.medium, o.support, o.emplacement_signature, o.annee,
+           o.prix, o.statut, o.retrait_date
+    FROM oeuvres o
+    WHERE o.id IN (${ph})
+    ORDER BY o.numero_inventaire COLLATE NOCASE, o.titre COLLATE NOCASE
+  `).all(...ids);
+}
+
 module.exports = {
   listerArtistes,
   obtenirArtiste,
   oeuvresPourCatalogue,
+  oeuvresDetailArtiste,
+  oeuvresParIds,
   obtenirFicheArtisteBundle,
   voisinsArtiste,
   listerOeuvres,

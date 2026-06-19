@@ -144,6 +144,18 @@ CREATE TABLE IF NOT EXISTS certificats (
   cree_le            TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS annexes (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  artiste_id  INTEGER NOT NULL REFERENCES artistes(id) ON DELETE CASCADE,
+  type        TEXT NOT NULL,            -- 'depot' | 'retrait'
+  numero      TEXT NOT NULL,            -- ex. 'A-CLB-001'
+  seq         INTEGER NOT NULL,         -- séquence par artiste
+  date        TEXT NOT NULL,            -- date du document (ISO)
+  oeuvre_ids  TEXT,                     -- JSON : ids des œuvres listées
+  pdf_path    TEXT,
+  cree_le     TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_artistes_nom         ON artistes(nom);
 CREATE INDEX IF NOT EXISTS idx_oeuvres_artiste      ON oeuvres(artiste_id);
 CREATE INDEX IF NOT EXISTS idx_oeuvres_statut       ON oeuvres(statut);

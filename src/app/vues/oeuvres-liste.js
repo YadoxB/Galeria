@@ -5,6 +5,7 @@ import {
   gabaritSelecteurTaille, TAILLES_VIGNETTE, nettoyerErreur,
 } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
+import { proposerAnnexeApres } from '../annexe.js';
 
 const CLE_PREF_VUE = 'oeuvres-vue';
 const CLE_PREF_TRI = 'oeuvres-tri';
@@ -536,12 +537,25 @@ export async function rendreOeuvresListe(contenu, params = {}) {
       const dateRetrait = overlay.querySelector('#lot-date').value || aujourdHui;
       const motif = overlay.querySelector('#lot-motif').value.trim();
       const ids = [...selection];
+      // Capturer les œuvres retirées (avec leur artiste) avant le rafraîchissement.
+      const selObjs = ids
+        .map((id) => oeuvres.find((o) => o.id === id))
+        .filter((o) => o && o.statut !== 'vendu' && o.statut !== 'vendue');
       fermer();
       try {
         const res = await window.api.oeuvresRetraitLot(ids, { date: dateRetrait, motif });
         oeuvres = await window.api.oeuvresListe(filtres);
         quitterModeSelection();
         await alerter({ type: 'succes', title: 'Retrait effectué', message: `${pluriel(res.retirees || 0, 'œuvre')} retirée(s) de la galerie.` });
+        // Annexe(s) A de retrait, une par artiste concerné.
+        const parArtiste = new Map();
+        for (const o of selObjs) {
+          if (!parArtiste.has(o.artiste_id)) parArtiste.set(o.artiste_id, []);
+          parArtiste.get(o.artiste_id).push(o.id);
+        }
+        for (const [artisteId, oeuvreIds] of parArtiste) {
+          await proposerAnnexeApres({ type: 'retrait', artisteId, oeuvreIds });
+        }
       } catch (err) {
         await alerter({ type: 'error', title: 'Échec du retrait', message: nettoyerErreur(err) });
       }

@@ -112,6 +112,24 @@ function migrer(db) {
     db.exec('PRAGMA user_version = 2');
   }
 
+  // 1d. Nouvelle table « annexes » (Annexe A — dépôt / retrait d'œuvres).
+  //     Créée ici pour les bases existantes (schema.sql la crée pour les
+  //     installations fraîches). Numérotation séquentielle par artiste.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS annexes (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      artiste_id  INTEGER NOT NULL REFERENCES artistes(id) ON DELETE CASCADE,
+      type        TEXT NOT NULL,
+      numero      TEXT NOT NULL,
+      seq         INTEGER NOT NULL,
+      date        TEXT NOT NULL,
+      oeuvre_ids  TEXT,
+      pdf_path    TEXT,
+      cree_le     TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_annexes_artiste ON annexes(artiste_id);
+  `);
+
   // 2. Backfill : artistes.numero_taxes (TPS unique) → artistes.numeros_taxes (liste JSON)
   const colsArtistes = db.prepare(`PRAGMA table_info(artistes)`).all().map((c) => c.name);
   if (colsArtistes.includes('numeros_taxes') && colsArtistes.includes('numero_taxes')) {

@@ -646,7 +646,36 @@ function supprimerCertificat(id) {
   return { supprime: info.changes > 0 };
 }
 
+// ===== Annexes A (dépôt / retrait d'œuvres) =====
+
+// Réserve le prochain numéro d'annexe pour un artiste (séquence par artiste,
+// partagée dépôt/retrait) et enregistre la ligne. Numéro : A-{préfixe}-{NNN}.
+function enregistrerAnnexe({ artisteId, type, oeuvreIds }) {
+  const db = openDatabase();
+  const art = obtenirArtiste(artisteId);
+  if (!art) throw new Error('Artiste introuvable.');
+  const t = type === 'retrait' ? 'retrait' : 'depot';
+  const row = db.prepare('SELECT MAX(seq) AS m FROM annexes WHERE artiste_id = ?').get(artisteId);
+  const seq = ((row && row.m) || 0) + 1;
+  const prefixe = (art.prefixe_inventaire || '').toString().trim() || String(artisteId);
+  const numero = `A-${prefixe}-${String(seq).padStart(3, '0')}`;
+  const date = new Date().toISOString().slice(0, 10);
+  const ids = Array.isArray(oeuvreIds) && oeuvreIds.length ? JSON.stringify(oeuvreIds) : null;
+  const info = db.prepare(`
+    INSERT INTO annexes (artiste_id, type, numero, seq, date, oeuvre_ids)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(artisteId, t, numero, seq, date, ids);
+  return { id: Number(info.lastInsertRowid), numero, seq, date, type: t };
+}
+
+function majAnnexePdfPath(id, pdfPath) {
+  const db = openDatabase();
+  db.prepare('UPDATE annexes SET pdf_path = ? WHERE id = ?').run(pdfPath, id);
+  return { ok: true };
+}
+
 module.exports = {
+  enregistrerAnnexe, majAnnexePdfPath,
   modifierArtiste, creerArtiste, supprimerArtiste,
   modifierOeuvre, creerOeuvre, supprimerOeuvre, majPreparationOeuvre,
   modifierClient, creerClient, supprimerClient,

@@ -8,6 +8,7 @@ import {
   badgeArchive, boutonArchive, basculerArchive, nettoyerErreur,
 } from '../commun.js';
 import { parserCotes, TAILLES_COTES, formaterMontant } from '../calcul-prix.js';
+import { ouvrirAnnexeModale } from '../annexe.js';
 import { recadrerCarre } from '../recadrage.js';
 import { visionner } from '../visionneuse.js';
 import { confirmer } from '../dialogue.js';
@@ -183,6 +184,7 @@ export async function rendreArtisteFiche(contenu, params) {
         <div class="zone-identite-actions">
           <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
           ${boutonArchive({ archive: a.archive })}
+          <button class="btn-action btn-secondaire" id="btn-annexe">Annexe A…</button>
           <button class="btn-action btn-secondaire" id="btn-catalogue-pdf">Catalogue PDF</button>
           <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
         </div>
@@ -445,6 +447,24 @@ export async function rendreArtisteFiche(contenu, params) {
           btnCatalogue.disabled = false;
           btnCatalogue.textContent = libelle;
         }
+      });
+    }
+
+    const btnAnnexe = contenu.querySelector('#btn-annexe');
+    if (btnAnnexe) {
+      btnAnnexe.addEventListener('click', async () => {
+        let oeuvres = [];
+        try {
+          oeuvres = await window.api.oeuvresDetailArtiste(a.id);
+        } catch (err) {
+          await confirmer({ type: 'error', title: 'Erreur', message: nettoyerErreur(err), buttons: ['OK'] });
+          return;
+        }
+        if (!oeuvres.length) {
+          await confirmer({ type: 'info', title: 'Aucune œuvre', message: "Cet artiste n'a aucune œuvre.", buttons: ['OK'] });
+          return;
+        }
+        await ouvrirAnnexeModale({ artiste: a, oeuvres, type: 'depot' });
       });
     }
 

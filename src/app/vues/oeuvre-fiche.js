@@ -10,6 +10,7 @@ import { calculerPrixSuggere } from '../calcul-prix.js';
 import { visionner } from '../visionneuse.js';
 import { confirmer, alerter } from '../dialogue.js';
 import { ouvrirCreationCertificat } from './certificat-creation.js';
+import { proposerAnnexeApres } from '../annexe.js';
 
 const TYPES_OEUVRE = ['Peinture', 'Sculpture', 'Reproduction', 'Photographie', 'Dessin', 'Estampe', 'Mixte'];
 const ORIENTATIONS = ['Horizontale', 'Verticale', 'Carrée'];
@@ -679,6 +680,7 @@ export async function rendreOeuvreFiche(contenu, params) {
           o = await window.api.oeuvreRetrait(o.id, { retire: true, date, motif });
           await rechargerBundle();
           dessiner();
+          await proposerAnnexeApres({ type: 'retrait', artisteId: o.artiste_id, oeuvreIds: [o.id] });
         } catch (err) {
           await alerter({ type: 'error', title: 'Échec du retrait', message: nettoyerErreur(err) });
         }
@@ -806,6 +808,7 @@ export async function rendreOeuvreFiche(contenu, params) {
     const enchainement = !!params.enchainement;
     const enchainementCompte = Number(params.enchainement_compte) || 0;
     const enchainementNom = params.enchainement_artiste_nom || '';
+    const enchainementIds = Array.isArray(params.enchainement_ids) ? params.enchainement_ids : [];
     const titrePage = nouveau
       ? (enchainement
           ? `Ajouter une œuvre pour « ${ech(enchainementNom)} »`
@@ -1521,16 +1524,24 @@ export async function rendreOeuvreFiche(contenu, params) {
             enchainement: true,
             enchainement_compte: enchainementCompte + 1,
             enchainement_artiste_nom: enchainementNom,
+            enchainement_ids: [...enchainementIds, o.id],
           });
           return;
         }
         if (terminerEnchainement) {
           leverGardien();
+          const idsDepot = [...enchainementIds, o.id];
+          const artisteIdDepot = (data.artiste_id ? Number(data.artiste_id) : null) || o.artiste_id || params.artiste_id;
+          await proposerAnnexeApres({ type: 'depot', artisteId: artisteIdDepot, oeuvreIds: idsDepot });
           remplacerCourant('artiste-fiche', { id: params.artiste_id });
           return;
         }
         await rechargerBundle();
         sortirEdition();
+        if (nouveau && !enchainement) {
+          const artisteIdDepot = (data.artiste_id ? Number(data.artiste_id) : null) || o.artiste_id;
+          await proposerAnnexeApres({ type: 'depot', artisteId: artisteIdDepot, oeuvreIds: [o.id] });
+        }
       } catch (err) {
         await confirmer({
           type: 'error',

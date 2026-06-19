@@ -4,7 +4,7 @@ const path = require('node:path');
 const { openDatabase } = require('./db/database');
 const { getDocumentsDirAnnee, getPhotosDir } = require('./db/paths');
 const { obtenirCertificat, obtenirVente, obtenirArtiste, oeuvresPourCatalogue } = require('./db/requetes');
-const { obtenirOuReserverNumeroFactureArtisteVente } = require('./db/mutations');
+const { obtenirOuReserverNumeroFactureArtisteVente, enregistrerAnnexe, majAnnexePdfPath } = require('./db/mutations');
 const { obtenirConfig } = require('./config');
 
 // ===== Helpers =====
@@ -223,7 +223,7 @@ async function genererCertificatPdf(certificatId) {
   const cfg = obtenirConfig();
   const donnees = preparerDonneesCertificat(cert, cfg);
   const annee = anneeDe(cert.date_delivrance);
-  const dossier = getDocumentsDirAnnee(annee);
+  const dossier = path.join(getDocumentsDirAnnee(annee), 'Certificats');
   const slugTitre = slug(cert.oeuvre_titre);
   const nomFichier = `Certificat_${slug(cert.numero_delivrance, 30)}${slugTitre ? '_' + slugTitre : ''}.pdf`;
   const sortie = path.join(dossier, nomFichier);
@@ -250,7 +250,7 @@ async function genererFactureArtistePdf(venteId) {
 
   const donnees = preparerDonneesFactureArtiste(vente, artiste, cfg, numeroFA);
   const annee = anneeDe(vente.date_vente);
-  const dossier = getDocumentsDirAnnee(annee);
+  const dossier = path.join(getDocumentsDirAnnee(annee), 'Factures artiste');
   const slugArt = slug([artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom);
   const nomFichier = `FactureArtiste_${slug(numeroFA, 30)}${slugArt ? '_' + slugArt : ''}.pdf`;
   const sortie = path.join(dossier, nomFichier);
@@ -303,7 +303,7 @@ async function genererRapportPdf(dateISO) {
   const rap = rapportJournalier(dateISO);
   const cfg = obtenirConfig();
   const donnees = preparerDonneesRapport(rap, cfg, dateISO);
-  const dossier = getDocumentsDirAnnee(anneeDe(dateISO));
+  const dossier = path.join(getDocumentsDirAnnee(anneeDe(dateISO)), 'Rapports');
   // Horodatage dans le nom : évite le verrou EBUSY si un rapport précédent du
   // même jour est encore ouvert dans le visionneur, et garde l'historique.
   const n = new Date();
@@ -357,7 +357,7 @@ async function genererCataloguePdf(artisteId) {
   const oeuvres = oeuvresPourCatalogue(artisteId);
   const donnees = preparerDonneesCatalogue(artiste, oeuvres);
 
-  const dossier = getDocumentsDirAnnee(new Date().getFullYear());
+  const dossier = path.join(getDocumentsDirAnnee(new Date().getFullYear()), 'Catalogues');
   const slugArt = slug([artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom);
   const n = new Date();
   const p = (x) => String(x).padStart(2, '0');
@@ -368,4 +368,44 @@ async function genererCataloguePdf(artisteId) {
   return { pdf_path: sortie, nb_oeuvres: oeuvres.length };
 }
 
-module.exports = { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf };
+// ===== Orchestrateur : Annexe A (dépôt / retrait) =====
+
+// Les lignes d'œuvres (codes + prix par cotes) sont préparées côté renderer et
+// passées telles quelles ; le main numérote, enregistre et rend le PDF.
+async function genererAnnexePdf({ type, artiste_id, artisteId, oeuvres = [], oeuvreIds = null }) {
+  artisteId = artiste_id != null ? artiste_id : artisteId;
+  const artiste = obtenirArtiste(artisteId);
+  if (!artiste) throw new Error('Artiste introuvable.');
+  const cfg = obtenirConfig();
+  const t = type === 'retrait' ? 'retrait' : 'depot';
+
+  const ids = Array.isArray(oeuvreIds) && oeuvreIds.length
+    ? oeuvreIds
+    : oeuvres.map((o) => o.id).filter(Boolean);
+  const enr = enregistrerAnnexe({ artisteId, type: t, oeuvreIds: ids });
+
+  const nom = [artiste.prenom, artiste.nom].filter((x) => x && String(x).trim()).join(' ') || artiste.nom || '';
+  const donnees = {
+    type: t,
+    numero: enr.numero,
+    date: dateCourteRap(enr.date),
+    identifiant: (artiste.prefixe_inventaire || '').toString().trim() || String(artisteId),
+    artiste: { nom, telephone: artiste.telephone || '', courriel: artiste.courriel || '' },
+    signataire: (cfg.documents && cfg.documents.signataire_certificat) || 'Joanne Boucher',
+    galerie: donneesGalerie(cfg),
+    oeuvres,
+    total: oeuvres.length,
+  };
+
+  const gabarit = 'gabarit-annexe.html';
+  const dossier = path.join(getDocumentsDirAnnee(new Date().getFullYear()), 'Annexes');
+  const slugArt = slug(nom);
+  const nomFichier = `Annexe_${t === 'retrait' ? 'Retrait' : 'Depot'}_${slug(enr.numero, 30)}${slugArt ? '_' + slugArt : ''}.pdf`;
+  const sortie = path.join(dossier, nomFichier);
+
+  await genererPdf({ gabaritNom: gabarit, donnees, sortie, paysage: true });
+  majAnnexePdfPath(enr.id, sortie);
+  return { pdf_path: sortie, numero: enr.numero, type: t };
+}
+
+module.exports = { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf };
