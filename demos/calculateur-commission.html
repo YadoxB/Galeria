@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo calculateur de commission (net versé à l'artiste)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <link rel="stylesheet" href="../src/styles.css">
+  <style>
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+    .demo-bar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px 20px; background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    main { padding: 24px 32px 60px; max-width: 720px; }
+    p.desc { color: var(--slate); font-size: 14px; margin: 0 0 20px; }
+
+    /* Bloc rabais repliable (même esprit que le formulaire de vente) */
+    .rabais-toggle { background: none; border: 0; color: #8a6d1f; font: inherit; font-size: 13px; cursor: pointer; padding: 4px 0; text-decoration: underline; }
+    .rabais-bloc { margin-top: 8px; }
+    .rabais-bloc[hidden] { display: none; }
+    #cc-cote-champ[hidden], #cc-frais-champ[hidden] { display: none; }
+
+    /* Cases taxes */
+    .taxes-ligne { display: flex; gap: 22px; align-items: center; margin-top: 4px; }
+    .taxes-ligne label { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; color: var(--ink); cursor: pointer; }
+    .taxes-ligne input { width: 17px; height: 17px; accent-color: var(--warm-gold); }
+
+    /* Résultat : tuile vedette « versement à l'artiste » */
+    .resultat { margin-top: 22px; }
+    .tuile-versement { background: var(--deep-navy); color: var(--soft-ivory); border-radius: 16px; padding: 20px 22px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+    .tuile-versement .lib { font-size: 14px; color: rgba(255,255,255,.72); }
+    .tuile-versement .val { font-family: var(--font-titre); font-size: 34px; color: var(--warm-gold); font-weight: 600; }
+    .tuile-versement .val small { font-size: 14px; color: rgba(255,255,255,.6); font-family: var(--font-ui); display: block; text-align: right; font-weight: 400; margin-top: 2px; }
+
+    /* Détail façon facture */
+    .detail { margin-top: 16px; border: 1px solid var(--mist); border-radius: 12px; overflow: hidden; }
+    .detail .ligne { display: flex; justify-content: space-between; gap: 16px; padding: 9px 16px; font-size: 14px; }
+    .detail .ligne + .ligne { border-top: 1px solid var(--mist); }
+    .detail .ligne .lib { color: var(--slate); }
+    .detail .ligne.muted { color: var(--stone); }
+    .detail .ligne.muted .montant { color: #b3502e; }
+    .detail .ligne.sous .lib, .detail .ligne.sous .montant { font-weight: 600; color: var(--ink); }
+    .detail .ligne.sous { background: var(--soft-ivory); }
+    .detail .ligne.total { background: var(--cloud); }
+    .detail .ligne.total .lib, .detail .ligne.total .montant { font-weight: 700; color: var(--ink); font-size: 15px; }
+    .detail .montant { font-variant-numeric: tabular-nums; }
+
+    .note-galerie { margin-top: 12px; font-size: 13px; color: var(--slate); }
+    .note-galerie strong { color: var(--ink); }
+    .vide { color: var(--stone); font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Calculateur de commission (net versé à l'artiste)</div>
+    <div class="note" style="font-size:12px;color:rgba(255,255,255,.6)">CSS réel. Données fictives.</div>
+  </div>
+
+  <main>
+    <p class="desc">Outil de projection : on choisit le <b>type d'œuvre</b> (qui fixe la cote — <b>Peinture 50 %</b>, <b>Sculpture 33 %</b>, <b>Reproduction 50 % après frais</b>, ou <b>Autre</b> avec un % libre), on entre le <b>prix de vente</b>, et on coche les taxes que l'artiste perçoit. Galeria affiche le <b>montant total versé à l'artiste</b>. <b>Mêmes formules que la facture artiste.</b></p>
+
+    <div class="vue-fiche vue-fiche-bento" style="padding:0;">
+      <div class="grille-bento" style="display:block;">
+        <div class="carte" style="max-width:660px;">
+          <h3>Calculateur de commission</h3>
+          <p class="aide-champ">Projette ce que la galerie versera à l'artiste pour une vente donnée, taxes comprises.</p>
+
+          <div class="grille-form">
+            <div class="form-champ">
+              <label for="cc-type">Type d'œuvre</label>
+              <select id="cc-type">
+                <option value="peinture">Peinture (50 %)</option>
+                <option value="sculpture">Sculpture (33 %)</option>
+                <option value="reproduction">Reproduction (50 % après frais)</option>
+                <option value="autre">Autre…</option>
+              </select>
+            </div>
+            <div class="form-champ" id="cc-cote-champ" hidden>
+              <label for="cc-cote">Cote de la galerie (%)</label>
+              <input type="number" id="cc-cote" min="0" max="100" step="1" value="50">
+            </div>
+          </div>
+
+          <div class="form-champ">
+            <label for="cc-prix">Prix de vente ($)</label>
+            <input type="number" id="cc-prix" min="0" step="1" placeholder="0" value="3100">
+          </div>
+
+          <div class="form-champ" id="cc-frais-champ" hidden>
+            <label for="cc-frais">Frais de production ($) <span class="aide-champ" style="font-weight:400;">— récupérés par la galerie avant le partage</span></label>
+            <input type="number" id="cc-frais" min="0" step="1" placeholder="0" value="0">
+          </div>
+
+          <div class="form-champ">
+            <label>Taxes perçues par l'artiste</label>
+            <div class="taxes-ligne">
+              <label><input type="checkbox" id="cc-tps" checked> TPS (5 %)</label>
+              <label><input type="checkbox" id="cc-tvq" checked> TVQ (9,975 %)</label>
+            </div>
+          </div>
+
+          <button type="button" class="rabais-toggle" id="cc-rabais-toggle">+ Rabais (optionnels)</button>
+          <div class="rabais-bloc" id="cc-rabais-bloc" hidden>
+            <div class="grille-form">
+              <div class="form-champ">
+                <label for="cc-rab-art">Rabais artiste ($)</label>
+                <input type="number" id="cc-rab-art" min="0" step="1" placeholder="0" value="0">
+              </div>
+              <div class="form-champ">
+                <label for="cc-rab-gal">Rabais galerie ($)</label>
+                <input type="number" id="cc-rab-gal" min="0" step="1" placeholder="0" value="0">
+              </div>
+            </div>
+          </div>
+
+          <div class="resultat" id="cc-resultat"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const TAUX_TPS = 5.0;     // cfg.documents.tps_taux
+    const TAUX_TVQ = 9.975;   // cfg.documents.tvq_taux
+    // Cote par défaut selon le type d'œuvre (Chantier 2 — commission par type).
+    const COTE_DEFAUT = { peinture: 50, sculpture: 33, reproduction: 50 };
+
+    // ====== Helpers de formatage (alignés sur le gabarit facture artiste) ======
+    function money(v) {
+      const s = (Math.round(v * 100) / 100).toFixed(2).split('.');
+      return s[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ',' + s[1] + ' $';
+    }
+    const moneyNeg = (v) => '−' + money(v);
+    const rate = (v) => ('' + v).replace('.', ',');
+    const n = (x) => { const v = parseFloat(x); return isNaN(v) ? 0 : v; };
+
+    const $ = (id) => document.getElementById(id);
+    const selType = $('cc-type');
+    const champCote = $('cc-cote-champ');
+    const inCote = $('cc-cote');
+    const inPrix = $('cc-prix');
+    const champFrais = $('cc-frais-champ');
+    const inFrais = $('cc-frais');
+    const cbTps = $('cc-tps');
+    const cbTvq = $('cc-tvq');
+    const inRabArt = $('cc-rab-art');
+    const inRabGal = $('cc-rab-gal');
+    const blocRabais = $('cc-rabais-bloc');
+    const zoneRes = $('cc-resultat');
+
+    // Affiche/masque les champs selon le type, et renvoie la cote effective.
+    function coteEffective() {
+      const type = selType.value;
+      champCote.hidden = type !== 'autre';
+      champFrais.hidden = type !== 'reproduction';
+      if (type === 'autre') return n(inCote.value);
+      return COTE_DEFAUT[type] ?? 50;
+    }
+
+    $('cc-rabais-toggle').addEventListener('click', (e) => {
+      const ouvert = !blocRabais.hidden;
+      blocRabais.hidden = ouvert;
+      e.target.textContent = ouvert ? '+ Rabais (optionnels)' : '− Rabais (optionnels)';
+      if (ouvert) { inRabArt.value = 0; inRabGal.value = 0; }
+      calculer();
+    });
+
+    function calculer() {
+      const cote = coteEffective();
+      const estRepro = selType.value === 'reproduction';
+      const prixReg = n(inPrix.value);
+      const rabArt = blocRabais.hidden ? 0 : n(inRabArt.value);
+      const rabGal = blocRabais.hidden ? 0 : n(inRabGal.value);
+      const frais = estRepro ? n(inFrais.value) : 0;
+
+      if (prixReg <= 0) {
+        zoneRes.innerHTML = `<p class="vide">Entre un prix de vente pour calculer.</p>`;
+        return;
+      }
+
+      // === Formules (alignées sur la facture artiste) ===
+      // Reproduction : la galerie récupère ses frais d'abord, puis 50/50 sur le net.
+      const prixVente = prixReg - rabArt - rabGal;
+      const net = prixVente - frais;            // base de partage (= prixVente hors repro)
+      const commission = net * cote / 100;      // part de commission de la galerie
+      const part = net - commission;            // part de l'artiste (frais NON remboursés à l'artiste)
+      const galerieGarde = frais + commission;  // la galerie récupère frais + commission
+      const tpsOn = cbTps.checked;
+      const tvqOn = cbTvq.checked;
+      const mTps = tpsOn ? part * TAUX_TPS / 100 : 0;
+      const mTvq = tvqOn ? part * TAUX_TVQ / 100 : 0;
+      const total = part + mTps + mTvq;
+
+      const aRabais = rabArt > 0 || rabGal > 0;
+      const lignes = [];
+      lignes.push(`<div class="ligne"><span class="lib">Prix de vente</span><span class="montant">${money(prixReg)}</span></div>`);
+      if (rabArt > 0) lignes.push(`<div class="ligne muted"><span class="lib">Rabais artiste</span><span class="montant">${moneyNeg(rabArt)}</span></div>`);
+      if (rabGal > 0) lignes.push(`<div class="ligne muted"><span class="lib">Rabais galerie</span><span class="montant">${moneyNeg(rabGal)}</span></div>`);
+      if (aRabais) lignes.push(`<div class="ligne sous"><span class="lib">Sous-total</span><span class="montant">${money(prixVente)}</span></div>`);
+      if (estRepro && frais > 0) {
+        lignes.push(`<div class="ligne muted"><span class="lib">Frais de production (à la galerie)</span><span class="montant">${moneyNeg(frais)}</span></div>`);
+        lignes.push(`<div class="ligne sous"><span class="lib">Net à partager</span><span class="montant">${money(net)}</span></div>`);
+      }
+      lignes.push(`<div class="ligne muted"><span class="lib">Commission galerie (${rate(cote)} %)</span><span class="montant">${moneyNeg(commission)}</span></div>`);
+      lignes.push(`<div class="ligne sous"><span class="lib">Part de l'artiste</span><span class="montant">${money(part)}</span></div>`);
+      if (tpsOn) lignes.push(`<div class="ligne"><span class="lib">TPS (${rate(TAUX_TPS)} %)</span><span class="montant">${money(mTps)}</span></div>`);
+      if (tvqOn) lignes.push(`<div class="ligne"><span class="lib">TVQ (${rate(TAUX_TVQ)} %)</span><span class="montant">${money(mTvq)}</span></div>`);
+      lignes.push(`<div class="ligne total"><span class="lib">Montant versé à l'artiste</span><span class="montant">${money(total)}</span></div>`);
+
+      const sousTaxe = (mTps + mTvq) > 0 ? `<small>dont ${money(mTps + mTvq)} de taxes</small>` : '';
+      const noteGalerie = (estRepro && frais > 0)
+        ? `La galerie récupère <strong>${money(frais)}</strong> de frais + <strong>${money(commission)}</strong> de commission = <strong>${money(galerieGarde)}</strong>.`
+        : `La galerie conserve <strong>${money(commission)}</strong> de commission (${rate(cote)} % du prix de vente).`;
+
+      zoneRes.innerHTML = `
+        <div class="tuile-versement">
+          <span class="lib">Montant versé à l'artiste</span>
+          <span class="val">${money(total)}${sousTaxe}</span>
+        </div>
+        <div class="detail">${lignes.join('')}</div>
+        <p class="note-galerie">${noteGalerie}</p>
+      `;
+    }
+
+    selType.addEventListener('change', calculer);
+    [inCote, inPrix, inFrais, inRabArt, inRabGal].forEach((el) => el.addEventListener('input', calculer));
+    [cbTps, cbTvq].forEach((el) => el.addEventListener('change', calculer));
+
+    calculer();
+  </script>
+</body>
+</html>

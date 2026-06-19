@@ -3959,13 +3959,42 @@ details.bloc.pliable > .bloc-corps {
 
 /* ====== Page Outils (bento) ====== */
 
-.zone-outil-calc  { grid-column: span 8; padding: var(--s3) var(--s4); }
-.zone-outil-cotes { grid-column: span 4; padding: var(--s3) var(--s4); }
+.zone-outil-calc        { grid-column: span 8; padding: var(--s3) var(--s4); }
+.zone-outil-cotes       { grid-column: span 4; padding: var(--s3) var(--s4); }
+.zone-outil-commission     { grid-column: span 8; padding: var(--s3) var(--s4); }
+.zone-outil-commission-ref { grid-column: span 4; padding: var(--s3) var(--s4); }
 
 @media (max-width: 1200px) {
   .zone-outil-calc,
-  .zone-outil-cotes { grid-column: span 12; }
+  .zone-outil-cotes,
+  .zone-outil-commission,
+  .zone-outil-commission-ref { grid-column: span 12; }
 }
+
+/* Calculateur de commission — cases taxes, tuile de versement, détail */
+.comm-taxes { display: flex; gap: var(--s4); align-items: center; margin-top: 4px; }
+.comm-taxes label { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; color: var(--ink); cursor: pointer; }
+.comm-taxes input { width: 17px; height: 17px; accent-color: var(--warm-gold); }
+
+.comm-tuile { background: var(--deep-navy); color: var(--soft-ivory); border-radius: var(--r-carte); padding: var(--s3) var(--s4); display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
+.comm-tuile-lib { font-size: 14px; color: rgba(255, 255, 255, .72); }
+.comm-tuile-val { font-family: var(--font-titre); font-size: 32px; color: var(--warm-gold); font-weight: 600; text-align: right; }
+.comm-tuile-val small { display: block; font-family: var(--font-ui); font-size: 13px; font-weight: 400; color: rgba(255, 255, 255, .6); margin-top: 2px; }
+
+.comm-detail { margin-top: var(--s3); border: 1px solid var(--mist); border-radius: var(--r-btn); overflow: hidden; }
+.comm-detail .ligne { display: flex; justify-content: space-between; gap: var(--s3); padding: 9px var(--s3); font-size: 14px; }
+.comm-detail .ligne + .ligne { border-top: 1px solid var(--mist); }
+.comm-detail .ligne .lib { color: var(--slate); }
+.comm-detail .ligne .montant { font-variant-numeric: tabular-nums; }
+.comm-detail .ligne.muted { color: var(--stone); }
+.comm-detail .ligne.muted .montant { color: var(--terracotta); }
+.comm-detail .ligne.sous { background: var(--soft-ivory); }
+.comm-detail .ligne.sous .lib, .comm-detail .ligne.sous .montant { font-weight: 600; color: var(--ink); }
+.comm-detail .ligne.total { background: var(--cloud); }
+.comm-detail .ligne.total .lib, .comm-detail .ligne.total .montant { font-weight: 700; color: var(--ink); font-size: 15px; }
+
+.comm-note { margin-top: var(--s2); font-size: 13px; color: var(--slate); }
+.comm-note strong { color: var(--ink); }
 
 /* ====== Formulaires d'édition ====== */
 

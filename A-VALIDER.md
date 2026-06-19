@@ -37,9 +37,9 @@
 
 ## Modèle économique
 
-- **Commission galerie selon type d'œuvre** : 50 % toiles, 33 % sculptures, 50 % reproductions après déduction des coûts de production. À confirmer :
-  - La liste complète des « types d'œuvre » et le pourcentage applicable à chacun.
-  - Pour les reproductions : où sont saisis les coûts de production ? Sur la fiche œuvre, lors de la vente ?
+- ~~**Commission galerie selon type d'œuvre**~~ ✓ **Tranché (Dave, 2026-06-19)** : **Peinture 50 %**, **Sculpture 33 %**, **Reproduction 50 % après déduction des frais de production**. Pour la reproduction, **la galerie récupère ses frais de production en premier**, puis 50/50 sur le net : *Galerie = frais + 50 % du net · Artiste = 50 % du net* (net = prix de vente − frais). Le **type d'œuvre est pré-rempli depuis `artiste.type`** (peintre→Peinture, sculpteur→Sculpture), modifiable. Implémenté dans le **calculateur de commission** (Lot 1, `demos/calculateur-commission.html`). **Reste à confirmer** :
+  - Y a-t-il d'autres types d'œuvre que Peinture / Sculpture / Reproduction (avec un % différent) ?
+  - Pour les reproductions : où saisir les frais de production de façon persistante (fiche œuvre ? lors de la vente ?) pour les rapatrier dans la facture artiste. *(Dans le calculateur, ils sont tapés à la main pour l'instant.)*
 
 - **Modes de paiement complexes** : payer maintenant / payer plus tard / paiements échelonnés mensuels sur 12 mois. À confirmer :
   - L'app doit-elle traquer les versements mensuels (rappels, statut de chaque versement) ou juste les noter ?
