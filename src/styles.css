@@ -2363,7 +2363,9 @@ details.bloc.pliable > .bloc-corps {
 /* Base carte pour toutes les tuiles du bento : fond porcelain, bordure
    mist, ombre légère. Les composants enfants ajoutent leur propre
    padding/grille de colonne. */
-.grille-bento > .carte {
+.grille-bento > .carte,
+.contenu-artiste > .carte,
+.gestion-artiste > .carte {
   background: var(--porcelain);
   border: 1px solid var(--mist);
   border-radius: var(--r-carte);
@@ -2458,6 +2460,80 @@ details.bloc.pliable > .bloc-corps {
   letter-spacing: 0.05em;
   color: var(--stone);
   margin-right: 2px;
+}
+
+/* ===== Fiche artiste — hiérarchie en 3 niveaux ===== */
+/* Niveau 1 : en-tête (photo + identité + stats + actions) */
+.hero-artiste {
+  display: flex;
+  gap: var(--s4);
+  align-items: stretch;
+  background: #fff;
+  border: 1px solid var(--mist);
+  border-radius: 18px;
+  padding: var(--s3) var(--s4);
+  margin-bottom: var(--s3);
+}
+.hero-artiste-photo { flex: 0 0 auto; width: 150px; }
+.hero-artiste-photo .zone-photo {
+  width: 150px; height: 150px; margin: 0;
+  border-radius: 14px; overflow: hidden;
+  background: var(--cloud);
+  display: flex; align-items: center; justify-content: center;
+}
+.hero-artiste-photo .zone-photo img { width: 100%; height: 100%; object-fit: cover; }
+.hero-artiste-photo .zone-photo-initiales { font-family: var(--font-titre); font-size: 46px; color: var(--warm-gold); }
+.hero-artiste-corps { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.hero-artiste-nom { margin: 0; font-family: var(--font-titre); font-weight: 500; font-size: 38px; line-height: 1.05; color: var(--ink); word-break: break-word; }
+.hero-artiste-meta { margin: 4px 0 0; color: var(--slate); font-size: 14px; }
+.hero-artiste-filet { width: 60px; height: 3px; background: var(--warm-gold); border-radius: 2px; margin: 12px 0 16px; }
+.hero-artiste-stats { display: flex; gap: 28px; flex-wrap: wrap; margin-top: auto; }
+.hero-artiste-stats .hero-stat { display: flex; flex-direction: column; }
+.hero-artiste-stats .v { font-family: var(--font-titre); font-size: 24px; color: var(--gallery-navy); }
+.hero-artiste-stats .v.accent { color: var(--warm-gold); }
+.hero-artiste-stats .l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--stone); }
+.hero-stat-valeur { cursor: pointer; user-select: none; }
+.hero-stat-valeur .v { color: var(--stone); letter-spacing: 1px; }
+.hero-stat-valeur.visible .v { color: var(--gallery-navy); letter-spacing: normal; }
+.hero-stat-valeur .oeil { color: var(--warm-gold); text-transform: none; letter-spacing: 0; font-size: 10px; }
+.hero-artiste-actions { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; justify-content: space-between; flex: 0 0 auto; }
+.hero-artiste-actions .grp-actions,
+.hero-artiste-actions .grp-docs { display: flex; gap: var(--s2); flex-wrap: wrap; justify-content: flex-end; }
+.hero-artiste-actions .grp-docs-label { width: 100%; text-align: right; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--stone); margin-bottom: -2px; }
+
+/* Niveau 2 : contenu (présentation + aperçu du catalogue) */
+.contenu-artiste { display: grid; grid-template-columns: 1.25fr 1fr; gap: var(--s3); margin-bottom: var(--s4); align-items: start; }
+.contenu-artiste > .carte { margin: 0; grid-column: auto; }
+/* Aperçu du catalogue : grille multi-rangées (au lieu d'une bande sur 1 ligne)
+   pour donner de la hauteur à la colonne de droite. */
+.contenu-artiste .vignettes-bento { grid-template-columns: repeat(4, 1fr); }
+/* Présentation : carte aux dimensions stables → texte défilant + bouton modale. */
+.contenu-artiste .carte-presentation { max-height: 440px; }
+.contenu-artiste .carte-presentation .onglet-corps { max-height: 320px; overflow-y: auto; padding-right: 6px; }
+.btn-presentation-agrandir { margin-left: auto; align-self: center; border: 0; background: none; cursor: pointer; color: var(--slate); font-size: 16px; line-height: 1; padding: 4px 8px; border-radius: 6px; }
+.btn-presentation-agrandir:hover { background: var(--cloud); color: var(--gallery-navy); }
+/* Modale « ouvrir en grand » de la présentation */
+.modale-presentation-corps { overflow-y: auto; padding: 2px 2px 4px; }
+.modale-presentation-titre { font-family: var(--font-titre); font-size: 19px; font-weight: 500; color: var(--gallery-navy); margin: 16px 0 6px; }
+.modale-presentation-titre:first-child { margin-top: 0; }
+.modale-presentation-texte { font-size: 14px; line-height: 1.7; color: #2a261f; }
+
+/* Niveau 3 : gestion (discret) */
+.gestion-artiste-titre { margin: 0 2px 10px; font-family: var(--font-ui); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em; color: var(--stone); }
+.gestion-artiste { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s2); align-items: start; }
+.gestion-artiste > .carte { background: var(--cloud); padding: 14px 16px; margin: 0; grid-column: auto; box-shadow: none; }
+.gestion-artiste > .carte h3 { font-family: var(--font-ui); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate); margin: 0 0 8px; }
+.gestion-artiste > .carte h4 { font-size: 11px; color: var(--slate); margin: 0 0 4px; }
+/* Encarts internes (Cotes / Fiscalité) à plat dans la gestion : pas de boîte. */
+.gestion-artiste .sous-section { background: transparent; border: 0; border-radius: 0; padding: 0; margin: 0 0 10px; }
+.gestion-artiste .sous-section:last-child { margin-bottom: 0; }
+.gestion-artiste .conditions-corps { display: block; }
+
+@media (max-width: 1100px) {
+  .contenu-artiste { grid-template-columns: 1fr; }
+  .gestion-artiste { grid-template-columns: repeat(2, 1fr); }
+  .hero-artiste { flex-wrap: wrap; }
+  .hero-artiste-actions { align-items: flex-start; }
 }
 
 /* --- Stats (2×2 mini-cartes à droite) --- */
@@ -3728,7 +3804,9 @@ details.bloc.pliable > .bloc-corps {
    toutes les cartes de la grille bento (fiches + Réglages). */
 
 .grille-bento > .carte > h3,
-.grille-bento > .carte > .entete-bloc-bento > h3 {
+.grille-bento > .carte > .entete-bloc-bento > h3,
+.contenu-artiste > .carte > h3,
+.contenu-artiste > .carte > .entete-bloc-bento > h3 {
   font-family: var(--font-titre);
   font-size: 24px;
   color: var(--gallery-navy);

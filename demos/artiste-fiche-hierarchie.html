@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo hiérarchie fiche artiste</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <link rel="stylesheet" href="../src/styles.css">
+  <style>
+    html, body { margin:0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+    .demo-bar { position: sticky; top:0; z-index:10; display:flex; justify-content:space-between; align-items:center; gap:16px; padding:10px 20px; background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size:18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style:italic; }
+    main { padding: 22px 28px 60px; max-width:1320px; margin:0 auto; }
+
+    /* espacement entre les 3 niveaux */
+    .niveau { margin-bottom: 26px; }
+
+    /* ===== Niveau 1 — En-tête (hero) ===== */
+    .hero {
+      display:flex; gap:26px; align-items:stretch;
+      background:#fff; border:1px solid var(--mist); border-radius:18px;
+      padding:22px 26px; box-shadow:0 1px 2px rgba(0,0,0,.04);
+    }
+    .hero-photo { width:150px; height:150px; border-radius:14px; object-fit:cover; flex:0 0 auto;
+      background:radial-gradient(circle at 35% 30%, #f3ede0, #e2d6bd); display:flex; align-items:center; justify-content:center;
+      font-family: var(--font-titre); font-size:46px; color: var(--warm-gold); }
+    .hero-corps { flex:1; min-width:0; display:flex; flex-direction:column; }
+    .hero-nom { font-family: var(--font-titre); font-weight:500; font-size:40px; line-height:1.05; color: var(--ink); }
+    .hero-meta { color: var(--slate); font-size:14px; margin-top:4px; }
+    .hero-filet { width:60px; height:3px; background: var(--warm-gold); border-radius:2px; margin:12px 0 16px; }
+    .hero-stats { display:flex; gap:28px; flex-wrap:wrap; margin-top:auto; }
+    .hero-stat .v { font-family: var(--font-titre); font-size:24px; color: var(--gallery-navy); }
+    .hero-stat .v.navy { color: var(--warm-gold); }
+    .hero-stat .l { font-size:11px; text-transform:uppercase; letter-spacing:.05em; color: var(--stone); }
+    .hero-stat-valeur { cursor:pointer; user-select:none; }
+    .hero-stat-valeur .v { color: var(--stone); letter-spacing:1px; }
+    .hero-stat-valeur.visible .v { color: var(--gallery-navy); letter-spacing:normal; }
+    .hero-stat-valeur .oeil { color: var(--warm-gold); text-transform:none; letter-spacing:0; font-size:10px; }
+    .hero-actions { display:flex; flex-direction:column; gap:10px; align-items:flex-end; justify-content:space-between; }
+    .hero-actions .grp { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    .hero-actions .docs-label { font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color: var(--stone); width:100%; text-align:right; margin-bottom:-4px; }
+    .btn-demo { border:1px solid var(--mist); background: var(--porcelain); color: var(--ink); font-family:inherit; font-size:13px; border-radius:10px; padding:8px 14px; cursor:pointer; }
+    .btn-demo.principal { background: var(--warm-gold); color: var(--soft-ivory); border-color: var(--warm-gold); font-weight:600; }
+    .btn-demo.danger { color:#900001; border-color:#e3c4c4; background:#fff; }
+
+    /* ===== Niveau 2 — Contenu (présentation + catalogue) ===== */
+    .contenu { display:grid; grid-template-columns: 1.25fr 1fr; gap:18px; }
+    .carte-contenu { background:#fff; border:1px solid var(--mist); border-radius:16px; padding:20px 22px; }
+    .carte-contenu > h2 { font-family: var(--font-titre); font-size:23px; color: var(--gallery-navy); margin:0 0 12px; }
+    .onglets { display:flex; gap:6px; border-bottom:1px solid var(--mist); margin-bottom:12px; }
+    .onglets button { border:0; background:none; font-family:inherit; font-size:14px; color: var(--slate); padding:8px 12px; cursor:pointer; border-bottom:2px solid transparent; }
+    .onglets button.actif { color: var(--gallery-navy); border-bottom-color: var(--warm-gold); font-weight:600; }
+    .corps-presentation { font-size:13.5px; line-height:1.7; color:#2a261f; }
+    .mini-grille { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .mini-vignette { aspect-ratio:1; border-radius:8px; background: var(--cloud); border:1px solid var(--mist); display:flex; align-items:flex-end; padding:6px; font-size:10px; color: var(--stone); }
+
+    /* ===== Niveau 3 — Gestion (discret) ===== */
+    .gestion-titre { font-size:12px; text-transform:uppercase; letter-spacing:.09em; color: var(--stone); margin:0 2px 10px; font-weight:600; }
+    .gestion { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+    .carte-gestion { background: var(--cloud); border:1px solid var(--mist); border-radius:12px; padding:14px 16px; }
+    .carte-gestion > h3 { font-family: var(--font-ui); font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color: var(--slate); margin:0 0 8px; font-weight:700; }
+    .carte-gestion .ligne { font-size:12.5px; color: var(--ink); margin:2px 0; }
+    .carte-gestion .muet { color: var(--slate); }
+    .pastille { display:inline-block; font-size:10.5px; border-radius:999px; padding:1px 9px; background: var(--porcelain); border:1px solid var(--mist); color: var(--slate); }
+    .pastille.ok { background: var(--badge-disponible-fond, #e7f0e7); color:#2e7d32; border-color:#cfe3cf; }
+    table.cotes-mini { width:100%; border-collapse:collapse; font-size:11.5px; }
+    table.cotes-mini td { padding:2px 0; }
+    table.cotes-mini .p { text-align:right; color: var(--gallery-navy); font-weight:600; }
+
+    .note-demo { font-size:12px; color: rgba(255,255,255,.6); }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Hiérarchie de la fiche artiste (proposition)</div>
+    <div class="note-demo">3 niveaux : En-tête · Contenu · Gestion. Données fictives.</div>
+  </div>
+
+  <main>
+    <!-- NIVEAU 1 : EN-TÊTE -->
+    <div class="niveau">
+      <div class="hero">
+        <div class="hero-photo">AC</div>
+        <div class="hero-corps">
+          <div class="hero-nom">André Coppens</div>
+          <div class="hero-meta">Artiste peintre · Préfixe ANC · 32 œuvres au catalogue</div>
+          <div class="hero-filet"></div>
+          <div class="hero-stats">
+            <div class="hero-stat"><div class="v">32</div><div class="l">Au catalogue</div></div>
+            <div class="hero-stat"><div class="v navy">11</div><div class="l">Disponibles</div></div>
+            <div class="hero-stat"><div class="v">21</div><div class="l">Ventes</div></div>
+            <div class="hero-stat hero-stat-valeur" id="stat-valeur" title="Cliquer pour afficher / masquer">
+              <div class="v" id="valeur-dispo">••• •••&nbsp;$</div>
+              <div class="l">Valeur dispo <span class="oeil" id="oeil-valeur">afficher</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <div class="grp">
+            <button class="btn-demo danger">Supprimer</button>
+            <button class="btn-demo">Archiver</button>
+            <button class="btn-demo principal">Modifier</button>
+          </div>
+          <div class="grp">
+            <div class="docs-label">Documents</div>
+            <button class="btn-demo">Présentation PDF</button>
+            <button class="btn-demo">Catalogue PDF</button>
+            <button class="btn-demo">Annexe A…</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NIVEAU 2 : CONTENU -->
+    <div class="niveau contenu">
+      <div class="carte-contenu">
+        <h2>Présentation</h2>
+        <div class="onglets">
+          <button class="actif">Biographie</button>
+          <button>Démarche</button>
+          <button>Curriculum</button>
+        </div>
+        <div class="corps-presentation">
+          Né à Saint-Jean-sur-Richelieu, André Coppens découvre la peinture à l'adolescence, en autodidacte. Après des études en arts visuels, il développe un langage pictural où la lumière du fleuve et les ciels changeants de la vallée occupent une place centrale. Son travail figure dans plusieurs collections privées au Québec et en Europe.
+        </div>
+      </div>
+      <div class="carte-contenu">
+        <h2>Aperçu du catalogue</h2>
+        <div class="mini-grille">
+          <div class="mini-vignette">Chaleur…</div>
+          <div class="mini-vignette">Brume…</div>
+          <div class="mini-vignette">Village…</div>
+          <div class="mini-vignette">Toits…</div>
+          <div class="mini-vignette">Pêcheurs…</div>
+          <div class="mini-vignette">Lever…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NIVEAU 3 : GESTION -->
+    <div class="niveau">
+      <h2 class="gestion-titre">Informations de gestion</h2>
+      <div class="gestion">
+        <div class="carte-gestion">
+          <h3>Contact</h3>
+          <div class="ligne">andre.coppens@example.com</div>
+          <div class="ligne">514 555-0182</div>
+          <div class="ligne muet">Saint-Jean-sur-Richelieu, QC</div>
+        </div>
+        <div class="carte-gestion">
+          <h3>Conditions galerie</h3>
+          <table class="cotes-mini">
+            <tr><td>Acrylique · Moyen</td><td class="p">3,50 $/po²</td></tr>
+            <tr><td>Acrylique · Grand</td><td class="p">4,00 $/po²</td></tr>
+          </table>
+          <div class="ligne" style="margin-top:8px;"><span class="pastille ok">Perçoit les taxes</span></div>
+        </div>
+        <div class="carte-gestion">
+          <h3>Aide à la description IA</h3>
+          <div class="ligne">Consignes configurées</div>
+          <div class="ligne muet">GPT personnalisé lié</div>
+        </div>
+        <div class="carte-gestion">
+          <h3>Notes internes</h3>
+          <div class="ligne muet">Préfère être contacté par courriel. Prochaine livraison d'œuvres prévue à l'automne.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (function(){
+      const VALEUR = '18 400 $';
+      const MASQUE = '••• ••• $';
+      let visible = false;
+      const stat = document.getElementById('stat-valeur');
+      const val = document.getElementById('valeur-dispo');
+      const oeil = document.getElementById('oeil-valeur');
+      function montrer(v){
+        visible = v;
+        val.textContent = v ? VALEUR : MASQUE;
+        oeil.textContent = v ? 'masquer en quittant' : 'afficher';
+        stat.classList.toggle('visible', v);
+      }
+      // Clic = révèle ; le montant disparaît dès que la souris quitte la stat.
+      stat.addEventListener('click', function(){ montrer(true); });
+      stat.addEventListener('mouseleave', function(){ if (visible) montrer(false); });
+    })();
+  </script>
+</body>
+</html>

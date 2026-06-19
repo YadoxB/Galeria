@@ -89,6 +89,13 @@ identifiants.
   (Outils, Réglages) et bloc profil inchangés. Markup + CSS uniquement, aucune
   logique de navigation modifiée.
 - **Cartes de statistiques retirées** du haut de la liste des Œuvres.
+- **Fiche artiste réorganisée en 3 niveaux** : **en-tête** (photo + nom + stats
+  en ligne + actions de fiche / documents), **contenu** (Présentation + Aperçu
+  du catalogue), et un bloc **« Informations de gestion »** discret et grisé
+  (Contact, Conditions galerie, Aide IA, Notes). La **valeur disponible est
+  masquée** (révélée au clic, re-masquée quand la souris quitte). La carte
+  Présentation garde une hauteur stable (texte défilant) + un bouton **« ⤢ »**
+  pour l'ouvrir en grand (modale Bio + Démarche + Curriculum).
 
 ---
 

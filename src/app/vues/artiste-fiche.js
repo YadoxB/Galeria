@@ -170,51 +170,40 @@ export async function rendreArtisteFiche(contenu, params) {
            <span class="zone-photo-initiales">${ech(initiales(nomCompletA))}</span>
          </div>`;
 
-    // === Identité (titre + meta + actions) ===
-    const zoneIdentite = `
-      <div class="carte zone-identite">
-        <div class="zone-identite-titre">
-          <h1>${ech(nomCompletA)}</h1>
-          <p class="zone-identite-meta">
+    // === Niveau 1 : en-tête (photo + identité + stats + actions) ===
+    const heroArtiste = `
+      <div class="hero-artiste">
+        <div class="hero-artiste-photo">${photoHtml}</div>
+        <div class="hero-artiste-corps">
+          <h1 class="hero-artiste-nom">${ech(nomCompletA)}</h1>
+          <p class="hero-artiste-meta">
             ${a.type ? ech(a.type) : '<em>type non précisé</em>'}
             ${a.prefixe_inventaire ? ` &middot; Préfixe ${ech(a.prefixe_inventaire)}` : ''}
             &middot; ${pluriel(a.nb_oeuvres, 'œuvre')} au catalogue
           </p>
+          <div class="hero-artiste-filet"></div>
+          <div class="hero-artiste-stats">
+            <div class="hero-stat"><span class="v">${stats.catalogue}</span><span class="l">Au catalogue</span></div>
+            <div class="hero-stat"><span class="v accent">${stats.disponibles}</span><span class="l">Disponibles</span></div>
+            <div class="hero-stat"><span class="v">${stats.ventes}</span><span class="l">Ventes</span></div>
+            <div class="hero-stat hero-stat-valeur" id="stat-valeur-dispo" data-valeur="${ech(formaterMontant(stats.valeurDispo))}" title="Cliquer pour afficher">
+              <span class="v" id="valeur-dispo-val">••• ••• $</span>
+              <span class="l">Valeur dispo <span class="oeil" id="valeur-dispo-oeil">afficher</span></span>
+            </div>
+          </div>
         </div>
-        <div class="zone-identite-bas">
-          <div class="zone-identite-actions">
+        <div class="hero-artiste-actions">
+          <div class="grp-actions">
             <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
             ${boutonArchive({ archive: a.archive })}
             <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
           </div>
-          <div class="zone-identite-docs">
-            <span class="zone-docs-label">Documents</span>
+          <div class="grp-docs">
+            <span class="grp-docs-label">Documents</span>
             <button class="btn-action btn-secondaire" id="btn-presentation-pdf">Présentation PDF</button>
             <button class="btn-action btn-secondaire" id="btn-catalogue-pdf">Catalogue PDF</button>
             <button class="btn-action btn-secondaire" id="btn-annexe">Annexe A…</button>
           </div>
-        </div>
-      </div>
-    `;
-
-    // === Stats (4 mini-cartes, dont 1 navy pour Disponibles) ===
-    const zoneStats = `
-      <div class="zone-stats">
-        <div class="stat-bento">
-          <span class="stat-bento-label">Au catalogue</span>
-          <span class="stat-bento-val">${stats.catalogue}</span>
-        </div>
-        <div class="stat-bento stat-bento-navy">
-          <span class="stat-bento-label">Disponibles</span>
-          <span class="stat-bento-val">${stats.disponibles}</span>
-        </div>
-        <div class="stat-bento">
-          <span class="stat-bento-label">Ventes</span>
-          <span class="stat-bento-val">${stats.ventes}</span>
-        </div>
-        <div class="stat-bento">
-          <span class="stat-bento-label">Valeur dispo</span>
-          <span class="stat-bento-val stat-bento-val-money">${formaterMontant(stats.valeurDispo)}</span>
         </div>
       </div>
     `;
@@ -238,7 +227,10 @@ export async function rendreArtisteFiche(contenu, params) {
     }).join('');
     const zonePresentation = `
       <div class="carte carte-presentation">
-        <div class="onglets-bento">${tetes}</div>
+        <div class="onglets-bento">
+          ${tetes}
+          <button type="button" class="btn-presentation-agrandir" id="btn-presentation-agrandir" title="Ouvrir en grand">⤢</button>
+        </div>
         ${corpsOnglets}
       </div>
     `;
@@ -386,17 +378,18 @@ export async function rendreArtisteFiche(contenu, params) {
 
     // === Assemblage ===
     contenu.innerHTML = `
-      <div class="vue-fiche vue-fiche-bento">
+      <div class="vue-fiche vue-fiche-bento fiche-artiste-v2">
         ${navVoisins}
-        <div class="grille-bento">
-          ${photoHtml}
-          ${zoneIdentite}
-          ${zoneStats}
-          ${zoneConditions}
-          ${zoneContact}
-          ${zoneIA}
+        ${heroArtiste}
+        <div class="contenu-artiste">
           ${zonePresentation}
           ${zoneCatalogue}
+        </div>
+        <h2 class="gestion-artiste-titre">Informations de gestion</h2>
+        <div class="gestion-artiste">
+          ${zoneContact}
+          ${zoneConditions}
+          ${zoneIA}
           ${zoneNotes}
         </div>
       </div>
@@ -405,6 +398,24 @@ export async function rendreArtisteFiche(contenu, params) {
     // === Handlers ===
     contenu.querySelector('#btn-modifier').addEventListener('click', entrerEdition);
     contenu.querySelector('#btn-supprimer').addEventListener('click', supprimer);
+
+    // Valeur dispo masquée : révélée au clic, re-masquée quand la souris quitte.
+    const statValeur = contenu.querySelector('#stat-valeur-dispo');
+    if (statValeur) {
+      const elVal = statValeur.querySelector('#valeur-dispo-val');
+      const elOeil = statValeur.querySelector('#valeur-dispo-oeil');
+      const reel = statValeur.dataset.valeur || '';
+      const MASQUE = '••• ••• $';
+      let vis = false;
+      const majValeur = (v) => {
+        vis = v;
+        elVal.textContent = v ? reel : MASQUE;
+        elOeil.textContent = v ? 'masquer en quittant' : 'afficher';
+        statValeur.classList.toggle('visible', v);
+      };
+      statValeur.addEventListener('click', () => majValeur(true));
+      statValeur.addEventListener('mouseleave', () => { if (vis) majValeur(false); });
+    }
     contenu.querySelector('#btn-archiver').addEventListener('click', async () => {
       const fait = await basculerArchive({
         table: 'artistes',
@@ -554,6 +565,35 @@ export async function rendreArtisteFiche(contenu, params) {
         });
       });
     });
+
+    // Bouton « ⤢ » : ouvre la présentation complète (3 sections) en modale.
+    const btnAgrandir = contenu.querySelector('#btn-presentation-agrandir');
+    if (btnAgrandir) {
+      btnAgrandir.addEventListener('click', () => {
+        const sections = [
+          { t: 'Biographie', c: a.biographie },
+          { t: 'Démarche', c: a.demarche },
+          { t: 'Curriculum', c: a.curriculum },
+        ].filter((s) => s.c && String(s.c).trim());
+        const corps = sections.length
+          ? sections.map((s) => `<h4 class="modale-presentation-titre">${ech(s.t)}</h4><div class="modale-presentation-texte">${ech(s.c).replace(/\n/g, '<br>')}</div>`).join('')
+          : '<p class="aide-champ">Aucune présentation renseignée.</p>';
+        const overlay = document.createElement('div');
+        overlay.className = 'overlay-modale overlay-dialogue';
+        overlay.innerHTML = `
+          <div class="dialogue" role="dialog" aria-modal="true" style="max-width:760px;max-height:88vh;display:flex;flex-direction:column;">
+            <div class="dialogue-entete"><h3 class="dialogue-titre">Présentation — ${ech(nomCompletA)}</h3></div>
+            <div class="modale-presentation-corps">${corps}</div>
+            <div class="dialogue-actions"><button type="button" class="btn-action btn-principal" id="presentation-fermer">Fermer</button></div>
+          </div>`;
+        const fermer = () => { window.removeEventListener('keydown', onKey); overlay.remove(); };
+        const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); fermer(); } };
+        overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) fermer(); });
+        window.addEventListener('keydown', onKey);
+        document.body.appendChild(overlay);
+        overlay.querySelector('#presentation-fermer').addEventListener('click', fermer);
+      });
+    }
 
     // Vignettes du catalogue : clic = ouvrir la fiche d'œuvre.
     contenu.querySelectorAll('.vignette-bento').forEach((v) => {

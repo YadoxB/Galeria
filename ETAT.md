@@ -1,13 +1,15 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-06-17.
+> Date de cette sauvegarde : 2026-06-19.
 >
 > **Voir aussi** : `CHANGELOG.md` (historique versionné détaillé) et `A-VALIDER.md` (questions ouvertes avec les parents).
 
 ---
 
 ## En une phrase
+
+> **Session 2026-06-19 (à reprendre).** Gros lot de documents livré et **commité localement** sur la branche `claude/interesting-sanderson-54354e` (**en avance de 11 commits sur `origin/master`, rien n'est poussé ni publié**). Au programme de la reprise : **pousser** la branche / préparer une release ; puis **Lot 1** (calculateur de commission) ou **Lot 4** (refonte de la section Documents) ; et la **nomenclature des factures** (Dave doit donner la formule, basée sur celle des images). Détails dans le « Journal de session — 2026-06-19 » en bas. Travailler dans le worktree `interesting-sanderson-54354e`.
 
 L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable et installée chez les parents. Dernière version **publiée : v0.2.5** (2026-06-18, sur GitHub Releases) — apporte : migration des dimensions H/L/P, stepper du tableau de bord, **section Suivi** (cycle de vie complet + étape Stock), **bloc Œuvres en préparation** à l'accueil, **droplist médium** partagé, **sélecteur de taille de vignette**, réagencement du formulaire d'œuvre, **avancement du splash**, **section Documents** (index des PDF), **section Rapport** (journal + suivi opérationnel, export PDF Lettre) et **mécanisme de retrait d'œuvres** (simple + en lot). Reste le jalon 4 (pack de vente, sauf retrait/commission), le jalon 5 (renommage des photos), plus les phases reportées (Sage, web, sécurité). **Prochaine livraison parents : installer manuellement le build COMPLET de v0.2.5** (`npm run build:complet` → catalogue+photos) — ils sont sur 0.2.0, donc l'auto-update ne les rejoint pas encore.
 
@@ -358,6 +360,22 @@ Nouveau train de fonctionnalités planifié avec Dave, organisé en **lots**. Te
 - **Certificat** : accent doré `#b9912f` → **rouge GVSJ `#900001`** (6 occurrences + halo de focus). Amorce l'identité rouge commune à tous les documents.
 - **Fiche artiste** : à la création, fiscalité pré-remplie avec **TPS + TVQ** (numéros vides). **Validation bloquante** à l'enregistrement pour TPS (`9 + RT + 4`) et TVQ (`10 + TQ + 4`), **espaces ignorés** ; autres étiquettes et champs vides non bloquants (champ en rouge + dialogue d'erreur si invalide).
 - **Sélecteur d'unité po ⇄ cm** sur le calculateur de prix (Outils) **et** sur les dimensions de la fiche d'œuvre. **Source de vérité toujours en pouces** (`calcPo` / `dimPo`) : le toggle convertit l'affichage ; format/orientation/prix/sauvegarde utilisent les pouces. Réutilise le composant segmenté `.taille-vue`. Démo : `demos/outils-unite-mesure.html`. Décision : le « convertisseur » séparé devient un **sélecteur d'unité sur l'outil en place**.
+
+### Journal de session — 2026-06-19 (Lots 2, 3, 5 + refonte fiche artiste)
+
+Grosse session « documents ». **Tout commité localement** sur `claude/interesting-sanderson-54354e` (**11 commits d'avance sur `origin/master`, rien de poussé ni publié — Dave fermera la session et reprendra ailleurs**).
+
+- **Lot 5 ✓** — refonte de la **hiérarchie de la sidebar** (Accueil détaché + groupes Catalogue/Ventes/Archives) ; retrait des cartes de stats en haut de la liste Œuvres.
+- **Lot 0 ✓** — certificat doré → rouge `#900001`, TPS+TVQ pré-remplis + validation des numéros, sélecteur d'unité po/cm.
+- **Lot 2 ✓** — **catalogue artiste** (PDF 6/page) + **Annexes A dépôt (rouge) / retrait (bleu)** (table `annexes`, numéro `A-{préfixe}-NNN`, manuel + déclenchements dans les flux ajout/retrait).
+- **Lot 3 ✓** — **pochette de vente** : bouton + **invite après enregistrement d'une vente** ; dossier **`Documents\{année}\Pochettes\{client}\{facture}\`** réunissant lettre+œuvre (8 variantes, garantie 1 page), **certificat officiel** (rangé dans la pochette via `cheminCertificatOfficiel`), présentation réutilisée (cache), guide fixe. **Présentation d'artiste** + cache par signature. **« Version modifiée » WYSIWYG générique** (`ouvrirEditeurDocument` + `preload-editeur.js`, dispatcher `editerDocument`, `src/app/editer-document.js`) pour tous les documents ; pour un doc de pochette, remplace le fichier dans la pochette. Suppression de vente débloquée (détache les certificats) + propose d'effacer le dossier de pochette (et ses certificats).
+- **Refonte fiche artiste ✓** — 3 niveaux (en-tête / contenu / gestion grisée), **valeur dispo masquée** (clic pour révéler, re-masquée à la sortie souris), carte Présentation à hauteur stable (scroll) + bouton **« ⤢ »** (modale Bio/Démarche/CV). Démo : `demos/artiste-fiche-hierarchie.html`. CSS dans `styles.css` (sélecteurs `.hero-artiste`, `.contenu-artiste`, `.gestion-artiste`).
+
+**Reporté / à reprendre la prochaine session :**
+1. **Pousser** la branche (`git push`) / préparer une **release** (≥ v0.2.6) — puis livraison manuelle aux parents (toujours sur 0.2.0, voir encadré en tête).
+2. **Nomenclature des factures** — Dave doit donner la formule (basée sur celle des images d'inventaire).
+3. **Lot 1** — calculateur de commission (net artiste après TPS/TVQ).
+4. **Lot 4** — refonte de la **section Documents** (regrouper certificats, factures, catalogues, annexes, rapports, **pochettes**).
 
 ---
 
