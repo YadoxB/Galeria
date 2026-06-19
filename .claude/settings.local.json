@@ -107,7 +107,15 @@
       "Bash(node scripts/_fixg.js)",
       "Bash(node -e \"const m=require\\('./src/db/mutations.js'\\); console.log\\('creerCertificat:',typeof m.creerCertificat,'| reserverProchainNumeroCertificat:',typeof m.reserverProchainNumeroCertificat\\)\")",
       "Bash(node --check src/preload-editeur.js)",
-      "Bash(node -e \"require\\('./src/db/mutations.js'\\); console.log\\('backend OK'\\)\")"
+      "Bash(node -e \"require\\('./src/db/mutations.js'\\); console.log\\('backend OK'\\)\")",
+      "Bash(git rev-list *)",
+      "Bash(awk '/Journal de session — 2026-06-19/{f=1} f')",
+      "Bash(awk '/^### Journal de session — 2026-06-19/{f=1} f')",
+      "Bash(git merge *)",
+      "Bash(python -c \"import json; json.load\\(open\\('.claude/settings.local.json'\\)\\); print\\('JSON valide'\\)\")",
+      "Bash(git checkout-index *)",
+      "Bash(git reset *)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('.claude/settings.local.json','utf8'\\)\\); console.log\\('JSON valide'\\)\")"
     ]
   }
 }

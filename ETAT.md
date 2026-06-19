@@ -194,24 +194,29 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable e
 
 **Chantier 1 · Visibilité & navigation** — *prochain jalon « Visibilité » ; naît du jalon 3 + du stepper du tableau de bord*
 - ~~**Section Suivi (#16)**~~ — **✓ Intégrée** : vue dédiée du cycle de vie complet (À préparer + Commandes en cours regroupés dans « Actif », onglet « Complétées »), bandeau de synthèse, stepper inline-éditable, paiement en menu déroulant, modales « Confirmer la livraison » / « Revenir en arrière ». Inclut l'étape de préparation **Stock** (Sage → Stock → Site).
-- **Œuvres en préparation sur le tableau de bord (#21)** — afficher les œuvres en préparation (Sage/Stock/Site) sur l'accueil, et **retirer le « Résumé du catalogue »** (valeur cumulée). Complète le bloc « Commandes non complétées ».
+- ~~**Œuvres en préparation sur le tableau de bord (#21)**~~ — **✓ Livré (v0.2.5)** : bloc « Œuvres en préparation » (Sage/Stock/Site) à l'accueil, **« Résumé du catalogue » retiré**, rangée du bas réordonnée (Préparation · Réservées · Commandes).
 - ~~**Section Documents (#15)**~~ — **✓ Livré** : section dédiée qui réunit tous les PDF produits (certificats + factures artiste), groupés par année, filtrables par type, recherchables, avec actions Voir / Dossier / Re-générer. Requête `tousLesDocuments` (sources `certificats.pdf_path` + `ventes.facture_artiste_path` ; prêt à accueillir factures client / lettres).
-- ~~**Rapport journalier (#17)**~~ — **✓ Livré** : section **Rapport** (sidebar) = journal d'une journée (sélecteur de date) — tuiles, ventes détaillées, intrants/extrants du jour, activité opérationnelle — **+ suivi opérationnel** (admissions en cours, ventes/livraisons en cours). **PDF Lettre** via gabarit autonome `gabarit-rapport.html` (IPC `rapport:pdf` → `printToPDF` 'Letter', polices système, fond blanc, nom horodaté). Inclut le **mécanisme de retrait** d'œuvres (remplace « Archiver » sur l'œuvre : bouton « Retirer » fiche + **retrait en lot** via mode sélection sur la liste ; vendues non retirables ; colonnes `retrait_date`/`retrait_motif`). ⚠️ **Connu (hors périmètre)** : le visionneur **Acrobat** affiche une erreur « Font Capture » quelques secondes après l'ouverture de **tout** PDF généré (certificats inclus) — environnemental, le PDF reste valide. À investiguer séparément.
+- ~~**Rapport journalier (#17)**~~ — **✓ Livré** : section **Rapport** (sidebar) = journal d'une journée (sélecteur de date) — tuiles, ventes détaillées, intrants/extrants du jour, activité opérationnelle — **+ suivi opérationnel** (admissions en cours, ventes/livraisons en cours). **PDF Lettre** via gabarit autonome `gabarit-rapport.html` (IPC `rapport:pdf` → `printToPDF` 'Letter', polices système, fond blanc, nom horodaté). Inclut le **mécanisme de retrait** d'œuvres (remplace « Archiver » sur l'œuvre : bouton « Retirer » fiche + **retrait en lot** via mode sélection sur la liste ; vendues non retirables ; colonnes `retrait_date`/`retrait_motif`). ⚠️ **Connu (hors périmètre)** : le visionneur **Acrobat** affiche une erreur « Font Capture » quelques secondes après l'ouverture de **tout** PDF généré (certificats inclus) — environnemental, le PDF reste valide. À investiguer séparément (voir Chantier 3).
+- **Lot 4 — refonte de la section Documents** — la Section Documents (#15) ne liste que certificats + factures artiste. **Étendre** pour regrouper et ranger clairement **tous les types** maintenant produits : certificats, factures artiste, **catalogues**, **annexes A**, **rapports**, **pochettes** (lettre + fiche œuvre + présentation + guide). À l'origine « Lot 4 » du train de documents 2026-06-18/19. Démo HTML d'abord (préférence Dave).
 
 **Chantier 2 · Modèle économique** — *partie non bloquée du jalon 4*
+- **Lot 1 — calculateur de commission** — projection du **net versé à l'artiste après TPS/TVQ** (à partir du prix de vente, de la cote et du régime fiscal de l'artiste). À l'origine « Lot 1 » du train de documents. Autonome, s'appuie sur la facture artiste et les cotes déjà en place. *Prochain candidat de dev recommandé.*
+- **Nomenclature des factures** — définir le format des numéros de facture (basé sur la formule des images d'inventaire). **Dépend de Dave** (il apporte la formule) ; ensuite changement ciblé, numérotation reconfigurable, aucune migration de fond (cf. décision #16). Recoupe le point « format final des numéros (#7) » de l'axe B.
 - **Commission par type d'œuvre** (50 % toiles / 33 % sculptures / 50 % repro après coûts) + champ **coûts de production** sur l'œuvre → branché sur la facture artiste. (Les % exacts et la saisie des coûts repro restent à confirmer — axe B.)
 
 **Chantier 3 · Polish & onboarding**
 - ~~**Sélecteur de taille de vignette (#19)**~~ — **✓ Livré** : segmenté Petit/Moyen/Grand (190/240/300 px) dans Artistes et Œuvres (vue grille), mémorisé en localStorage (`oeuvres-taille`, `artistes-taille`). Composant partagé `gabaritSelecteurTaille` + variable CSS `--vignette-min`.
 - ~~**Inverser les cartes Sujet et Commerce (#20)**~~ — **✓ Livré** : formulaire d'œuvre réagencé en Caractéristiques (8) + Commerce (4) ; Préparation (6) + Sujets (6).
 - ~~**Avancement du splash (#18)**~~ — **✓ Livré** : barre dorée + libellé d'étape sur le splash (Ouverture base → Préparation photos X/N → Chargement → Prêt). Le splash s'affiche **avant** les étapes longues ; `seedPhotos` rendu asynchrone par lots pour que la barre avance réellement. Progression poussée via `executeJavaScript`.
-- **Tutoriel de première ouverture (#13)** — overlay guidé au 1er lancement, accessible ensuite depuis Réglages/Aide.
+- **Section d'aide (#22)** — *re-demandé 2026-06-19* : nouvelle section dédiée (sidebar ou via le bloc profil) regroupant l'aide à l'utilisation. **Point d'entrée pour rejouer le tutoriel (#13)** ; à construire en duo avec lui. Démo HTML d'abord (préférence Dave).
+- **Tutoriel de première ouverture (#13)** — *re-demandé 2026-06-19* : overlay guidé au 1er lancement (détection via marqueur, cf. `.seed-applique`), accessible ensuite depuis la **Section d'aide (#22)**. Construit en duo avec #22.
 - ~~**Correction #356 « Chrysalide 1/30 »**~~ — **✓ Fait par Dave** (dimensions saisies à la main).
 - **Migration des 2 pseudonymes** — « LO (Laurent Torregrossa) », « Sofia (Sophie Lebeuf) » (5 min dans l'app).
+- **Bug connu — Acrobat « Font Capture »** — Acrobat affiche une erreur « Font Capture » quelques secondes après l'ouverture de **tout** PDF généré (le PDF reste valide). Environnemental. À investiguer (tester un autre visionneur comme Edge ; vérifier l'embarquement des polices dans `printToPDF`).
 
 **Chantier 4 · Données & catalogue** — *gros ou risqué, à isoler*
 - **Jalon 5 — renommage des photos** : sous-dossiers par artiste + déplacement/renommage physique des 500+ fichiers (générateur `src/db/nomenclature.js` déjà fait et testé). Sauvegarde préalable obligatoire. **Dépend des validations B** (codes-lettres, dimensions incomplètes).
-- **Édition en batch (#2)** — vue tableau multi-lignes. Gros morceau reporté plusieurs fois.
+- **Édition en batch (#2)** — *re-demandé 2026-06-19* : vue tableau multi-lignes pour éditer plusieurs fiches d'un coup. Gros morceau reporté plusieurs fois ; indépendant. Démo HTML d'abord (préférence Dave).
 
 ### B — Bloqué sur les parents (à poser en une seule conversation → `A-VALIDER.md`)
 
@@ -286,7 +291,7 @@ L'application **Galeria** pour la **Galerie du Vieux Saint-Jean** est livrable e
 
 ## Historique des jalons & journal de session
 
-**État livré :** v0.2.4 publiée sur GitHub Releases, tout sur `master`. ⚠ **Les parents sont encore sur 0.2.0** (sans auto-update) — voir l'encadré « En une phrase » en tête.
+**État livré :** v0.3.0 publiée sur GitHub Releases, tout sur `master`. ⚠ **Les parents sont encore sur 0.2.0** (sans auto-update) — voir l'encadré « En une phrase » en tête.
 
 ### Jalons livrés (récap — détail complet dans `CHANGELOG.md`)
 
