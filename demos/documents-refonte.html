@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo refonte de la section Documents (Lot 4)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <link rel="stylesheet" href="../src/styles.css">
+  <style>
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+    .demo-bar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px 20px; background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    main { padding: 24px 32px 60px; max-width: 940px; }
+    p.desc { color: var(--slate); font-size: 14px; margin: 0 0 18px; }
+
+    /* Barre de filtres toujours visible */
+    .doc-filtres-barre { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin: 6px 0 22px; }
+    .doc-filtres-barre .groupe-filtre { display: flex; flex-direction: column; gap: 5px; }
+    .doc-filtres-barre label { font-size: 12px; color: var(--slate); font-weight: 500; }
+    .doc-filtres-barre select {
+      height: 36px; padding: 0 32px 0 12px; min-width: 150px;
+      background: var(--porcelain); border: 1px solid var(--mist); border-radius: var(--r-btn);
+      font-family: var(--font-ui); font-size: 14px; color: var(--ink); cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235D6875' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+      background-repeat: no-repeat; background-position: right 10px center;
+    }
+    .doc-filtres-barre select:focus { outline: none; border-color: var(--warm-gold); box-shadow: 0 0 0 4px rgba(201,154,61,.18); }
+    .doc-reset { align-self: flex-end; height: 36px; background: none; border: 0; color: #8a6d1f; font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; padding: 0 6px; }
+    .doc-reset[hidden] { display: none; }
+    .doc-compteur-barre { margin-left: auto; align-self: flex-end; height: 36px; display: flex; align-items: center; font-size: 12px; color: var(--stone); }
+
+    /* Section par type */
+    .doc-type-bloc { margin-bottom: 26px; }
+    .doc-type-titre { display: flex; align-items: center; gap: 12px; margin: 0 2px 10px; }
+    .doc-type-ic { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--gallery-navy); color: var(--soft-ivory); }
+    .doc-type-ic svg { width: 17px; height: 17px; }
+    .doc-type-nom { font-family: var(--font-titre); font-size: 20px; color: var(--gallery-navy); }
+    .doc-type-compte { font-size: 12px; color: var(--stone); background: var(--cloud); border-radius: 999px; padding: 2px 9px; }
+
+    /* Séparateur d'année à l'intérieur d'un type */
+    .doc-annee-sep { font-size: 12px; font-weight: 600; color: var(--stone); letter-spacing: .04em; padding: 8px 16px 4px; }
+
+    /* Icônes (tuiles de ligne) — couleurs par type, SVG hérite de currentColor */
+    .doc-icone svg { width: 22px; height: 22px; }
+    .doc-icone-catalogue    { background: #6a4d8c; color: var(--soft-ivory); }
+    .doc-icone-annexe       { background: #4a5568; color: var(--soft-ivory); }
+    .doc-icone-annexe-depot { background: #900001; color: var(--soft-ivory); }
+    .doc-icone-annexe-retr  { background: #2a5c8a; color: var(--soft-ivory); }
+    .doc-icone-rapport      { background: var(--terracotta); color: var(--soft-ivory); }
+
+    .doc-badge { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--cloud); color: var(--slate); margin-left: 6px; vertical-align: middle; }
+
+    /* Pochette dépliable */
+    .doc-ligne.pochette { cursor: pointer; }
+    .doc-chevron { width: 16px; height: 16px; color: var(--stone); transition: transform .15s; flex-shrink: 0; }
+    .doc-ligne.ouvert .doc-chevron { transform: rotate(90deg); }
+    .pochette-contenu { background: var(--soft-ivory); border-bottom: 1px solid var(--mist); padding: 4px 16px 10px 70px; }
+    .pochette-contenu[hidden] { display: none; }
+    .pochette-doc { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 13px; color: var(--slate); border-bottom: 1px dashed var(--mist); }
+    .pochette-doc:last-child { border-bottom: 0; }
+    .pochette-doc .nom { flex: 1; min-width: 0; color: var(--ink); }
+    .pochette-doc .mini-voir { font-size: 12px; padding: 0 10px; height: 28px; }
+    .doc-vide-global { padding: 40px; text-align: center; color: var(--stone); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Refonte de la section Documents (Lot 4)</div>
+    <div class="note" style="font-size:12px;color:rgba(255,255,255,.6)">CSS réel. Données fictives.</div>
+  </div>
+
+  <main>
+    <p class="desc">Documents regroupés <b>par type</b> (sections), avec une <b>barre de filtres permanente</b> (Type · Année · Artiste · Client) et une recherche. Icônes par type, pochettes dépliables. Données issues de la base <i>et</i> du disque. <b>Essaie les filtres et déplie une pochette.</b></p>
+
+    <div class="vue-documents">
+      <div class="entete-page entete-page--simple">
+        <h2 class="entete-page-titre">Documents</h2>
+        <div class="entete-page-recherche-wrap">
+          <div class="recherche-pillule">
+            <svg class="recherche-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>
+            </svg>
+            <input type="search" id="doc-recherche" placeholder="Rechercher (numéro, œuvre, artiste, client)…" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <div class="doc-filtres-barre">
+        <div class="groupe-filtre"><label for="f-type">Type</label><select id="f-type"></select></div>
+        <div class="groupe-filtre"><label for="f-annee">Année</label><select id="f-annee"></select></div>
+        <div class="groupe-filtre"><label for="f-artiste">Artiste</label><select id="f-artiste"></select></div>
+        <div class="groupe-filtre"><label for="f-client">Client</label><select id="f-client"></select></div>
+        <button type="button" class="doc-reset" id="f-reset" hidden>Réinitialiser</button>
+        <span class="doc-compteur-barre" id="doc-compteur"></span>
+      </div>
+
+      <div id="doc-liste"></div>
+    </div>
+  </main>
+
+  <script>
+    // ====== Données fictives couvrant tous les types ======
+    const DOCS = [
+      { type:'certificat', numero:'C-2026-014', date:'2026-06-18', oeuvre:'Entre le vent et la mer', artiste:'Clarence Bourgoin', client:'Marie Tremblay', source:'base', regen:true },
+      { type:'facture_artiste', numero:'A-2026-009', date:'2026-06-18', oeuvre:'Entre le vent et la mer', artiste:'Clarence Bourgoin', client:'Marie Tremblay', source:'base', regen:true },
+      { type:'pochette', numero:'F-2026-031', date:'2026-06-18', client:'Marie Tremblay', oeuvre:'Entre le vent et la mer', artiste:'Clarence Bourgoin', source:'disque',
+        contenu:[
+          { nom:'Lettre de remerciement + fiche de l’œuvre', fichier:'Lettre_F-2026-031.pdf' },
+          { nom:'Certificat d’authenticité', fichier:'Certificat_C-2026-014.pdf' },
+          { nom:'Présentation de l’artiste', fichier:'Presentation_Clarence-Bourgoin.pdf' },
+          { nom:'Guide de l’acheteur', fichier:'Guide_acheteur.pdf' },
+        ] },
+      { type:'catalogue', numero:'Catalogue — André Coppens', date:'2026-06-15', artiste:'André Coppens', source:'disque' },
+      { type:'annexe', sousType:'depot', numero:'A-COP-003', date:'2026-06-10', artiste:'André Coppens', source:'base', regen:true, libelleType:'Annexe A — dépôt' },
+      { type:'presentation', numero:'Présentation — Clarence Bourgoin', date:'2026-06-09', artiste:'Clarence Bourgoin', source:'base', regen:true },
+      { type:'facture_artiste', numero:'A-2026-008', date:'2026-05-22', oeuvre:'Aurore boréale', artiste:'Sofia', client:'Jean Dubois', source:'disque', modifiee:true },
+      { type:'rapport', numero:'Rapport — 12 mai 2026', date:'2026-05-12', source:'disque' },
+      { type:'annexe', sousType:'retrait', numero:'A-COP-004', date:'2026-04-30', artiste:'André Coppens', source:'base', regen:true, libelleType:'Annexe A — retrait' },
+      { type:'certificat', numero:'C-2025-022', date:'2025-11-03', oeuvre:'Le silence des pins', artiste:'Sofia', client:'Lucie Gagnon', source:'base', regen:true },
+      { type:'catalogue', numero:'Catalogue — Clarence Bourgoin', date:'2025-09-01', artiste:'Clarence Bourgoin', source:'disque' },
+      { type:'presentation', numero:'Présentation — Sofia', date:'2025-08-20', artiste:'Sofia', source:'base', regen:true },
+    ];
+
+    const TYPE_ORDER = ['certificat','facture_artiste','catalogue','annexe','presentation','rapport','pochette'];
+    const LIBELLE_PLURIEL = {
+      certificat:'Certificats', facture_artiste:'Factures artiste', catalogue:'Catalogues',
+      annexe:'Annexes', presentation:'Présentations', rapport:'Rapports', pochette:'Pochettes de vente',
+    };
+    const LIBELLE = {
+      certificat:"Certificat d'authenticité", facture_artiste:'Facture artiste', catalogue:'Catalogue',
+      annexe:'Annexe A', presentation:'Présentation', rapport:'Rapport', pochette:'Pochette de vente',
+    };
+
+    // SVG par type (stroke = currentColor)
+    const SVG = {
+      certificat:'<circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 7 21l5-2.5L17 21l-1.5-8.5"/>',
+      facture_artiste:'<path d="M7 3h10v18l-2.5-1.6L12 21l-2.5-1.6L7 21z"/><line x1="10" y1="8" x2="14" y2="8"/><line x1="10" y1="12" x2="14" y2="12"/>',
+      catalogue:'<rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="4" width="7" height="7" rx="1"/><rect x="3" y="13" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/>',
+      annexe:'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3.2A1.2 1.2 0 0 1 10.2 2h3.6A1.2 1.2 0 0 1 15 3.2V4"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="13.5" x2="15" y2="13.5"/><line x1="9" y1="17" x2="13" y2="17"/>',
+      presentation:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2.2"/><path d="M5 16c.6-1.6 6-1.6 6.6 0"/><line x1="14" y1="10" x2="18" y2="10"/><line x1="14" y1="14" x2="18" y2="14"/>',
+      rapport:'<line x1="4" y1="20" x2="20" y2="20"/><rect x="6" y="11" width="3" height="7"/><rect x="11" y="6" width="3" height="12"/><rect x="16" y="13" width="3" height="5"/>',
+      pochette:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    };
+    function svgWrap(inner){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`; }
+    function classeIconeLigne(d){
+      if (d.type==='annexe') return d.sousType==='retrait' ? 'doc-icone-annexe-retr' : 'doc-icone-annexe-depot';
+      if (d.type==='facture_artiste') return 'doc-icone-facture';
+      if (d.type==='pochette') return 'doc-icone-pochette';
+      if (d.type==='certificat') return 'doc-icone-cert';
+      if (d.type==='presentation') return 'doc-icone-presentation';
+      if (d.type==='catalogue') return 'doc-icone-catalogue';
+      if (d.type==='rapport') return 'doc-icone-rapport';
+      return '';
+    }
+    function classeIconeType(type){ return type==='annexe' ? 'doc-icone-annexe' : classeIconeLigne({type}); }
+
+    const $ = (s) => document.querySelector(s);
+    const ech = (s) => String(s==null?'':s).replace(/[&<>"]/g, (c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const sansAccents = (s) => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+    const MOIS = ['janv.','févr.','mars','avr.','mai','juin','juill.','août','sept.','oct.','nov.','déc.'];
+    function dateFr(iso){ const p=String(iso||'').split('-'); if(p.length!==3) return iso||''; return parseInt(p[2],10)+' '+MOIS[parseInt(p[1],10)-1]+' '+p[0]; }
+    const distinct = (arr) => [...new Set(arr.filter(Boolean))];
+
+    const elListe = $('#doc-liste');
+    const fType=$('#f-type'), fAnnee=$('#f-annee'), fArtiste=$('#f-artiste'), fClient=$('#f-client'), fReset=$('#f-reset');
+    let filtre = '';
+
+    // Remplir les selects
+    function opt(v,l,sel){ return `<option value="${ech(v)}"${sel?' selected':''}>${ech(l)}</option>`; }
+    fType.innerHTML = opt('tous','Tous les types',true) + TYPE_ORDER.map((t)=>opt(t,LIBELLE_PLURIEL[t])).join('');
+    fAnnee.innerHTML = opt('tous','Toutes les années',true) + distinct(DOCS.map(d=>String(d.date).slice(0,4))).sort((a,b)=>b.localeCompare(a)).map((y)=>opt(y,y)).join('');
+    fArtiste.innerHTML = opt('tous','Tous les artistes',true) + distinct(DOCS.map(d=>d.artiste)).sort().map((a)=>opt(a,a)).join('');
+    fClient.innerHTML = opt('tous','Tous les clients',true) + distinct(DOCS.map(d=>d.client)).sort().map((c)=>opt(c,c)).join('');
+
+    const chevronSvg = '<svg class="doc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
+
+    function ligne(d, i) {
+      const typeLib = d.libelleType || LIBELLE[d.type] || 'Document';
+      const meta = [d.oeuvre, d.artiste, d.client].filter(Boolean).map(ech).join(' · ');
+      const badge = d.modifiee ? '<span class="doc-badge">version modifiée</span>' : '';
+      const icone = `<div class="doc-icone ${classeIconeLigne(d)}">${svgWrap(SVG[d.type])}</div>`;
+
+      if (d.type === 'pochette') {
+        const contenu = (d.contenu||[]).map((c) => `
+          <div class="pochette-doc">
+            <span class="nom">${ech(c.nom)} <span style="color:var(--stone)">— ${ech(c.fichier)}</span></span>
+            <button type="button" class="btn-action btn-secondaire-action mini-voir">Voir</button>
+          </div>`).join('');
+        return `
+          <div class="doc-ligne pochette" data-i="${i}">
+            ${chevronSvg}${icone}
+            <div class="doc-info">
+              <p class="doc-titre">${ech(d.numero)} · ${ech(typeLib)}</p>
+              <p class="doc-meta">${meta}${meta?' · ':''}${dateFr(d.date)} · ${(d.contenu||[]).length} document(s)</p>
+            </div>
+            <div class="doc-actions"><button type="button" class="btn-action btn-secondaire-action" data-act="dossier">Ouvrir le dossier</button></div>
+          </div>
+          <div class="pochette-contenu" data-contenu="${i}" hidden>${contenu}</div>`;
+      }
+
+      const actRegen = d.regen ? '<button type="button" class="btn-action btn-secondaire-action" data-act="regen">Re-générer</button>' : '';
+      return `
+        <div class="doc-ligne" data-i="${i}">
+          ${icone}
+          <div class="doc-info">
+            <p class="doc-titre">${ech(d.numero||'—')} · ${ech(typeLib)}${badge}</p>
+            <p class="doc-meta">${meta}${meta?' · ':''}${dateFr(d.date)}</p>
+          </div>
+          <div class="doc-actions">
+            <button type="button" class="btn-action btn-secondaire-action" data-act="voir">Voir</button>
+            <button type="button" class="btn-action btn-secondaire-action" data-act="dossier">Dossier</button>
+            ${actRegen}
+          </div>
+        </div>`;
+    }
+
+    function peindre() {
+      const ft=fType.value, fy=fAnnee.value, fa=fArtiste.value, fc=fClient.value;
+      const actif = ft!=='tous'||fy!=='tous'||fa!=='tous'||fc!=='tous'||!!filtre;
+      fReset.hidden = !actif;
+
+      let liste = DOCS.map((d,i)=>({d,i}));
+      if (ft!=='tous') liste = liste.filter(({d})=>d.type===ft);
+      if (fy!=='tous') liste = liste.filter(({d})=>String(d.date).slice(0,4)===fy);
+      if (fa!=='tous') liste = liste.filter(({d})=>d.artiste===fa);
+      if (fc!=='tous') liste = liste.filter(({d})=>d.client===fc);
+      if (filtre) liste = liste.filter(({d})=>sansAccents([d.numero,d.oeuvre,d.artiste,d.client,LIBELLE[d.type]].filter(Boolean).join(' ')).includes(filtre));
+
+      $('#doc-compteur').textContent = `${liste.length} document${liste.length>1?'s':''}`;
+      if (!liste.length) { elListe.innerHTML = `<div class="doc-vide-global">Aucun document ne correspond à ces filtres.</div>`; return; }
+
+      let html = '';
+      for (const type of TYPE_ORDER) {
+        const items = liste.filter(({d})=>d.type===type).sort((a,b)=>String(b.d.date).localeCompare(String(a.d.date)));
+        if (!items.length) continue;
+        const annees = distinct(items.map(({d})=>String(d.date).slice(0,4)));
+        const multi = annees.length > 1;
+        let corps = '';
+        if (multi) {
+          for (const an of annees.sort((a,b)=>b.localeCompare(a))) {
+            corps += `<div class="doc-annee-sep">${ech(an)}</div>` + items.filter(({d})=>String(d.date).slice(0,4)===an).map(({d,i})=>ligne(d,i)).join('');
+          }
+        } else {
+          corps = items.map(({d,i})=>ligne(d,i)).join('');
+        }
+        html += `
+          <section class="doc-type-bloc">
+            <div class="doc-type-titre">
+              <span class="doc-type-ic ${classeIconeType(type)}">${svgWrap(SVG[type])}</span>
+              <span class="doc-type-nom">${ech(LIBELLE_PLURIEL[type])}</span>
+              <span class="doc-type-compte">${items.length}</span>
+            </div>
+            <div class="doc-carte">${corps}</div>
+          </section>`;
+      }
+      elListe.innerHTML = html;
+      bind();
+    }
+
+    function bind() {
+      elListe.querySelectorAll('.doc-ligne.pochette').forEach((row) => {
+        row.addEventListener('click', (e) => {
+          if (e.target.closest('[data-act]')) return;
+          const i = row.dataset.i;
+          const c = elListe.querySelector(`[data-contenu="${i}"]`);
+          row.classList.toggle('ouvert');
+          if (c) c.hidden = !c.hidden;
+        });
+      });
+    }
+
+    $('#doc-recherche').addEventListener('input', (e) => { filtre = sansAccents(e.target.value||''); peindre(); });
+    [fType,fAnnee,fArtiste,fClient].forEach((s)=>s.addEventListener('change', peindre));
+    fReset.addEventListener('click', () => {
+      fType.value='tous'; fAnnee.value='tous'; fArtiste.value='tous'; fClient.value='tous';
+      filtre=''; $('#doc-recherche').value=''; peindre();
+    });
+
+    peindre();
+  </script>
+</body>
+</html>
