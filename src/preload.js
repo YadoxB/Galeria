@@ -80,6 +80,7 @@ contextBridge.exposeInMainWorld('api', {
   certificatReserverNumero: () => ipcRenderer.invoke('certificats:reserver-numero'),
   pdfCertificatGenerer: (id) => ipcRenderer.invoke('pdf:certificat-generer', id),
   pdfFactureArtisteGenerer: (venteId) => ipcRenderer.invoke('pdf:facture-artiste-generer', venteId),
+  pdfCatalogueGenerer: (artisteId) => ipcRenderer.invoke('pdf:catalogue-generer', artisteId),
   pdfOuvrir: (cheminPdf) => ipcRenderer.invoke('pdf:ouvrir', cheminPdf),
   pdfRevelerDansExplorateur: (cheminPdf) => ipcRenderer.invoke('pdf:reveler-dans-explorateur', cheminPdf),
   photoChoisir: (table, id) => ipcRenderer.invoke('photo:choisir', { table, id }),

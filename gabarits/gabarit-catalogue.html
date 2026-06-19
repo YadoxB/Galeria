@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>Catalogue d'artiste · La Galerie du Vieux Saint-Jean</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
+     background:#e8e3db;color:#1c1a17;}
+
+/* ── Page ── */
+.page{width:8.5in;height:11in;padding:13mm 14mm 11mm;background:#fdfcf8;
+      margin:0 auto;display:flex;flex-direction:column;
+      page-break-after:always;}
+.page:last-child{page-break-after:auto;}
+@media screen{
+  .page{box-shadow:0 4px 24px rgba(0,0,0,.14);margin:18px auto;}
+  body{padding:12px;}
+}
+@media print{
+  @page{size:letter;margin:0;}
+  body{background:#fff;}
+  .page{box-shadow:none;margin:0;}
+}
+
+/* ── En-tête de page ── */
+.page-head{display:flex;justify-content:space-between;align-items:center;
+           padding-bottom:4mm;border-bottom:1.5px solid #900001;
+           margin-bottom:5mm;flex-shrink:0;}
+.logo{height:12mm;}
+.head-centre{text-align:center;}
+.artist-name{font-size:13pt;font-weight:700;letter-spacing:.3px;color:#1c1a17;}
+.cat-label{font-size:7.5pt;letter-spacing:2px;text-transform:uppercase;
+            color:#900001;margin-top:1mm;}
+.page-num{font-size:8.5pt;color:#9a8f78;letter-spacing:.5px;
+           text-align:right;white-space:nowrap;}
+
+/* ── Grille 2 × 3 ── */
+.grid{display:grid;grid-template-columns:1fr 1fr;
+       grid-template-rows:repeat(3,1fr);gap:5mm;flex:1;min-height:0;}
+
+/* ── Carte d'œuvre ── */
+.artwork{display:flex;flex-direction:column;min-height:0;}
+.artwork.empty{border:none;background:none;}
+
+.photo-wrap{flex:1;min-height:0;display:flex;align-items:center;
+             justify-content:center;overflow:hidden;
+             background:#f5f0e8;border:.5px solid #d8d0c0;
+             padding:2mm;}
+.photo-wrap img{max-width:100%;max-height:100%;object-fit:contain;
+                 display:block;}
+
+.caption{flex-shrink:0;padding:2.5mm 0 0;border-top:.5px solid #e0d8cc;
+          margin-top:2mm;}
+.caption .inv{font-size:8pt;color:#900001;font-weight:700;
+               letter-spacing:.5px;}
+.caption .tiret{color:#c8bfa8;font-size:8pt;}
+.caption .titre{font-size:10pt;font-weight:600;color:#1c1a17;}
+.caption .details{font-size:8.5pt;color:#7a7060;margin-top:1mm;}
+.caption .dispo{font-size:8.5pt;margin-top:1mm;}
+.dispo-prix{color:#1c1a17;font-weight:700;}
+.dispo-indispo{color:#9a8f78;font-weight:600;}
+</style></head>
+<body>
+<div id="doc"></div>
+
+<script>
+function escHtml(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function remplir(data){
+  const PAR_PAGE = 6;
+  const oeuvres = (data && data.oeuvres) || [];
+  const artiste = (data && data.artiste_nom) || '';
+  const logo = (data && data.logo) || 'actifs/logo-gvsj.png';
+  const root = document.getElementById('doc');
+  root.innerHTML = '';
+
+  const nbPages = Math.max(1, Math.ceil(oeuvres.length / PAR_PAGE));
+  for (let p = 0; p < nbPages; p++){
+    const lot = oeuvres.slice(p * PAR_PAGE, (p + 1) * PAR_PAGE);
+    const cellules = [];
+    for (let i = 0; i < PAR_PAGE; i++){
+      const o = lot[i];
+      if (!o){ cellules.push('<div class="artwork empty"></div>'); continue; }
+      const sep = (o.inv && o.titre) ? '<span class="tiret"> · </span>' : '';
+      cellules.push(`
+        <div class="artwork">
+          <div class="photo-wrap">${o.photo ? `<img src="${o.photo}" alt="">` : ''}</div>
+          <div class="caption">
+            <span class="inv">${escHtml(o.inv)}</span>${sep}<span class="titre">${escHtml(o.titre)}</span>
+            ${o.details ? `<div class="details">${escHtml(o.details)}</div>` : ''}
+            ${o.dispo ? `<div class="dispo ${o.dispoClasse || ''}">${escHtml(o.dispo)}</div>` : ''}
+          </div>
+        </div>`);
+    }
+    root.insertAdjacentHTML('beforeend', `
+      <div class="page">
+        <div class="page-head">
+          <img class="logo" src="${logo}" alt="">
+          <div class="head-centre">
+            <div class="artist-name">${escHtml(artiste)}</div>
+            <div class="cat-label">Catalogue des œuvres</div>
+          </div>
+          <div class="page-num">Page ${p + 1} / ${nbPages}</div>
+        </div>
+        <div class="grid">${cellules.join('')}</div>
+      </div>`);
+  }
+}
+</script>
+</body></html>

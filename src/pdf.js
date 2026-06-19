@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { openDatabase } = require('./db/database');
 const { getDocumentsDirAnnee, getPhotosDir } = require('./db/paths');
-const { obtenirCertificat, obtenirVente, obtenirArtiste } = require('./db/requetes');
+const { obtenirCertificat, obtenirVente, obtenirArtiste, oeuvresPourCatalogue } = require('./db/requetes');
 const { obtenirOuReserverNumeroFactureArtisteVente } = require('./db/mutations');
 const { obtenirConfig } = require('./config');
 
@@ -314,4 +314,58 @@ async function genererRapportPdf(dateISO) {
   return sortie;
 }
 
-module.exports = { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf };
+// ===== Orchestrateur : catalogue d'artiste =====
+
+function dispoCatalogue(o) {
+  const s = (o.statut || '').toLowerCase();
+  // Vendue ou réservée → non disponible à la vente.
+  if (s.includes('vend') || s.includes('réserv') || s.includes('reserv')) {
+    return { label: 'Non disponible', classe: 'dispo-indispo' };
+  }
+  // Disponible → on affiche le prix (ou « Prix sur demande » si absent).
+  const prix = formaterValeurCa(o.prix);
+  return { label: prix || 'Prix sur demande', classe: 'dispo-prix' };
+}
+
+function preparerDonneesCatalogue(artiste, oeuvres) {
+  const nom = [artiste.prenom, artiste.nom].filter((x) => x && String(x).trim()).join(' ') || artiste.nom || '';
+  return {
+    artiste_nom: nom,
+    logo: 'actifs/logo-gvsj.png',
+    oeuvres: oeuvres.map((o) => {
+      const dims = o.dimensions || '';
+      const med = o.medium || '';
+      const sup = o.support || '';
+      const medSup = med ? (sup ? `${med} sur ${sup}` : med) : (sup || '');
+      const details = [dims, medSup].filter(Boolean).join(' · ');
+      const d = dispoCatalogue(o);
+      return {
+        inv: o.numero_inventaire || '',
+        titre: o.titre || '',
+        details,
+        dispo: d.label,
+        dispoClasse: d.classe,
+        photo: photoEnDataUrl(o.image_path),
+      };
+    }),
+  };
+}
+
+async function genererCataloguePdf(artisteId) {
+  const artiste = obtenirArtiste(artisteId);
+  if (!artiste) throw new Error('Artiste introuvable.');
+  const oeuvres = oeuvresPourCatalogue(artisteId);
+  const donnees = preparerDonneesCatalogue(artiste, oeuvres);
+
+  const dossier = getDocumentsDirAnnee(new Date().getFullYear());
+  const slugArt = slug([artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom);
+  const n = new Date();
+  const p = (x) => String(x).padStart(2, '0');
+  const stamp = `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}`;
+  const sortie = path.join(dossier, `Catalogue_${slugArt || 'artiste'}_${stamp}.pdf`);
+
+  await genererPdf({ gabaritNom: 'gabarit-catalogue.html', donnees, sortie, paysage: false });
+  return { pdf_path: sortie, nb_oeuvres: oeuvres.length };
+}
+
+module.exports = { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf };

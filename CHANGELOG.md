@@ -12,6 +12,12 @@ identifiants.
 
 ### Ajouté
 
+- **Catalogue d'artiste imprimable (PDF)** — bouton **« Catalogue PDF »** sur la
+  fiche artiste : génère un PDF portrait Lettre, **6 œuvres par page** (grille
+  2×3, identité rouge GVSJ #900001, sauts de page automatiques). Sous chaque
+  œuvre : n° d'inventaire, titre, dimensions, médium (sur support) et — selon la
+  disponibilité — le **prix** si l'œuvre est disponible, sinon **« Non
+  disponible »**. Exclut les œuvres archivées et retirées.
 - **Sélecteur d'unité pouces / cm** sur le calculateur de prix (Outils) et sur
   les champs de dimensions de la fiche d'œuvre. Changer d'unité **convertit les
   valeurs affichées** ; la source de vérité et l'enregistrement restent

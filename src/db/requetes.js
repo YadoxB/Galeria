@@ -712,9 +712,23 @@ function voisinsVente(id) {
   };
 }
 
+// Œuvres d'un artiste pour le catalogue imprimé : exclut les archivées et les
+// retirées, ordonnées par numéro d'inventaire puis titre.
+function oeuvresPourCatalogue(artisteId) {
+  const db = openDatabase();
+  return db.prepare(`
+    SELECT o.id, o.titre, o.numero_inventaire, o.medium, o.support,
+           o.dimensions, o.statut, o.prix, o.image_path
+    FROM oeuvres o
+    WHERE o.artiste_id = ? AND o.archive = 0 AND o.retrait_date IS NULL
+    ORDER BY o.numero_inventaire COLLATE NOCASE, o.titre COLLATE NOCASE
+  `).all(artisteId);
+}
+
 module.exports = {
   listerArtistes,
   obtenirArtiste,
+  oeuvresPourCatalogue,
   obtenirFicheArtisteBundle,
   voisinsArtiste,
   listerOeuvres,

@@ -183,6 +183,7 @@ export async function rendreArtisteFiche(contenu, params) {
         <div class="zone-identite-actions">
           <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
           ${boutonArchive({ archive: a.archive })}
+          <button class="btn-action btn-secondaire" id="btn-catalogue-pdf">Catalogue PDF</button>
           <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
         </div>
       </div>
@@ -406,6 +407,46 @@ export async function rendreArtisteFiche(contenu, params) {
       });
       if (!fait) return;
     });
+
+    const btnCatalogue = contenu.querySelector('#btn-catalogue-pdf');
+    if (btnCatalogue) {
+      btnCatalogue.addEventListener('click', async () => {
+        if (!a.nb_oeuvres) {
+          await confirmer({
+            type: 'info',
+            title: 'Aucune œuvre',
+            message: "Cet artiste n'a aucune œuvre à mettre au catalogue.",
+            buttons: ['OK'],
+          });
+          return;
+        }
+        const libelle = btnCatalogue.textContent;
+        btnCatalogue.disabled = true;
+        btnCatalogue.textContent = 'Génération…';
+        try {
+          const res = await window.api.pdfCatalogueGenerer(a.id);
+          const rep = await confirmer({
+            type: 'succes',
+            title: 'Catalogue produit',
+            message: `Catalogue de ${res.nb_oeuvres} œuvre(s) généré en PDF.`,
+            buttons: ['Ouvrir le PDF', 'Fermer'],
+            defaultId: 0,
+            cancelId: 1,
+          });
+          if (rep === 0) { try { await window.api.pdfOuvrir(res.pdf_path); } catch {} }
+        } catch (err) {
+          await confirmer({
+            type: 'error',
+            title: 'Échec de la génération',
+            message: nettoyerErreur(err),
+            buttons: ['OK'],
+          });
+        } finally {
+          btnCatalogue.disabled = false;
+          btnCatalogue.textContent = libelle;
+        }
+      });
+    }
 
     const avatarVision = contenu.querySelector('#avatar-vision');
     if (avatarVision && a.photo_path) {
