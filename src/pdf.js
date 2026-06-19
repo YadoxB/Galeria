@@ -57,6 +57,18 @@ function typeContrat(typeOeuvre) {
   return { type: 'peintre', type_autre: '' };
 }
 
+// Cote (commission) de la galerie selon le type d'œuvre.
+// Sculpture : 33 %. Tout le reste (peinture, reproduction, photo, etc.) : le
+// défaut configurable de la galerie (50 %). NB : pour les reproductions, les
+// frais de production ne sont pas encore déduits ici (champ persistant à venir,
+// voir A-VALIDER) — la cote s'applique alors au plein prix.
+function coteGaleriePourType(typeOeuvre, cfg) {
+  const defaut = cfg?.documents?.cote_galerie_pourcent || 50;
+  const t = (typeOeuvre || '').toLowerCase();
+  if (t.includes('sculpt')) return 33;
+  return defaut;
+}
+
 function donneesGalerie(cfg) {
   const g = cfg.galerie || {};
   return {
@@ -144,7 +156,7 @@ function preparerDonneesFactureArtiste(vente, artiste, cfg, numeroFactureArtiste
       prix_regulier: (Number(vente.prix_vente) || 0) + (Number(vente.rabais_artiste) || 0) + (Number(vente.rabais_galerie) || 0),
       rabais_artiste: Number(vente.rabais_artiste) || 0,
       rabais_galerie: Number(vente.rabais_galerie) || 0,
-      cote_pct: cfg.documents.cote_galerie_pourcent || 50,
+      cote_pct: coteGaleriePourType(vente.oeuvre_type, cfg),
     },
     taxes: {
       actives: !!artiste.percoit_taxes,

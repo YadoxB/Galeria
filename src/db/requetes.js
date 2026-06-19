@@ -630,7 +630,7 @@ function obtenirVente(id) {
     SELECT
       v.*,
       o.titre AS oeuvre_titre, o.numero_inventaire, o.image_path,
-      o.dimensions, o.medium, o.support, o.annee,
+      o.type AS oeuvre_type, o.dimensions, o.medium, o.support, o.annee,
       o.prix AS oeuvre_prix,
       a.id AS artiste_id, TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
       c.nom AS client_nom, c.prenom AS client_prenom,
