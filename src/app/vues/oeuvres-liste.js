@@ -18,77 +18,6 @@ function ecrirePref(cle, val) {
   try { localStorage.setItem(cle, val); } catch {}
 }
 
-function formaterEntier(n) {
-  return (Number(n) || 0).toLocaleString('fr-CA');
-}
-
-function formaterMontantCourt(n) {
-  const v = Number(n) || 0;
-  if (v >= 1000) return Math.round(v).toLocaleString('fr-CA') + ' $';
-  return v.toFixed(2) + ' $';
-}
-
-function gabaritStatsOeuvres(stats) {
-  const deltaArtistes = stats.artistesDeltaMois > 0
-    ? `+${stats.artistesDeltaMois} ce mois-ci`
-    : 'aucun nouveau ce mois';
-  const deltaOeuvres = stats.totalDeltaMois > 0
-    ? `+${stats.totalDeltaMois} ce mois-ci`
-    : 'aucune nouvelle ce mois';
-  return `
-    <div class="stats-row">
-      <div class="stat-carte">
-        <div class="stat-tuile tuile-doree" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M21 16l-5-5L5 21"/>
-          </svg>
-        </div>
-        <div class="stat-corps">
-          <p class="stat-libelle">Œuvres au total</p>
-          <p class="stat-valeur">${formaterEntier(stats.total)}</p>
-          <p class="stat-delta ${stats.totalDeltaMois > 0 ? '' : 'neutre'}">${ech(deltaOeuvres)}</p>
-        </div>
-      </div>
-      <div class="stat-carte">
-        <div class="stat-tuile tuile-saumon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
-          </svg>
-        </div>
-        <div class="stat-corps">
-          <p class="stat-libelle">Artistes représentés</p>
-          <p class="stat-valeur">${formaterEntier(stats.artistes)}</p>
-          <p class="stat-delta ${stats.artistesDeltaMois > 0 ? '' : 'neutre'}">${ech(deltaArtistes)}</p>
-        </div>
-      </div>
-      <div class="stat-carte">
-        <div class="stat-tuile tuile-terracotta" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="3" x2="12" y2="21"/><path d="M17 6.5H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H6"/>
-          </svg>
-        </div>
-        <div class="stat-corps">
-          <p class="stat-libelle">Ventes ce mois</p>
-          <p class="stat-valeur">${formaterEntier(stats.ventesRecentes)}</p>
-          <p class="stat-delta neutre">${ech(formaterMontantCourt(stats.ventesRecentesMontant))}</p>
-        </div>
-      </div>
-      <div class="stat-carte">
-        <div class="stat-tuile tuile-navy" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-        </div>
-        <div class="stat-corps">
-          <p class="stat-libelle">Disponibles</p>
-          <p class="stat-valeur">${formaterEntier(stats.disponibles)}</p>
-          <p class="stat-delta neutre">${stats.disponiblesPct}% du total</p>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
 function trier(oeuvres, tri) {
   const liste = [...oeuvres];
   const cmpStr = (a, b) => sansAccents(a || '').localeCompare(sansAccents(b || ''));
@@ -153,11 +82,10 @@ export async function rendreOeuvresListe(contenu, params = {}) {
   const filtres = { inclureArchives };
   if (params.artiste_id != null) filtres.artiste_id = params.artiste_id;
 
-  let [oeuvres, artistes, types, stats] = await Promise.all([
+  let [oeuvres, artistes, types] = await Promise.all([
     window.api.oeuvresListe(filtres),
     window.api.artistesListe({ inclureArchives: true }),
     window.api.oeuvresTypes(),
-    params.artiste_id == null ? window.api.oeuvresStats() : Promise.resolve(null),
   ]);
 
   let vueCourante = lirePref(CLE_PREF_VUE, 'grille');
@@ -184,7 +112,6 @@ export async function rendreOeuvresListe(contenu, params = {}) {
         boutonSecondaireLibelle: 'Retirer',
         idBoutonSecondaire: 'btn-retirer-lot',
       })}
-      ${stats ? gabaritStatsOeuvres(stats) : ''}
       ${filtreActif}
 
       <div class="controles-vue">
