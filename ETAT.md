@@ -332,6 +332,23 @@ Grosse session de fonctionnalités, tout commité et fusionné sur `master`, **p
 - **Bug connu (hors périmètre)** : Acrobat plante (« Font Capture ») quelques secondes après l'ouverture de tout PDF généré (certificats inclus) — environnemental, PDF valide. Tâche de fond créée pour l'investiguer (tester un autre visionneur comme Edge).
 - **Prochaine étape recommandée** : **tagger + release** une nouvelle version (≥ v0.2.5) et la livrer aux parents en install manuelle (ils sont sur 0.2.0). Puis : commission par type d'œuvre, tutoriel de 1re ouverture, édition en batch, ou jalon 5 (photos).
 
+### Journal de session — 2026-06-18 (suite — Lot 0 : quick wins + identité rouge)
+
+Nouveau train de fonctionnalités planifié avec Dave, organisé en **lots**. Templates fournis **hors repo** (voir mémoire `reference-gabarits-documents`, dossier `F:\Galerie\Automatisation\Galeria\`) :
+
+- **Lot 0** (✓ fait) : certificat doré → rouge, TVQ pré-remplie, validation numéros de taxes, sélecteur d'unité po/cm.
+- **Lot 1** : calculateur de commission (projection nette artiste après TPS/TVQ).
+- **Lot 2** : Annexe A **dépôt** (rouge) + **retrait** (bleu `#2a5c8a`) + **catalogue artiste** (portrait, 6 œuvres/page).
+- **Lot 3** : **pochette de vente** (lettre de remerciement — 8 variantes FR/EN × personne/web × cadeau — + fiche œuvre + présentation artiste) **fusionnée avec la modale post-vente** « Produire un rapport ». Nécessite 3 champs de vente (`type_achat`, `est_cadeau`, `langue`), un champ artiste « distinctions », et `guide_certificat.pdf` en actif fixe.
+- **Lot 4** : refonte de la section **Documents** (tous types, rangement clair).
+- **Lot 5** : refonte de la **hiérarchie de la sidebar** (brief + maquette fournis ; ranger la section Rapport sous ARCHIVES).
+
+**Lot 0 livré et testé par Dave (OK dans l'app) :**
+
+- **Certificat** : accent doré `#b9912f` → **rouge GVSJ `#900001`** (6 occurrences + halo de focus). Amorce l'identité rouge commune à tous les documents.
+- **Fiche artiste** : à la création, fiscalité pré-remplie avec **TPS + TVQ** (numéros vides). **Validation bloquante** à l'enregistrement pour TPS (`9 + RT + 4`) et TVQ (`10 + TQ + 4`), **espaces ignorés** ; autres étiquettes et champs vides non bloquants (champ en rouge + dialogue d'erreur si invalide).
+- **Sélecteur d'unité po ⇄ cm** sur le calculateur de prix (Outils) **et** sur les dimensions de la fiche d'œuvre. **Source de vérité toujours en pouces** (`calcPo` / `dimPo`) : le toggle convertit l'affichage ; format/orientation/prix/sauvegarde utilisent les pouces. Réutilise le composant segmenté `.taille-vue`. Démo : `demos/outils-unite-mesure.html`. Décision : le « convertisseur » séparé devient un **sélecteur d'unité sur l'outil en place**.
+
 ---
 
 ## Notes techniques pour l'intervenant suivant

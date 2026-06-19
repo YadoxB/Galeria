@@ -1170,6 +1170,16 @@ footer {
 }
 .taille-vue.cache { display: none; }
 
+/* En-tête de la zone Dimensions : libellé à gauche, sélecteur d'unité à droite */
+.dim-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.dim-entete > label,
+.dim-entete > h4 { margin: 0; }
+
 /* ====== Mode sélection (retrait en lot) ====== */
 .barre-selection { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--gallery-navy); color: var(--soft-ivory); border-radius: 12px; padding: 10px 16px; margin-bottom: var(--s3); }
 .barre-selection.cache { display: none; }
@@ -4042,6 +4052,14 @@ details.bloc.pliable > .bloc-corps {
   outline: none;
   border-color: var(--warm-gold);
   box-shadow: 0 0 0 4px rgba(201, 154, 61, 0.18);
+}
+.ligne-taxe .champ-numero.erreur {
+  border-color: var(--erreur);
+  background: rgba(144, 0, 1, 0.04);
+}
+.ligne-taxe .champ-numero.erreur:focus {
+  border-color: var(--erreur);
+  box-shadow: 0 0 0 4px rgba(144, 0, 1, 0.15);
 }
 
 .btn-supprimer-ligne {

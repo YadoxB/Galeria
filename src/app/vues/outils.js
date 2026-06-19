@@ -38,7 +38,13 @@ export async function rendreOutils(contenu) {
           </div>
 
           <div class="form-champ">
-            <label>Dimensions (pouces)</label>
+            <div class="dim-entete">
+              <label>Dimensions</label>
+              <div class="taille-vue" role="group" aria-label="Unité de mesure">
+                <button type="button" data-unite="po" class="actif">pouces</button>
+                <button type="button" data-unite="cm">cm</button>
+              </div>
+            </div>
             <div class="dim-trio">
               <div class="dim-champ">
                 <input type="number" id="calc-hauteur" min="0" step="0.1" placeholder="0">
@@ -49,7 +55,7 @@ export async function rendreOutils(contenu) {
                 <input type="number" id="calc-largeur" min="0" step="0.1" placeholder="0">
                 <span class="dim-libelle">Largeur</span>
               </div>
-              <span class="dim-unite">pouces</span>
+              <span class="dim-unite" id="calc-dim-unite">pouces</span>
             </div>
           </div>
 
@@ -126,8 +132,8 @@ export async function rendreOutils(contenu) {
       zoneResultat.innerHTML = `<p class="aide-champ" style="font-style:italic;">Choisis un artiste pour démarrer.</p>`;
       return;
     }
-    const h = Number(inHauteur.value) || 0;
-    const l = Number(inLargeur.value) || 0;
+    const h = calcPo.h || 0;
+    const l = calcPo.l || 0;
     if (h <= 0 || l <= 0) {
       zoneResultat.innerHTML = `<p class="aide-champ" style="font-style:italic;">Entre la hauteur et la largeur pour calculer.</p>`;
       return;
@@ -164,8 +170,41 @@ export async function rendreOutils(contenu) {
     `;
   }
 
+  // ====== Unité de mesure (pouces ⇄ cm) ======
+  // La source de vérité reste en pouces (calcPo) ; l'affichage est converti.
+  // Le calcul du prix utilise toujours les pouces.
+  const PO_EN_CM = 2.54;
+  let uniteCalc = 'po';
+  const arrondi2 = (n) => Math.round(n * 100) / 100;
+  const calcPo = { h: null, l: null };
+  const labelUniteCalc = contenu.querySelector('#calc-dim-unite');
+
+  function lireSaisieCalc() {
+    const f = uniteCalc === 'cm' ? PO_EN_CM : 1;
+    const vh = parseFloat(inHauteur.value);
+    const vl = parseFloat(inLargeur.value);
+    calcPo.h = Number.isFinite(vh) ? vh / f : null;
+    calcPo.l = Number.isFinite(vl) ? vl / f : null;
+  }
+  function afficherUniteCalc() {
+    const f = uniteCalc === 'cm' ? PO_EN_CM : 1;
+    inHauteur.value = calcPo.h != null ? arrondi2(calcPo.h * f) : '';
+    inLargeur.value = calcPo.l != null ? arrondi2(calcPo.l * f) : '';
+    if (labelUniteCalc) labelUniteCalc.textContent = uniteCalc === 'cm' ? 'cm' : 'pouces';
+  }
+
   selArtiste.addEventListener('change', () => chargerArtiste(selArtiste.value));
-  [inMedium, inHauteur, inLargeur].forEach((el) => el.addEventListener('input', calculer));
+  inMedium.addEventListener('input', calculer);
+  [inHauteur, inLargeur].forEach((el) => el.addEventListener('input', () => { lireSaisieCalc(); calculer(); }));
+  contenu.querySelectorAll('[data-unite]').forEach((b) => {
+    b.addEventListener('click', () => {
+      if (b.dataset.unite === uniteCalc) return;
+      contenu.querySelectorAll('[data-unite]').forEach((x) => x.classList.toggle('actif', x === b));
+      uniteCalc = b.dataset.unite;
+      afficherUniteCalc();
+    });
+  });
+
   afficherCotesArtiste();
   calculer();
 }

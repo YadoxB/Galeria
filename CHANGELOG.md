@@ -8,6 +8,29 @@ identifiants.
 
 ---
 
+## [Non publié]
+
+### Ajouté
+
+- **Sélecteur d'unité pouces / cm** sur le calculateur de prix (Outils) et sur
+  les champs de dimensions de la fiche d'œuvre. Changer d'unité **convertit les
+  valeurs affichées** ; la source de vérité et l'enregistrement restent
+  **toujours en pouces** (aucune dérive sur les allers-retours).
+- **Pré-remplissage TPS + TVQ** dans la section fiscalité à la **création** d'un
+  artiste (étiquettes remplies, numéros à compléter).
+- **Validation bloquante du format des numéros TPS et TVQ** à l'enregistrement
+  d'un artiste — TPS : `9 chiffres + RT + 4` · TVQ : `10 chiffres + TQ + 4`,
+  **espaces ignorés**. Les autres étiquettes (TVH, étranger…) et les champs
+  laissés vides ne bloquent jamais.
+
+### Modifié
+
+- **Certificat d'authenticité** : l'accent **doré (#b9912f)** passe au **rouge
+  GVSJ #900001**, amorçant l'identité visuelle rouge commune à tous les
+  documents générés.
+
+---
+
 ## [0.2.5] — 2026-06-18
 
 > Publiée sur GitHub Releases. À livrer aux parents en une **installation

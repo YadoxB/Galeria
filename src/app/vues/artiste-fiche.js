@@ -483,7 +483,9 @@ export async function rendreArtisteFiche(contenu, params) {
     const taxes = parserNumerosTaxes(a.numeros_taxes);
     const lignesTaxesHtml = taxes.length
       ? taxes.map((t) => gabaritLigneTaxe(t.etiquette, t.numero)).join('')
-      : (nouveau ? gabaritLigneTaxe('TPS', '') : gabaritLigneTaxe('TPS', ''));
+      : (nouveau
+          ? gabaritLigneTaxe('TPS', '') + gabaritLigneTaxe('TVQ', '')
+          : gabaritLigneTaxe('TPS', ''));
 
     const nomAffichage = nomComplet(a) || a.nom || '';
     const titrePage = nouveau ? 'Nouvel artiste' : `Modifier « ${ech(nomAffichage)} »`;
@@ -866,6 +868,39 @@ export async function rendreArtisteFiche(contenu, params) {
         }))
         .filter((t) => t.numero);
       data.numeros_taxes = lignesTaxes.length ? JSON.stringify(lignesTaxes) : null;
+
+      // Validation bloquante du format des numéros TPS et TVQ (espaces ignorés).
+      // On ne valide que les lignes TPS/TVQ remplies ; les autres étiquettes et
+      // les champs laissés vides ne bloquent pas.
+      const FORMATS_TAXES = {
+        TPS: { regex: /^\d{9}RT\d{4}$/, exemple: '123456789 RT 0001' },
+        TVQ: { regex: /^\d{10}TQ\d{4}$/, exemple: '1234567890 TQ 0001' },
+      };
+      const erreursTaxes = [];
+      zoneTaxes.querySelectorAll('.ligne-taxe').forEach((l) => {
+        const inNum = l.querySelector('.champ-numero');
+        inNum.classList.remove('erreur');
+        const etiquette = l.querySelector('.champ-etiquette').value.trim().toUpperCase();
+        const numeroBrut = inNum.value.trim();
+        const fmt = FORMATS_TAXES[etiquette];
+        if (!fmt || !numeroBrut) return;
+        const numeroNormalise = numeroBrut.replace(/\s+/g, '').toUpperCase();
+        if (!fmt.regex.test(numeroNormalise)) {
+          inNum.classList.add('erreur');
+          erreursTaxes.push(`${etiquette} : « ${numeroBrut} » — format attendu : ${fmt.exemple}`);
+        }
+      });
+      if (erreursTaxes.length) {
+        await confirmer({
+          type: 'error',
+          title: 'Numéro de taxe invalide',
+          message: 'Le format de certains numéros de taxes ne correspond pas :',
+          detail: erreursTaxes.join('\n')
+            + '\n\nTPS : 9 chiffres + RT + 4 chiffres.\nTVQ : 10 chiffres + TQ + 4 chiffres.\n(Les espaces ne sont pas pris en compte.)',
+          buttons: ['OK'],
+        });
+        return;
+      }
 
       const lignesCotes = Array.from(zoneCotes.querySelectorAll('.ligne-cote'))
         .map((l) => ({

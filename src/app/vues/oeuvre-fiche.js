@@ -886,7 +886,13 @@ export async function rendreOeuvreFiche(contenu, params) {
                 </div>
               </div>
               <div class="sous-section">
-                <h4>Dimensions (en pouces)</h4>
+                <div class="dim-entete">
+                  <h4>Dimensions</h4>
+                  <div class="taille-vue" role="group" aria-label="Unité de mesure">
+                    <button type="button" data-unite-dim="po" class="actif">pouces</button>
+                    <button type="button" data-unite-dim="cm">cm</button>
+                  </div>
+                </div>
                 <div class="form-champ">
                   <div class="dim-trio">
                     <div class="dim-champ">
@@ -903,7 +909,7 @@ export async function rendreOeuvreFiche(contenu, params) {
                       <input type="number" id="f-profondeur" name="profondeur" value="${o.profondeur ?? ''}" min="0" step="0.1" placeholder="0">
                       <span class="dim-libelle">Profondeur</span>
                     </div>
-                    <span class="dim-unite">pouces</span>
+                    <span class="dim-unite" id="f-dim-unite">pouces</span>
                   </div>
                   <p class="aide-champ" id="dim-apercu">${o.dimensions ? `Saisie héritée : <em>${ech(o.dimensions)}</em>` : 'La profondeur est facultative.'}</p>
                 </div>
@@ -1238,6 +1244,39 @@ export async function rendreOeuvreFiche(contenu, params) {
     const elDimensions = form.elements.dimensions;
     const elApercu = contenu.querySelector('#dim-apercu');
 
+    // ---- Unité de mesure des dimensions (pouces ⇄ cm) ----
+    // La source de vérité reste toujours en pouces (dimPo) ; l'affichage est
+    // converti à la volée. Texte des dimensions, format, orientation et
+    // sauvegarde utilisent les pouces, quelle que soit l'unité affichée.
+    const PO_EN_CM = 2.54;
+    let uniteDim = 'po';
+    const dimPo = { h: null, l: null, p: null };
+    const labelUniteDim = contenu.querySelector('#f-dim-unite');
+    const arrondi2Dim = (n) => Math.round(n * 100) / 100;
+    function lireSaisieDim() {
+      const f = uniteDim === 'cm' ? PO_EN_CM : 1;
+      const conv = (el) => { const v = parseFloat(el.value); return Number.isFinite(v) ? arrondi2Dim(v / f) : null; };
+      dimPo.h = conv(elHauteur);
+      dimPo.l = conv(elLargeur);
+      dimPo.p = conv(elProfondeur);
+    }
+    function afficherUniteDim() {
+      const f = uniteDim === 'cm' ? PO_EN_CM : 1;
+      const show = (el, v) => { el.value = v != null ? arrondi2Dim(v * f) : ''; };
+      show(elHauteur, dimPo.h);
+      show(elLargeur, dimPo.l);
+      show(elProfondeur, dimPo.p);
+      if (labelUniteDim) labelUniteDim.textContent = uniteDim === 'cm' ? 'cm' : 'pouces';
+    }
+    contenu.querySelectorAll('[data-unite-dim]').forEach((b) => {
+      b.addEventListener('click', () => {
+        if (b.dataset.uniteDim === uniteDim) return;
+        contenu.querySelectorAll('[data-unite-dim]').forEach((x) => x.classList.toggle('actif', x === b));
+        uniteDim = b.dataset.uniteDim;
+        afficherUniteDim();
+      });
+    });
+
     // L'utilisateur peut écraser format/orientation à la main ; on cesse alors
     // de les auto-remplir tant qu'il est dans cette session d'édition.
     let formatAuto = !o.format
@@ -1249,9 +1288,10 @@ export async function rendreOeuvreFiche(contenu, params) {
     elOrientation.addEventListener('input', () => { orientationAuto = false; });
 
     const majDimensions = () => {
-      const h = elHauteur.value;
-      const l = elLargeur.value;
-      const p = elProfondeur.value;
+      lireSaisieDim();
+      const h = dimPo.h ?? '';
+      const l = dimPo.l ?? '';
+      const p = dimPo.p ?? '';
       const texte = formaterDimensionsTexte(h, l, p);
       if (texte) {
         elDimensions.value = texte;
@@ -1341,8 +1381,8 @@ export async function rendreOeuvreFiche(contenu, params) {
         return;
       }
       const oeuvreVirt = {
-        hauteur: Number(elHauteur.value) || 0,
-        largeur: Number(elLargeur.value) || 0,
+        hauteur: dimPo.h || 0,
+        largeur: dimPo.l || 0,
         medium: elMedium?.value || '',
         format: elFormat?.value || '',
       };
@@ -1433,6 +1473,13 @@ export async function rendreOeuvreFiche(contenu, params) {
       e.preventDefault();
       const fd = new FormData(form);
       const data = Object.fromEntries(fd);
+
+      // Les dimensions sont toujours stockées en pouces, quelle que soit
+      // l'unité affichée au moment de la saisie.
+      lireSaisieDim();
+      data.hauteur = dimPo.h != null ? dimPo.h : '';
+      data.largeur = dimPo.l != null ? dimPo.l : '';
+      data.profondeur = dimPo.p != null ? dimPo.p : '';
 
       const enchainerSuivante = enchainement && e.submitter?.id === 'btn-enregistrer-et-suivante';
       const terminerEnchainement = enchainement && e.submitter?.id === 'btn-terminer-enchainement';

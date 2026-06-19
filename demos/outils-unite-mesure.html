@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo sélecteur d'unité (po/cm) sur le calculateur</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <link rel="stylesheet" href="../src/styles.css">
+  <style>
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+    .demo-bar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px 20px; background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    main { padding: 24px 32px 60px; max-width: 720px; }
+    p.desc { color: var(--slate); font-size: 14px; margin: 0 0 20px; }
+
+    /* En-tête de la zone dimensions : libellé à gauche, sélecteur d'unité à droite */
+    .dim-entete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .dim-entete > label { margin: 0; }
+
+    /* Sélecteur d'unité segmenté (même esprit que le toggle Grille/Liste) */
+    .unite-vue { display: inline-flex; gap: 4px; background: var(--cloud); padding: 3px; border-radius: 999px; }
+    .unite-vue button { border: 0; background: transparent; font-family: inherit; font-size: 12.5px; color: var(--slate); padding: 4px 12px; border-radius: 999px; cursor: pointer; }
+    .unite-vue button.actif { background: var(--porcelain); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+
+    .note-unite { margin-top: 8px; font-size: 12px; color: var(--stone); font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Sélecteur d'unité po/cm sur le calculateur</div>
+    <div class="note" style="font-size:12px;color:rgba(255,255,255,.6)">CSS réel. Données fictives.</div>
+  </div>
+
+  <main>
+    <p class="desc">Au lieu d'un outil de conversion séparé, le <b>calculateur de prix</b> reçoit un sélecteur d'unité <b>po / cm</b> près des dimensions. Quand tu changes d'unité, les nombres saisis <b>se convertissent automatiquement</b>. Le prix se calcule toujours à partir des pouces (en cm, Galeria convertit sous le capot). <b>Change l'unité pour voir les valeurs s'adapter.</b></p>
+
+    <div class="vue-fiche vue-fiche-bento" style="padding:0;">
+      <div class="grille-bento" style="display:block;">
+        <div class="carte" style="max-width:660px;">
+          <h3>Calculateur de prix</h3>
+          <p class="aide-champ">Sélectionne un artiste et saisis les dimensions de l'œuvre. Le prix préférentiel (sans encadrement) et courant (encadré) s'affichent automatiquement à partir des cotes.</p>
+
+          <div class="grille-form">
+            <div class="form-champ">
+              <label for="calc-artiste">Artiste</label>
+              <select id="calc-artiste">
+                <option value="">— Sélectionner —</option>
+                <option value="1" selected>Clarence Bourgoin</option>
+                <option value="2">André Coppens</option>
+              </select>
+            </div>
+            <div class="form-champ">
+              <label for="calc-medium">Médium (optionnel)</label>
+              <input type="text" id="calc-medium" placeholder="Acrylique, encaustique…" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="form-champ">
+            <div class="dim-entete">
+              <label>Dimensions</label>
+              <div class="unite-vue" id="unite-vue">
+                <button data-unite="po" class="actif">pouces</button>
+                <button data-unite="cm">cm</button>
+              </div>
+            </div>
+            <div class="dim-trio">
+              <div class="dim-champ">
+                <input type="number" id="calc-hauteur" min="0" step="0.1" placeholder="0" value="24">
+                <span class="dim-libelle">Hauteur</span>
+              </div>
+              <span class="dim-mult">×</span>
+              <div class="dim-champ">
+                <input type="number" id="calc-largeur" min="0" step="0.1" placeholder="0" value="36">
+                <span class="dim-libelle">Largeur</span>
+              </div>
+              <span class="dim-unite" id="dim-unite-label">pouces</span>
+            </div>
+            <p class="note-unite" id="note-unite">Équivaut à 24 × 36 po. Le calcul du prix utilise les pouces.</p>
+          </div>
+
+          <div id="calc-resultat" class="calc-resultat">
+            <div class="prix-suggere prix-suggere-actif">
+              <div class="prix-suggere-entete">
+                <span class="prix-suggere-libelle">Prix courant (encadré)</span>
+                <span class="prix-suggere-valeur">3 100 $</span>
+              </div>
+              <p class="prix-suggere-formule">Format : <strong>Moyen</strong> · calculé à partir de 24 × 36 po.</p>
+              <p class="prix-suggere-formule">Préférentiel (sans cadre) : <strong>2 970 $</strong></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const PO_EN_CM = 2.54;
+    let unite = 'po';
+    const inH = document.getElementById('calc-hauteur');
+    const inL = document.getElementById('calc-largeur');
+    const labelUnite = document.getElementById('dim-unite-label');
+    const note = document.getElementById('note-unite');
+    const arrondi = (n) => Math.round(n * 100) / 100;
+
+    // Valeurs « vraies » toujours conservées en pouces, peu importe l'affichage.
+    let hPo = 24, lPo = 36;
+
+    function afficher() {
+      const f = unite === 'cm' ? PO_EN_CM : 1;
+      inH.value = hPo ? arrondi(hPo * f) : '';
+      inL.value = lPo ? arrondi(lPo * f) : '';
+      labelUnite.textContent = unite === 'cm' ? 'cm' : 'pouces';
+      note.textContent = `Équivaut à ${arrondi(hPo)} × ${arrondi(lPo)} po. Le calcul du prix utilise les pouces.`;
+    }
+
+    function lireSaisie() {
+      const f = unite === 'cm' ? PO_EN_CM : 1;
+      hPo = (parseFloat(inH.value) || 0) / f;
+      lPo = (parseFloat(inL.value) || 0) / f;
+      note.textContent = `Équivaut à ${arrondi(hPo)} × ${arrondi(lPo)} po. Le calcul du prix utilise les pouces.`;
+    }
+
+    inH.addEventListener('input', lireSaisie);
+    inL.addEventListener('input', lireSaisie);
+    document.querySelectorAll('#unite-vue button').forEach((b) => {
+      b.addEventListener('click', () => {
+        if (b.dataset.unite === unite) return;
+        document.querySelectorAll('#unite-vue button').forEach((x) => x.classList.remove('actif'));
+        b.classList.add('actif');
+        unite = b.dataset.unite;
+        afficher(); // reconvertit l'affichage à partir des pouces conservés
+      });
+    });
+
+    afficher();
+  </script>
+</body>
+</html>
