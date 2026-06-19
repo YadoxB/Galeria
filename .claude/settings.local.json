@@ -96,7 +96,13 @@
       "Bash(node --check src/db/nomenclature.js)",
       "Bash(xargs ls -la)",
       "Bash(awk '{print $5, $9}')",
-      "Bash(node --check src/app/vues/outils.js)"
+      "Bash(node --check src/app/vues/outils.js)",
+      "Bash(cd \"F:/Galerie/Automatisation/GalerieApp/.claude/worktrees/interesting-sanderson-54354e\" && cp \"F:/Galerie/Automatisation/GalerieApp/.claude/worktrees/thirsty-wu-958e92/demos/sidebar-hierarchie.html\" demos/sidebar-hierarchie.html && ls -la demos/sidebar-hierarchie.html | awk '{print $5, $9}')",
+      "Bash(node -e \"const r=require\\('./src/db/requetes.js'\\); const m=require\\('./src/db/mutations.js'\\); console.log\\('requetes.oeuvresDetailArtiste:', typeof r.oeuvresDetailArtiste\\); console.log\\('mutations.enregistrerAnnexe:', typeof m.enregistrerAnnexe, '| majAnnexePdfPath:', typeof m.majAnnexePdfPath\\);\")",
+      "Bash(node --check src/preload.js)",
+      "Bash(node --check src/app/annexe.js)",
+      "Bash(node -e \"console.log\\('oeuvresParIds:', typeof require\\('./src/db/requetes.js'\\).oeuvresParIds\\)\")",
+      "Bash('@ 2>/dev/null; git log --oneline -3)"
     ]
   }
 }
