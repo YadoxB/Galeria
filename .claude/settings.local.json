@@ -104,7 +104,10 @@
       "Bash(node -e \"console.log\\('oeuvresParIds:', typeof require\\('./src/db/requetes.js'\\).oeuvresParIds\\)\")",
       "Bash('@ 2>/dev/null; git log --oneline -3)",
       "Bash(cd \"F:/Galerie/Automatisation/GalerieApp/.claude/worktrees/interesting-sanderson-54354e\" && cp \"F:/Galerie/Automatisation/Galeria/INFORMATIONS POUR  L'ACHETEUR \\(CERTIFICAT\\).pdf\" gabarits/actifs/guide_certificat.pdf && ls -la gabarits/actifs/guide_certificat.pdf | awk '{print $5, $9}')",
-      "Bash(node scripts/_fixg.js)"
+      "Bash(node scripts/_fixg.js)",
+      "Bash(node -e \"const m=require\\('./src/db/mutations.js'\\); console.log\\('creerCertificat:',typeof m.creerCertificat,'| reserverProchainNumeroCertificat:',typeof m.reserverProchainNumeroCertificat\\)\")",
+      "Bash(node --check src/preload-editeur.js)",
+      "Bash(node -e \"require\\('./src/db/mutations.js'\\); console.log\\('backend OK'\\)\")"
     ]
   }
 }
