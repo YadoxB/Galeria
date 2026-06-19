@@ -305,6 +305,10 @@ const COLONNES_VENTE = [
   ['mode_paiement', vide],
   ['numero_facture', vide],
   ['notes', vide],
+  // Pochette de vente — sélection de la lettre de remerciement
+  ['type_achat', vide],
+  ['est_cadeau', bool],
+  ['langue', vide],
   // Jalon 3 — suivi cycle de vie post-vente
   ['paiement_statut', vide],
   ['paiement_date', vide],
@@ -674,8 +678,16 @@ function majAnnexePdfPath(id, pdfPath) {
   return { ok: true };
 }
 
+// Mémorise le PDF de présentation d'un artiste et la signature de son profil
+// (pour réutiliser le document tant que le profil ne change pas).
+function majPresentationArtiste(id, pdfPath, sig) {
+  const db = openDatabase();
+  db.prepare('UPDATE artistes SET presentation_path = ?, presentation_sig = ? WHERE id = ?').run(pdfPath, sig, id);
+  return { ok: true };
+}
+
 module.exports = {
-  enregistrerAnnexe, majAnnexePdfPath,
+  enregistrerAnnexe, majAnnexePdfPath, majPresentationArtiste,
   modifierArtiste, creerArtiste, supprimerArtiste,
   modifierOeuvre, creerOeuvre, supprimerOeuvre, majPreparationOeuvre,
   modifierClient, creerClient, supprimerClient,

@@ -676,6 +676,18 @@ export async function rendreVenteFiche(contenu, params) {
             <div class="grille-form">
               ${champTexte({ nom: 'mode_paiement', libelle: 'Mode de paiement', valeur: v.mode_paiement, liste: 'modes-paiement' })}
             </div>
+            <div class="grille-form">
+              ${champSelect({ nom: 'type_achat', libelle: "Type d'achat", valeur: v.type_achat || 'personne', options: [
+                { valeur: 'personne', libelle: 'En personne' },
+                { valeur: 'web', libelle: 'En ligne (web)' },
+              ]})}
+              ${champSelect({ nom: 'langue', libelle: 'Langue des documents', valeur: v.langue || 'FR', options: [
+                { valeur: 'FR', libelle: 'Français' },
+                { valeur: 'EN', libelle: 'Anglais' },
+              ]})}
+            </div>
+            ${champCheckbox({ nom: 'est_cadeau', libelle: 'Achat-cadeau', valeur: !!v.est_cadeau })}
+            <p class="aide-champ" style="margin-bottom:0;">Sert à choisir la lettre de remerciement de la pochette de vente.</p>
           </section>
 
           <section class="bloc">
@@ -771,6 +783,10 @@ export async function rendreVenteFiche(contenu, params) {
         mode_paiement: val('mode_paiement'),
         numero_facture: val('numero_facture'),
         notes: val('notes'),
+        // Pochette de vente — sélection de la lettre
+        type_achat: val('type_achat') || 'personne',
+        est_cadeau: form.elements.est_cadeau?.checked ? 1 : 0,
+        langue: val('langue') || 'FR',
         // Jalon 3 — suivi cycle de vie
         paiement_statut: val('paiement_statut') || null,
         paiement_date: val('paiement_date') || null,

@@ -15,6 +15,10 @@ const COLONNES_ATTENDUES = {
     ['instructions_ia', 'TEXT'],
     ['lien_chatgpt', 'TEXT'],
     ['cotes', 'TEXT'],
+    // Pochette de vente : présentation artiste mise en cache (réutilisée tant
+    // que le profil n'a pas changé). `presentation_sig` = signature des champs.
+    ['presentation_path', 'TEXT'],
+    ['presentation_sig', 'TEXT'],
   ],
   oeuvres: [
     ['format', 'TEXT'],
@@ -61,6 +65,10 @@ const COLONNES_ATTENDUES = {
     ['emballage_date', 'TEXT'],
     ['envoi_date', 'TEXT'],
     ['livraison_date', 'TEXT'],
+    // Pochette de vente : sélection de la lettre de remerciement.
+    ['type_achat', 'TEXT'],          // 'personne' | 'web'
+    ['est_cadeau', 'INTEGER NOT NULL DEFAULT 0'],
+    ['langue', 'TEXT'],              // 'FR' | 'EN'
   ],
 };
 

@@ -12,6 +12,16 @@ identifiants.
 
 ### Ajouté
 
+- **Présentation d'artiste imprimable (PDF)** — bouton **« Présentation PDF »**
+  sur la fiche artiste : photo + biographie + démarche + curriculum. Le **CV est
+  mis en forme en frise** (année à gauche — y compris plages `1996 à 2001` et
+  listes `2000, 2004, 2009` —, rubriques en intertitres, listes à tirets) ; les
+  **citations** (paragraphe entre guillemets « ») ressortent en **exergue** avec
+  attribution alignée à droite ; espacement français des guillemets automatique.
+  **Mise en cache** : le PDF n'est régénéré que si le profil de l'artiste a
+  changé (signature des champs), sinon la dernière version est réutilisée.
+- **Champs de vente pour la pochette** : type d'achat (en personne / web),
+  achat-cadeau, langue (FR / EN) — serviront à choisir la lettre de remerciement.
 - **Annexe A — dépôt / retrait d'œuvres (PDF)** — document signé artiste +
   galeriste confirmant la consignation (dépôt) ou la reprise (retrait) des
   œuvres. Format Lettre paysage, tableau des œuvres (n° inv, titre, format,
@@ -42,6 +52,8 @@ identifiants.
 
 ### Modifié
 
+- **Documents générés sur fond blanc** (présentation, catalogue, annexes) — pas
+  d'aplat de couleur à l'impression ; les accents rouge/bleu sont conservés.
 - **Classement des documents générés** : rangés par **type dans l'année**
   (`Documents\{année}\Certificats\`, `…\Factures artiste\`, `…\Catalogues\`,
   `…\Annexes\`, `…\Rapports\`) au lieu d'un seul dossier annuel. S'applique aux

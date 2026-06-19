@@ -1,10 +1,11 @@
 const { BrowserWindow } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const { openDatabase } = require('./db/database');
 const { getDocumentsDirAnnee, getPhotosDir } = require('./db/paths');
 const { obtenirCertificat, obtenirVente, obtenirArtiste, oeuvresPourCatalogue } = require('./db/requetes');
-const { obtenirOuReserverNumeroFactureArtisteVente, enregistrerAnnexe, majAnnexePdfPath } = require('./db/mutations');
+const { obtenirOuReserverNumeroFactureArtisteVente, enregistrerAnnexe, majAnnexePdfPath, majPresentationArtiste } = require('./db/mutations');
 const { obtenirConfig } = require('./config');
 
 // ===== Helpers =====
@@ -361,7 +362,7 @@ async function genererCataloguePdf(artisteId) {
   const slugArt = slug([artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom);
   const n = new Date();
   const p = (x) => String(x).padStart(2, '0');
-  const stamp = `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}`;
+  const stamp = `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}-${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`;
   const sortie = path.join(dossier, `Catalogue_${slugArt || 'artiste'}_${stamp}.pdf`);
 
   await genererPdf({ gabaritNom: 'gabarit-catalogue.html', donnees, sortie, paysage: false });
@@ -408,4 +409,72 @@ async function genererAnnexePdf({ type, artiste_id, artisteId, oeuvres = [], oeu
   return { pdf_path: sortie, numero: enr.numero, type: t };
 }
 
-module.exports = { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf };
+// ===== Orchestrateur : présentation d'artiste (avec cache par signature) =====
+
+function titreDArtiste(type) {
+  const t = (type || '').toLowerCase();
+  if (t.includes('peintre')) return 'Artiste peintre';
+  if (t.includes('sculpteur')) return 'Sculpteur';
+  if (t.includes('photo')) return 'Photographe';
+  return type || '';
+}
+
+// Signature des champs de présentation : sert à détecter un changement de profil
+// et à éviter de régénérer un PDF identique. Inclut la date de modif de la photo.
+function signaturePresentation(artiste) {
+  let mtime = '';
+  if (artiste.photo_path) {
+    try {
+      const pp = path.join(getPhotosDir(), artiste.photo_path);
+      if (fs.existsSync(pp)) mtime = String(fs.statSync(pp).mtimeMs);
+    } catch {}
+  }
+  const payload = JSON.stringify({
+    nom: [artiste.prenom, artiste.nom].filter((x) => x && String(x).trim()).join(' ') || artiste.nom || '',
+    type: artiste.type || '',
+    bio: artiste.biographie || '',
+    dem: artiste.demarche || '',
+    cv: artiste.curriculum || '',
+    photo: (artiste.photo_path || '') + '|' + mtime,
+  });
+  return crypto.createHash('sha1').update(payload).digest('hex');
+}
+
+function preparerDonneesPresentation(artiste, cfg) {
+  const nom = [artiste.prenom, artiste.nom].filter((x) => x && String(x).trim()).join(' ') || artiste.nom || '';
+  return {
+    galerie: donneesGalerie(cfg),
+    artiste: { nom, titre: titreDArtiste(artiste.type), photo: photoEnDataUrl(artiste.photo_path) },
+    sections: [
+      { titre: 'Biographie', contenu: artiste.biographie || '' },
+      { titre: 'Démarche', contenu: artiste.demarche || '' },
+      { titre: 'Curriculum', contenu: artiste.curriculum || '', cv: true, sautAvant: true },
+    ],
+  };
+}
+
+// Génère (ou réutilise) la présentation PDF d'un artiste. Réutilise le PDF
+// existant tant que la signature du profil n'a pas changé.
+async function genererPresentationPdf(artisteId, { forcer = false } = {}) {
+  const artiste = obtenirArtiste(artisteId);
+  if (!artiste) throw new Error('Artiste introuvable.');
+  const sig = signaturePresentation(artiste);
+  if (!forcer && artiste.presentation_sig === sig && artiste.presentation_path && fs.existsSync(artiste.presentation_path)) {
+    return { pdf_path: artiste.presentation_path, reutilise: true };
+  }
+  const cfg = obtenirConfig();
+  const donnees = preparerDonneesPresentation(artiste, cfg);
+  const dossier = path.join(getDocumentsDirAnnee(new Date().getFullYear()), 'Présentations');
+  const slugArt = slug([artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom);
+  // Nom horodaté : évite le verrou EBUSY si une version précédente est encore
+  // ouverte dans le visionneur lors d'une régénération.
+  const n = new Date();
+  const p = (x) => String(x).padStart(2, '0');
+  const stamp = `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}-${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`;
+  const sortie = path.join(dossier, `Presentation_${slugArt || 'artiste'}_${stamp}.pdf`);
+  await genererPdf({ gabaritNom: 'gabarit-presentation.html', donnees, sortie });
+  majPresentationArtiste(artisteId, sortie, sig);
+  return { pdf_path: sortie, reutilise: false };
+}
+
+module.exports = { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf };

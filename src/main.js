@@ -18,7 +18,7 @@ const {
   arreterSauvegardePeriodique,
 } = require('./db/backup');
 const { previewFile, importArtistes, importOeuvres } = require('./import/importer');
-const { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf } = require('./pdf');
+const { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf } = require('./pdf');
 const {
   listerArtistes,
   obtenirArtiste,
@@ -630,6 +630,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('pdf:facture-artiste-generer', (_e, venteId) => genererFactureArtistePdf(venteId));
   ipcMain.handle('pdf:catalogue-generer', (_e, artisteId) => genererCataloguePdf(artisteId));
   ipcMain.handle('pdf:annexe-generer', (_e, payload) => genererAnnexePdf(payload));
+  ipcMain.handle('pdf:presentation-generer', (_e, artisteId) => genererPresentationPdf(artisteId));
   ipcMain.handle('pdf:ouvrir', async (_e, cheminPdf) => {
     const erreur = await shell.openPath(cheminPdf);
     if (erreur) throw new Error(erreur);

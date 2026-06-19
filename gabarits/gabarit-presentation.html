@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>Présentation de l'artiste · La Galerie du Vieux Saint-Jean</title>
+<style>
+@font-face{font-family:'G';font-weight:400;font-style:normal;src:url(actifs/garamond-regular.woff2) format('woff2');}
+@font-face{font-family:'G';font-weight:600;font-style:normal;src:url(actifs/garamond-semibold.woff2) format('woff2');}
+@font-face{font-family:'G';font-weight:400;font-style:italic;src:url(actifs/garamond-italic.woff2) format('woff2');}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+/* Fond du <html> propagé à toute la feuille ; @page gère les marges page par
+   page (espace en haut/bas de TOUTES les pages, y compris à partir de la 2e). */
+html{background:#fff;}
+body{font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#1c1a17;}
+@media screen{
+  html{background:#e8e3db;}
+  body{padding:18px;}
+  .doc{width:8.5in;background:#fff;padding:18mm 20mm;margin:0 auto;
+       box-shadow:0 6px 30px rgba(0,0,0,.16);}
+}
+@media print{
+  @page{size:letter;margin:16mm 18mm;}
+}
+
+/* Eyebrow */
+.eyebrow{font-family:'G';font-size:10pt;letter-spacing:4px;text-transform:uppercase;
+         color:#900001;margin-bottom:7mm;}
+
+/* Bandeau identité */
+.bandeau{display:flex;align-items:center;gap:11mm;margin-bottom:4mm;}
+.portrait{width:40mm;height:40mm;border-radius:50%;object-fit:cover;flex:0 0 auto;
+          box-shadow:0 0 0 4px #fff,0 0 0 5px #f0e9da;}
+.portrait-ph{width:40mm;height:40mm;border-radius:50%;flex:0 0 auto;
+             display:flex;align-items:center;justify-content:center;
+             background:radial-gradient(circle at 35% 30%, #f3ede0, #e7ddc7);
+             color:#900001;font-family:'G';font-size:26pt;
+             box-shadow:0 0 0 4px #fff,0 0 0 5px #f0e9da;}
+.identite{flex:1;min-width:0;}
+.artiste-nom{font-family:'G';font-weight:600;font-size:30pt;line-height:1.04;color:#1c1a17;}
+.artiste-titre{font-size:10pt;letter-spacing:2px;text-transform:uppercase;color:#900001;margin-top:3mm;}
+.filet{width:58mm;height:2px;background:#900001;margin-top:5mm;}
+
+/* Sections */
+.section{margin-top:10mm;}
+.section.saut-avant{page-break-before:always;}
+.section-titre{display:flex;align-items:center;gap:5mm;
+               font-family:'G';font-weight:600;font-size:15pt;color:#1c1a17;margin-bottom:4mm;}
+.section-titre::after{content:"";flex:1;height:1px;background:#e0d8cc;}
+.section-titre .puce{color:#900001;font-size:13pt;line-height:1;}
+.para{font-size:11pt;line-height:1.78;color:#2a261f;margin-bottom:3.5mm;text-align:justify;}
+.para:last-child{margin-bottom:0;}
+
+/* Citation mise en exergue (paragraphe entièrement entre guillemets) */
+.exergue{font-family:'G';font-style:italic;font-size:15pt;line-height:1.55;
+         color:#900001;margin:6mm 0;padding-left:7mm;border-left:2.5px solid #900001;
+         page-break-inside:avoid;}
+
+.exergue-source{font-size:10.5pt;color:#6b6253;text-align:right;
+                margin:-1mm 0 6mm;padding-right:2mm;}
+
+/* CV — frise */
+.cv-rubrique{font-family:'G';font-size:11.5pt;font-style:italic;color:#900001;
+             margin:6mm 0 2.5mm;}
+.cv-rubrique:first-child{margin-top:0;}
+.cv-entree{display:grid;grid-template-columns:24mm 1fr;gap:5mm;align-items:baseline;
+           padding:2mm 0;border-bottom:.4px solid #efe9dd;page-break-inside:avoid;}
+.cv-annee{font-family:'G';font-weight:600;font-size:11pt;color:#900001;text-align:right;}
+.cv-desc{font-size:10.5pt;line-height:1.5;color:#2a261f;}
+.cv-ligne{font-size:10.5pt;line-height:1.6;color:#2a261f;padding:1mm 0;}
+</style></head>
+<body>
+<div class="doc" id="doc"></div>
+
+<script>
+function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// Espacement français autour des guillemets : « texte » (espace insécable).
+function normaliserGuillemets(s){
+  return String(s||'')
+    .replace(/«[ \t\u00A0\u202F]*/g, '«\u00A0')
+    .replace(/[ \t\u00A0\u202F]*»/g, '\u00A0»');
+}
+// Une ligne entièrement entre guillemets = citation à mettre en exergue
+// (ponctuation finale après le guillemet fermant tolérée).
+function estCitation(t){ return /^[«"“][\s\S]+[»"”][.!?…]?$/.test(t.trim()); }
+
+function rendreParagraphes(texte){
+  const lignes = String(texte||'').split(/\r?\n/);
+  let html = '', buf = [], dernierExergue = false;
+  function flush(){
+    const t = buf.join('\n').trim();
+    if(t){ html += '<p class="para">'+escHtml(t).replace(/\n/g,'<br>')+'</p>'; dernierExergue = false; }
+    buf = [];
+  }
+  for(const ligne of lignes){
+    const t = ligne.trim();
+    if(!t){ flush(); continue; }
+    if(estCitation(t)){ flush(); html += '<blockquote class="exergue">'+escHtml(t)+'</blockquote>'; dernierExergue = true; continue; }
+    // Ligne d'attribution juste après une citation (« - Nom » ou « — Nom »).
+    if(dernierExergue && /^[-–—]\s*\S/.test(t)){
+      html += '<div class="exergue-source">\u2014\u00A0'+escHtml(t.replace(/^[-–—]\s*/,''))+'</div>';
+      dernierExergue = false;
+      continue;
+    }
+    buf.push(ligne);
+  }
+  flush();
+  return html;
+}
+
+function estRubrique(l){
+  if(l.endsWith(':')) return true;
+  const lettres = l.replace(/[^A-Za-zÀ-ÿ]/g,'');
+  return lettres.length>0 && !/^\d{4}/.test(l) && l.length<=48 && !/[.]$/.test(l);
+}
+
+function rendreCV(texte){
+  const lignes = String(texte||'').split(/\r?\n/);
+  // Année seule, plage (1996 à 2001 / 1996-2001) ou liste (2000, 2004, 2009).
+  const reAnnee = /^(\d{4}(?:\s*(?:à|et|[-–—]|,)\s*\d{4})*)[\s:.,–—-]+(.+)$/;
+  let html = '';
+  for(const ligne of lignes){
+    const l = ligne.trim();
+    if(!l) continue;
+    // Élément de liste (commence par un tiret) → entrée simple, jamais un intertitre.
+    if(/^[-–—]\s+\S/.test(l)){
+      html += '<div class="cv-ligne">'+escHtml(l.replace(/^[-–—]\s*/,'\u2014 '))+'</div>';
+      continue;
+    }
+    const m = l.match(reAnnee);
+    if(m && m[2]){
+      html += '<div class="cv-entree"><span class="cv-annee">'+escHtml(m[1])+'</span><span class="cv-desc">'+escHtml(m[2])+'</span></div>';
+    } else if(estRubrique(l)){
+      html += '<div class="cv-rubrique">'+escHtml(l.replace(/:$/,''))+'</div>';
+    } else {
+      html += '<div class="cv-ligne">'+escHtml(l)+'</div>';
+    }
+  }
+  return html || rendreParagraphes(texte);
+}
+
+function remplir(data){
+  data = data || {};
+  const a = data.artiste||{};
+  const sections = (data.sections||[]).filter(s=>s&&s.contenu&&String(s.contenu).trim());
+  const initiales = (a.nom||'').split(/\s+/).filter(Boolean).map(m=>m[0]).slice(0,2).join('').toUpperCase();
+  const portrait = a.photo
+    ? '<img class="portrait" src="'+a.photo+'" alt="">'
+    : '<div class="portrait-ph">'+escHtml(initiales)+'</div>';
+  const secHtml = sections.map(function(s,i){
+    const cls = (s.sautAvant && i>0) ? ' saut-avant' : '';
+    const corps = s.cv ? rendreCV(normaliserGuillemets(s.contenu)) : rendreParagraphes(normaliserGuillemets(s.contenu));
+    return '<section class="section'+cls+'"><h2 class="section-titre"><span class="puce">◆</span>'+escHtml(s.titre)+'</h2>'+corps+'</section>';
+  }).join('');
+  document.getElementById('doc').innerHTML =
+    '<div class="eyebrow">L\'artiste</div>'+
+    '<div class="bandeau">'+portrait+
+      '<div class="identite"><div class="artiste-nom">'+escHtml(a.nom)+'</div>'+
+      (a.titre?'<div class="artiste-titre">'+escHtml(a.titre)+'</div>':'')+
+      '<div class="filet"></div></div></div>'+
+    secHtml;
+}
+</script>
+</body></html>

@@ -185,6 +185,7 @@ export async function rendreArtisteFiche(contenu, params) {
           <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
           ${boutonArchive({ archive: a.archive })}
           <button class="btn-action btn-secondaire" id="btn-annexe">Annexe A…</button>
+          <button class="btn-action btn-secondaire" id="btn-presentation-pdf">Présentation PDF</button>
           <button class="btn-action btn-secondaire" id="btn-catalogue-pdf">Catalogue PDF</button>
           <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
         </div>
@@ -446,6 +447,34 @@ export async function rendreArtisteFiche(contenu, params) {
         } finally {
           btnCatalogue.disabled = false;
           btnCatalogue.textContent = libelle;
+        }
+      });
+    }
+
+    const btnPresentation = contenu.querySelector('#btn-presentation-pdf');
+    if (btnPresentation) {
+      btnPresentation.addEventListener('click', async () => {
+        const libelle = btnPresentation.textContent;
+        btnPresentation.disabled = true;
+        btnPresentation.textContent = 'Génération…';
+        try {
+          const res = await window.api.pdfPresentationGenerer(a.id);
+          const rep = await confirmer({
+            type: 'succes',
+            title: 'Présentation produite',
+            message: res.reutilise
+              ? 'Profil inchangé — la dernière présentation a été réutilisée.'
+              : 'Présentation générée en PDF.',
+            buttons: ['Ouvrir le PDF', 'Fermer'],
+            defaultId: 0,
+            cancelId: 1,
+          });
+          if (rep === 0) { try { await window.api.pdfOuvrir(res.pdf_path); } catch {} }
+        } catch (err) {
+          await confirmer({ type: 'error', title: 'Échec de la génération', message: nettoyerErreur(err), buttons: ['OK'] });
+        } finally {
+          btnPresentation.disabled = false;
+          btnPresentation.textContent = libelle;
         }
       });
     }

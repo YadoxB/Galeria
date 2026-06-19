@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS artistes (
   instructions_ia     TEXT,
   lien_chatgpt        TEXT,
   cotes               TEXT,
+  presentation_path   TEXT,
+  presentation_sig    TEXT,
   archive             INTEGER NOT NULL DEFAULT 0
                       CHECK (archive IN (0, 1)),
   cree_le             TEXT NOT NULL DEFAULT (datetime('now')),
@@ -118,6 +120,9 @@ CREATE TABLE IF NOT EXISTS ventes (
   facture_artiste_path TEXT,
   facture_client_path  TEXT,
   lettre_path          TEXT,
+  type_achat           TEXT,
+  est_cadeau           INTEGER NOT NULL DEFAULT 0,
+  langue               TEXT,
   exporte_sage         INTEGER NOT NULL DEFAULT 0
                        CHECK (exporte_sage IN (0, 1)),
   exporte_sage_date    TEXT,

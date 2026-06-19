@@ -84,6 +84,7 @@ contextBridge.exposeInMainWorld('api', {
   pdfFactureArtisteGenerer: (venteId) => ipcRenderer.invoke('pdf:facture-artiste-generer', venteId),
   pdfCatalogueGenerer: (artisteId) => ipcRenderer.invoke('pdf:catalogue-generer', artisteId),
   pdfAnnexeGenerer: (payload) => ipcRenderer.invoke('pdf:annexe-generer', payload),
+  pdfPresentationGenerer: (artisteId) => ipcRenderer.invoke('pdf:presentation-generer', artisteId),
   pdfOuvrir: (cheminPdf) => ipcRenderer.invoke('pdf:ouvrir', cheminPdf),
   pdfRevelerDansExplorateur: (cheminPdf) => ipcRenderer.invoke('pdf:reveler-dans-explorateur', cheminPdf),
   photoChoisir: (table, id) => ipcRenderer.invoke('photo:choisir', { table, id }),
