@@ -88,8 +88,10 @@ async function montrer(i) {
   bulle.innerHTML = `<div class="tuto-num">Étape ${numCoach(i)} / ${NB_ETAPES}</div>
     <div class="tuto-titre">${e.titre}</div><div class="tuto-texte">${e.texte}</div>
     <div class="tuto-pied">${points(i)}
-      <button class="tuto-btn sec" data-prec>Précédent</button>
-      <button class="tuto-btn pri" data-suiv>${numCoach(i) === NB_ETAPES ? 'Continuer' : 'Suivant'}</button>
+      <div class="tuto-actions">
+        <button class="tuto-btn sec" data-prec>Précédent</button>
+        <button class="tuto-btn pri" data-suiv>${numCoach(i) === NB_ETAPES ? 'Continuer' : 'Suivant'}</button>
+      </div>
     </div>`;
   bulle.querySelector('[data-suiv]').addEventListener('click', suivant);
   bulle.querySelector('[data-prec]').addEventListener('click', precedent);
