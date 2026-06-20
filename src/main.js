@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, ipcMain, dialog, protocol, net, shell, clipboard, nativeImage } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, protocol, net, shell, clipboard, nativeImage, screen } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -100,9 +100,12 @@ function createSplashWindow() {
 }
 
 function createWindow(splash) {
+  // Adapte la taille à l'écran disponible pour que toute l'interface
+  // (barre latérale comprise) reste visible, même sur un écran < 900 px de haut.
+  const { width: dispW, height: dispH } = screen.getPrimaryDisplay().workAreaSize;
   const win = new BrowserWindow({
-    width: 1600,
-    height: 900,
+    width: Math.min(1600, dispW),
+    height: Math.min(900, dispH),
     minWidth: 1024,
     minHeight: 576,
     title: 'Galeria',
