@@ -5,7 +5,7 @@
 // Le bouton « Revoir le tutoriel » est prêt mais le tutoriel de 1re ouverture
 // (#13) n'est pas encore bâti : il affiche un message « à venir » pour l'instant.
 
-import { alerter } from './dialogue.js';
+import { lancerTutoriel } from './tutoriel.js';
 
 const CATS = [
   ['demarrage', 'Premiers pas'], ['artistes', 'Artistes'], ['oeuvres', 'Œuvres & catalogue'],
@@ -456,7 +456,8 @@ function construirePanneau() {
     rendre();
   });
   overlay.querySelector('#aide-tuto').addEventListener('click', () => {
-    alerter({ type: 'info', title: 'Tutoriel de bienvenue', message: 'La visite guidée arrivera dans une prochaine version.' });
+    ouvrir(false);        // ferme l'aide
+    lancerTutoriel();     // puis relance la visite guidée
   });
   overlay.querySelector('#aide-pied-mail').addEventListener('click', (e) => {
     e.preventDefault(); window.api.ouvrirUrl('mailto:' + COURRIEL_SOUTIEN);

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo tutoriel de bienvenue (#13)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <link rel="stylesheet" href="../src/styles.css">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+    .demo-bar { position: sticky; top: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px 20px; background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar button { background: var(--warm-gold); color: var(--soft-ivory); border: 0; border-radius: 8px; padding: 7px 14px; font: inherit; font-weight: 600; cursor: pointer; }
+
+    /* ---- Faux fond d'application ---- */
+    .faux-app { display: flex; height: calc(100vh - 56px); }
+    .faux-sidebar { width: 240px; flex-shrink: 0; background: var(--deep-navy); color: var(--soft-ivory); padding: 18px 14px; display: flex; flex-direction: column; gap: 4px; }
+    .faux-logo { font-family: var(--font-titre); font-size: 22px; color: var(--warm-gold); font-style: italic; margin: 4px 8px 14px; }
+    .faux-groupe { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: rgba(255,255,255,.45); margin: 10px 10px 3px; }
+    .faux-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 9px; font-size: 14px; color: rgba(255,255,255,.85); }
+    .faux-item.actif { background: var(--gallery-navy); color: var(--warm-gold); }
+    .faux-item .pt { width: 17px; height: 17px; border-radius: 5px; background: rgba(255,255,255,.18); flex-shrink: 0; }
+    .faux-item.actif .pt { background: var(--warm-gold); }
+    .faux-profil { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 9px; border-radius: 10px; background: rgba(255,255,255,.06); }
+    .faux-profil .av { width: 32px; height: 32px; border-radius: 8px; background: var(--warm-gold); color: var(--deep-navy); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; }
+    .faux-main { flex: 1; padding: 24px 30px; min-width: 0; overflow: hidden; }
+    .faux-entete { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .faux-titre { font-family: var(--font-titre); font-size: 28px; color: var(--ink); margin: 0; }
+    .faux-ajouter { background: var(--warm-gold); color: var(--soft-ivory); border: 0; border-radius: 999px; padding: 9px 16px; font: inherit; font-weight: 600; }
+    .faux-pillule { height: 36px; flex: 1; max-width: 320px; background: var(--porcelain); border: 1px solid var(--mist); border-radius: 999px; }
+    .faux-barre { display: flex; gap: 8px; margin-bottom: 14px; }
+    .faux-chip { height: 30px; padding: 0 14px; display: flex; align-items: center; background: var(--porcelain); border: 1px solid var(--mist); border-radius: 999px; font-size: 12px; color: var(--slate); }
+    .faux-grille { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .faux-carte { height: 128px; background: var(--porcelain); border: 1px solid var(--mist); border-radius: 14px; }
+    .faux-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px; }
+    .faux-stat { height: 76px; border-radius: 14px; background: var(--porcelain); border: 1px solid var(--mist); }
+    .faux-stat.or { background: var(--warm-gold); border-color: var(--warm-gold); }
+    .faux-stat.navy { background: var(--deep-navy); border-color: var(--deep-navy); }
+    .faux-liste { display: flex; flex-direction: column; gap: 8px; }
+    .faux-rangee { height: 52px; background: var(--porcelain); border: 1px solid var(--mist); border-radius: 12px; }
+    .faux-toggle { display: inline-flex; gap: 4px; background: var(--cloud); padding: 3px; border-radius: 999px; }
+    .faux-toggle span { padding: 5px 16px; border-radius: 999px; font-size: 13px; color: var(--slate); }
+    .faux-toggle span.on { background: var(--porcelain); color: var(--ink); font-weight: 600; }
+    .faux-outils { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+    .faux-outil { height: 220px; background: var(--porcelain); border: 1px solid var(--mist); border-radius: 16px; }
+    .faux-fab { position: fixed; right: 26px; bottom: 26px; width: 52px; height: 52px; border-radius: 999px; background: var(--warm-gold); color: var(--soft-ivory); font-family: var(--font-titre); font-size: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 22px rgba(7,26,47,.28); z-index: 2; }
+
+    /* ---- Tutoriel ---- */
+    #tuto { position: fixed; inset: 0; z-index: 1000; display: none; }
+    #tuto.actif { display: block; }
+    #tuto [hidden] { display: none !important; }
+    .tuto-catch { position: absolute; inset: 0; background: transparent; }
+    .tuto-spot { position: absolute; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(7,26,47,.62); transition: all .28s ease; pointer-events: none; }
+    .tuto-bulle { position: absolute; width: 330px; max-width: 86vw; background: var(--porcelain); border-radius: 16px; box-shadow: var(--ombre-modal); padding: 18px 20px; animation: tuto-pop .18s ease-out; }
+    @keyframes tuto-pop { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+    .tuto-num { font-size: 12px; color: var(--warm-gold); font-weight: 700; letter-spacing: .04em; }
+    .tuto-titre { font-family: var(--font-titre); font-size: 21px; color: var(--gallery-navy); margin: 4px 0 8px; }
+    .tuto-texte { font-size: 14px; line-height: 1.6; color: #3f3a31; }
+    .tuto-pied { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+    .tuto-points { display: flex; gap: 6px; margin-right: auto; }
+    .tuto-point { width: 7px; height: 7px; border-radius: 999px; background: var(--mist); }
+    .tuto-point.actif { background: var(--warm-gold); }
+    .tuto-btn { border: 0; border-radius: var(--r-btn); font: inherit; font-size: 13.5px; padding: 8px 14px; cursor: pointer; }
+    .tuto-btn.sec { background: var(--porcelain); border: 1px solid var(--mist); color: var(--slate); }
+    .tuto-btn.pri { background: var(--warm-gold); color: var(--soft-ivory); font-weight: 600; }
+    .tuto-passer { position: absolute; top: 18px; right: 22px; background: rgba(252,250,244,.92); border: 1px solid var(--mist); color: var(--slate); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13px; cursor: pointer; }
+    .tuto-centre { position: absolute; inset: 0; background: rgba(7,26,47,.62); display: flex; align-items: center; justify-content: center; }
+    .tuto-carte { width: 460px; max-width: 90vw; background: var(--porcelain); border-radius: 18px; box-shadow: var(--ombre-modal); padding: 30px 32px; text-align: center; animation: tuto-pop .18s ease-out; }
+    .tuto-carte .logo { font-family: var(--font-titre); font-style: italic; font-size: 34px; color: var(--warm-gold); }
+    .tuto-carte h2 { font-family: var(--font-titre); font-size: 26px; color: var(--gallery-navy); margin: 10px 0 10px; }
+    .tuto-carte p { font-size: 14.5px; line-height: 1.65; color: #3f3a31; margin: 0 0 8px; }
+    .tuto-carte .actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Tutoriel de bienvenue (#13)</div>
+    <button id="rejouer">▶ Revoir le tutoriel</button>
+  </div>
+
+  <div class="faux-app">
+    <aside class="faux-sidebar" id="cible-sidebar">
+      <div class="faux-logo">Galeria</div>
+      <div class="faux-item" data-vue="accueil"><span class="pt"></span> Accueil</div>
+      <div class="faux-groupe">Catalogue</div>
+      <div class="faux-item" data-vue="artistes"><span class="pt"></span> Artistes</div>
+      <div class="faux-item" data-vue="oeuvres"><span class="pt"></span> Œuvres</div>
+      <div class="faux-groupe">Ventes</div>
+      <div class="faux-item" data-vue="clients"><span class="pt"></span> Clients</div>
+      <div class="faux-item" data-vue="ventes"><span class="pt"></span> Ventes</div>
+      <div class="faux-item" data-vue="suivi"><span class="pt"></span> Suivi</div>
+      <div class="faux-groupe">Archives</div>
+      <div class="faux-item" data-vue="documents"><span class="pt"></span> Documents</div>
+      <div class="faux-groupe">&nbsp;</div>
+      <div class="faux-item" data-vue="outils"><span class="pt"></span> Outils</div>
+      <div class="faux-profil" id="cible-profil"><span class="av">GVSJ</span><span style="font-size:13px">Profil de la galerie</span></div>
+    </aside>
+    <main class="faux-main" id="faux-main"></main>
+  </div>
+  <div class="faux-fab" id="cible-aide">?</div>
+
+  <div id="tuto">
+    <div class="tuto-catch"></div>
+    <button class="tuto-passer" id="tuto-passer">Passer la visite</button>
+    <div class="tuto-spot" id="tuto-spot" hidden></div>
+    <div class="tuto-bulle" id="tuto-bulle" hidden></div>
+    <div class="tuto-centre" id="tuto-centre" hidden></div>
+  </div>
+
+  <script>
+    // Faux contenu par section
+    const PAGES = {
+      accueil: `<div class="faux-entete"><h1 class="faux-titre">Tableau de bord</h1></div>
+        <div class="faux-stats"><div class="faux-stat or"></div><div class="faux-stat"></div><div class="faux-stat"></div><div class="faux-stat navy"></div></div>
+        <div class="faux-grille"><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div></div>`,
+      artistes: `<div class="faux-entete"><h1 class="faux-titre">Artistes</h1><div style="display:flex;gap:12px;align-items:center"><div class="faux-pillule" style="width:240px"></div><button class="faux-ajouter">+ Ajouter</button></div></div>
+        <div class="faux-grille"><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div></div>`,
+      oeuvres: `<div class="faux-entete"><h1 class="faux-titre">Œuvres</h1><div style="display:flex;gap:12px;align-items:center"><div class="faux-pillule" style="width:240px"></div><button class="faux-ajouter" id="cible-ajouter">+ Ajouter</button></div></div>
+        <div class="faux-barre" id="cible-filtres"><div class="faux-chip">Grille / Liste</div><div class="faux-chip">Filtres</div><div class="faux-chip">Tri</div></div>
+        <div class="faux-grille"><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div></div>`,
+      ventes: `<div class="faux-entete"><h1 class="faux-titre">Ventes</h1><button class="faux-ajouter">+ Ajouter</button></div>
+        <div class="faux-liste"><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div></div>`,
+      documents: `<div class="faux-entete"><h1 class="faux-titre">Documents</h1></div>
+        <div id="cible-docvue" style="margin-bottom:16px"><div class="faux-toggle"><span class="on">Liste</span><span>Explorateur</span></div></div>
+        <div class="faux-liste"><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div></div>`,
+      outils: `<div class="faux-entete"><h1 class="faux-titre">Outils</h1></div>
+        <div class="faux-outils" id="cible-outils"><div class="faux-outil"></div><div class="faux-outil"></div></div>`,
+    };
+    const fauxMain = document.getElementById('faux-main');
+    function renderVue(vue) {
+      fauxMain.innerHTML = PAGES[vue] || '';
+      document.querySelectorAll('.faux-item').forEach((it) => it.classList.toggle('actif', it.dataset.vue === vue));
+    }
+
+    const ETAPES = [
+      { centre: true, logo: true, titre: 'Bienvenue dans Galeria', texte: "Galeria gère votre galerie : artistes, œuvres, clients, ventes, et tous vos documents. Voici une courte visite des sections principales.", btn: 'Commencer la visite' },
+      { vue: 'accueil', cible: '.faux-item[data-vue=accueil]', placement: 'right', titre: "L'accueil", texte: "À l'ouverture, votre <b>tableau de bord</b> : statistiques, ventes récentes, œuvres à préparer ou à relancer." },
+      { vue: 'artistes', cible: '.faux-item[data-vue=artistes]', placement: 'right', titre: 'Les artistes', texte: "Chaque artiste a sa fiche : biographie, <b>cotes</b> (tarifs), fiscalité, et ses documents (présentation, catalogue, annexe)." },
+      { vue: 'oeuvres', cible: '.faux-item[data-vue=oeuvres]', placement: 'right', titre: 'Le catalogue d’œuvres', texte: "Vos œuvres, en <b>grille ou liste</b>, avec recherche, filtres et tri." },
+      { vue: 'oeuvres', cible: '#cible-ajouter', placement: 'bottom-left', titre: 'Ajouter une œuvre', texte: "Le bouton <b>+ Ajouter</b> crée une fiche. Le prix peut se calculer tout seul à partir des cotes de l'artiste." },
+      { vue: 'ventes', cible: '.faux-item[data-vue=ventes]', placement: 'right', titre: 'Ventes & clients', texte: "Enregistrez une <b>vente</b> (œuvre + client, taxes, rabais). Le suivi des commandes se fait dans <b>Suivi</b>." },
+      { vue: 'documents', cible: '#cible-docvue', placement: 'bottom', titre: 'Vos documents', texte: "Tous les PDF produits (certificats, factures, pochettes…), en vue <b>liste</b> ou <b>explorateur</b> de dossiers." },
+      { vue: 'outils', cible: '#cible-outils', placement: 'top', titre: 'Les outils', texte: "Des <b>calculateurs</b> de prix et de commission (le net versé à l'artiste après les taxes)." },
+      { vue: 'oeuvres', cible: '#cible-profil', placement: 'right', titre: 'Réglages & profil', texte: "En bas, le <b>profil de la galerie</b> (coordonnées, logo, taxes) qui alimente tous vos documents. Les <b>Réglages</b> sont juste au-dessus." },
+      { vue: 'oeuvres', cible: '#cible-aide', placement: 'top-left', titre: "L'aide, toujours là", texte: "Le bouton <b>?</b> ouvre l'aide cherchable depuis n'importe quelle page — et permet de <b>revoir ce tutoriel</b>." },
+      { centre: true, titre: 'Vous êtes prêt !', texte: "Vous pouvez commencer. En cas de doute, le bouton <b>?</b> en bas à droite répond à presque tout.", btn: 'Terminer' },
+    ];
+    const NB_ETAPES = ETAPES.filter((e) => !e.centre).length;
+
+    const tuto = document.getElementById('tuto');
+    const spot = document.getElementById('tuto-spot');
+    const bulle = document.getElementById('tuto-bulle');
+    const centre = document.getElementById('tuto-centre');
+    let idx = 0;
+
+    function numCoach(i) { return ETAPES.slice(0, i + 1).filter((e) => !e.centre).length; }
+    function points(i) {
+      return `<div class="tuto-points">${ETAPES.map((e, k) => e.centre ? '' : `<span class="tuto-point ${k === i ? 'actif' : ''}"></span>`).join('')}</div>`;
+    }
+    function placer(rect, placement) {
+      const m = 14, bw = bulle.offsetWidth, bh = bulle.offsetHeight, vw = innerWidth, vh = innerHeight;
+      let left, top;
+      if (placement === 'right') { left = rect.right + m; top = rect.top; }
+      else if (placement === 'bottom-left') { left = rect.right - bw; top = rect.bottom + m; }
+      else if (placement === 'bottom') { left = rect.left; top = rect.bottom + m; }
+      else if (placement === 'top-left') { left = rect.right - bw; top = rect.top - bh - m; }
+      else if (placement === 'top') { left = rect.left; top = rect.top - bh - m; }
+      else { left = rect.left; top = rect.bottom + m; }
+      left = Math.max(m, Math.min(left, vw - bw - m));
+      top = Math.max(m, Math.min(top, vh - bh - m));
+      bulle.style.left = left + 'px'; bulle.style.top = top + 'px';
+    }
+    function montrer(i) {
+      idx = i;
+      const e = ETAPES[i];
+      if (e.centre) {
+        spot.hidden = true; bulle.hidden = true; centre.hidden = false;
+        const estFin = i === ETAPES.length - 1;
+        centre.innerHTML = `<div class="tuto-carte">
+          ${e.logo ? '<div class="logo">Galeria</div>' : ''}
+          <h2>${e.titre}</h2><p>${e.texte}</p>
+          <div class="actions">
+            ${i > 0 ? '<button class="tuto-btn sec" data-prec>Précédent</button>' : ''}
+            <button class="tuto-btn pri" data-suiv>${e.btn || 'Suivant'}</button>
+          </div></div>`;
+        centre.querySelector('[data-suiv]').addEventListener('click', suivant);
+        const p = centre.querySelector('[data-prec]'); if (p) p.addEventListener('click', precedent);
+        return;
+      }
+      centre.hidden = true;
+      if (e.vue) renderVue(e.vue);
+      const el = document.querySelector(e.cible);
+      const r = el.getBoundingClientRect();
+      const pad = 6;
+      spot.hidden = false;
+      spot.style.left = (r.left - pad) + 'px'; spot.style.top = (r.top - pad) + 'px';
+      spot.style.width = (r.width + pad * 2) + 'px'; spot.style.height = (r.height + pad * 2) + 'px';
+      bulle.hidden = false;
+      bulle.innerHTML = `<div class="tuto-num">Étape ${numCoach(i)} / ${NB_ETAPES}</div>
+        <div class="tuto-titre">${e.titre}</div><div class="tuto-texte">${e.texte}</div>
+        <div class="tuto-pied">${points(i)}
+          <button class="tuto-btn sec" data-prec>Précédent</button>
+          <button class="tuto-btn pri" data-suiv>${numCoach(i) === NB_ETAPES ? 'Continuer' : 'Suivant'}</button>
+        </div>`;
+      bulle.querySelector('[data-suiv]').addEventListener('click', suivant);
+      bulle.querySelector('[data-prec]').addEventListener('click', precedent);
+      bulle.style.left = '-9999px'; bulle.style.top = '0';
+      requestAnimationFrame(() => placer(r, e.placement));
+    }
+    function suivant() { if (idx < ETAPES.length - 1) montrer(idx + 1); else fermer(); }
+    function precedent() { if (idx > 0) montrer(idx - 1); }
+    function ouvrir() { renderVue('accueil'); tuto.classList.add('actif'); montrer(0); }
+    function fermer() { tuto.classList.remove('actif'); }
+
+    document.getElementById('tuto-passer').addEventListener('click', fermer);
+    document.getElementById('rejouer').addEventListener('click', ouvrir);
+    addEventListener('keydown', (e) => { if (e.key === 'Escape') fermer(); });
+    addEventListener('resize', () => { const e = ETAPES[idx]; if (tuto.classList.contains('actif') && e && !e.centre) montrer(idx); });
+
+    ouvrir();
+  </script>
+</body>
+</html>

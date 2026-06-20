@@ -4680,6 +4680,34 @@ details.bloc.pliable > .bloc-corps {
   .aide-panneau { width: 100vw; }
 }
 
+/* ====== Tutoriel de bienvenue (#13) ====== */
+#tuto { position: fixed; inset: 0; z-index: 1000; display: none; }
+#tuto.actif { display: block; }
+#tuto [hidden] { display: none !important; }
+.tuto-catch { position: absolute; inset: 0; background: transparent; }
+.tuto-spot { position: absolute; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(7,26,47,.62); transition: all .28s ease; pointer-events: none; }
+.tuto-bulle { position: absolute; width: 330px; max-width: 86vw; background: var(--porcelain); border-radius: 16px; box-shadow: var(--ombre-modal); padding: 18px 20px; animation: tuto-pop .18s ease-out; }
+@keyframes tuto-pop { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+.tuto-num { font-size: 12px; color: var(--warm-gold); font-weight: 700; letter-spacing: .04em; }
+.tuto-titre { font-family: var(--font-titre); font-size: 21px; color: var(--gallery-navy); margin: 4px 0 8px; }
+.tuto-texte { font-size: 14px; line-height: 1.6; color: #3f3a31; }
+.tuto-texte b { color: var(--ink); }
+.tuto-pied { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+.tuto-points { display: flex; gap: 6px; margin-right: auto; }
+.tuto-point { width: 7px; height: 7px; border-radius: 999px; background: var(--mist); }
+.tuto-point.actif { background: var(--warm-gold); }
+.tuto-btn { border: 0; border-radius: var(--r-btn); font: inherit; font-size: 13.5px; padding: 8px 14px; cursor: pointer; }
+.tuto-btn.sec { background: var(--porcelain); border: 1px solid var(--mist); color: var(--slate); }
+.tuto-btn.pri { background: var(--warm-gold); color: var(--soft-ivory); font-weight: 600; }
+.tuto-passer { position: absolute; top: 18px; right: 22px; background: rgba(252,250,244,.92); border: 1px solid var(--mist); color: var(--slate); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13px; cursor: pointer; }
+.tuto-centre { position: absolute; inset: 0; background: rgba(7,26,47,.62); display: flex; align-items: center; justify-content: center; }
+.tuto-carte { width: 460px; max-width: 90vw; background: var(--porcelain); border-radius: 18px; box-shadow: var(--ombre-modal); padding: 30px 32px; text-align: center; animation: tuto-pop .18s ease-out; }
+.tuto-carte .logo { font-family: var(--font-titre); font-style: italic; font-size: 34px; color: var(--warm-gold); }
+.tuto-carte h2 { font-family: var(--font-titre); font-size: 26px; color: var(--gallery-navy); margin: 10px 0 10px; }
+.tuto-carte p { font-size: 14.5px; line-height: 1.65; color: #3f3a31; margin: 0 0 8px; }
+.tuto-carte p b { color: var(--ink); }
+.tuto-carte .actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+
 .zone-recadrage {
   position: relative;
   display: flex;

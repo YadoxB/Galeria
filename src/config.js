@@ -43,6 +43,9 @@ const DEFAULTS = {
     instructions_galerie: '',
     lien_chatgpt_defaut: 'https://chat.openai.com/',
   },
+  // Tutoriel de bienvenue (#13) : passe à true une fois la visite vue au
+  // premier lancement ; rejouable ensuite depuis l'aide.
+  tutoriel_vu: false,
 };
 
 function cheminConfig() {
