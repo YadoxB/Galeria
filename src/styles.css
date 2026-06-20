@@ -3807,6 +3807,49 @@ details.bloc.pliable > .bloc-corps {
 .pochette-doc .nom { flex: 1; min-width: 0; color: var(--ink); }
 .pochette-doc .mini-voir { font-size: 12px; padding: 0 10px; height: 28px; }
 .doc-vide-global { padding: 40px; text-align: center; color: var(--stone); font-size: 13px; }
+.doc-icone-guide { background: #4a5568; color: var(--soft-ivory); }
+
+/* Bascule Liste / Explorateur */
+.doc-vue-bascule { display: inline-flex; gap: 4px; background: var(--cloud); padding: 3px; border-radius: 999px; margin: 0 0 18px; }
+.doc-vue-bascule button { border: 0; background: transparent; font-family: inherit; font-size: 13px; color: var(--slate); padding: 5px 16px; border-radius: 999px; cursor: pointer; }
+.doc-vue-bascule button.actif { background: var(--porcelain); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+
+/* Explorateur : barre + fil d'Ariane */
+.exp-barre { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.exp-remonter { width: 36px; height: 36px; border-radius: var(--r-btn); border: 1px solid var(--mist); background: var(--porcelain); color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.exp-remonter:disabled { opacity: .4; cursor: default; }
+.exp-remonter svg { width: 18px; height: 18px; }
+.fil { flex: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 2px; font-size: 14px; min-width: 0; }
+.fil-seg { background: none; border: 0; font: inherit; color: var(--slate); cursor: pointer; padding: 4px 7px; border-radius: 7px; }
+.fil-seg:hover { background: var(--cloud); color: var(--ink); }
+.fil-seg.actuel { color: var(--ink); font-weight: 600; cursor: default; }
+.fil-seg.actuel:hover { background: none; }
+.fil-sep { color: var(--stone); }
+.exp-section-label { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--stone); margin: 6px 2px 8px; display: flex; align-items: center; gap: 10px; }
+
+/* Explorateur : dossiers */
+.exp-dossiers { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.exp-dossier { display: flex; align-items: center; gap: 11px; padding: 12px 14px; border: 1px solid var(--mist); border-radius: var(--r-carte); background: var(--porcelain); cursor: pointer; text-align: left; font: inherit; }
+.exp-dossier:hover { border-color: var(--warm-gold); background: var(--soft-ivory); }
+.exp-dossier .exp-ic-doss { width: 38px; height: 38px; flex-shrink: 0; color: var(--warm-gold); }
+.exp-dossier .exp-ic-doss svg { width: 100%; height: 100%; }
+.exp-dossier .doc-icone { width: 38px; height: 38px; }
+.exp-dossier .nom { font-weight: 600; color: var(--ink); font-size: 14px; line-height: 1.2; }
+.exp-dossier .meta { display: block; font-size: 12px; color: var(--stone); margin-top: 2px; }
+
+/* Explorateur : fichiers */
+.exp-fichiers { border: 1px solid var(--mist); border-radius: var(--r-carte); overflow: hidden; }
+.exp-fichier { display: flex; align-items: center; gap: 13px; padding: 11px 15px; border-bottom: 1px solid var(--mist); }
+.exp-fichier:last-child { border-bottom: 0; }
+.exp-fichier:hover { background: var(--cloud); }
+.exp-fichier .doc-icone { width: 38px; height: 38px; }
+.exp-fichier .info { flex: 1; min-width: 0; }
+.exp-fichier .nom { font-size: 14px; color: var(--ink); }
+.exp-fichier .meta { font-size: 12px; color: var(--stone); margin-top: 2px; }
+.exp-loc { font-size: 11.5px; color: var(--stone); margin-top: 2px; }
+.exp-fichier .actions { display: flex; gap: 6px; }
+.exp-fichier .actions .btn-action { font-size: 12px; padding: 0 10px; height: 32px; }
+.exp-vide { padding: 36px; text-align: center; color: var(--stone); font-size: 13px; }
 
 /* Bouton « Produire la pochette » : prééminent, pleine largeur ; les actions
    secondaires (certificat seul, facture artiste) en dessous, discrètes. */
