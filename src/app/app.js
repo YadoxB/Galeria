@@ -17,6 +17,7 @@ import { rendreOutils } from './vues/outils.js';
 import { rafraichirEntete } from './marque.js';
 import { formaterTelephone } from './commun.js';
 import { initialiserUpdater } from './updater.js';
+import { initialiserAide } from './aide.js';
 
 enregistrer('accueil', rendreAccueil);
 enregistrer('artistes-liste', rendreArtistesListe);
@@ -63,4 +64,5 @@ document.addEventListener('input', (e) => {
   await rafraichirEntete();
   await remplacer('accueil');
   initialiserUpdater();
+  initialiserAide();
 })();
