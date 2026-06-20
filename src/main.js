@@ -18,7 +18,7 @@ const {
   arreterSauvegardePeriodique,
 } = require('./db/backup');
 const { previewFile, importArtistes, importOeuvres } = require('./import/importer');
-const { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPresentationPersonnalisee, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette } = require('./pdf');
+const { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPresentationPersonnalisee, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette, indexerTousLesDocuments } = require('./pdf');
 const {
   listerArtistes,
   obtenirArtiste,
@@ -491,7 +491,7 @@ app.whenReady().then(async () => {
     oeuvresEnPreparation: oeuvresAPreparer().slice(0, 12),
     ventesParMois: ventesParMois(12),
   }));
-  ipcMain.handle('documents:liste', () => tousLesDocuments());
+  ipcMain.handle('documents:liste', () => indexerTousLesDocuments());
   ipcMain.handle('rapport:journalier', (_e, dateISO) => rapportJournalier(dateISO));
   // Génère le PDF du rapport (format Lettre) via un gabarit autonome rendu
   // dans une fenêtre isolée (polices système, aucun @font-face) — même

@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { openDatabase } = require('./db/database');
-const { getDocumentsDirAnnee, getPhotosDir } = require('./db/paths');
+const { getDocumentsDir, getDocumentsDirAnnee, getPhotosDir } = require('./db/paths');
 const { obtenirCertificat, obtenirVente, obtenirArtiste, oeuvresPourCatalogue, listerCertificatsParVente } = require('./db/requetes');
 const { obtenirOuReserverNumeroFactureArtisteVente, enregistrerAnnexe, majAnnexePdfPath, majPresentationArtiste, creerCertificat, reserverProchainNumeroCertificat } = require('./db/mutations');
 const { obtenirConfig } = require('./config');
@@ -881,4 +881,108 @@ async function editerDocument(spec) {
   return { pdf_path: pdf };
 }
 
-module.exports = { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPresentationPersonnalisee, genererLettrePochettePdf, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette };
+// ===== Index de tous les documents (base + scan disque) — Lot 4 =====
+// Réunit, pour la section Documents : les types enregistrés en base (certificats,
+// factures artiste, annexes, présentations — métadonnées riches) ET les fichiers
+// rangés sur le disque dans Documents\{année}\{Type}\ (catalogues, rapports,
+// pochettes, et les « versions modifiées » qui ne sont pas en base).
+const DOSSIER_TYPE = {
+  'Certificats': 'certificat',
+  'Factures artiste': 'facture_artiste',
+  'Factures client': 'facture_client',
+  'Catalogues': 'catalogue',
+  'Annexes': 'annexe',
+  'Présentations': 'presentation',
+  'Rapports': 'rapport',
+  'Lettres': 'lettre',
+};
+function _sousDossiers(dir) {
+  try { return fs.readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name); }
+  catch { return []; }
+}
+function _pdfs(dir) {
+  try { return fs.readdirSync(dir, { withFileTypes: true }).filter((d) => d.isFile() && /\.pdf$/i.test(d.name)).map((d) => d.name); }
+  catch { return []; }
+}
+function _normChemin(p) { try { return path.resolve(String(p || '')).toLowerCase(); } catch { return String(p || '').toLowerCase(); } }
+function _dateFichier(full, annee) {
+  try { return fs.statSync(full).mtime.toISOString().slice(0, 10); }
+  catch { return `${annee || '0000'}-01-01`; }
+}
+function _nomLisible(fichier) {
+  let s = fichier.replace(/\.pdf$/i, '');
+  s = s.replace(/_modifiee?(_[0-9]+)?$/i, '');   // suffixe « version modifiée »
+  s = s.replace(/_[0-9]{8,}$/, '');               // horodatage final
+  s = s.replace(/_+/g, ' ').trim();
+  return s || fichier;
+}
+
+function indexerTousLesDocuments() {
+  const db = openDatabase();
+  const out = [];
+  const pathsDB = new Set();
+  const NOM_A = "TRIM(COALESCE(a.prenom || ' ', '') || a.nom)";
+  const NOM_CL = "TRIM(COALESCE(cl.prenom || ' ', '') || cl.nom)";
+
+  for (const c of db.prepare(`
+    SELECT c.id ref_id, c.numero_delivrance numero, c.date_delivrance date, c.pdf_path,
+           o.titre oeuvre_titre, ${NOM_A} artiste_nom, ${NOM_CL} client_nom
+    FROM certificats c JOIN oeuvres o ON o.id = c.oeuvre_id JOIN artistes a ON a.id = o.artiste_id
+    LEFT JOIN ventes v ON v.id = c.vente_id LEFT JOIN clients cl ON cl.id = v.client_id
+    WHERE c.pdf_path IS NOT NULL AND TRIM(c.pdf_path) <> ''`).all()) {
+    out.push({ type: 'certificat', ref_id: c.ref_id, numero: c.numero, date: c.date, pdf_path: c.pdf_path, oeuvre_titre: c.oeuvre_titre, artiste_nom: c.artiste_nom, client_nom: c.client_nom, source: 'base', regen: true });
+    pathsDB.add(_normChemin(c.pdf_path));
+  }
+  for (const v of db.prepare(`
+    SELECT v.id ref_id, v.numero_facture_artiste numero, v.date_vente date, v.facture_artiste_path pdf_path,
+           o.titre oeuvre_titre, ${NOM_A} artiste_nom, ${NOM_CL} client_nom
+    FROM ventes v JOIN oeuvres o ON o.id = v.oeuvre_id JOIN artistes a ON a.id = o.artiste_id JOIN clients cl ON cl.id = v.client_id
+    WHERE v.facture_artiste_path IS NOT NULL AND TRIM(v.facture_artiste_path) <> ''`).all()) {
+    out.push({ type: 'facture_artiste', ref_id: v.ref_id, numero: v.numero, date: v.date, pdf_path: v.pdf_path, oeuvre_titre: v.oeuvre_titre, artiste_nom: v.artiste_nom, client_nom: v.client_nom, source: 'base', regen: true });
+    pathsDB.add(_normChemin(v.pdf_path));
+  }
+  for (const an of db.prepare(`
+    SELECT an.id ref_id, an.numero, an.type sous_type, an.date, an.pdf_path, ${NOM_A} artiste_nom
+    FROM annexes an JOIN artistes a ON a.id = an.artiste_id
+    WHERE an.pdf_path IS NOT NULL AND TRIM(an.pdf_path) <> ''`).all()) {
+    out.push({ type: 'annexe', ref_id: an.ref_id, numero: an.numero, date: an.date, pdf_path: an.pdf_path, artiste_nom: an.artiste_nom, sousType: an.sous_type === 'retrait' ? 'retrait' : 'depot', source: 'base' });
+    pathsDB.add(_normChemin(an.pdf_path));
+  }
+  for (const a of db.prepare(`
+    SELECT a.id ref_id, a.presentation_path pdf_path, ${NOM_A} artiste_nom
+    FROM artistes a WHERE a.presentation_path IS NOT NULL AND TRIM(a.presentation_path) <> ''`).all()) {
+    out.push({ type: 'presentation', ref_id: a.ref_id, numero: 'Présentation — ' + a.artiste_nom, date: _dateFichier(a.pdf_path, ''), pdf_path: a.pdf_path, artiste_nom: a.artiste_nom, source: 'base' });
+    pathsDB.add(_normChemin(a.pdf_path));
+  }
+
+  const racine = getDocumentsDir();
+  for (const annee of _sousDossiers(racine)) {
+    if (!/^\d{4}$/.test(annee)) continue;
+    const baseAnnee = path.join(racine, annee);
+    for (const [dossier, type] of Object.entries(DOSSIER_TYPE)) {
+      const d = path.join(baseAnnee, dossier);
+      for (const f of _pdfs(d)) {
+        const full = path.join(d, f);
+        if (pathsDB.has(_normChemin(full))) continue;       // déjà listé via la base
+        out.push({
+          type, numero: _nomLisible(f), date: _dateFichier(full, annee), pdf_path: full,
+          source: 'disque', modifiee: /_modifiee?\b|_modifie/i.test(f),
+          sousType: type === 'annexe' ? (/retrait/i.test(f) ? 'retrait' : 'depot') : undefined,
+        });
+      }
+    }
+    const dp = path.join(baseAnnee, 'Pochettes');
+    for (const client of _sousDossiers(dp)) {
+      const dClient = path.join(dp, client);
+      for (const facture of _sousDossiers(dClient)) {
+        const dPochette = path.join(dClient, facture);
+        const fichiers = _pdfs(dPochette).map((f) => ({ nom: _nomLisible(f), fichier: f, pdf_path: path.join(dPochette, f) }));
+        if (!fichiers.length) continue;
+        out.push({ type: 'pochette', numero: facture, client, date: _dateFichier(dPochette, annee), pdf_path: dPochette, source: 'disque', contenu: fichiers });
+      }
+    }
+  }
+  return out;
+}
+
+module.exports = { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPresentationPersonnalisee, genererLettrePochettePdf, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette, indexerTousLesDocuments };

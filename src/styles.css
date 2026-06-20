@@ -3760,6 +3760,54 @@ details.bloc.pliable > .bloc-corps {
   color: var(--soft-ivory);
 }
 
+/* ====== Refonte section Documents (Lot 4) ====== */
+.doc-icone svg { width: 22px; height: 22px; }
+.doc-icone-catalogue    { background: #6a4d8c; color: var(--soft-ivory); }
+.doc-icone-annexe       { background: #4a5568; color: var(--soft-ivory); }
+.doc-icone-annexe-depot { background: #900001; color: var(--soft-ivory); }
+.doc-icone-annexe-retr  { background: #2a5c8a; color: var(--soft-ivory); }
+.doc-icone-rapport      { background: var(--terracotta); color: var(--soft-ivory); }
+.doc-icone-lettre       { background: #7a6a4a; color: var(--soft-ivory); }
+
+/* Barre de filtres permanente */
+.doc-filtres-barre { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin: 6px 0 22px; }
+.doc-filtres-barre .groupe-filtre { display: flex; flex-direction: column; gap: 5px; }
+.doc-filtres-barre label { font-size: 12px; color: var(--slate); font-weight: 500; }
+.doc-filtres-barre select {
+  height: 36px; padding: 0 32px 0 12px; min-width: 150px;
+  background: var(--porcelain); border: 1px solid var(--mist); border-radius: var(--r-btn);
+  font-family: var(--font-ui); font-size: 14px; color: var(--ink); cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235D6875' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat; background-position: right 10px center;
+}
+.doc-filtres-barre select:focus { outline: none; border-color: var(--warm-gold); box-shadow: 0 0 0 4px rgba(201,154,61,.18); }
+.doc-reset { align-self: flex-end; height: 36px; background: none; border: 0; color: #8a6d1f; font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; padding: 0 6px; }
+.doc-reset[hidden] { display: none; }
+.doc-compteur-barre { margin-left: auto; align-self: flex-end; height: 36px; display: flex; align-items: center; font-size: 12px; color: var(--stone); }
+
+/* Sections par type */
+.doc-type-bloc { margin-bottom: 26px; }
+.doc-type-titre { display: flex; align-items: center; gap: 12px; margin: 0 2px 10px; }
+.doc-type-ic { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--gallery-navy); color: var(--soft-ivory); }
+.doc-type-ic svg { width: 17px; height: 17px; }
+.doc-type-nom { font-family: var(--font-titre); font-size: 20px; color: var(--gallery-navy); }
+.doc-type-compte { font-size: 12px; color: var(--stone); background: var(--cloud); border-radius: 999px; padding: 2px 9px; }
+.doc-annee-sep { font-size: 12px; font-weight: 600; color: var(--stone); letter-spacing: .04em; padding: 8px 16px 4px; }
+
+.doc-badge { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--cloud); color: var(--slate); margin-left: 6px; vertical-align: middle; }
+
+/* Pochette dépliable */
+.doc-ligne.pochette { cursor: pointer; }
+.doc-chevron { width: 16px; height: 16px; color: var(--stone); transition: transform .15s; flex-shrink: 0; }
+.doc-ligne.pochette.ouvert .doc-chevron { transform: rotate(90deg); }
+.pochette-contenu { background: var(--soft-ivory); border-bottom: 1px solid var(--mist); padding: 4px 16px 10px 70px; }
+.pochette-contenu[hidden] { display: none; }
+.pochette-doc { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 13px; color: var(--slate); border-bottom: 1px dashed var(--mist); }
+.pochette-doc:last-child { border-bottom: 0; }
+.pochette-doc .nom { flex: 1; min-width: 0; color: var(--ink); }
+.pochette-doc .mini-voir { font-size: 12px; padding: 0 10px; height: 28px; }
+.doc-vide-global { padding: 40px; text-align: center; color: var(--stone); font-size: 13px; }
+
 /* Bouton « Produire la pochette » : prééminent, pleine largeur ; les actions
    secondaires (certificat seul, facture artiste) en dessous, discrètes. */
 .btn-pochette { flex: 1 1 100%; justify-content: center; padding: 12px; font-size: 1rem; }
