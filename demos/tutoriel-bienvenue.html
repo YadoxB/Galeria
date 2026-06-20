@@ -92,6 +92,7 @@
       <div class="faux-item" data-vue="suivi"><span class="pt"></span> Suivi</div>
       <div class="faux-groupe">Archives</div>
       <div class="faux-item" data-vue="documents"><span class="pt"></span> Documents</div>
+      <div class="faux-item" data-vue="rapport"><span class="pt"></span> Rapport</div>
       <div class="faux-groupe">&nbsp;</div>
       <div class="faux-item" data-vue="outils"><span class="pt"></span> Outils</div>
       <div class="faux-profil" id="cible-profil"><span class="av">GVSJ</span><span style="font-size:13px">Profil de la galerie</span></div>
@@ -124,6 +125,9 @@
       documents: `<div class="faux-entete"><h1 class="faux-titre">Documents</h1></div>
         <div id="cible-docvue" style="margin-bottom:16px"><div class="faux-toggle"><span class="on">Liste</span><span>Explorateur</span></div></div>
         <div class="faux-liste"><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div></div>`,
+      rapport: `<div class="faux-entete"><h1 class="faux-titre">Rapport</h1><div class="faux-chip" style="height:36px">📅 Aujourd'hui</div></div>
+        <div class="faux-stats"><div class="faux-stat"></div><div class="faux-stat"></div><div class="faux-stat"></div><div class="faux-stat or"></div></div>
+        <div class="faux-liste"><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div></div>`,
       outils: `<div class="faux-entete"><h1 class="faux-titre">Outils</h1></div>
         <div class="faux-outils" id="cible-outils"><div class="faux-outil"></div><div class="faux-outil"></div></div>`,
     };
@@ -141,6 +145,7 @@
       { vue: 'oeuvres', cible: '#cible-ajouter', placement: 'bottom-left', titre: 'Ajouter une œuvre', texte: "Le bouton <b>+ Ajouter</b> crée une fiche. Le prix peut se calculer tout seul à partir des cotes de l'artiste." },
       { vue: 'ventes', cible: '.faux-item[data-vue=ventes]', placement: 'right', titre: 'Ventes & clients', texte: "Enregistrez une <b>vente</b> (œuvre + client, taxes, rabais). Le suivi des commandes se fait dans <b>Suivi</b>." },
       { vue: 'documents', cible: '#cible-docvue', placement: 'bottom', titre: 'Vos documents', texte: "Tous les PDF produits (certificats, factures, pochettes…), en vue <b>liste</b> ou <b>explorateur</b> de dossiers." },
+      { vue: 'rapport', cible: '.faux-item[data-vue=rapport]', placement: 'right', titre: 'Le rapport du jour', texte: "Le <b>Rapport</b> est le journal d'une journée : ventes, œuvres ajoutées ou retirées, et le suivi des commandes en cours. <b>Exportable en PDF</b> — pratique pour faire le point chaque jour ou pour la comptabilité." },
       { vue: 'outils', cible: '#cible-outils', placement: 'top', titre: 'Les outils', texte: "Des <b>calculateurs</b> de prix et de commission (le net versé à l'artiste après les taxes)." },
       { vue: 'oeuvres', cible: '#cible-profil', placement: 'right', titre: 'Réglages & profil', texte: "En bas, le <b>profil de la galerie</b> (coordonnées, logo, taxes) qui alimente tous vos documents. Les <b>Réglages</b> sont juste au-dessus." },
       { vue: 'oeuvres', cible: '#cible-aide', placement: 'top-left', titre: "L'aide, toujours là", texte: "Le bouton <b>?</b> ouvre l'aide cherchable depuis n'importe quelle page — et permet de <b>revoir ce tutoriel</b>." },
