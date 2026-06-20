@@ -120,8 +120,13 @@
       oeuvres: `<div class="faux-entete"><h1 class="faux-titre">Œuvres</h1><div style="display:flex;gap:12px;align-items:center"><div class="faux-pillule" style="width:240px"></div><button class="faux-ajouter" id="cible-ajouter">+ Ajouter</button></div></div>
         <div class="faux-barre" id="cible-filtres"><div class="faux-chip">Grille / Liste</div><div class="faux-chip">Filtres</div><div class="faux-chip">Tri</div></div>
         <div class="faux-grille"><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div><div class="faux-carte"></div></div>`,
+      clients: `<div class="faux-entete"><h1 class="faux-titre">Clients</h1><div style="display:flex;gap:12px;align-items:center"><div class="faux-pillule" style="width:240px"></div><button class="faux-ajouter">+ Ajouter</button></div></div>
+        <div class="faux-liste"><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div></div>`,
       ventes: `<div class="faux-entete"><h1 class="faux-titre">Ventes</h1><button class="faux-ajouter">+ Ajouter</button></div>
         <div class="faux-liste"><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div></div>`,
+      suivi: `<div class="faux-entete"><h1 class="faux-titre">Suivi</h1><div class="faux-toggle"><span class="on">Actif</span><span>Complétées</span></div></div>
+        <div class="faux-barre"><div class="faux-chip">À préparer 3</div><div class="faux-chip">À emballer 1</div><div class="faux-chip">À livrer 2</div></div>
+        <div class="faux-liste"><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div></div>`,
       documents: `<div class="faux-entete"><h1 class="faux-titre">Documents</h1></div>
         <div id="cible-docvue" style="margin-bottom:16px"><div class="faux-toggle"><span class="on">Liste</span><span>Explorateur</span></div></div>
         <div class="faux-liste"><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div><div class="faux-rangee"></div></div>`,
@@ -143,7 +148,9 @@
       { vue: 'artistes', cible: '.faux-item[data-vue=artistes]', placement: 'right', titre: 'Les artistes', texte: "Chaque artiste a sa fiche : biographie, <b>cotes</b> (tarifs), fiscalité, et ses documents (présentation, catalogue, annexe)." },
       { vue: 'oeuvres', cible: '.faux-item[data-vue=oeuvres]', placement: 'right', titre: 'Le catalogue d’œuvres', texte: "Vos œuvres, en <b>grille ou liste</b>, avec recherche, filtres et tri." },
       { vue: 'oeuvres', cible: '#cible-ajouter', placement: 'bottom-left', titre: 'Ajouter une œuvre', texte: "Le bouton <b>+ Ajouter</b> crée une fiche. Le prix peut se calculer tout seul à partir des cotes de l'artiste." },
-      { vue: 'ventes', cible: '.faux-item[data-vue=ventes]', placement: 'right', titre: 'Ventes & clients', texte: "Enregistrez une <b>vente</b> (œuvre + client, taxes, rabais). Le suivi des commandes se fait dans <b>Suivi</b>." },
+      { vue: 'clients', cible: '.faux-item[data-vue=clients]', placement: 'right', titre: 'Les clients', texte: "Vos clients : coordonnées, <b>historique d'achat</b>, et le <b>consentement courriel</b> (Loi 25) pour les invitations aux vernissages." },
+      { vue: 'ventes', cible: '.faux-item[data-vue=ventes]', placement: 'right', titre: 'Les ventes', texte: "Enregistrez une <b>vente</b> : choisissez l'œuvre et le client, ajustez taxes et rabais. L'œuvre passe « vendue » et Galeria propose la <b>pochette de vente</b>." },
+      { vue: 'suivi', cible: '.faux-item[data-vue=suivi]', placement: 'right', titre: 'Le suivi des commandes', texte: "Le <b>Suivi</b> regroupe les œuvres à préparer (Sage, stock, site) et les commandes en cours — <b>paiement, emballage, envoi, livraison</b> — éditables d'un clic." },
       { vue: 'documents', cible: '#cible-docvue', placement: 'bottom', titre: 'Vos documents', texte: "Tous les PDF produits (certificats, factures, pochettes…), en vue <b>liste</b> ou <b>explorateur</b> de dossiers." },
       { vue: 'rapport', cible: '.faux-item[data-vue=rapport]', placement: 'right', titre: 'Le rapport du jour', texte: "Le <b>Rapport</b> est le journal d'une journée : ventes, œuvres ajoutées ou retirées, et le suivi des commandes en cours. <b>Exportable en PDF</b> — pratique pour faire le point chaque jour ou pour la comptabilité." },
       { vue: 'outils', cible: '#cible-outils', placement: 'top', titre: 'Les outils', texte: "Des <b>calculateurs</b> de prix et de commission (le net versé à l'artiste après les taxes)." },
