@@ -98,6 +98,15 @@ const ARTICLES = [
      <div class="attention">Si tu attendais un prix automatique, vérifie le <b>médium</b> (pas le style) : c'est lui qui doit correspondre à une cote.</div>`),
   A('oeuvres', 'Statut d\'une œuvre (disponible, réservé, vendu, prêté)', 'statut disponible réservé vendu prêté changer',
     `<p>Le statut indique où en est l'œuvre. Il passe à <b>vendu</b> automatiquement à l'enregistrement d'une vente. « Réservé » sert à mettre de côté (l'œuvre apparaît dans « à relancer » du tableau de bord).</p>`),
+  A('oeuvres', 'Réserver une œuvre pour un client', 'réservation réserver client échéance libérer convertir vente mettre de côté relancer',
+    `<p>Sur une œuvre disponible, le bouton <b>Réserver</b> la met de côté pour un client.</p>
+     <ol><li>Choisis le <b>client</b> (ou crée-le), une <b>date d'échéance</b> (optionnelle) et des <b>notes</b>.</li>
+     <li>L'œuvre passe <b>« réservée »</b> et apparaît au tableau de bord (« Œuvres réservées »), avec un repère d'échéance (bientôt / dépassée).</li></ol>
+     <p>Sur la fiche, la carte <b>Réservation</b> propose ensuite :</p>
+     <ul><li><b>Convertir en vente</b> — ouvre le formulaire de vente déjà rempli avec le client ;</li>
+     <li><b>Libérer</b> — remet l'œuvre disponible et efface la réservation.</li></ul>
+     <p>La réservation est aussi effacée automatiquement si l'œuvre est vendue.</p>
+     <div class="voir-aussi"><b>Voir aussi :</b> <a data-go="Enregistrer une vente">Enregistrer une vente</a></div>`),
   A('oeuvres', 'Préparation : Sage 50, Stock, Site web', 'préparation sage stock site web cycle cocher étape',
     `<p>Sur la fiche œuvre, la carte <b>Préparation</b> suit trois étapes éditables d'un clic : <b>Sage 50</b> → <b>Stock</b> → <b>Site web</b> (la date se met à aujourd'hui à la coche).</p>
      <div class="attention"><b>Sage 50 est obligatoire avant de vendre</b> l'œuvre (voir « Vente refusée »).</div>`),
