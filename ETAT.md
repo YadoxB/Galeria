@@ -397,6 +397,33 @@ Reprise dans le worktree `angry-heyrovsky-02b716` (mis à niveau sur `master` pa
 
 ---
 
+### Journal de session — 2026-06-20 (v0.4.0 publiée)
+
+Grosse session de fonctionnalités, **fusionnée dans `master` et publiée en release `v0.4.0`** sur GitHub. Travail fait dans le worktree `angry-heyrovsky-02b716`.
+
+**Livré (v0.4.0) :**
+- **Lot 1 — calculateur de commission** (Outils ; net versé à l'artiste après TPS/TVQ ; cote par type Peinture 50 / Sculpture 33 / Reproduction 50 après frais / Autre).
+- **Cote par type sur la vraie facture artiste** (`oeuvres.type` → Sculpture 33 %, sinon défaut config 50 %).
+- **Section d'aide (#22)** — bouton « ? » flottant + panneau cherchable, ~65 articles.
+- **Tutoriel de bienvenue (#13)** — visite hybride qui fait défiler toutes les sections ; rejouable depuis l'aide ; auto au 1er lancement (`config.tutoriel_vu`).
+- **Lot 4 — refonte Documents** (groupement par type, filtres, icônes SVG, pochettes dépliables, source hybride base + scan disque) **+ vue Explorateur** (bascule Liste/Explorateur).
+- **Réservation d'œuvres** (client + échéance + notes ; convertir en vente / libérer ; bloc tableau de bord enrichi).
+- Correctifs : fenêtre adaptée à l'écran, icône emballage (boîte de livraison), padding carte réservation, boutons du tutoriel.
+
+**Release & livraison :**
+- `master` = `93bc21b`, poussé. Release **v0.4.0** publiée (auto-update ≥ 0.2.1).
+- **Build complet prêt** : `F:\Galerie\Automatisation\GalerieApp\dist\Galeria Setup 0.4.0.exe` (477 Mo, catalogue + photos) — pour l'install manuelle chez les parents (toujours sur 0.2.0). **Tester la migration 0.2.0 → 0.4.0 sur une copie de leur base avant.**
+- ⚠️ **`npm run release` et `npm run build:complet` doivent être lancés depuis le worktree PRINCIPAL** `F:\Galerie\Automatisation\GalerieApp` (qui a `node_modules` + Electron 42.4.0). Le worktree `angry-heyrovsky-02b716` n'a **pas** de `node_modules` → electron-builder y échoue (« Cannot compute electron version »). `npm start` y a fonctionné parce que… [à vérifier] — de toute façon, **builder depuis le principal**.
+- ⚠️ Tout le lot v0.4.0 est **non vérifié visuellement par Claude** (résolveur computer-use ne capte pas la fenêtre Electron de dev) — **à confirmer par Dave**.
+
+**Reporté / à reprendre :**
+1. **Nomenclature des documents** — *recensement fait* (voir `A-VALIDER.md` → « Nomenclature des numéros et des fichiers »). Prochaine session : **définir la nomenclature générale unifiée** (Dave apporte la formule des images d'inventaire) et l'appliquer dans `src/pdf.js`.
+2. **Reproductions** — brancher les **frais de production** sur la facture artiste (champ persistant + gabarit).
+3. **Édition en batch (#2)** — vue tableau multi-lignes.
+4. **Livraison aux parents** — installer le build complet v0.4.0 + tester la migration.
+
+---
+
 ## Notes techniques pour l'intervenant suivant
 
 - **Aucune commande de build automatique requise** au quotidien. `npm start` lance l'app en dev.

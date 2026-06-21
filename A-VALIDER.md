@@ -55,11 +55,36 @@
   - Liste exacte des étapes que les parents veulent voir.
   - Quels statuts sont visibles aux clients (par exemple si on veut les notifier) ?
 
-## Nomenclature des numéros
+## Nomenclature des numéros et des fichiers (chantier dédié — prochaine session)
 
-- **Format final** des numéros de factures, certificats, inventaires. À confirmer avec les parents :
-  - Préfixe et zéro-padding voulu (ex. F-2026-001 ou autre format).
-  - Numérotation par année qui repart à 1 chaque janvier, ou continue ?
+> **Recensement fait le 2026-06-20** (pour ne pas le refaire). Objectif de la prochaine session : **définir une nomenclature générale unifiée** des noms de fichiers et l'appliquer partout (`src/pdf.js`).
+
+**Documents produits — numéro + nom de fichier actuel + dossier :**
+
+| Document | Numéro | Nom de fichier actuel | Dossier |
+|---|---|---|---|
+| Certificat d'authenticité | `C-2026-NNN` | `Certificat_{numéro}_{titre-slug}.pdf` | `…\{année}\Certificats\` (ou dans la pochette) |
+| Facture artiste | `A-2026-NNN` | `FactureArtiste_{numéro}_{artiste-slug}.pdf` | `…\{année}\Factures artiste\` |
+| Facture client | `F-2026-NNN` | *non produite (Phase 3D)* | — |
+| Catalogue d'artiste | — | `Catalogue_{artiste-slug}_{horodatage}.pdf` | `…\{année}\Catalogues\` |
+| Annexe A (dépôt/retrait) | `A-{préfixe}-NNN` (par artiste) | `Annexe_{Depot\|Retrait}_{numéro}_{artiste-slug}.pdf` | `…\{année}\Annexes\` |
+| Présentation d'artiste | — | `Presentation_{artiste-slug}_{horodatage}.pdf` | `…\{année}\Présentations\` |
+| Rapport journalier | — | `Rapport_{date}_{horodatage}.pdf` | `…\{année}\Rapports\` |
+
+**Pochette de vente** — dossier `…\{année}\Pochettes\{client}\{facture}\` : `Lettre de remerciement - {client}.pdf`, `Certificat_{numéro}_{titre}.pdf`, `Présentation de l'artiste - {artiste}.pdf`, `Guide de l'acheteur.pdf` (fixe).
+
+**« Version modifiée »** : même dossier, suffixe `_modifie(e)` + horodatage.
+
+**Incohérences à trancher :**
+- Deux styles de noms : `PascalCase_underscore` (la plupart) **vs** français lisible avec espaces et « - » (fichiers de pochette). → choisir **un** style.
+- **Numéro vs horodatage** : certificat/facture/annexe portent leur numéro ; catalogue/présentation/rapport portent un horodatage (pas de numéro). → faut-il un numéro pour tous ?
+- Suffixe `_modifie` (catalogue) vs `_modifiee` (autres) → uniformiser.
+- Casse/accents : `slug()` met en minuscules sans accents.
+
+**Décisions à prendre :**
+- **Format des numéros** : préfixe + zéro-padding (ex. `F-2026-001`) ; remise à 1 chaque janvier ou continu ?
+- **Forme générale du nom de fichier** : ordre des parties (type, numéro, date, artiste/œuvre/client), séparateur, casse, accents.
+- Dave apporte la **formule basée sur celle des images d'inventaire**.
 
 ## Intégrations externes
 
