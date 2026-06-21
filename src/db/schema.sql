@@ -75,6 +75,10 @@ CREATE TABLE IF NOT EXISTS oeuvres (
                          CHECK (archive IN (0, 1)),
   retrait_date           TEXT,
   retrait_motif          TEXT,
+  reservation_client_id  INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+  reservation_date       TEXT,
+  reservation_echeance   TEXT,
+  reservation_notes      TEXT,
   cree_le                TEXT NOT NULL DEFAULT (datetime('now')),
   modifie_le             TEXT NOT NULL DEFAULT (datetime('now'))
 );

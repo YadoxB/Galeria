@@ -58,6 +58,19 @@ export async function rendreVenteFiche(contenu, params) {
       rabais_galerie: 0,
       notes: null,
     };
+    // Préremplissage du client (ex. conversion d'une réservation en vente).
+    if (params.client_id) {
+      try {
+        const cli = await window.api.clientGet(params.client_id);
+        if (cli) {
+          v.client_id = cli.id;
+          v.client_nom = cli.nom;
+          v.client_prenom = cli.prenom;
+          v.client_courriel = cli.courriel;
+          v.client_telephone = cli.telephone;
+        }
+      } catch {}
+    }
   } else {
     const bundle = await window.api.venteFicheBundle(params.id);
     if (!bundle || !bundle.vente) {
@@ -1262,7 +1275,7 @@ function dateAujourdhuiCli() {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-function ouvrirCreationClient() {
+export function ouvrirCreationClient() {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
     overlay.className = 'overlay-modale overlay-dialogue';

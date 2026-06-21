@@ -4709,6 +4709,24 @@ details.bloc.pliable > .bloc-corps {
 .tuto-carte p b { color: var(--ink); }
 .tuto-carte .actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
 
+/* ====== Réservation d'œuvre ====== */
+.zone-reservation-bento { grid-column: 1 / -1; }
+.zone-reservation-bento h3 { font-family: var(--font-titre); font-size: 18px; color: var(--gallery-navy); margin: 0 0 12px; display: flex; align-items: center; gap: 9px; }
+.zone-reservation-bento h3 svg { width: 19px; height: 19px; color: var(--warm-gold); }
+.resa-lignes { display: flex; flex-direction: column; gap: 9px; margin-bottom: 14px; }
+.resa-l { display: flex; gap: 10px; font-size: 14px; }
+.resa-l .k { color: var(--slate); width: 110px; flex-shrink: 0; }
+.resa-l .v { color: var(--ink); }
+.barre-actions-resa { display: flex; gap: 10px; flex-wrap: wrap; }
+.resa-client-row { display: flex; gap: 8px; }
+.resa-client-row select { flex: 1; }
+
+/* Badge d'échéance (fiche œuvre + tableau de bord) */
+.badge-ech { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; vertical-align: middle; }
+.badge-ech.ok { background: var(--cloud); color: var(--slate); }
+.badge-ech.bientot { background: #f7ecd0; color: #8a6d1f; }
+.badge-ech.echu { background: #fbe2da; color: #a23b22; }
+
 .zone-recadrage {
   position: relative;
   display: flex;

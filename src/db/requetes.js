@@ -126,7 +126,8 @@ function obtenirFicheOeuvreBundle(id) {
   const ventes = listerVentesOeuvre(id);
   const certificats = listerCertificatsParOeuvre(id);
   const artiste = oeuvre.artiste_id ? obtenirArtiste(oeuvre.artiste_id) : null;
-  return { oeuvre, voisins, ventes, certificats, artiste };
+  const reservationClient = oeuvre.reservation_client_id ? obtenirClient(oeuvre.reservation_client_id) : null;
+  return { oeuvre, voisins, ventes, certificats, artiste, reservationClient };
 }
 
 function voisinsOeuvre(id) {
@@ -454,11 +455,14 @@ function oeuvresReservees(limite = 8) {
   return db.prepare(`
     SELECT o.id, o.titre, o.numero_inventaire, o.prix, o.image_path,
            TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
+           o.reservation_echeance,
+           TRIM(COALESCE(cl.prenom || ' ', '') || cl.nom) AS client_nom,
            o.modifie_le
     FROM oeuvres o
     JOIN artistes a ON a.id = o.artiste_id
+    LEFT JOIN clients cl ON cl.id = o.reservation_client_id
     WHERE o.statut = 'reserve' AND o.archive = 0
-    ORDER BY o.modifie_le DESC, o.id DESC
+    ORDER BY (o.reservation_echeance IS NULL), o.reservation_echeance ASC, o.modifie_le DESC
     LIMIT ?
   `).all(limite);
 }

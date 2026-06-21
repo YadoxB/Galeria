@@ -312,16 +312,29 @@ function remplirReservees(contenu, oeuvres) {
       </div>
       <div class="dashboard-ligne-corps">
         <p class="dashboard-ligne-titre">${ech(o.titre)}</p>
-        <p class="dashboard-ligne-meta">${ech(o.artiste_nom)}</p>
+        <p class="dashboard-ligne-meta">${ech(o.artiste_nom)}${o.client_nom ? ' &middot; ' + ech(o.client_nom) : ''}</p>
       </div>
       <div class="dashboard-ligne-droite">
-        ${o.prix != null ? `<p class="dashboard-ligne-montant">${formaterPrix(o.prix)}</p>` : ''}
+        ${badgeEcheanceResa(o.reservation_echeance)}
       </div>
     </button>
   `).join('')}</div>`;
   zone.querySelectorAll('.dashboard-ligne').forEach((btn) => {
     btn.addEventListener('click', () => naviguer('oeuvre-fiche', { id: Number(btn.dataset.id) }));
   });
+}
+
+// Badge d'échéance d'une réservation (échue / bientôt / neutre).
+function badgeEcheanceResa(iso) {
+  if (!iso) return '<span class="badge-ech ok">Réservée</span>';
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const d = new Date(iso + 'T00:00:00');
+  if (isNaN(d.getTime())) return '<span class="badge-ech ok">Réservée</span>';
+  const jours = Math.round((d - today) / 86400000);
+  if (jours < 0) return `<span class="badge-ech echu">Échue (${-jours} j)</span>`;
+  if (jours === 0) return `<span class="badge-ech bientot">Aujourd'hui</span>`;
+  if (jours <= 7) return `<span class="badge-ech bientot">Dans ${jours} j</span>`;
+  return `<span class="badge-ech ok">Dans ${jours} j</span>`;
 }
 
 function remplirOeuvresEnPreparation(contenu, oeuvres) {

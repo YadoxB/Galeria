@@ -18,6 +18,8 @@ contextBridge.exposeInMainWorld('api', {
   rapportPdf: (dateISO) => ipcRenderer.invoke('rapport:pdf', dateISO),
   oeuvreRetrait: (id, data) => ipcRenderer.invoke('oeuvres:retrait', id, data),
   oeuvresRetraitLot: (ids, data) => ipcRenderer.invoke('oeuvres:retrait-lot', ids, data),
+  oeuvreReserver: (id, data) => ipcRenderer.invoke('oeuvres:reserver', id, data),
+  oeuvreLiberer: (id) => ipcRenderer.invoke('oeuvres:liberer', id),
   appInfos: () => ipcRenderer.invoke('app:infos'),
   iaCopierPourChatGPT: (oeuvreId) => ipcRenderer.invoke('ia:copier-pour-chatgpt', oeuvreId),
   iaCopierPourChatGPTInline: (params) => ipcRenderer.invoke('ia:copier-pour-chatgpt-inline', params),

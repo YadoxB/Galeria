@@ -427,7 +427,7 @@ function creerVente(data) {
     const placeholders = cols.map(() => '?').join(', ');
     const info = db.prepare(`INSERT INTO ventes (${colNames}) VALUES (${placeholders})`).run(...valeurs);
 
-    db.prepare(`UPDATE oeuvres SET statut = 'vendu', modifie_le = datetime('now') WHERE id = ?`).run(oeuvreId);
+    db.prepare(`UPDATE oeuvres SET statut = 'vendu', reservation_client_id = NULL, reservation_date = NULL, reservation_echeance = NULL, reservation_notes = NULL, modifie_le = datetime('now') WHERE id = ?`).run(oeuvreId);
 
     db.exec('COMMIT');
     return obtenirVente(info.lastInsertRowid);
@@ -590,6 +590,47 @@ function definirRetraitOeuvresLot(ids, data = {}) {
   return { retirees: n };
 }
 
+// ===== Réservation d'œuvre =====
+
+// Réserve une œuvre pour un client (statut 'reserve' + client/échéance/notes).
+// Le client est obligatoire. Refuse une œuvre déjà vendue.
+function reserverOeuvre(id, data = {}) {
+  const idInt = entier(id);
+  if (idInt == null) throw new Error('Identifiant invalide.');
+  const clientId = entier(data.client_id);
+  if (clientId == null) throw new Error('Un client doit être sélectionné pour réserver.');
+  const db = openDatabase();
+  const oeuvre = db.prepare('SELECT statut FROM oeuvres WHERE id = ?').get(idInt);
+  if (!oeuvre) throw new Error('Œuvre introuvable.');
+  if (oeuvre.statut === 'vendu') throw new Error('Cette œuvre est déjà vendue.');
+  const date = vide(data.date) || new Date().toISOString().slice(0, 10);
+  db.prepare(`
+    UPDATE oeuvres SET
+      statut = 'reserve',
+      reservation_client_id = ?, reservation_date = ?,
+      reservation_echeance = ?, reservation_notes = ?,
+      modifie_le = datetime('now')
+    WHERE id = ?
+  `).run(clientId, date, vide(data.echeance), vide(data.notes), idInt);
+  return obtenirOeuvre(idInt);
+}
+
+// Libère une œuvre réservée : la remet « disponible » et efface la réservation.
+function libererOeuvre(id) {
+  const idInt = entier(id);
+  if (idInt == null) throw new Error('Identifiant invalide.');
+  const db = openDatabase();
+  db.prepare(`
+    UPDATE oeuvres SET
+      statut = 'disponible',
+      reservation_client_id = NULL, reservation_date = NULL,
+      reservation_echeance = NULL, reservation_notes = NULL,
+      modifie_le = datetime('now')
+    WHERE id = ? AND statut = 'reserve'
+  `).run(idInt);
+  return obtenirOeuvre(idInt);
+}
+
 // ===== Certificats =====
 
 const COLONNES_CERTIFICAT = [
@@ -701,4 +742,6 @@ module.exports = {
   definirArchive,
   definirRetraitOeuvre,
   definirRetraitOeuvresLot,
+  reserverOeuvre,
+  libererOeuvre,
 };

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo réservation d'œuvre</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <link rel="stylesheet" href="../src/styles.css">
+  <style>
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+    .demo-bar { position: sticky; top: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px 20px; background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    main { padding: 24px 32px 60px; max-width: 820px; }
+    h2.sec { font-family: var(--font-titre); font-size: 20px; color: var(--gallery-navy); margin: 28px 0 10px; }
+    p.desc { color: var(--slate); font-size: 14px; margin: 0 0 18px; }
+    .carte { background: var(--porcelain); border: 1px solid var(--mist); border-radius: var(--r-carte); padding: 18px 20px; }
+    .carte h3 { font-family: var(--font-titre); font-size: 18px; color: var(--gallery-navy); margin: 0 0 12px; display: flex; align-items: center; gap: 9px; }
+    .carte h3 svg { width: 19px; height: 19px; color: var(--warm-gold); }
+
+    .btn { border: 0; border-radius: var(--r-btn); font: inherit; font-size: 14px; font-weight: 600; padding: 9px 16px; cursor: pointer; }
+    .btn.pri { background: var(--warm-gold); color: var(--soft-ivory); }
+    .btn.sec { background: var(--porcelain); border: 1px solid var(--mist); color: var(--ink); font-weight: 500; }
+    .btn.danger { background: none; border: 1px solid var(--terracotta); color: var(--terracotta); font-weight: 500; }
+    .barre-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* Carte réservation (fiche œuvre) */
+    .resa-lignes { display: flex; flex-direction: column; gap: 9px; margin-bottom: 14px; }
+    .resa-l { display: flex; gap: 10px; font-size: 14px; }
+    .resa-l .k { color: var(--slate); width: 110px; flex-shrink: 0; }
+    .resa-l .v { color: var(--ink); }
+    .resa-l .v a { color: #8a6d1f; text-decoration: none; }
+    .badge-ech { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
+    .badge-ech.ok { background: var(--cloud); color: var(--slate); }
+    .badge-ech.bientot { background: #f7ecd0; color: #8a6d1f; }
+    .badge-ech.echu { background: #fbe2da; color: #a23b22; }
+
+    /* Liste tableau de bord */
+    .db-liste { display: flex; flex-direction: column; gap: 8px; }
+    .db-resa { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border: 1px solid var(--mist); border-radius: 12px; background: var(--porcelain); cursor: pointer; }
+    .db-resa:hover { background: var(--cloud); }
+    .db-vign { width: 42px; height: 42px; border-radius: 8px; background: var(--cloud); flex-shrink: 0; }
+    .db-resa .info { flex: 1; min-width: 0; }
+    .db-resa .t { font-size: 14px; color: var(--ink); }
+    .db-resa .m { font-size: 12px; color: var(--slate); margin-top: 2px; }
+
+    /* Modale */
+    .overlay-modale { position: fixed; inset: 0; background: rgba(7,26,47,.45); backdrop-filter: blur(2px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .overlay-modale.on { display: flex; }
+    .modale { width: 460px; max-width: 92vw; background: var(--porcelain); border-radius: var(--r-modal); box-shadow: var(--ombre-modal); padding: 24px; }
+    .modale h3 { font-family: var(--font-titre); font-size: 22px; color: var(--gallery-navy); margin: 0 0 16px; }
+    .form-champ { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .form-champ label { font-size: 13px; color: var(--slate); font-weight: 500; }
+    .form-champ input, .form-champ select, .form-champ textarea { height: 40px; padding: 0 12px; border: 1px solid var(--mist); border-radius: var(--r-btn); background: var(--porcelain); font: inherit; font-size: 14px; color: var(--ink); }
+    .form-champ textarea { height: auto; padding: 10px 12px; resize: vertical; }
+    .client-row { display: flex; gap: 8px; }
+    .client-row select { flex: 1; }
+    .modale-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+    .aide-champ { font-size: 12px; color: var(--stone); }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Réservation d'œuvre</div>
+    <div class="note" style="font-size:12px;color:rgba(255,255,255,.6)">CSS réel. Données fictives.</div>
+  </div>
+
+  <main>
+    <p class="desc">Réserver une œuvre pour un <b>client</b>, avec une <b>date d'échéance</b> et des <b>notes</b>. Depuis la réservation, on peut <b>convertir en vente</b> (formulaire pré-rempli) ou <b>libérer</b> l'œuvre.</p>
+
+    <h2 class="sec">1 · Sur une œuvre disponible</h2>
+    <p class="desc">Un bouton « Réserver » s'ajoute à côté de « Vendre ».</p>
+    <div class="carte">
+      <div class="barre-actions">
+        <button class="btn pri">Vendre</button>
+        <button class="btn sec" id="ouvrir-resa">Réserver</button>
+      </div>
+    </div>
+
+    <h2 class="sec">2 · Sur une œuvre réservée (carte sur la fiche)</h2>
+    <div class="carte">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        Réservation
+      </h3>
+      <div class="resa-lignes">
+        <div class="resa-l"><span class="k">Client</span><span class="v"><a href="#">Marie Tremblay</a></span></div>
+        <div class="resa-l"><span class="k">Réservée le</span><span class="v">12 juin 2026</span></div>
+        <div class="resa-l"><span class="k">Échéance</span><span class="v">25 juin 2026 &nbsp; <span class="badge-ech bientot">Dans 5 jours</span></span></div>
+        <div class="resa-l"><span class="k">Notes</span><span class="v">À confirmer après le vernissage. Tient l'œuvre jusqu'à la fin du mois.</span></div>
+      </div>
+      <div class="barre-actions">
+        <button class="btn pri">Convertir en vente</button>
+        <button class="btn danger">Libérer</button>
+      </div>
+    </div>
+
+    <h2 class="sec">3 · Au tableau de bord (« Œuvres réservées · à relancer »)</h2>
+    <div class="carte">
+      <div class="db-liste">
+        <div class="db-resa">
+          <div class="db-vign"></div>
+          <div class="info"><div class="t">Entre le vent et la mer — Clarence Bourgoin</div><div class="m">Marie Tremblay · échéance 25 juin</div></div>
+          <span class="badge-ech bientot">Dans 5 jours</span>
+        </div>
+        <div class="db-resa">
+          <div class="db-vign"></div>
+          <div class="info"><div class="t">Le silence des pins — Sofia</div><div class="m">Lucie Gagnon · échéance 14 juin</div></div>
+          <span class="badge-ech echu">Échue depuis 6 jours</span>
+        </div>
+        <div class="db-resa">
+          <div class="db-vign"></div>
+          <div class="info"><div class="t">Aurore boréale — André Coppens</div><div class="m">Jean Dubois · sans échéance</div></div>
+          <span class="badge-ech ok">Réservée</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modale Réserver -->
+  <div class="overlay-modale" id="modale-resa">
+    <div class="modale">
+      <h3>Réserver l'œuvre</h3>
+      <div class="form-champ">
+        <label for="resa-client">Client</label>
+        <div class="client-row">
+          <select id="resa-client">
+            <option value="">— Choisir un client —</option>
+            <option>Marie Tremblay</option>
+            <option>Lucie Gagnon</option>
+            <option>Jean Dubois</option>
+          </select>
+          <button class="btn sec" type="button">+ Nouveau client</button>
+        </div>
+      </div>
+      <div class="form-champ">
+        <label for="resa-ech">Date d'échéance <span class="aide-champ">(optionnel)</span></label>
+        <input type="date" id="resa-ech" value="2026-06-25">
+      </div>
+      <div class="form-champ">
+        <label for="resa-notes">Notes <span class="aide-champ">(optionnel)</span></label>
+        <textarea id="resa-notes" rows="3" placeholder="Conditions, contexte…"></textarea>
+      </div>
+      <div class="modale-actions">
+        <button class="btn sec" id="annuler-resa">Annuler</button>
+        <button class="btn pri">Confirmer la réservation</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ov = document.getElementById('modale-resa');
+    document.getElementById('ouvrir-resa').addEventListener('click', () => ov.classList.add('on'));
+    document.getElementById('annuler-resa').addEventListener('click', () => ov.classList.remove('on'));
+    ov.addEventListener('click', (e) => { if (e.target === ov) ov.classList.remove('on'); });
+  </script>
+</body>
+</html>

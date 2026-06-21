@@ -43,6 +43,12 @@ const COLONNES_ATTENDUES = {
     // œuvre. S'appuie sur la colonne `archive` ; ajoute la date et le motif.
     ['retrait_date', 'TEXT'],
     ['retrait_motif', 'TEXT'],
+    // Réservation (statut 'reserve') : client visé + échéance + notes. Une
+    // réservation active par œuvre ; effacée à la vente ou à la libération.
+    ['reservation_client_id', 'INTEGER'],
+    ['reservation_date', 'TEXT'],
+    ['reservation_echeance', 'TEXT'],
+    ['reservation_notes', 'TEXT'],
   ],
   clients: [
     ['prenom', 'TEXT'],

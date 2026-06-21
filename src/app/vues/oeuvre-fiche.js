@@ -11,6 +11,21 @@ import { visionner } from '../visionneuse.js';
 import { confirmer, alerter } from '../dialogue.js';
 import { ouvrirCreationCertificat } from './certificat-creation.js';
 import { proposerAnnexeApres } from '../annexe.js';
+import { ouvrirCreationClient } from './vente-fiche.js';
+
+// Badge d'échéance d'une réservation : « Échue depuis N j » (rouge),
+// « Dans N j » (ambre si ≤ 7 jours, neutre sinon), ou « Réservée » sans échéance.
+function badgeEcheance(iso) {
+  if (!iso) return '<span class="badge-ech ok">Réservée</span>';
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const d = new Date(iso + 'T00:00:00');
+  if (isNaN(d.getTime())) return '<span class="badge-ech ok">Réservée</span>';
+  const jours = Math.round((d - today) / 86400000);
+  if (jours < 0) return `<span class="badge-ech echu">Échue depuis ${-jours} jour${-jours > 1 ? 's' : ''}</span>`;
+  if (jours === 0) return `<span class="badge-ech bientot">Échéance aujourd'hui</span>`;
+  if (jours <= 7) return `<span class="badge-ech bientot">Dans ${jours} jour${jours > 1 ? 's' : ''}</span>`;
+  return `<span class="badge-ech ok">Dans ${jours} jours</span>`;
+}
 
 const TYPES_OEUVRE = ['Peinture', 'Sculpture', 'Reproduction', 'Photographie', 'Dessin', 'Estampe', 'Mixte'];
 const ORIENTATIONS = ['Horizontale', 'Verticale', 'Carrée'];
@@ -176,6 +191,7 @@ export async function rendreOeuvreFiche(contenu, params) {
   let ventes = [];
   let certificats = [];
   let artiste = null;
+  let reservationClient = null;
 
   if (estNouveau) {
     o = { ...GABARIT_VIDE };
@@ -198,6 +214,7 @@ export async function rendreOeuvreFiche(contenu, params) {
     ventes = bundle.ventes;
     certificats = bundle.certificats;
     artiste = bundle.artiste;
+    reservationClient = bundle.reservationClient;
   }
 
   async function rechargerBundle() {
@@ -209,6 +226,7 @@ export async function rendreOeuvreFiche(contenu, params) {
       ventes = bundle.ventes;
       certificats = bundle.certificats;
       artiste = bundle.artiste;
+      reservationClient = bundle.reservationClient;
     }
   }
 
@@ -454,12 +472,37 @@ export async function rendreOeuvreFiche(contenu, params) {
                 ? `<button class="btn-action" id="btn-retirer">Retirer</button>`
                 : '')}
           <button class="btn-action" id="btn-modifier">Modifier</button>
-          ${o.statut !== 'vendu' && o.statut !== 'vendue'
+          ${o.statut !== 'vendu' && o.statut !== 'vendue' && o.statut !== 'reserve' && !o.archive
+            ? `<button class="btn-action" id="btn-reserver">Réserver</button>`
+            : ''}
+          ${o.statut !== 'vendu' && o.statut !== 'vendue' && o.statut !== 'reserve'
             ? `<button class="btn-action btn-principal" id="btn-vendre">Vendre</button>`
             : ''}
         </div>
       </div>
     `;
+
+    // === Carte Réservation (œuvre au statut « reserve ») ===
+    const zoneReservation = o.statut === 'reserve' ? (() => {
+      const cliNom = reservationClient ? [reservationClient.prenom, reservationClient.nom].filter(Boolean).join(' ') : '—';
+      const notes = o.reservation_notes
+        ? `<div class="resa-l"><span class="k">Notes</span><span class="v">${ech(o.reservation_notes).replace(/\n/g, '<br>')}</span></div>`
+        : '';
+      return `
+        <div class="carte zone-reservation-bento">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Réservation</h3>
+          <div class="resa-lignes">
+            <div class="resa-l"><span class="k">Client</span><span class="v">${reservationClient ? `<button type="button" class="btn-lien" id="resa-client-lien">${ech(cliNom)}</button>` : ech(cliNom)}</span></div>
+            <div class="resa-l"><span class="k">Réservée le</span><span class="v">${o.reservation_date ? formaterDate(o.reservation_date) : '<span class="champ-vide">—</span>'}</span></div>
+            <div class="resa-l"><span class="k">Échéance</span><span class="v">${o.reservation_echeance ? formaterDate(o.reservation_echeance) : 'Sans échéance'} &nbsp; ${badgeEcheance(o.reservation_echeance)}</span></div>
+            ${notes}
+          </div>
+          <div class="barre-actions-resa">
+            <button class="btn-action btn-principal" id="btn-convertir-vente">Convertir en vente</button>
+            <button class="btn-action btn-danger" id="btn-liberer">Libérer</button>
+          </div>
+        </div>`;
+    })() : '';
 
     // === Caractéristiques ===
     const particulariteHtml = o.particularite
@@ -608,6 +651,7 @@ export async function rendreOeuvreFiche(contenu, params) {
         <div class="grille-bento">
           ${imageHtml}
           ${zoneIdentite}
+          ${zoneReservation}
           ${zoneCarac}
           ${zoneLocalisation}
           ${zonePreparation}
@@ -706,6 +750,97 @@ export async function rendreOeuvreFiche(contenu, params) {
       btnVoirVente.addEventListener('click', () =>
         naviguer('vente-fiche', { id: ventes[0].id })
       );
+    }
+
+    // === Réservation ===
+    const btnReserver = contenu.querySelector('#btn-reserver');
+    if (btnReserver) btnReserver.addEventListener('click', () => ouvrirModaleReservation());
+
+    const btnConvertir = contenu.querySelector('#btn-convertir-vente');
+    if (btnConvertir) btnConvertir.addEventListener('click', () =>
+      naviguer('vente-fiche', { nouveau: true, oeuvre_id: o.id, client_id: o.reservation_client_id })
+    );
+
+    const btnLiberer = contenu.querySelector('#btn-liberer');
+    if (btnLiberer) btnLiberer.addEventListener('click', async () => {
+      const rep = await confirmer({
+        type: 'question', title: 'Libérer la réservation ?',
+        message: `Remettre « ${o.titre} » disponible et retirer la réservation ?`,
+        buttons: ['Libérer', 'Annuler'], defaultId: 0, cancelId: 1,
+      });
+      if (rep !== 0) return;
+      try { o = await window.api.oeuvreLiberer(o.id); await rechargerBundle(); dessiner(); }
+      catch (err) { await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) }); }
+    });
+
+    const resaClientLien = contenu.querySelector('#resa-client-lien');
+    if (resaClientLien) resaClientLien.addEventListener('click', () =>
+      naviguer('client-fiche', { id: o.reservation_client_id })
+    );
+
+    // Modale « Réserver l'œuvre » : client (requis) + échéance + notes.
+    async function ouvrirModaleReservation() {
+      let clients = [];
+      try { clients = await window.api.clientsListe(); } catch {}
+      const optClients = clients.map((c) => {
+        const nom = [c.prenom, c.nom].filter(Boolean).join(' ');
+        return `<option value="${c.id}">${ech(nom)}</option>`;
+      }).join('');
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay-modale overlay-dialogue';
+      overlay.innerHTML = `
+        <div class="dialogue" role="dialog" aria-modal="true">
+          <div class="dialogue-entete"><h3 class="dialogue-titre">Réserver l'œuvre</h3></div>
+          <p class="dialogue-message">« ${ech(o.titre)} » sera mise de côté (statut « réservée ») pour le client choisi.</p>
+          <div class="form-champ">
+            <label for="resa-client">Client</label>
+            <div class="resa-client-row">
+              <select id="resa-client"><option value="">— Choisir un client —</option>${optClients}</select>
+              <button type="button" class="btn-action btn-secondaire-action" id="resa-nouveau-client">+ Nouveau client</button>
+            </div>
+          </div>
+          <div class="form-champ">
+            <label for="resa-echeance">Date d'échéance <span class="aide-champ">(optionnel)</span></label>
+            <input type="date" id="resa-echeance">
+          </div>
+          <div class="form-champ">
+            <label for="resa-notes">Notes <span class="aide-champ">(optionnel)</span></label>
+            <input type="text" id="resa-notes" placeholder="Conditions, contexte…" autocomplete="off">
+          </div>
+          <div class="dialogue-actions">
+            <button type="button" class="btn-action btn-secondaire-action" id="resa-annuler">Annuler</button>
+            <button type="button" class="btn-action btn-principal" id="resa-ok">Confirmer la réservation</button>
+          </div>
+        </div>`;
+      const fermer = () => overlay.remove();
+      const sel = overlay.querySelector('#resa-client');
+      overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) fermer(); });
+      overlay.querySelector('#resa-annuler').addEventListener('click', fermer);
+      overlay.querySelector('#resa-nouveau-client').addEventListener('click', async () => {
+        const cree = await ouvrirCreationClient();
+        if (cree) {
+          const nom = [cree.prenom, cree.nom].filter(Boolean).join(' ');
+          const opt = document.createElement('option');
+          opt.value = cree.id; opt.textContent = nom; opt.selected = true;
+          sel.appendChild(opt);
+        }
+      });
+      overlay.querySelector('#resa-ok').addEventListener('click', async () => {
+        const cid = Number(sel.value) || null;
+        if (!cid) { await alerter({ type: 'warning', title: 'Client requis', message: 'Choisis un client pour réserver l\'œuvre.' }); return; }
+        const echeance = overlay.querySelector('#resa-echeance').value || null;
+        const notes = overlay.querySelector('#resa-notes').value.trim();
+        fermer();
+        try {
+          o = await window.api.oeuvreReserver(o.id, { client_id: cid, echeance, notes });
+          await rechargerBundle();
+          dessiner();
+        } catch (err) {
+          await alerter({ type: 'error', title: 'Échec de la réservation', message: nettoyerErreur(err) });
+        }
+      });
+      document.body.appendChild(overlay);
+      sel.focus();
     }
     const imageVision = contenu.querySelector('#image-vision');
     if (imageVision && o.image_path) {

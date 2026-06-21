@@ -68,6 +68,7 @@ const {
   apercuProchainNumeroCertificat, reserverProchainNumeroCertificat,
   apercuProchainNumeroInventaire, reserverProchainNumeroInventaire,
   definirArchive, definirRetraitOeuvre, definirRetraitOeuvresLot,
+  reserverOeuvre, libererOeuvre,
 } = require('./db/mutations');
 
 function createSplashWindow() {
@@ -506,6 +507,8 @@ app.whenReady().then(async () => {
   });
   ipcMain.handle('oeuvres:retrait', (_e, id, data) => definirRetraitOeuvre(id, data));
   ipcMain.handle('oeuvres:retrait-lot', (_e, ids, data) => definirRetraitOeuvresLot(ids, data));
+  ipcMain.handle('oeuvres:reserver', (_e, id, data) => reserverOeuvre(id, data));
+  ipcMain.handle('oeuvres:liberer', (_e, id) => libererOeuvre(id));
   ipcMain.handle('suivi:donnees', () => ({
     preparation: oeuvresAPreparer(),
     ventes: ventesSuivi(),
