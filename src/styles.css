@@ -4710,7 +4710,7 @@ details.bloc.pliable > .bloc-corps {
 .tuto-carte .actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
 
 /* ====== Réservation d'œuvre ====== */
-.zone-reservation-bento { grid-column: 1 / -1; }
+.zone-reservation-bento { grid-column: 1 / -1; padding: var(--s3) var(--s4); }
 .zone-reservation-bento h3 { font-family: var(--font-titre); font-size: 18px; color: var(--gallery-navy); margin: 0 0 12px; display: flex; align-items: center; gap: 9px; }
 .zone-reservation-bento h3 svg { width: 19px; height: 19px; color: var(--warm-gold); }
 .resa-lignes { display: flex; flex-direction: column; gap: 9px; margin-bottom: 14px; }
