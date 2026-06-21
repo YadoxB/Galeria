@@ -8,6 +8,58 @@ identifiants.
 
 ---
 
+## [0.4.0] — 2026-06-20
+
+### Ajouté
+
+- **Réservation d'œuvres** — bouton **« Réserver »** sur une œuvre
+  disponible : on la met de côté pour un **client** (requis), avec **date
+  d'échéance** et **notes**. Carte **« Réservation »** sur la fiche (client,
+  dates, **badge d'échéance** échue/bientôt) avec **« Convertir en vente »**
+  (formulaire de vente pré-rempli) et **« Libérer »**. La réservation est
+  effacée à la vente. Bloc « Œuvres réservées » du tableau de bord enrichi
+  (client + échéance). Colonnes `reservation_*` sur les œuvres.
+- **Section « Aide »** — bouton **« ? »** flottant présent sur toutes les
+  pages, ouvrant un panneau cherchable (deux volets : catégories
+  collapsibles + recherche à gauche, article complet à droite). Base de
+  ~65 articles (artistes, œuvres, cotes/prix, clients, ventes, documents,
+  suivi, sauvegardes, réglages, sécurité, problèmes courants, glossaire),
+  avec mots-clés, surlignage et liens « Voir aussi ». Tout local.
+- **Tutoriel de bienvenue** — visite guidée hybride au 1ᵉʳ lancement
+  (diapo de bienvenue → coach-marks qui **font défiler les sections** :
+  Accueil, Artistes, Œuvres, Clients, Ventes, Suivi, Documents, Rapport,
+  Outils, Profil/Réglages, Aide → diapo finale). Rejouable depuis l'aide.
+- **Calculateur de commission** (Outils) — projette le **net versé à
+  l'artiste** après TPS/TVQ. Cote selon le type : Peinture 50 %,
+  Sculpture 33 %, Reproduction 50 % après frais de production, ou « Autre »
+  (% libre).
+- **Vue « Explorateur »** pour la section Documents (bascule **Liste /
+  Explorateur** mémorisée) : navigation dans l'arborescence réelle
+  (Année → Type → fichiers ; Pochettes → client → facture), fil d'Ariane
+  et recherche globale ; dossiers de type avec leur icône.
+
+### Modifié
+
+- **Section Documents repensée (Lot 4)** : réunit **tous les types** de
+  documents (certificats, factures artiste, catalogues, annexes,
+  présentations, rapports, **pochettes**) depuis une source **hybride
+  base + disque** (y compris les « versions modifiées »). Groupement par
+  type, **barre de filtres** (Type · Année · Artiste · Client) +
+  recherche, icônes SVG par type, **pochettes dépliables**, badge
+  « version modifiée ».
+- **Facture artiste** : la **cote** appliquée dépend désormais du **type de
+  l'œuvre** (Sculpture 33 %, sinon le défaut configurable, 50 %).
+- **Fenêtre** adaptée à la taille de l'écran disponible (la barre latérale
+  reste entièrement visible, même sur un écran < 900 px de haut).
+- **Icône « Emballage »** (tableau de bord + Suivi) : boîte de livraison.
+
+### Corrigé
+
+- Padding manquant sur la carte « Réservation » ; débordement des boutons
+  à la dernière étape du tutoriel.
+
+---
+
 ## [0.3.0] — 2026-06-19
 
 ### Ajouté
