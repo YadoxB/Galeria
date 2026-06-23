@@ -408,7 +408,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
         const r = await confirmer({
           type: 'warning', title: 'Supprimer cette œuvre ?',
           message: `Supprimer définitivement « ${oeuvre.titre} » ?`,
-          detail: 'Action irréversible. Refusée si l\'œuvre est liée à une vente.',
+          detail: 'Action irréversible. Refusée si l\'œuvre est liée à une vente ou à un certificat.',
           buttons: ['Supprimer', 'Annuler'],
           defaultId: 1, cancelId: 1,
         });

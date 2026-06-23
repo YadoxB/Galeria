@@ -206,6 +206,15 @@ function supprimerOeuvre(id) {
   if (nbVentes > 0) {
     throw new Error(`Impossible de supprimer cette œuvre : ${nbVentes} vente(s) y sont attachée(s).`);
   }
+  // Les certificats référencent l'œuvre (FK ON DELETE RESTRICT). On les préserve
+  // (comme partout dans l'app) : refus clair plutôt qu'une cascade silencieuse.
+  const nbCertifs = db.prepare('SELECT COUNT(*) AS n FROM certificats WHERE oeuvre_id = ?').get(id).n;
+  if (nbCertifs > 0) {
+    const phrase = nbCertifs > 1
+      ? `${nbCertifs} certificats y sont liés. Supprimez-les d'abord`
+      : `1 certificat y est lié. Supprimez-le d'abord`;
+    throw new Error(`Impossible de supprimer cette œuvre : ${phrase} depuis la fiche de l'œuvre, puis réessayez.`);
+  }
   const info = db.prepare('DELETE FROM oeuvres WHERE id = ?').run(id);
   return { supprime: info.changes > 0 };
 }
