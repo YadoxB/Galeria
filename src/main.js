@@ -66,6 +66,7 @@ const {
   apercuProchainNumeroFacture, reserverProchainNumeroFacture,
   creerCertificat, modifierCertificat, supprimerCertificat,
   apercuProchainNumeroCertificat, reserverProchainNumeroCertificat,
+  apercuNumeroCertificat,
   apercuProchainNumeroInventaire, reserverProchainNumeroInventaire,
   definirArchive, definirRetraitOeuvre, definirRetraitOeuvresLot,
   reserverOeuvre, libererOeuvre,
@@ -632,6 +633,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('certificats:supprimer', (_e, id) => supprimerCertificat(id));
   ipcMain.handle('certificats:apercu-numero', () => apercuProchainNumeroCertificat());
   ipcMain.handle('certificats:reserver-numero', () => reserverProchainNumeroCertificat());
+  ipcMain.handle('certificats:apercu', (_e, oeuvreId) => apercuNumeroCertificat(oeuvreId));
   ipcMain.handle('pdf:certificat-generer', (_e, id) => genererCertificatPdf(id));
   ipcMain.handle('pdf:facture-artiste-generer', (_e, venteId) => genererFactureArtistePdf(venteId));
   ipcMain.handle('pdf:catalogue-generer', (_e, artisteId) => genererCataloguePdf(artisteId));

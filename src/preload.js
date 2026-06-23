@@ -82,6 +82,7 @@ contextBridge.exposeInMainWorld('api', {
   certificatSupprimer: (id) => ipcRenderer.invoke('certificats:supprimer', id),
   certificatApercuNumero: () => ipcRenderer.invoke('certificats:apercu-numero'),
   certificatReserverNumero: () => ipcRenderer.invoke('certificats:reserver-numero'),
+  certificatApercu: (oeuvreId) => ipcRenderer.invoke('certificats:apercu', oeuvreId),
   pdfCertificatGenerer: (id) => ipcRenderer.invoke('pdf:certificat-generer', id),
   pdfFactureArtisteGenerer: (venteId) => ipcRenderer.invoke('pdf:facture-artiste-generer', venteId),
   pdfCatalogueGenerer: (artisteId) => ipcRenderer.invoke('pdf:catalogue-generer', artisteId),

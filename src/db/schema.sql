@@ -120,6 +120,7 @@ CREATE TABLE IF NOT EXISTS ventes (
   mode_paiement        TEXT,
   numero_facture       TEXT,
   numero_facture_artiste TEXT,
+  numero_facture_sage  TEXT,
   certificat_path      TEXT,
   facture_artiste_path TEXT,
   facture_client_path  TEXT,
@@ -150,6 +151,10 @@ CREATE TABLE IF NOT EXISTS certificats (
   signataire         TEXT,
   particularite      TEXT,
   pdf_path           TEXT,
+  -- Nouveau format de numéro : {n° inventaire}-{année}-{seq artiste}-{n° Sage}.
+  -- seq_artiste = compteur par artiste ; numero_sage = n° de facture Sage requis.
+  seq_artiste        INTEGER,
+  numero_sage        TEXT,
   cree_le            TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

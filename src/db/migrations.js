@@ -75,6 +75,16 @@ const COLONNES_ATTENDUES = {
     ['type_achat', 'TEXT'],          // 'personne' | 'web'
     ['est_cadeau', 'INTEGER NOT NULL DEFAULT 0'],
     ['langue', 'TEXT'],              // 'FR' | 'EN'
+    // N° de facture Sage (saisi à la main pour l'instant ; Phase 4 plus tard).
+    // Alimente le numéro de certificat composé.
+    ['numero_facture_sage', 'TEXT'],
+  ],
+  certificats: [
+    // Nouveau format de numéro de certificat : {n° inventaire}-{année}-{seq
+    // artiste}-{n° Sage}. Les anciens certificats « C-2026-NNN » gardent
+    // seq_artiste/numero_sage à NULL.
+    ['seq_artiste', 'INTEGER'],
+    ['numero_sage', 'TEXT'],
   ],
 };
 

@@ -10,19 +10,74 @@ const { obtenirConfig } = require('./config');
 
 // ===== Helpers =====
 
-function slug(s, maxLen = 40) {
-  if (!s) return '';
-  return String(s)
-    .normalize('NFD').replace(/\p{Mn}/gu, '')
-    .replace(/[^a-zA-Z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .slice(0, maxLen);
-}
-
 function anneeDe(dateIso) {
   if (!dateIso) return new Date().getFullYear();
   const m = String(dateIso).match(/^(\d{4})/);
   return m ? Number(m[1]) : new Date().getFullYear();
+}
+
+// ===== Nomenclature unifiée des noms de fichiers (style « Lisible français ») =====
+// Forme : « {tête} — {queue} (version modifiée AAAA-MM-JJ).pdf », avec accents,
+// espaces et parenthèses conservés.
+//   tête  : type + identifiant, ex. « Certificat C-2026-001 », « Rapport 2026-06-23 »
+//   queue : entité décrite (optionnelle), ex. « Le verger (Marie Tremblay) », « Marie Tremblay »
+// Décisions 2026-06-23 (Dave) : style lisible français, numéros continus (gérés
+// ailleurs), documents sans numéro restés datés. Voir A-VALIDER.md.
+const SEP_DOC = ' — '; // tiret cadratin entre les parties du nom de fichier
+
+function dateJour() {
+  const n = new Date();
+  const p = (x) => String(x).padStart(2, '0');
+  return `${n.getFullYear()}-${p(n.getMonth() + 1)}-${p(n.getDate())}`;
+}
+
+// nomSur() (défini plus bas, hissé) retire les caractères interdits par Windows
+// en gardant accents/espaces/parenthèses.
+function nomDocument(tete, queue, { modifie = false } = {}) {
+  let nom = nomSur(tete);
+  const q = nomSur(queue || '');
+  if (q) nom += SEP_DOC + q;
+  if (modifie) nom += ` (version modifiée ${dateJour()})`;
+  return nom + '.pdf';
+}
+
+// Évite d'écraser un fichier existant : ajoute « (2) », « (3) »… avant « .pdf ».
+// Sert aux versions modifiées (ne jamais clobberer un document édité à la main).
+function cheminUnique(dossier, nomFichier) {
+  let cible = path.join(dossier, nomFichier);
+  if (!fs.existsSync(cible)) return cible;
+  const ext = path.extname(nomFichier);
+  const base = nomFichier.slice(0, nomFichier.length - ext.length);
+  for (let i = 2; i < 1000; i++) {
+    cible = path.join(dossier, `${base} (${i})${ext}`);
+    if (!fs.existsSync(cible)) return cible;
+  }
+  return cible;
+}
+
+// Supprime l'ancien fichier d'un document suivi en base quand sa re-génération
+// l'a renommé (sinon l'ancien nom traînerait en double dans la section Documents).
+function supprimerSiAutre(ancien, nouveau) {
+  try {
+    if (ancien && path.resolve(ancien) !== path.resolve(nouveau) && fs.existsSync(ancien)) fs.rmSync(ancien);
+  } catch { /* fichier verrouillé/absent : sans gravité */ }
+}
+
+// Écrit le PDF au nom voulu ; si le fichier est verrouillé (ouvert dans un
+// visionneur), réessaie sous un nom « (2) » au lieu d'échouer. Pour les documents
+// datés régénérables (rapport, catalogue, présentation) qui partagent leur nom.
+async function genererPdfTolerant(opts, dossier, nom) {
+  try {
+    await genererPdf({ ...opts, sortie: path.join(dossier, nom) });
+    return path.join(dossier, nom);
+  } catch (e) {
+    if (/EBUSY|EPERM|EACCES|locked|in use/i.test(String((e && e.message) || ''))) {
+      const sortie = cheminUnique(dossier, nom);
+      await genererPdf({ ...opts, sortie });
+      return sortie;
+    }
+    throw e;
+  }
 }
 
 function formaterValeurCa(n) {
@@ -330,9 +385,20 @@ async function genererCertificatPdf(certificatId) {
   const cfg = obtenirConfig();
   const donnees = preparerDonneesCertificat(cert, cfg);
   // Le certificat officiel vit dans la pochette de la vente (s'il y en a une).
-  const sortie = cheminCertificatOfficiel(cert);
+  // Dossier + nom daté déterministes. À la régénération, on réécrit le fichier
+  // existant s'il est déjà dans le bon dossier ; sinon on choisit un nom unique
+  // (collision possible le même jour avec un autre certificat de la même œuvre).
+  const ancien = cert.pdf_path;
+  const cible = cheminCertificatOfficiel(cert);
+  let sortie;
+  if (ancien && fs.existsSync(ancien) && path.dirname(path.resolve(ancien)) === path.dirname(path.resolve(cible))) {
+    sortie = ancien;
+  } else {
+    sortie = cheminUnique(path.dirname(cible), path.basename(cible));
+  }
 
   await genererPdf({ gabaritNom: 'gabarit-certificat.html', donnees, sortie, paysage: true });
+  supprimerSiAutre(ancien, sortie);
 
   const db = openDatabase();
   db.prepare('UPDATE certificats SET pdf_path = ? WHERE id = ?').run(sortie, certificatId);
@@ -355,13 +421,14 @@ async function genererFactureArtistePdf(venteId) {
   const donnees = preparerDonneesFactureArtiste(vente, artiste, cfg, numeroFA);
   const annee = anneeDe(vente.date_vente);
   const dossier = path.join(getDocumentsDirAnnee(annee), 'Factures artiste');
-  const slugArt = slug([artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom);
-  const nomFichier = `FactureArtiste_${slug(numeroFA, 30)}${slugArt ? '_' + slugArt : ''}.pdf`;
-  const sortie = path.join(dossier, nomFichier);
-
-  await genererPdf({ gabaritNom: 'gabarit-facture-artiste.html', donnees, sortie, paysage: false });
+  const artisteNom = [artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom || '';
+  const sortie = path.join(dossier, nomDocument(`Facture artiste ${numeroFA}`, artisteNom));
 
   const db = openDatabase();
+  const ancien = db.prepare('SELECT facture_artiste_path FROM ventes WHERE id = ?').get(venteId)?.facture_artiste_path;
+  await genererPdf({ gabaritNom: 'gabarit-facture-artiste.html', donnees, sortie, paysage: false });
+  supprimerSiAutre(ancien, sortie);
+
   db.prepare('UPDATE ventes SET facture_artiste_path = ? WHERE id = ?').run(sortie, venteId);
   return { pdf_path: sortie, numero_facture_artiste: numeroFA };
 }
@@ -408,13 +475,13 @@ async function genererRapportPdf(dateISO) {
   const cfg = obtenirConfig();
   const donnees = preparerDonneesRapport(rap, cfg, dateISO);
   const dossier = path.join(getDocumentsDirAnnee(anneeDe(dateISO)), 'Rapports');
-  // Horodatage dans le nom : évite le verrou EBUSY si un rapport précédent du
-  // même jour est encore ouvert dans le visionneur, et garde l'historique.
-  const n = new Date();
-  const p = (x) => String(x).padStart(2, '0');
-  const stamp = `${p(n.getHours())}h${p(n.getMinutes())}`;
-  const sortie = path.join(dossier, `Rapport_${dateISO}_${stamp}.pdf`);
-  await genererPdf({ gabaritNom: 'gabarit-rapport.html', donnees, sortie });
+  // Nom daté, un fichier par jour (régénérer le même jour l'écrase) ;
+  // genererPdfTolerant bascule sur « (2) » si le fichier est verrouillé.
+  const sortie = await genererPdfTolerant(
+    { gabaritNom: 'gabarit-rapport.html', donnees },
+    dossier,
+    nomDocument(`Rapport ${dateISO}`),
+  );
   return sortie;
 }
 
@@ -462,13 +529,12 @@ async function genererCataloguePdf(artisteId) {
   const donnees = preparerDonneesCatalogue(artiste, oeuvres);
 
   const dossier = path.join(getDocumentsDirAnnee(new Date().getFullYear()), 'Catalogues');
-  const slugArt = slug([artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom);
-  const n = new Date();
-  const p = (x) => String(x).padStart(2, '0');
-  const stamp = `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}-${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`;
-  const sortie = path.join(dossier, `Catalogue_${slugArt || 'artiste'}_${stamp}.pdf`);
-
-  await genererPdf({ gabaritNom: 'gabarit-catalogue.html', donnees, sortie, paysage: false });
+  const artisteNom = [artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom || '';
+  const sortie = await genererPdfTolerant(
+    { gabaritNom: 'gabarit-catalogue.html', donnees, paysage: false },
+    dossier,
+    nomDocument(`Catalogue ${dateJour()}`, artisteNom),
+  );
   return { pdf_path: sortie, nb_oeuvres: oeuvres.length };
 }
 
@@ -503,8 +569,7 @@ async function genererAnnexePdf({ type, artiste_id, artisteId, oeuvres = [], oeu
 
   const gabarit = 'gabarit-annexe.html';
   const dossier = path.join(getDocumentsDirAnnee(new Date().getFullYear()), 'Annexes');
-  const slugArt = slug(nom);
-  const nomFichier = `Annexe_${t === 'retrait' ? 'Retrait' : 'Depot'}_${slug(enr.numero, 30)}${slugArt ? '_' + slugArt : ''}.pdf`;
+  const nomFichier = nomDocument(`Annexe ${t === 'retrait' ? 'retrait' : 'dépôt'} ${enr.numero}`, nom);
   const sortie = path.join(dossier, nomFichier);
 
   if (editer) {
@@ -573,14 +638,14 @@ async function genererPresentationPdf(artisteId, { forcer = false } = {}) {
   const cfg = obtenirConfig();
   const donnees = preparerDonneesPresentation(artiste, cfg);
   const dossier = path.join(getDocumentsDirAnnee(new Date().getFullYear()), 'Présentations');
-  const slugArt = slug([artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom);
-  // Nom horodaté : évite le verrou EBUSY si une version précédente est encore
-  // ouverte dans le visionneur lors d'une régénération.
-  const n = new Date();
-  const p = (x) => String(x).padStart(2, '0');
-  const stamp = `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}-${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`;
-  const sortie = path.join(dossier, `Presentation_${slugArt || 'artiste'}_${stamp}.pdf`);
-  await genererPdf({ gabaritNom: 'gabarit-presentation.html', donnees, sortie });
+  const artisteNom = [artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom || '';
+  const ancien = artiste.presentation_path;
+  const sortie = await genererPdfTolerant(
+    { gabaritNom: 'gabarit-presentation.html', donnees },
+    dossier,
+    nomDocument('Présentation', artisteNom),
+  );
+  supprimerSiAutre(ancien, sortie);
   majPresentationArtiste(artisteId, sortie, sig);
   return { pdf_path: sortie, reutilise: false };
 }
@@ -600,11 +665,8 @@ async function genererPresentationPersonnalisee(artisteId, overrides) {
   const cfg = obtenirConfig();
   const donnees = preparerDonneesPresentation(a, cfg);
   const dossier = path.join(getDocumentsDirAnnee(new Date().getFullYear()), 'Présentations');
-  const slugArt = slug([artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom);
-  const n = new Date();
-  const p = (x) => String(x).padStart(2, '0');
-  const stamp = `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}-${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`;
-  const sortie = path.join(dossier, `Presentation_${slugArt || 'artiste'}_modifiee_${stamp}.pdf`);
+  const artisteNom = [artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom || '';
+  const sortie = cheminUnique(dossier, nomDocument('Présentation', artisteNom, { modifie: true }));
   await genererPdf({ gabaritNom: 'gabarit-presentation.html', donnees, sortie });
   return { pdf_path: sortie };
 }
@@ -660,8 +722,16 @@ function dossierPochetteVente(vente) {
 // Chemin du PDF officiel d'un certificat : dans la pochette si le certificat est
 // lié à une vente, sinon dans le dossier Certificats de l'année.
 function cheminCertificatOfficiel(cert) {
-  const slugTitre = slug(cert.oeuvre_titre);
-  const nom = `Certificat_${slug(cert.numero_delivrance || '', 30)}${slugTitre ? '_' + slugTitre : ''}.pdf`;
+  const titre = cert.oeuvre_titre || '';
+  const artiste = cert.artiste_nom || '';
+  const queue = titre + (artiste ? ` (${artiste})` : '');
+  // Nom court daté : « Certificat {n° inventaire} — titre (artiste) {date} ».
+  // Le numéro complet (séquentiel, n° Sage) reste DANS le PDF, pas dans le nom.
+  // Repli sur le numéro de délivrance pour les anciens certificats sans inventaire.
+  // (Unicité d'un éventuel doublon même-jour gérée par genererCertificatPdf.)
+  const idCourt = (cert.numero_inventaire || cert.numero_delivrance || '').toString().trim();
+  const base = nomDocument(`Certificat ${idCourt}`.trim(), queue).replace(/\.pdf$/i, '');
+  const nom = `${base} ${dateJour()}.pdf`;
   if (cert.vente_id) {
     const vente = obtenirVente(cert.vente_id);
     if (vente) return path.join(dossierPochetteVente(vente), nom);
@@ -708,12 +778,11 @@ function supprimerDossierPochette(chemin) {
 // modifiée » remplace bien le bon fichier. Retourne null si hors pochette.
 function nomFichierPochette(type, vente) {
   if (type === 'lettre') {
-    const cli = nomSur(`${vente.client_prenom || ''} ${vente.client_nom || ''}`.trim());
-    return 'Lettre de remerciement' + (cli ? ' - ' + cli : '') + '.pdf';
+    const cli = `${vente.client_prenom || ''} ${vente.client_nom || ''}`.trim();
+    return nomDocument('Lettre de remerciement', cli);
   }
   if (type === 'presentation') {
-    const art = nomSur(vente.artiste_nom || '');
-    return "Présentation de l'artiste" + (art ? ' - ' + art : '') + '.pdf';
+    return nomDocument('Présentation', vente.artiste_nom || '');
   }
   return null;
 }
@@ -729,11 +798,8 @@ async function genererLettrePochettePdf(venteId, dossier, nomFichier) {
 
   const annee = anneeDe(vente.date_vente);
   const dest = dossier || path.join(getDocumentsDirAnnee(annee), 'Lettres');
-  const slugCli = slug(`${vente.client_prenom || ''} ${vente.client_nom || ''}`.trim()) || 'client';
-  const n = new Date();
-  const p = (x) => String(x).padStart(2, '0');
-  const stamp = `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}-${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`;
-  const sortie = path.join(dest, nomFichier || `Lettre_${slug(vente.numero_facture || '', 30) || slugCli}_${stamp}.pdf`);
+  const cli = `${vente.client_prenom || ''} ${vente.client_nom || ''}`.trim();
+  const sortie = path.join(dest, nomFichier || nomDocument('Lettre de remerciement', cli));
 
   await genererPdf({ gabaritNom: 'gabarit-lettre.html', donnees, sortie });
   const db = openDatabase();
@@ -759,17 +825,21 @@ async function genererPochette(venteId) {
   //    encore (valeurs par défaut : valeur = prix de vente, signataire des réglages).
   let cert = (listerCertificatsParVente(venteId) || [])[0];
   if (!cert) {
+    const sage = (vente.numero_facture_sage || '').toString().trim();
+    if (!sage) {
+      throw new Error("Pour produire la pochette, saisis d'abord le N° de facture (Sage) sur la vente : il compose le numéro du certificat d'authenticité.");
+    }
     const today = new Date();
     const pad = (x) => String(x).padStart(2, '0');
     const dateISO = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
     cert = creerCertificat({
       oeuvre_id: vente.oeuvre_id,
       vente_id: venteId,
-      numero_delivrance: reserverProchainNumeroCertificat(),
       date_delivrance: dateISO,
       valeur: vente.prix_vente != null ? vente.prix_vente : vente.oeuvre_prix,
       signataire: (cfg.documents && cfg.documents.signataire_certificat) || 'Joanne Boucher',
       particularite: null,
+      numero_sage: sage,
       pdf_path: null,
     });
   }
@@ -807,10 +877,7 @@ async function genererPochette(venteId) {
 // Dispatcher « version modifiée » pour les documents pilotés par un id.
 async function editerDocument(spec) {
   const cfg = obtenirConfig();
-  const an = new Date();
-  const p = (x) => String(x).padStart(2, '0');
-  const stamp = `${an.getFullYear()}${p(an.getMonth() + 1)}${p(an.getDate())}-${p(an.getHours())}${p(an.getMinutes())}${p(an.getSeconds())}`;
-  const dossierAnnee = getDocumentsDirAnnee(an.getFullYear());
+  const dossierAnnee = getDocumentsDirAnnee(new Date().getFullYear());
   let gabaritNom, donnees, paysage = false, sortie, titre;
 
   // Contexte de vente : si le document appartient à une pochette, la version
@@ -826,18 +893,18 @@ async function editerDocument(spec) {
   if (spec.type === 'presentation') {
     const artiste = obtenirArtiste(spec.artiste_id);
     if (!artiste) throw new Error('Artiste introuvable.');
-    const sa = slug([artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom) || 'artiste';
+    const artisteNom = [artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom || '';
     gabaritNom = 'gabarit-presentation.html';
     donnees = preparerDonneesPresentation(artiste, cfg);
-    sortie = path.join(dossierAnnee, 'Présentations', `Presentation_${sa}_modifiee_${stamp}.pdf`);
+    sortie = cheminUnique(path.join(dossierAnnee, 'Présentations'), nomDocument('Présentation', artisteNom, { modifie: true }));
     titre = 'Présentation — version modifiée';
   } else if (spec.type === 'catalogue') {
     const artiste = obtenirArtiste(spec.artiste_id);
     if (!artiste) throw new Error('Artiste introuvable.');
-    const sa = slug([artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom) || 'artiste';
+    const artisteNom = [artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom || '';
     gabaritNom = 'gabarit-catalogue.html';
     donnees = preparerDonneesCatalogue(artiste, oeuvresPourCatalogue(spec.artiste_id));
-    sortie = path.join(dossierAnnee, 'Catalogues', `Catalogue_${sa}_modifie_${stamp}.pdf`);
+    sortie = cheminUnique(path.join(dossierAnnee, 'Catalogues'), nomDocument(`Catalogue ${dateJour()}`, artisteNom, { modifie: true }));
     titre = 'Catalogue — version modifiée';
   } else if (spec.type === 'lettre') {
     const vente = obtenirVente(spec.vente_id);
@@ -845,7 +912,8 @@ async function editerDocument(spec) {
     const cert = (listerCertificatsParVente(spec.vente_id) || [])[0] || null;
     gabaritNom = 'gabarit-lettre.html';
     donnees = preparerDonneesLettre(vente, cert, cfg);
-    sortie = path.join(dossierAnnee, 'Lettres', `Lettre_modifiee_${stamp}.pdf`);
+    const cli = `${vente.client_prenom || ''} ${vente.client_nom || ''}`.trim();
+    sortie = cheminUnique(path.join(dossierAnnee, 'Lettres'), nomDocument('Lettre de remerciement', cli, { modifie: true }));
     titre = 'Lettre — version modifiée';
   } else if (spec.type === 'certificat') {
     const cert = obtenirCertificat(spec.certificat_id);
@@ -865,7 +933,8 @@ async function editerDocument(spec) {
     vente.numero_facture_artiste = num;
     gabaritNom = 'gabarit-facture-artiste.html';
     donnees = preparerDonneesFactureArtiste(vente, artiste, cfg, num);
-    sortie = path.join(dossierAnnee, 'Factures artiste', `FactureArtiste_${slug(num || '', 30)}_modifiee_${stamp}.pdf`);
+    const artisteNom = [artiste.prenom, artiste.nom].filter(Boolean).join(' ') || (artiste && artiste.nom) || '';
+    sortie = cheminUnique(path.join(dossierAnnee, 'Factures artiste'), nomDocument(`Facture artiste ${num}`, artisteNom, { modifie: true }));
     titre = 'Facture artiste — version modifiée';
   } else {
     throw new Error('Type de document inconnu : ' + spec.type);
@@ -911,10 +980,17 @@ function _dateFichier(full, annee) {
 }
 function _nomLisible(fichier) {
   let s = fichier.replace(/\.pdf$/i, '');
-  s = s.replace(/_modifiee?(_[0-9]+)?$/i, '');   // suffixe « version modifiée »
-  s = s.replace(/_[0-9]{8,}$/, '');               // horodatage final
-  s = s.replace(/_+/g, ' ').trim();
-  return s || fichier;
+  // Nouveau schéma « Lisible français » : retire d'abord un éventuel « (2) » de
+  // désambiguïsation, puis le suffixe « (version modifiée …) ».
+  s = s.replace(/\s*\(\d+\)\s*$/, '');
+  s = s.replace(/\s*\(version modifiée[^)]*\)\s*$/i, '');
+  // Tolérance aux anciens noms PascalCase_underscore déjà produits sur le disque.
+  s = s.replace(/_\d{8}-\d{6}$/, '');                          // ancien horodatage AAAAMMJJ-HHMMSS
+  s = s.replace(/_\d{4}-\d{2}-\d{2}(_\d{1,2}h\d{2})?$/, '');   // ancien rapport (date[_HHhMM])
+  s = s.replace(/_modifiee?$/i, '');                           // ancien suffixe « version modifiée »
+  s = s.replace(/_[0-9]{8,}$/, '');                            // autre ancien horodatage
+  if (!/\s/.test(s)) s = s.replace(/_+/g, ' ');                // underscores → espaces (anciens noms seulement)
+  return s.trim() || fichier;
 }
 
 function indexerTousLesDocuments() {
@@ -966,7 +1042,7 @@ function indexerTousLesDocuments() {
         if (pathsDB.has(_normChemin(full))) continue;       // déjà listé via la base
         out.push({
           type, numero: _nomLisible(f), date: _dateFichier(full, annee), pdf_path: full,
-          source: 'disque', modifiee: /_modifiee?\b|_modifie/i.test(f),
+          source: 'disque', modifiee: /_modifiee?\b|_modifie|\(version modifiée/i.test(f),
           sousType: type === 'annexe' ? (/retrait/i.test(f) ? 'retrait' : 'depot') : undefined,
         });
       }

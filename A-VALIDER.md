@@ -55,9 +55,11 @@
   - Liste exacte des étapes que les parents veulent voir.
   - Quels statuts sont visibles aux clients (par exemple si on veut les notifier) ?
 
-## Nomenclature des numéros et des fichiers (chantier dédié — prochaine session)
+## Nomenclature des numéros et des fichiers (✓ tranché et implémenté — 2026-06-23)
 
-> **Recensement fait le 2026-06-20** (pour ne pas le refaire). Objectif de la prochaine session : **définir une nomenclature générale unifiée** des noms de fichiers et l'appliquer partout (`src/pdf.js`).
+> **Recensement fait le 2026-06-20**, **décision prise et appliquée le 2026-06-23**
+> (voir l'encadré « ✓ Tranché » plus bas). Le recensement ci-dessous est conservé
+> à titre d'historique.
 
 **Documents produits — numéro + nom de fichier actuel + dossier :**
 
@@ -75,16 +77,64 @@
 
 **« Version modifiée »** : même dossier, suffixe `_modifie(e)` + horodatage.
 
-**Incohérences à trancher :**
-- Deux styles de noms : `PascalCase_underscore` (la plupart) **vs** français lisible avec espaces et « - » (fichiers de pochette). → choisir **un** style.
-- **Numéro vs horodatage** : certificat/facture/annexe portent leur numéro ; catalogue/présentation/rapport portent un horodatage (pas de numéro). → faut-il un numéro pour tous ?
-- Suffixe `_modifie` (catalogue) vs `_modifiee` (autres) → uniformiser.
-- Casse/accents : `slug()` met en minuscules sans accents.
+### ✓ Tranché (Dave, 2026-06-23) — implémenté dans `src/pdf.js`
 
-**Décisions à prendre :**
-- **Format des numéros** : préfixe + zéro-padding (ex. `F-2026-001`) ; remise à 1 chaque janvier ou continu ?
-- **Forme générale du nom de fichier** : ordre des parties (type, numéro, date, artiste/œuvre/client), séparateur, casse, accents.
-- Dave apporte la **formule basée sur celle des images d'inventaire**.
+**Style retenu : « Lisible français »** — un seul gabarit pour tous les
+documents : **`Type Numéro — Entité.pdf`**, accents et espaces conservés,
+tiret cadratin ` — ` entre les parties, entité du certificat entre
+parenthèses (`titre (artiste)`).
+
+| Document | Nom de fichier |
+|---|---|
+| Certificat | `Certificat C-2026-001 — Le verger (Marie Tremblay).pdf` |
+| Facture artiste | `Facture artiste A-2026-005 — Marie Tremblay.pdf` |
+| Facture client | `Facture client F-2026-012 — Jean Dupont.pdf` |
+| Catalogue | `Catalogue 2026-06-23 — Marie Tremblay.pdf` |
+| Annexe dépôt/retrait | `Annexe dépôt A-MTR-003 — Marie Tremblay.pdf` |
+| Présentation | `Présentation — Marie Tremblay.pdf` |
+| Rapport | `Rapport 2026-06-23.pdf` |
+| Pochette (lettre) | `Lettre de remerciement — Jean Dupont.pdf` |
+| Version modifiée | `…même nom… (version modifiée 2026-06-23).pdf` |
+
+- **Numéros : continu** — les compteurs ne se remettent jamais à zéro
+  (c'était déjà le comportement ; l'année est figée dans le préfixe,
+  modifiable dans les Réglages). Format préfixe + zéro-padding 3 chiffres.
+- **Préfixes (2026-06-23)** : facture artiste **`FA-2026`**, facture client
+  **`FC-2026`** (migration douce des configs au défaut historique). Annexes
+  **`AD-`** (dépôt) / **`AR-`** (retrait).
+- **Documents sans numéro restent datés** (catalogue, présentation,
+  rapport) — instantanés régénérables, pas de compteur.
+- **Numéro de certificat (2026-06-23)** : refonte complète. Format
+  **`{n° inventaire}-{séquentiel par artiste}-{n° Sage}`**
+  (ex. `MTR1042-003-5567`, **sans année**). **Séquentiel propre à l'artiste**
+  (compte ses certificats). **N° de facture Sage requis** — saisi à la main
+  sur la vente / via une invite avant de produire le certificat ; **bloque**
+  la production si absent. Le n° de facture **vient de Sage** (Phase 4) ;
+  pour l'instant saisie manuelle. **Facture client FC** : rôle vis-à-vis de
+  Sage à trancher en Phase 3D/4. Anciens certificats `C-2026-NNN` non
+  renumérotés ; compteur global `C-2026` retiré pour les certificats.
+  **Nom de fichier daté** :
+  `Certificat {n° inventaire} — titre (artiste) {AAAA-MM-JJ}.pdf`
+  (numéro complet dans le PDF ; doublon le même jour → suffixe « (2) »,
+  plusieurs certificats possibles par œuvre).
+- **Version modifiée** : suffixe unique ` (version modifiée AAAA-MM-JJ)`,
+  désambiguïsé en ` (2)` si besoin — ne peut plus écraser un document édité
+  à la main.
+- **Caractères interdits Windows** (`: / \ | ? * " < >`) nettoyés en gardant
+  accents/espaces/parenthèses.
+- **Incohérences résolues** : un seul style (les anciens `PascalCase_underscore`
+  et les noms de pochette « - » convergent) ; suffixe `_modifie`/`_modifiee`
+  unifié. La section Documents reste **tolérante aux anciens noms** déjà sur
+  le disque (aucun renommage rétroactif).
+
+> La **formule des images d'inventaire** apportée par Dave concernait en fait
+> le **nommage des photos d'œuvres** (déjà codé dans `src/db/nomenclature.js`,
+> Jalon 5), pas les documents. Une divergence y a été corrigée au passage :
+> les mots du titre sont joints par **underscore** (`Sault_en_Provence`) et
+> non par tiret.
+
+**À confirmer par Dave (en lançant l'app)** : générer un de chaque document
+et vérifier les noms produits dans `Documents\Galeria\Documents\{année}\`.
 
 ## Intégrations externes
 

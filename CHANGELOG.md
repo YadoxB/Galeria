@@ -8,6 +8,68 @@ identifiants.
 
 ---
 
+## [Non publié]
+
+### Ajouté
+
+- **Numéro de certificat composé + n° de facture Sage** — le numéro de
+  certificat d'authenticité (= numéro de délivrance) suit désormais le format
+  **`{n° inventaire}-{séquentiel par artiste}-{n° Sage}`**
+  (ex. `MTR1042-003-5567`, **sans année**). Le **séquentiel est propre à
+  chaque artiste**. Le **n° de facture Sage est requis** : une invite le
+  demande avant de produire le certificat (impossible de produire sans).
+  Nouveau champ **« N° de facture (Sage) »** sur le formulaire de vente
+  (source unique, pré-remplit le certificat) et sur le formulaire de
+  certificat (aperçu du numéro composé en direct, bouton bloqué tant que le
+  n° Sage est vide). Le certificat de la **pochette** utilise le n° Sage de
+  la vente. **Nom de fichier daté** :
+  `Certificat {n° inventaire} — titre (artiste) {AAAA-MM-JJ}.pdf`
+  (le numéro complet reste dans le PDF ; un doublon le même jour reçoit un
+  suffixe « (2) », une œuvre pouvant avoir plusieurs certificats). Colonnes
+  `certificats.seq_artiste`, `certificats.numero_sage`,
+  `ventes.numero_facture_sage`. Les anciens certificats `C-2026-NNN` ne sont
+  pas renumérotés. Démo : `demos/certificat-numero-sage.html`.
+
+### Modifié
+
+- **Préfixes de numéros de factures et d'annexes** — facture artiste →
+  **`FA-2026`**, facture client → **`FC-2026`** (migration douce : seules les
+  configs restées au défaut historique `A-2026`/`F-2026` sont mises à jour,
+  un préfixe personnalisé est préservé). Annexes → **`AD-`** (dépôt) /
+  **`AR-`** (retrait) au lieu de `A-`. Les noms de fichiers suivent
+  automatiquement (ils reprennent le numéro).
+
+- **Nomenclature unifiée des noms de fichiers des documents** — tous les
+  PDF produits suivent désormais un seul schéma **lisible en français** :
+  `Type Numéro — Entité.pdf` (accents et espaces conservés). Exemples :
+  `Certificat C-2026-001 — Le verger (Marie Tremblay).pdf`,
+  `Facture artiste A-2026-005 — Marie Tremblay.pdf`,
+  `Catalogue 2026-06-23 — Marie Tremblay.pdf`,
+  `Annexe dépôt A-MTR-003 — Marie Tremblay.pdf`,
+  `Présentation — Marie Tremblay.pdf`, `Rapport 2026-06-23.pdf`. Les
+  documents numérotés portent leur numéro (continu, jamais remis à zéro) ;
+  catalogue/présentation/rapport restent datés. Les **versions modifiées**
+  reçoivent un suffixe unique ` (version modifiée AAAA-MM-JJ)` et ne peuvent
+  plus écraser un document édité à la main. Centralisé dans un seul helper
+  `nomDocument()` (`src/pdf.js`), appliqué aux ~10 générateurs ; la section
+  **Documents** reste **tolérante aux anciens noms** déjà sur le disque.
+- **Re-génération propre** — re-produire un certificat, une facture artiste
+  ou une présentation **supprime l'ancien fichier** s'il a été renommé (plus
+  de doublon dans la section Documents). Les documents datés régénérés le
+  même jour s'**écrasent** ; bascule automatique sur « (2) » si le fichier
+  est ouvert dans un visionneur (verrou).
+
+### Corrigé
+
+- **Nomenclature des images d'œuvres** (`src/db/nomenclature.js`) — les mots
+  du titre sont désormais joints par **underscore** (`Sault_en_Provence`) et
+  non par tiret, conformément à la formule de référence : le tiret est
+  réservé à la séparation des grandes parties du nom. Corrige aussi le nom
+  exact suggéré par le garde-fou Sage. (Renommage physique des photos :
+  Jalon 5, non touché ici.)
+
+---
+
 ## [0.4.0] — 2026-06-20
 
 ### Ajouté

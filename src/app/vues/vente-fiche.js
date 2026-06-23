@@ -809,8 +809,9 @@ export async function rendreVenteFiche(contenu, params) {
             <div class="grille-form">
               ${champTexte({ nom: 'date_vente', libelle: 'Date de vente', valeur: v.date_vente, type: 'date', requis: true })}
               ${champTexte({ nom: 'numero_facture', libelle: 'Numéro de facture', valeur: v.numero_facture || '' })}
+              ${champTexte({ nom: 'numero_facture_sage', libelle: 'N° de facture (Sage)', valeur: v.numero_facture_sage || '', attributs: 'placeholder="ex. 5567"' })}
             </div>
-            ${nouveau ? '<p class="aide-champ">Le numéro est généré automatiquement depuis les réglages. Modifiable au besoin.</p>' : ''}
+            ${nouveau ? '<p class="aide-champ">Le numéro de facture est généré automatiquement depuis les réglages. Le n° de facture Sage (saisi à la main) alimente le numéro du certificat d\'authenticité.</p>' : ''}
           </section>
 
           <section class="bloc">
@@ -954,6 +955,7 @@ export async function rendreVenteFiche(contenu, params) {
         tps, tvq,
         mode_paiement: val('mode_paiement'),
         numero_facture: val('numero_facture'),
+        numero_facture_sage: val('numero_facture_sage'),
         notes: val('notes'),
         // Pochette de vente — sélection de la lettre
         type_achat: val('type_achat') || 'personne',

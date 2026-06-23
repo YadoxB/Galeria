@@ -304,6 +304,7 @@ const COLONNES_VENTE = [
   ['tvq', nombre],
   ['mode_paiement', vide],
   ['numero_facture', vide],
+  ['numero_facture_sage', vide],
   ['notes', vide],
   // Pochette de vente — sélection de la lettre de remerciement
   ['type_achat', vide],
@@ -667,12 +668,67 @@ function _valeursCertificat(data) {
   return { cols, valeurs };
 }
 
-function creerCertificat(data) {
-  const { cols, valeurs } = _valeursCertificat(data);
+// Compose le numéro de certificat (= numéro de délivrance) :
+// {n° inventaire}-{seq artiste}-{n° Sage}. Ex. « MTR1042-003-5567 ».
+// Pas d'année dans le numéro (l'année reste dans le dossier + l'horodatage du
+// nom de fichier). Les segments vides sont omis.
+function composerNumeroCertificat({ numeroInventaire, seq, numeroSage }) {
+  return [
+    (numeroInventaire || '').toString().trim(),
+    seq != null ? String(seq).padStart(3, '0') : '',
+    (numeroSage || '').toString().trim(),
+  ].filter((p) => p !== '').join('-');
+}
+
+// Aperçu pour le formulaire : composantes du numéro AVANT saisie (n° d'inventaire
+// de l'œuvre + prochain séquentiel de l'artiste). Le formulaire compose le numéro
+// complet en direct en y ajoutant l'année et le n° Sage.
+function apercuNumeroCertificat(oeuvreId) {
   const db = openDatabase();
-  const colNames = cols.join(', ');
-  const placeholders = cols.map(() => '?').join(', ');
-  const info = db.prepare(`INSERT INTO certificats (${colNames}) VALUES (${placeholders})`).run(...valeurs);
+  const oeuvre = db.prepare('SELECT numero_inventaire, artiste_id FROM oeuvres WHERE id = ?').get(entier(oeuvreId));
+  if (!oeuvre) return null;
+  const row = db.prepare(`
+    SELECT COALESCE(MAX(c.seq_artiste), 0) AS m
+    FROM certificats c JOIN oeuvres o ON o.id = c.oeuvre_id
+    WHERE o.artiste_id = ?
+  `).get(oeuvre.artiste_id);
+  return {
+    numero_inventaire: oeuvre.numero_inventaire || '',
+    prochain_seq: ((row && row.m) || 0) + 1,
+  };
+}
+
+function creerCertificat(data) {
+  const db = openDatabase();
+  const oeuvre = db.prepare('SELECT id, numero_inventaire, artiste_id FROM oeuvres WHERE id = ?').get(entier(data.oeuvre_id));
+  if (!oeuvre) throw new Error("Une œuvre doit être choisie pour le certificat.");
+  const dateDelivrance = vide(data.date_delivrance);
+  if (!dateDelivrance) throw new Error("La date de délivrance est requise.");
+  const numeroSage = vide(data.numero_sage);
+  if (!numeroSage) throw new Error("Le numéro de facture (Sage) est requis pour produire un certificat.");
+
+  // Séquentiel par artiste : MAX existant + 1 (les anciens « C- » ont seq NULL → 0).
+  const row = db.prepare(`
+    SELECT COALESCE(MAX(c.seq_artiste), 0) AS m
+    FROM certificats c JOIN oeuvres o ON o.id = c.oeuvre_id
+    WHERE o.artiste_id = ?
+  `).get(oeuvre.artiste_id);
+  const seq = ((row && row.m) || 0) + 1;
+  const numero = composerNumeroCertificat({ numeroInventaire: oeuvre.numero_inventaire, seq, numeroSage });
+
+  const cols = ['oeuvre_id', 'vente_id', 'numero_delivrance', 'date_delivrance', 'valeur', 'signataire', 'particularite', 'pdf_path', 'seq_artiste', 'numero_sage'];
+  const valeurs = [
+    entier(data.oeuvre_id), entier(data.vente_id), numero, dateDelivrance,
+    nombre(data.valeur), vide(data.signataire), vide(data.particularite), vide(data.pdf_path),
+    seq, numeroSage,
+  ];
+  const info = db.prepare(`INSERT INTO certificats (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`).run(...valeurs);
+
+  // Source unique : reporte le n° Sage sur la vente liée s'il n'y est pas déjà.
+  if (entier(data.vente_id)) {
+    db.prepare("UPDATE ventes SET numero_facture_sage = ? WHERE id = ? AND (numero_facture_sage IS NULL OR numero_facture_sage = '')")
+      .run(numeroSage, entier(data.vente_id));
+  }
   return obtenirCertificat(info.lastInsertRowid);
 }
 
@@ -693,7 +749,8 @@ function supprimerCertificat(id) {
 // ===== Annexes A (dépôt / retrait d'œuvres) =====
 
 // Réserve le prochain numéro d'annexe pour un artiste (séquence par artiste,
-// partagée dépôt/retrait) et enregistre la ligne. Numéro : A-{préfixe}-{NNN}.
+// partagée dépôt/retrait) et enregistre la ligne. Numéro : AD-{préfixe}-{NNN}
+// pour un dépôt, AR-{préfixe}-{NNN} pour un retrait.
 function enregistrerAnnexe({ artisteId, type, oeuvreIds }) {
   const db = openDatabase();
   const art = obtenirArtiste(artisteId);
@@ -702,7 +759,7 @@ function enregistrerAnnexe({ artisteId, type, oeuvreIds }) {
   const row = db.prepare('SELECT MAX(seq) AS m FROM annexes WHERE artiste_id = ?').get(artisteId);
   const seq = ((row && row.m) || 0) + 1;
   const prefixe = (art.prefixe_inventaire || '').toString().trim() || String(artisteId);
-  const numero = `A-${prefixe}-${String(seq).padStart(3, '0')}`;
+  const numero = `${t === 'retrait' ? 'AR' : 'AD'}-${prefixe}-${String(seq).padStart(3, '0')}`;
   const date = new Date().toISOString().slice(0, 10);
   const ids = Array.isArray(oeuvreIds) && oeuvreIds.length ? JSON.stringify(oeuvreIds) : null;
   const info = db.prepare(`
@@ -737,6 +794,7 @@ module.exports = {
   obtenirOuReserverNumeroFactureArtisteVente,
   creerCertificat, modifierCertificat, supprimerCertificat,
   apercuProchainNumeroCertificat, reserverProchainNumeroCertificat,
+  apercuNumeroCertificat, composerNumeroCertificat,
   apercuProchainNumeroInventaire, reserverProchainNumeroInventaire,
   formaterNumero,
   definirArchive,

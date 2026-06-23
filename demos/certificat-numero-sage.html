@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo numéro de certificat + Sage</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <link rel="stylesheet" href="../src/styles.css">
+  <style>
+    :root { --rouge-gvsj: #900001; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+    .demo-bar { position: sticky; top: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px 20px; background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    main { padding: 24px 32px 80px; max-width: 920px; margin: 0 auto; }
+    p.desc { color: var(--slate); font-size: 14px; margin: 0 0 22px; line-height: 1.5; }
+    .colonnes { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+    @media (max-width: 820px) { .colonnes { grid-template-columns: 1fr; } }
+
+    .carte { background: var(--porcelain); border: 1px solid var(--mist); border-radius: var(--r-carte); padding: 20px 22px; }
+    .carte h3 { font-family: var(--font-titre); font-size: 19px; color: var(--gallery-navy); margin: 0 0 4px; }
+    .carte .sous { font-size: 13px; color: var(--slate); margin: 0 0 16px; }
+
+    /* Formulaire (reprend le style de l'app) */
+    .grille-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .form-champ { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .form-champ.plein { grid-column: 1 / -1; }
+    .form-champ label { font-size: 13px; color: var(--slate); font-weight: 500; }
+    .form-champ input, .form-champ textarea { height: 40px; padding: 0 12px; border: 1px solid var(--mist); border-radius: var(--r-btn); background: var(--porcelain); font: inherit; font-size: 14px; color: var(--ink); }
+    .form-champ textarea { height: auto; padding: 10px 12px; resize: vertical; }
+    .form-champ input:focus, .form-champ textarea:focus { outline: none; border-color: var(--warm-gold); box-shadow: 0 0 0 4px rgba(185,145,47,.18); }
+    .form-champ input[readonly] { background: var(--cloud); color: var(--slate); cursor: default; }
+    .form-champ .aide { font-size: 12px; color: var(--stone); }
+
+    /* Champ Sage mis en évidence (nouveau, requis) */
+    .form-champ.sage label { color: var(--rouge-gvsj); font-weight: 600; }
+    .form-champ.sage input { border-color: rgba(144,0,1,.45); }
+    .form-champ.sage input:focus { border-color: var(--rouge-gvsj); box-shadow: 0 0 0 4px rgba(144,0,1,.14); }
+    .form-champ.sage input.vide { background: #fbeceb; }
+    .req { color: var(--rouge-gvsj); }
+
+    .btn { border: 0; border-radius: var(--r-btn); font: inherit; font-size: 14px; font-weight: 600; padding: 10px 18px; cursor: pointer; }
+    .btn.pri { background: var(--rouge-gvsj); color: #fff; }
+    .btn.pri:disabled { background: var(--mist); color: var(--stone); cursor: not-allowed; }
+    .btn.sec { background: var(--porcelain); border: 1px solid var(--mist); color: var(--ink); font-weight: 500; }
+    .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+
+    /* Aperçu du numéro composé */
+    .apercu { background: #fff; border: 1px solid var(--mist); border-radius: var(--r-carte); padding: 20px 22px; }
+    .apercu .label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--slate); margin: 0 0 8px; }
+    .numero { font-family: var(--font-titre); font-size: 30px; color: var(--rouge-gvsj); letter-spacing: .01em; word-break: break-all; }
+    .numero .manque { color: var(--stone); font-style: italic; }
+    .blocage { margin-top: 12px; font-size: 13px; padding: 9px 12px; border-radius: 10px; background: #fbeceb; color: #8a1f1f; display: none; }
+    .blocage.on { display: block; }
+    .ok-msg { margin-top: 12px; font-size: 13px; padding: 9px 12px; border-radius: 10px; background: #eaf3ea; color: #2c6b3f; display: none; }
+    .ok-msg.on { display: block; }
+
+    /* Décomposition */
+    .decomp { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+    .decomp .row { display: grid; grid-template-columns: 130px 1fr; gap: 12px; align-items: baseline; font-size: 13px; }
+    .decomp .row .seg { font-family: var(--font-titre); font-size: 17px; color: var(--gallery-navy); }
+    .decomp .row .seg.vide { color: var(--stone); font-style: italic; }
+    .decomp .row .ex { color: var(--slate); }
+
+    .fichier { margin-top: 20px; font-size: 13px; color: var(--slate); }
+    .fichier .nom { display: inline-block; margin-top: 4px; font-family: var(--font-ui); font-size: 13px; color: var(--ink); background: var(--cloud); border: 1px solid var(--mist); border-radius: 8px; padding: 6px 10px; word-break: break-all; }
+
+    .note { margin-top: 24px; font-size: 13px; color: var(--slate); background: #fff; border: 1px dashed var(--mist); border-radius: 12px; padding: 14px 16px; line-height: 1.5; }
+    .note b { color: var(--gallery-navy); }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Numéro de certificat + n° de facture Sage</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.6)">CSS réel · données fictives · démo avant intégration</div>
+  </div>
+
+  <main>
+    <p class="desc">
+      Nouveau format du numéro de certificat (= numéro de délivrance) :
+      <b>{n° inventaire}-{séquentiel par artiste}-{n° Sage}</b> (sans année).
+      Le <b class="req">n° de facture Sage est obligatoire</b> : une invite le demande avant de produire le certificat
+      (pré-rempli depuis la vente liée). Modifie les champs pour voir le numéro et le nom de fichier se composer.
+    </p>
+
+    <div class="colonnes">
+      <!-- Formulaire (mini-formulaire du certificat) -->
+      <div class="carte">
+        <h3>Produire un certificat d'authenticité</h3>
+        <p class="sous">Pour <strong>Le verger au crépuscule</strong> — Marie Tremblay</p>
+
+        <div class="grille-form">
+          <div class="form-champ">
+            <label>N° d'inventaire de l'œuvre</label>
+            <input id="inv" value="MTR1042" />
+            <span class="aide">Repris de l'œuvre.</span>
+          </div>
+          <div class="form-champ">
+            <label>Date de délivrance</label>
+            <input id="date" type="date" value="2026-06-23" />
+          </div>
+
+          <div class="form-champ">
+            <label>Séquentiel de l'artiste</label>
+            <input id="seq" type="number" min="1" value="3" />
+            <span class="aide">Auto : 3ᵉ certificat de Marie Tremblay.</span>
+          </div>
+          <div class="form-champ sage">
+            <label>N° de facture (Sage) <span class="req">• requis</span></label>
+            <input id="sage" value="" placeholder="ex. 5567" />
+            <span class="aide">Pré-rempli depuis la vente si liée.</span>
+          </div>
+
+          <div class="form-champ">
+            <label>Valeur (CAD)</label>
+            <input id="valeur" type="number" value="2400" />
+          </div>
+          <div class="form-champ">
+            <label>Signataire</label>
+            <input id="signataire" value="Joanne Boucher, Galeriste" />
+          </div>
+
+          <div class="form-champ plein">
+            <label>Particularité (optionnel)</label>
+            <textarea rows="2"></textarea>
+          </div>
+
+          <div class="form-champ plein">
+            <label>Numéro de délivrance (composé automatiquement)</label>
+            <input id="numero-ro" readonly value="" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn sec">Annuler</button>
+          <button class="btn pri" id="btn-produire">Produire le certificat</button>
+        </div>
+      </div>
+
+      <!-- Aperçu -->
+      <div>
+        <div class="apercu">
+          <p class="label">Numéro de certificat</p>
+          <div class="numero" id="apercu-numero">—</div>
+
+          <div class="blocage" id="blocage">⛔ Production bloquée — le n° de facture Sage est requis.</div>
+          <div class="ok-msg" id="okmsg">✔ Prêt à produire.</div>
+
+          <div class="decomp">
+            <div class="row"><span class="ex">N° inventaire</span><span class="seg" id="d-inv">MTR1042</span></div>
+            <div class="row"><span class="ex">Séquentiel artiste</span><span class="seg" id="d-seq">003</span></div>
+            <div class="row"><span class="ex">N° facture Sage</span><span class="seg" id="d-sage">—</span></div>
+          </div>
+
+          <div class="fichier">
+            Nom de fichier produit :
+            <div class="nom" id="apercu-fichier">—</div>
+          </div>
+        </div>
+
+        <div class="note">
+          <b>Rappels.</b> Les anciens certificats « C-2026-NNN » ne sont pas renumérotés.
+          Le séquentiel par artiste est <b>stable</b> (réservé à la création, comme les annexes).
+          Le n° Sage étant requis, le numéro est complet dès la production.
+          Le <b>numéro ne contient pas l'année</b> ; le <b>nom de fichier porte la date</b>
+          (n° d'inventaire + date), le numéro complet restant dans le PDF. Un éventuel
+          doublon le même jour reçoit un suffixe « (2) ».
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Nettoyage des caractères interdits par Windows (réplique de nomSur dans pdf.js)
+    function nomSur(s){ return String(s||'').replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim(); }
+    const TITRE = 'Le verger au crépuscule', ARTISTE = 'Marie Tremblay';
+
+    const $ = (id) => document.getElementById(id);
+    function pad3(n){ const x = parseInt(n,10); return Number.isFinite(x) && x>0 ? String(x).padStart(3,'0') : ''; }
+
+    function maj(){
+      const inv = $('inv').value.trim();
+      const seq = pad3($('seq').value);
+      const sage = $('sage').value.trim();
+
+      // Décomposition
+      $('d-inv').textContent = inv || '—';
+      $('d-seq').textContent = seq || '—';
+      const dSage = $('d-sage');
+      dSage.textContent = sage || '—';
+      dSage.classList.toggle('vide', !sage);
+
+      // Numéro composé, SANS année (le n° Sage est requis pour un numéro complet)
+      const base = [inv, seq].filter(Boolean).join('-');
+      const numeroComplet = sage ? base + '-' + sage : base;
+      const apercu = $('apercu-numero');
+      if (sage) {
+        apercu.innerHTML = numeroComplet;
+      } else {
+        apercu.innerHTML = base + '-<span class="manque">{n° Sage}</span>';
+      }
+      $('numero-ro').value = sage ? numeroComplet : '';
+
+      // Blocage / prêt
+      const bloque = !sage || !inv || !seq;
+      $('blocage').classList.toggle('on', bloque);
+      $('okmsg').classList.toggle('on', !bloque);
+      $('btn-produire').disabled = bloque;
+      $('sage').classList.toggle('vide', !sage);
+
+      // Nom de fichier : n° d'inventaire + date (le numéro complet reste DANS
+      // le PDF, pas dans le nom).
+      const dateF = $('date').value || '2026-06-23';
+      const queue = TITRE + ' (' + ARTISTE + ')';
+      $('apercu-fichier').textContent = 'Certificat ' + nomSur(inv || '') + ' — ' + nomSur(queue) + ' ' + dateF + '.pdf';
+    }
+
+    ['inv','date','seq','sage'].forEach((id) => {
+      $(id).addEventListener('input', maj);
+    });
+    $('btn-produire').addEventListener('click', () => {
+      alert('Certificat produit (démo) :\n' + $('numero-ro').value);
+    });
+    maj();
+  </script>
+</body>
+</html>

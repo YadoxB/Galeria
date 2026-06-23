@@ -17,9 +17,9 @@ const DEFAULTS = {
     logo_path: '',
   },
   documents: {
-    prefixe_facture: 'F-2026',
+    prefixe_facture: 'FC-2026',
     prochain_numero_facture: 1,
-    prefixe_facture_artiste: 'A-2026',
+    prefixe_facture_artiste: 'FA-2026',
     prochain_numero_facture_artiste: 1,
     prefixe_certificat: 'C-2026',
     prochain_numero_certificat: 1,
@@ -66,6 +66,20 @@ function fusionner(base, partiel) {
   return res;
 }
 
+// Migrations ponctuelles de la configuration déjà enregistrée (les nouveaux
+// défauts ne remplacent pas une valeur existante via fusionner). Renvoie true
+// si un champ a changé (pour réécrire le fichier).
+function migrerConfig(cfg) {
+  let change = false;
+  const d = cfg.documents || {};
+  // 2026-06-23 : préfixes de factures FA (artiste) / FC (client). On ne migre
+  // que si la valeur est restée au défaut historique (« A-2026 » / « F-2026 »),
+  // pour ne pas écraser un préfixe personnalisé dans les Réglages.
+  if (d.prefixe_facture === 'F-2026') { d.prefixe_facture = 'FC-2026'; change = true; }
+  if (d.prefixe_facture_artiste === 'A-2026') { d.prefixe_facture_artiste = 'FA-2026'; change = true; }
+  return change;
+}
+
 let cache = null;
 
 function chargerConfig() {
@@ -80,6 +94,7 @@ function chargerConfig() {
   try {
     const charge = JSON.parse(fs.readFileSync(p, 'utf-8'));
     cache = fusionner(DEFAULTS, charge);
+    if (migrerConfig(cache)) sauverConfig(cache);
     return cache;
   } catch (e) {
     console.error('Configuration illisible, valeurs par défaut utilisées :', e);

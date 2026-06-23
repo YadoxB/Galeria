@@ -4,7 +4,9 @@
 // (Jalon 5).
 //
 // Forme : (code)-(titre slug)-(formatL)(HxLxP)-(médiumL)(supportL)-(signatureL)(année)
-// Exemple : CLD1992-Entre-le-vent-et-la-mer-M30x30x0.75-AT-BD2023
+// Exemple : ANC1323-Sault_en_Provence-M28x28x0.75-AT-BG2021
+// Le titre garde ses espaces sous forme d'underscores (« Sault_en_Provence ») pour
+// ne pas se confondre avec le tiret qui sépare les grandes parties du nom.
 //
 // Règle des codes-lettres : première lettre de CHAQUE mot, sans accent, en
 // majuscule. « Très grand » → TG, « Bas Droite » → BD, « Acrylique » → A.
@@ -23,12 +25,13 @@ function lettresCode(valeur) {
 }
 
 // Titre → slug : sans accents, tout ce qui n'est pas alphanumérique devient un
-// tiret, pas de tiret en début/fin.
+// underscore, pas d'underscore en début/fin. (Underscore et non tiret : le tiret
+// sépare les grandes parties du nom de fichier.)
 function slugTitre(titre) {
   const s = sansAccents(titre)
-    .replace(/[^A-Za-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return s || 'sans-titre';
+    .replace(/[^A-Za-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return s || 'sans_titre';
 }
 
 // Formate un nombre de dimension : entier tel quel, décimal avec le 0 devant
