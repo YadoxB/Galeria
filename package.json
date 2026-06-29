@@ -17,8 +17,10 @@
     "prepare:photos:vide": "node scripts/build-photos-seed-vide.js",
     "prepare:assets:complet": "npm run prepare:icon && npm run prepare:seed && npm run prepare:photos",
     "prepare:assets:public": "npm run prepare:icon && npm run prepare:seed:vide && npm run prepare:photos:vide",
+    "prepare:assets:catalogue": "npm run prepare:icon && node scripts/build-seed-catalogue.js",
     "build:complet": "npm run prepare:assets:complet && electron-builder --win",
     "build:public": "npm run prepare:assets:public && electron-builder --win --publish=never",
+    "build:catalogue": "npm run prepare:assets:catalogue && electron-builder --win --publish=never",
     "release": "node scripts/release.js",
     "build": "npm run build:complet"
   },

@@ -1,13 +1,15 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-06-19.
+> Date de cette sauvegarde : 2026-06-29.
 >
 > **Voir aussi** : `CHANGELOG.md` (historique versionné détaillé) et `A-VALIDER.md` (questions ouvertes avec les parents).
 
 ---
 
 ## En une phrase
+
+> **Session 2026-06-29 — v0.5.0 publiée.** `master` à jour (`80d05fd`) et **release `v0.5.0`** publiée sur GitHub Releases (auto-update ≥ 0.2.1). Au programme : **nomenclature unifiée des noms de fichiers** des documents (style « lisible français », helper unique `nomDocument()` dans `src/pdf.js`, relecteur disque tolérant aux anciens noms) ; **préfixes** facture artiste **FA-**, facture client **FC-** (migration douce de la config), annexes **AD-**/**AR-** ; **refonte du numéro de certificat** (= n° de délivrance) → **`{n° inventaire}-{séquentiel artiste}-{n° Sage}`** (sans année), séquentiel **par artiste**, **n° de facture Sage requis** (champ « N° de facture (Sage) » sur la vente + le certificat, invite bloquante, repris par la pochette) ; **nom de fichier de certificat daté** ; **correctif** : refus clair à la suppression d'une œuvre liée à un certificat. Correction au passage de la nomenclature des **images** (underscore dans le titre, `nomenclature.js`). **À confirmer par Dave dans l'app** (non vérifié visuellement par Claude). Reste : **livraison aux parents** (toujours sur 0.2.0 → install manuelle d'un build avec catalogue) ; rôle **FC vs Sage** pour la facture client (Phase 3D/4) ; reproductions (frais de production) ; édition en batch (#2). Démo : `demos/certificat-numero-sage.html`.
 
 > **Session 2026-06-20.** Gros lot fusionné dans `master` et **publié en release `v0.4.0`** sur GitHub (auto-update actif pour les ≥ 0.2.1). Au programme : **réservation d'œuvres**, **section d'aide (#22)**, **tutoriel de bienvenue (#13)**, **Lot 1** (calculateur de commission) + **cote par type** sur la facture artiste, **Lot 4** (refonte Documents) + **vue Explorateur**, correctifs UI. **À confirmer par Dave** (rien vérifié visuellement par Claude — résolveur computer-use). Reste : **nomenclature des factures** (formule de Dave) ; **reproductions** (frais de production sur la facture artiste) ; **édition en batch (#2)** ; **livraison aux parents** (toujours sur 0.2.0 → install manuelle du build COMPLET `npm run build:complet`, à tester avant — saut 0.2.0 → 0.4.0).
 
@@ -422,12 +424,34 @@ Grosse session de fonctionnalités, **fusionnée dans `master` et publiée en re
 3. **Édition en batch (#2)** — vue tableau multi-lignes.
 4. **Livraison aux parents** — installer le build complet v0.4.0 + tester la migration.
 
+### Journal de session — 2026-06-29 (v0.5.0 — nomenclature + numéro de certificat)
+
+Session « nomenclature », étendue à une refonte du numéro de certificat. **Tout commité, fusionné dans `master`, publié en `v0.5.0`.** Travail dans le worktree `affectionate-vaughan-9fbd10`.
+
+**Livré (v0.5.0) :**
+- **Nomenclature unifiée des noms de fichiers** (style « lisible français » : `Type Numéro — Entité.pdf`, accents/espaces). Helper unique `nomDocument()` dans `src/pdf.js`, appliqué aux ~10 générateurs ; re-génération propre (suppression de l'ancien fichier renommé) ; relecteur disque (`indexerTousLesDocuments`/`_nomLisible`) tolérant aux **anciens noms** déjà produits. Décisions (Dave) : style lisible, **numéros continus**, documents sans numéro restés datés.
+- **Préfixes** : facture artiste **FA-2026**, facture client **FC-2026** (migration douce dans `config.js` : seules les configs au défaut historique `A-2026`/`F-2026` migrent), annexes **AD-** (dépôt) / **AR-** (retrait).
+- **Refonte du numéro de certificat** : `{n° inventaire}-{séquentiel artiste}-{n° Sage}` (sans année). **Séquentiel par artiste** (`certificats.seq_artiste`, MAX+1, anciens `C-` ignorés). **N° de facture Sage requis** (`certificats.numero_sage`, `ventes.numero_facture_sage`) : invite bloquante au formulaire de certificat (aperçu live), champ sur la vente (source unique, pré-remplit), pochette reprend le n° Sage de la vente. **Nom de fichier daté** `Certificat {n° inventaire} — titre (artiste) {AAAA-MM-JJ}.pdf` (doublon même-jour → suffixe « (2) »). Anciens certificats `C-2026-NNN` non renumérotés ; compteur global `C-2026` retiré pour les certificats. IPC `certificats:apercu`. Démo `demos/certificat-numero-sage.html`.
+- **Correctif** : `supprimerOeuvre` vérifie désormais les **certificats liés** (refus clair au lieu de l'erreur FK brute) — révélé par les tests du nouveau flux.
+- **Correction nomenclature des images** (`nomenclature.js`) : underscore dans le titre (`Sault_en_Provence`), conforme à la formule de référence.
+
+**DB :** migrations additives `certificats.seq_artiste` / `numero_sage`, `ventes.numero_facture_sage` (+ `schema.sql`). Testées (schéma frais + migration sur base ancienne + idempotence) via `node:sqlite` en mémoire.
+
+**Release & build :** `master` = `80d05fd`, tag `v0.5.0` poussés ; **release v0.5.0 publiée** (build public, auto-update ≥ 0.2.1) via `npm run release` depuis le worktree principal. ⚠️ Non vérifié visuellement par Claude — **à confirmer par Dave dans l'app**.
+
+**Reste / ouvert :**
+1. **Livraison aux parents** (sur 0.2.0) — install manuelle du **build catalogue** : nouveau script **`npm run build:catalogue`** (`scripts/build-seed-catalogue.js`) = base catalogue **sans** clients/ventes/certificats/annexes (cache de présentation effacé, **statut des œuvres conservé**) + **photos d'œuvres réorganisées par artiste et renommées** selon la nomenclature (`construireNomFichier`), `image_path` mis à jour. Sortie : `dist\Galeria Setup 0.5.0 (catalogue).exe` (~331 Mo). ⚠️ **Builder app fermée** + nettoyer les entrées de test du catalogue (ex. artiste « Dave Belisle ») avant la livraison finale. (Le générateur lit la source en lecture seule ; les données live ne sont jamais modifiées.)
+2. **Facture client FC vs Sage** : le n° de facture vient-il de Sage ou l'app garde-t-elle son compteur FC ? À trancher en Phase 3D/4.
+3. **Reproductions** (frais de production sur la facture artiste) ; **édition en batch (#2)**.
+4. Détail : à confirmer si chaque copie d'une édition est une œuvre distincte (n° d'inventaire différent) → le nom de fichier pourrait alors être `Certificat {n° inventaire}` seul.
+
 ---
 
 ## Notes techniques pour l'intervenant suivant
 
 - **Aucune commande de build automatique requise** au quotidien. `npm start` lance l'app en dev.
 - **Build final** = `npm run build` (génère icône via pngjs, copie DB+photos depuis `Documents\Galeria\`, package via electron-builder). Mode Développeur Windows requis (symlinks).
+- **Variantes de build** : `build:complet` (catalogue + photos, données live telles quelles) · `build:public` (DB vide + sans photos, utilisé par `release`) · **`build:catalogue`** (catalogue sans clients/ventes/certificats/annexes, statut des œuvres conservé, **photos d'œuvres classées par artiste et renommées** via `scripts/build-seed-catalogue.js`). Toutes lisent `Documents\Galeria\` en lecture seule ; **fermer l'app avant** pour un seed net.
 - **Migrations DB** : ajouter dans `src/db/migrations.js` (additif). Modifier aussi `src/db/schema.sql` pour les installations fraîches.
 - **Config** : ajouter un champ dans `DEFAULTS` de `src/config.js`. Le merge récursif gère le hot-add.
 - **Dialogues** : `import { confirmer, alerter } from '../dialogue.js'`.
