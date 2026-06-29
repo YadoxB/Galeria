@@ -8,7 +8,7 @@ identifiants.
 
 ---
 
-## [Non publié]
+## [0.5.0] — 2026-06-29
 
 ### Ajouté
 
@@ -67,6 +67,12 @@ identifiants.
   réservé à la séparation des grandes parties du nom. Corrige aussi le nom
   exact suggéré par le garde-fou Sage. (Renommage physique des photos :
   Jalon 5, non touché ici.)
+- **Suppression d'une œuvre liée à un certificat** — `supprimerOeuvre` ne
+  vérifiait que les ventes ; une œuvre ayant un certificat (sans vente)
+  échouait sur la contrainte FK avec l'erreur SQL brute « FOREIGN KEY
+  constraint failed ». Le refus est désormais **clair** (« supprimez d'abord
+  le(s) certificat(s) depuis la fiche de l'œuvre »), cohérent avec les
+  ventes ; les certificats restent préservés.
 
 ---
 
