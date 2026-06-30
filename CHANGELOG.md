@@ -8,6 +8,37 @@ identifiants.
 
 ---
 
+## [Non publié]
+
+> Travail committé sur `master` après la release v0.5.0. Sans effet sur les
+> installations auto-update (build public sans catalogue) ; concerne surtout
+> l'**installateur de livraison** (build catalogue) et le 1er lancement.
+
+### Ajouté
+
+- **Détection automatique du catalogue livré** — chaque build catalogue est
+  tamponné (`meta.catalogue_id`). Au démarrage, si la base de l'utilisateur a un
+  catalogue différent (ou aucun tampon, ex. base 0.2.0) et que ce catalogue n'a
+  pas été refusé, l'app **propose de le charger** : sauvegarde de la base
+  actuelle dans `Sauvegardes\`, remplacement par le catalogue livré, re-déballage
+  des photos (barre du splash), puis **redémarrage**. Garde-fous : jamais
+  d'écrasement silencieux ; le build public (auto-update) n'a pas de catalogue →
+  aucune proposition ; un refus n'est pas reproposé.
+
+### Modifié
+
+- **Installateur (build catalogue)** — photos embarquées en **un seul paquet**
+  (`seed/photos.pack`) déballé au 1er lancement avec progression (au lieu de
+  poser 540 fichiers, ce qui gelait l'install/désinstall). Installateur
+  **assisté**, **en français** (`installerLanguages: ["fr_FR"]`), **visuels
+  Galeria** (`build/installer*.bmp`), `runAfterFinish: false`. Photos en pleine
+  résolution inchangées.
+- **Build de livraison** — nouveau script `npm run build:catalogue`
+  (catalogue sans clients/ventes/certificats/annexes, statut des œuvres
+  conservé, photos classées par artiste et renommées selon la nomenclature).
+
+---
+
 ## [0.5.0] — 2026-06-29
 
 ### Ajouté

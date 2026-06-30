@@ -7,6 +7,27 @@
 
 ---
 
+## ▶ Reprise — par où commencer (préparé le 2026-06-29)
+
+**État** : **v0.5.0 publiée** ; tout le travail post-publication est sur **`master` = `4acbb71`**, **poussé, rien en attente**. L'**installateur de livraison** est **prêt** : `dist\Galeria Setup 0.5.0 (catalogue).exe` (catalogue, photos en paquet unique, install/désinstall rapides, **français**, branding **Galeria**, **détection auto du catalogue** avec sauvegarde + redémarrage).
+
+**⚠️ Non vérifié visuellement par Claude** (le résolveur computer-use ne capte pas la fenêtre Electron de dev) — l'ensemble v0.5.0 + installateur est **à confirmer par Dave dans l'app**.
+
+**Prochaine étape n°1 — livraison aux parents (hors-code, côté Dave) :**
+1. Base **propre** : fermer l'app, retirer les entrées de test du catalogue (ex. artiste « Dave Belisle »), au besoin renommer `Galeria BU` → `Galeria` pour repartir des bonnes données.
+2. `npm run build:catalogue` (depuis le worktree **principal**) → `dist\Galeria Setup 0.5.0 (catalogue).exe`.
+3. Installer chez les parents (en 0.2.0) → ouvrir l'app → **« Charger le nouveau catalogue »** (leur ancienne base est sauvegardée). Tester sur une copie d'abord si possible.
+
+**Ensuite — chantiers code ouverts (par priorité suggérée) :**
+- **Reproductions** : frais de production sur la facture artiste (champ persistant — fiche œuvre ou vente, à trancher — + adaptation `gabarit-facture-artiste.html`). Voir `A-VALIDER.md`.
+- **Facture client (Phase 3D)** : gabarit + rôle **FC vs Sage** (le n° vient-il de Sage ?). Lié au numéro de certificat qui intègre déjà le n° Sage.
+- **Édition en batch (#2)** : vue tableau multi-lignes (démo HTML d'abord — préférence Dave).
+- **Détail nomenclature** : confirmer si chaque copie d'une édition est une œuvre distincte (n° d'inventaire différent) → impacte le nom de fichier du certificat.
+
+**Pour démarrer la nouvelle conversation** : faire lire `CLAUDE.md`, puis ce `ETAT.md` (ce bloc + le « Journal de session — 2026-06-29 » plus bas).
+
+---
+
 ## En une phrase
 
 > **Session 2026-06-29 — v0.5.0 publiée.** `master` à jour (`0343d2c`) et **release `v0.5.0`** publiée sur GitHub Releases (auto-update ≥ 0.2.1). Au programme : **nomenclature unifiée des noms de fichiers** des documents (style « lisible français », helper unique `nomDocument()` dans `src/pdf.js`, relecteur disque tolérant aux anciens noms) ; **préfixes** facture artiste **FA-**, facture client **FC-** (migration douce de la config), annexes **AD-**/**AR-** ; **refonte du numéro de certificat** (= n° de délivrance) → **`{n° inventaire}-{séquentiel artiste}-{n° Sage}`** (sans année), séquentiel **par artiste**, **n° de facture Sage requis** (champ « N° de facture (Sage) » sur la vente + le certificat, invite bloquante, repris par la pochette) ; **nom de fichier de certificat daté** ; **correctif** : refus clair à la suppression d'une œuvre liée à un certificat. Correction au passage de la nomenclature des **images** (underscore dans le titre, `nomenclature.js`). **À confirmer par Dave dans l'app** (non vérifié visuellement par Claude). Reste : **livraison aux parents** (toujours sur 0.2.0 → install manuelle d'un build avec catalogue) ; rôle **FC vs Sage** pour la facture client (Phase 3D/4) ; reproductions (frais de production) ; édition en batch (#2). **Installateur du build catalogue refondu** (même session) : **paquet unique** de photos → install/désinstall rapides, **assisté**, **en français**, visuels **Galeria**, déballage des photos avec barre de progression au 1er lancement ; **détection auto du catalogue livré** (si la base de l'utilisateur a un catalogue différent — ex. parents en 0.2.0 —, l'app propose de charger le catalogue embarqué, avec sauvegarde préalable + redémarrage). Démo : `demos/certificat-numero-sage.html`.
