@@ -13,25 +13,29 @@ identifiants.
 ### Ajouté
 
 - **Consignes IA par artiste + set global de la galerie** (d'après
-  `gabarits/Consignes-IA-descriptions-oeuvres.md`). Le **set global**
-  (voix, ancrage factuel strict, ouverture « Œuvre originale. », règles
-  d'écriture — pas de tiret cadratin, pas de « ce n'est pas X, c'est Y »,
-  pas de clichés) est intégré **dans le code** (constante `CONSIGNES_GLOBALES`,
-  `src/main.js`) afin de toujours s'appliquer et de suivre dans le build. Les
-  **consignes par artiste** (19) sont écrites dans `artistes.instructions_ia`
-  (script `scripts/appliquer-consignes-ia.js`, qui parse le document, sauvegarde
-  la base et apparie par nom) — elles suivront aux parents via
-  `npm run build:catalogue`.
+  `gabarits/Consignes-IA-descriptions-oeuvres.md`). Le **set global** (voix,
+  ancrage factuel strict, langue et format bilingue, ouverture « Œuvre
+  originale. », règles d'écriture — pas de tiret cadratin, pas de « ce n'est pas
+  X, c'est Y », pas de clichés) est la **valeur par défaut du champ éditable**
+  « Consignes générales de la galerie » (Réglages → IA) : **modifiable dans
+  l'app**, empaqueté dans le build (défaut dans `config.js`), et appliqué aux
+  configs existantes par une migration unique (`consignes_galerie_init`, sans
+  écraser un champ déjà personnalisé ni la clé). Les **consignes par artiste**
+  (19) sont écrites dans `artistes.instructions_ia` (script
+  `scripts/appliquer-consignes-ia.js`, qui parse le document, sauvegarde la base
+  et apparie par nom ; modifiables sur la fiche artiste) — elles suivront aux
+  parents via `npm run build:catalogue`.
 
 ### Modifié
 
-- **Génération des descriptions** désormais **bilingue (français puis
-  anglais)**, conforme aux consignes : `assemblerPromptIA` et le prompt système
-  de `src/ia.js` demandent les deux versions séparées (« Français » / « English »)
-  et rappellent l'ancrage factuel et les règles d'écriture. `max_tokens` relevé
-  (800 → 1500) pour les deux versions. Le champ Description n'apparaissant dans
-  aucun document PDF (vérifié), le bilingue ne touche pas les documents français.
-  S'applique aussi au flux « Copier pour ChatGPT » (même assemblage).
+- **Génération des descriptions** : la **langue et le format** (bilingue
+  français puis anglais par défaut) et les règles d'écriture sont **pilotés par
+  les consignes éditables** (champ galerie + consignes artiste), pas figés dans
+  le code. `assemblerPromptIA` injecte ces consignes et le prompt système de
+  `src/ia.js` reste minimal (il y défère). `max_tokens` relevé (800 → 1500) pour
+  les deux versions. Le champ Description n'apparaissant dans aucun document PDF
+  (vérifié), le bilingue ne touche pas les documents français. S'applique aussi
+  au flux « Copier pour ChatGPT » (même assemblage).
 
 ---
 

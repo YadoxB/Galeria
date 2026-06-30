@@ -187,8 +187,8 @@ export async function rendreReglages(contenu) {
               <p class="ia-cle-statut" id="ia-cle-statut"></p>
               <p class="aide-champ">Active le bouton « Générer la description » sur la fiche d'œuvre. La clé est <strong>chiffrée dans le coffre de Windows</strong> (jamais affichée ni stockée en clair). À créer sur console.anthropic.com — facturé à l'usage (~0,4 ¢ par description). Sans clé, l'app fonctionne normalement (« Copier pour ChatGPT » reste disponible).</p>
             </div>
-            ${champTextarea({ nom: 'ia_instructions_galerie', libelle: 'Consignes générales de la galerie', valeur: config.ia?.instructions_galerie || '', lignes: 5 })}
-            <p class="aide-champ">Ces consignes s'ajoutent à toutes les générations, peu importe l'artiste.</p>
+            ${champTextarea({ nom: 'ia_instructions_galerie', libelle: 'Consignes générales de la galerie', valeur: config.ia?.instructions_galerie || '', lignes: 14 })}
+            <p class="aide-champ">Consignes de base appliquées à <strong>toutes</strong> les générations (voix, langue et format, ancrage factuel, règles d'écriture). Modifiables ici. Les consignes propres à chaque artiste se règlent sur sa fiche (« Aide à la description IA »).</p>
             ${champTexte({ nom: 'ia_lien_chatgpt_defaut', libelle: 'Lien ChatGPT par défaut', valeur: config.ia?.lien_chatgpt_defaut || 'https://chat.openai.com/', attributs: 'placeholder="https://chat.openai.com/"' })}
             <p class="aide-champ">Pour « Copier pour ChatGPT » : utilisé quand l'artiste n'a pas de lien vers son propre GPT.</p>
           </div>

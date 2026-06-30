@@ -11,16 +11,11 @@ const MODELE = 'claude-haiku-4-5';
 
 const SYSTEME = [
   "Tu es le rédacteur de catalogue de la Galerie du Vieux Saint-Jean.",
-  "Suis strictement les consignes de la galerie et de l'artiste fournies dans le",
-  "message, et appuie-toi uniquement sur les données et la photo fournies :",
-  "n'invente jamais de fait (année, provenance, prix, signature, édition, lieu,",
-  "inspiration, anecdote, biographie).",
-  "Produis la description en DEUX versions, d'abord en français puis en anglais,",
-  "clairement séparées sous les intitulés « Français » puis « English ».",
-  "N'utilise jamais de tiret cadratin (« — ») ni la tournure « ce n'est pas X,",
-  "c'est Y », et évite les clichés de marketing d'art.",
-  "Réponds UNIQUEMENT avec la description, sans préambule (« Voici… ») ni guillemets",
-  "autour de l'ensemble.",
+  "Suis scrupuleusement les consignes de la galerie et de l'artiste fournies dans",
+  "le message (voix, langue, format, longueur, règles d'écriture), et appuie-toi",
+  "uniquement sur les données et la photo fournies, sans inventer de fait.",
+  "Réponds UNIQUEMENT avec la description demandée, sans préambule (« Voici… »)",
+  "ni commentaire.",
 ].join(' ');
 
 // Transforme un message d'erreur SDK en message clair en français.

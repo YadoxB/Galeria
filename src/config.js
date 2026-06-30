@@ -4,6 +4,23 @@ const { getDataDir } = require('./db/paths');
 
 const NOM_FICHIER = 'config.json';
 
+// Set global de la galerie pour la génération de descriptions par IA, transcrit
+// de gabarits/Consignes-IA-descriptions-oeuvres.md. C'est la VALEUR PAR DÉFAUT
+// du champ « Consignes générales de la galerie » (Réglages → IA) : modifiable
+// dans l'app, et empaquetée dans le build (les installs neuves la reçoivent ;
+// les configs existantes sont complétées une fois par migrerConfig).
+const CONSIGNES_GALERIE_DEFAUT = [
+  "Rôle. Tu rédiges des descriptions d'œuvres pour la Galerie du Vieux Saint-Jean : aider un visiteur à apprécier l'œuvre et à se projeter, dans une voix soignée et chaleureuse, fidèle à l'artiste.",
+  "Voix et ton. Troisième personne, ton évocateur mais sobre, qui valorise l'œuvre sans exagération commerciale. Tu peux nommer l'artiste. Élégant et accessible.",
+  "Langue et format. Produis toujours deux versions : d'abord le français, puis l'anglais. L'anglais dit la même chose, en adaptation naturelle (pas une traduction mot à mot). Sépare-les clairement sous les intitulés « Français » puis « English ».",
+  "Ancrage factuel (la règle la plus importante). N'invente jamais de fait. Appuie-toi uniquement sur le titre, le médium, le support, les dimensions, le sujet, le format, l'orientation, et ce qui est réellement visible sur la photo. N'invente jamais d'année, de provenance, de prix, de signature, de numéro d'édition, d'anecdote, de lieu géographique précis, d'inspiration, de référence à un autre artiste, ni d'élément biographique. Si une information manque, n'en parle pas ; dans le doute, reste descriptif et sobre.",
+  "Ouverture. Pour une œuvre originale, tu peux ouvrir par « Œuvre originale. ». Pour une reproduction ou une giclée, indique clairement qu'il s'agit d'une reproduction (et l'édition si elle est fournie) ; ne présente jamais une reproduction comme une pièce unique.",
+  "Longueur. Adapte-toi au sujet et au style de l'artiste. Par défaut, vise court à moyen ; étoffe seulement quand l'œuvre et le style le justifient. Mieux vaut court et juste que long et inventé.",
+  "Adapter au type d'œuvre. Peinture : la scène, la palette, la lumière, la touche. Sculpture : le matériau, la forme, le volume, le procédé. Reproduction : reste factuel sur la technique d'impression.",
+  "Préférences d'écriture (à respecter strictement). N'utilise jamais de tiret cadratin (le trait long « — ») ; sépare plutôt par une virgule, un deux-points ou une parenthèse. N'utilise jamais la tournure « ce n'est pas X, c'est Y ». Évite les clichés de marketing d'art (« incontournable », « véritable chef-d'œuvre », « ne vous laissera pas indifférent »). Écris en phrases complètes, dans une prose claire.",
+  "Qualité. Décris ce qui se voit et ce que l'œuvre évoque, sans sur-interpréter. Si la photo et les données sont minces, une à deux phrases honnêtes valent mieux qu'un paragraphe spéculatif.",
+].join('\n\n');
+
 const DEFAULTS = {
   galerie: {
     nom: 'Ma galerie',
@@ -40,7 +57,12 @@ const DEFAULTS = {
     zoom: 1.0,
   },
   ia: {
-    instructions_galerie: '',
+    // Consignes générales de la galerie pour la génération IA (modifiable dans
+    // Réglages → IA). Par défaut = set global du document de consignes.
+    instructions_galerie: CONSIGNES_GALERIE_DEFAUT,
+    // Marqueur : le défaut a-t-il déjà été appliqué aux configs existantes ?
+    // (évite de réécrire le champ si l'utilisateur l'a vidé volontairement.)
+    consignes_galerie_init: false,
     lien_chatgpt_defaut: 'https://chat.openai.com/',
     // Clé API Anthropic CHIFFRÉE (safeStorage / coffre Windows), encodée en
     // base64. Jamais en clair. Vide = génération directe inactive.
@@ -85,6 +107,17 @@ function migrerConfig(cfg) {
   // pour ne pas écraser un préfixe personnalisé dans les Réglages.
   if (d.prefixe_facture === 'F-2026') { d.prefixe_facture = 'FC-2026'; change = true; }
   if (d.prefixe_facture_artiste === 'A-2026') { d.prefixe_facture_artiste = 'FA-2026'; change = true; }
+  // 2026-06-30 : set global de consignes IA. On remplit le champ UNE fois s'il
+  // est vide (configs créées avant l'ajout), puis on pose le marqueur — ainsi
+  // l'utilisateur peut ensuite le modifier ou le vider sans qu'il se réécrive.
+  const ia = cfg.ia || (cfg.ia = {});
+  if (!ia.consignes_galerie_init) {
+    if (!ia.instructions_galerie || !String(ia.instructions_galerie).trim()) {
+      ia.instructions_galerie = CONSIGNES_GALERIE_DEFAUT;
+    }
+    ia.consignes_galerie_init = true;
+    change = true;
+  }
   return change;
 }
 
