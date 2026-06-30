@@ -10,7 +10,19 @@ identifiants.
 
 ## [Non publié]
 
-_Rien pour l'instant._
+### Ajouté
+
+- **Reproductions — frais de production sur la facture artiste.** Nouveau champ
+  **« Frais de production »** sur la fiche d'œuvre (carte Commerce), **affiché
+  seulement quand le type est une reproduction / giclée**. Colonne
+  `oeuvres.frais_production` (migration additive). Sur la **facture artiste**, la
+  galerie récupère ces frais **avant** la cote : deux lignes apparaissent
+  (« Frais de production » déduits, « Net après frais »), la cote s'applique au
+  **net** (« Cote de la galerie (50 % du net) »), donc *artiste = net × (100 −
+  cote)/100*. Déduction **bornée au type reproduction** (une valeur résiduelle
+  sur un autre type est ignorée) ; sans frais, la facture est **identique** à
+  avant. S'applique à la génération et à la « version modifiée ». Démo
+  `demos/facture-artiste-frais-repro.html`.
 
 ---
 

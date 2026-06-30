@@ -114,14 +114,19 @@ function typeContrat(typeOeuvre) {
 
 // Cote (commission) de la galerie selon le type d'œuvre.
 // Sculpture : 33 %. Tout le reste (peinture, reproduction, photo, etc.) : le
-// défaut configurable de la galerie (50 %). NB : pour les reproductions, les
-// frais de production ne sont pas encore déduits ici (champ persistant à venir,
-// voir A-VALIDER) — la cote s'applique alors au plein prix.
+// défaut configurable de la galerie (50 %). Pour les reproductions, la cote
+// s'applique au NET (prix de vente − frais de production) ; voir le calcul du
+// gabarit facture artiste et estReproductionType().
 function coteGaleriePourType(typeOeuvre, cfg) {
   const defaut = cfg?.documents?.cote_galerie_pourcent || 50;
   const t = (typeOeuvre || '').toLowerCase();
   if (t.includes('sculpt')) return 33;
   return defaut;
+}
+
+// Reproduction / giclée : seuls types où les frais de production sont déduits.
+function estReproductionType(typeOeuvre) {
+  return /reprod|gicl/i.test(typeOeuvre || '');
 }
 
 function donneesGalerie(cfg) {
@@ -211,6 +216,9 @@ function preparerDonneesFactureArtiste(vente, artiste, cfg, numeroFactureArtiste
       prix_regulier: (Number(vente.prix_vente) || 0) + (Number(vente.rabais_artiste) || 0) + (Number(vente.rabais_galerie) || 0),
       rabais_artiste: Number(vente.rabais_artiste) || 0,
       rabais_galerie: Number(vente.rabais_galerie) || 0,
+      // Frais de production : déduits avant la cote, uniquement pour les
+      // reproductions (une valeur résiduelle sur un autre type est ignorée).
+      frais_production: estReproductionType(vente.oeuvre_type) ? (Number(vente.frais_production) || 0) : 0,
       cote_pct: coteGaleriePourType(vente.oeuvre_type, cfg),
     },
     taxes: {

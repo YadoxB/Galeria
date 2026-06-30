@@ -28,6 +28,9 @@ function badgeEcheance(iso) {
 }
 
 const TYPES_OEUVRE = ['Peinture', 'Sculpture', 'Reproduction', 'Photographie', 'Dessin', 'Estampe', 'Mixte'];
+
+// Reproduction / giclée : seuls types où l'on saisit des frais de production.
+const estReproType = (t) => /reprod|gicl/i.test(t || '');
 const ORIENTATIONS = ['Horizontale', 'Verticale', 'Carrée'];
 const FORMATS = ['Petit', 'Moyen', 'Grand', 'Très grand'];
 const STYLES = ['Figuratif', 'Abstrait', 'Mi-Figuratif'];
@@ -1076,6 +1079,10 @@ export async function rendreOeuvreFiche(contenu, params) {
                 ${champTexte({ nom: 'emplacement', libelle: 'Emplacement (galerie)', valeur: o.emplacement })}
                 ${champTexte({ nom: 'exposition_actuelle', libelle: 'Exposition actuelle', valeur: o.exposition_actuelle })}
               </div>
+              <div id="zone-frais-production"${estReproType(o.type) ? '' : ' hidden'}>
+                ${champTexte({ nom: 'frais_production', libelle: 'Frais de production ($)', valeur: o.frais_production, type: 'number', attributs: 'step="0.01" min="0"' })}
+                <p class="aide-champ">Reproductions : la galerie récupère ces frais avant le partage 50/50. Déduits automatiquement sur la facture artiste.</p>
+              </div>
               <div id="zone-prix-suggere"></div>
               ${champCheckbox({ nom: 'cote_hors_normes', libelle: 'Cote hors-normes (œuvre exceptionnelle, prix saisi à la main)', valeur: !!o.cote_hors_normes })}
               ${champTexte({ nom: 'url_site', libelle: "URL de la fiche sur le site web", valeur: o.url_site, type: 'url', attributs: 'placeholder="https://galerievieuxstjean.com/produit/…"' })}
@@ -1272,6 +1279,15 @@ export async function rendreOeuvreFiche(contenu, params) {
 
     form.addEventListener('input', () => { modifie = true; });
     form.addEventListener('change', () => { modifie = true; });
+
+    // Champ « Frais de production » visible seulement pour les reproductions.
+    const champType = form.elements['type'];
+    const zoneFraisProd = contenu.querySelector('#zone-frais-production');
+    if (champType && zoneFraisProd) {
+      champType.addEventListener('input', () => {
+        zoneFraisProd.hidden = !estReproType(champType.value);
+      });
+    }
 
     // Récupère ce que l'utilisateur a saisi dans le form (pas encore enregistré)
     // + l'image en mémoire (imagePendingDataUrl) ou la version sauvegardée.

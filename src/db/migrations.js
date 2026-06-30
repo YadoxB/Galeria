@@ -49,6 +49,9 @@ const COLONNES_ATTENDUES = {
     ['reservation_date', 'TEXT'],
     ['reservation_echeance', 'TEXT'],
     ['reservation_notes', 'TEXT'],
+    // Reproductions : frais de production récupérés par la galerie avant le
+    // partage 50/50 (déduits sur la facture artiste).
+    ['frais_production', 'REAL'],
   ],
   clients: [
     ['prenom', 'TEXT'],

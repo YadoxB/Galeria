@@ -1,15 +1,22 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Facture artiste — La Galerie du Vieux Saint-Jean</title>
+<title>Démo — Facture artiste avec frais de production (reproductions)</title>
 <style>
-  /* Polices de marque (fichiers externes dans le dossier actifs) */
-  @font-face{font-family:'Garamond';font-weight:400;font-style:normal;src:url(actifs/garamond-regular.woff2) format('woff2');}
-  @font-face{font-family:'Garamond';font-weight:600;font-style:normal;src:url(actifs/garamond-semibold.woff2) format('woff2');}
-  @font-face{font-family:'Garamond';font-weight:400;font-style:italic;src:url(actifs/garamond-italic.woff2) format('woff2');}
+  /* Polices de marque (depuis le dossier des gabarits) */
+  @font-face{font-family:'Garamond';font-weight:400;font-style:normal;src:url(../gabarits/actifs/garamond-regular.woff2) format('woff2');}
+  @font-face{font-family:'Garamond';font-weight:600;font-style:normal;src:url(../gabarits/actifs/garamond-semibold.woff2) format('woff2');}
+  @font-face{font-family:'Garamond';font-weight:400;font-style:italic;src:url(../gabarits/actifs/garamond-italic.woff2) format('woff2');}
 
   *{box-sizing:border-box;}
-  body{margin:0;background:#eceae4;color:#1c1a17;display:flex;justify-content:center;padding:22px;}
+  body{margin:0;background:#eceae4;color:#1c1a17;display:flex;flex-direction:column;align-items:center;padding:22px;}
+
+  /* Barre de démo (pas dans le document) */
+  .demobar{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;background:#071A2F;color:#fff;padding:10px 16px;border-radius:10px;margin-bottom:16px;font-family:system-ui,sans-serif;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.15);}
+  .demobar b{color:#C99A3D;font-style:italic;}
+  .demobar button{font-family:inherit;font-size:13px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;}
+  .demobar button.actif{background:#C99A3D;border-color:#C99A3D;color:#071A2F;font-weight:600;}
+  .demobar .note{margin-left:auto;color:rgba(255,255,255,.6);}
 
   /* ----- LA FACTURE (Lettre, portrait) ----- */
   .page{width:8.5in;height:11in;padding:16mm 17mm;background:#fff;color:#1c1a17;font-family:'Garamond',serif;box-shadow:0 4px 24px rgba(0,0,0,.18);display:flex;flex-direction:column;}
@@ -39,18 +46,19 @@
   .paiement .lab{color:#8a8170;text-transform:uppercase;font-size:8.5pt;letter-spacing:1px;margin-right:3mm;}
   .spacer{flex:1 1 auto;}
   .pied{text-align:center;font-size:8pt;letter-spacing:.4px;color:#9a8f78;border-top:.5px solid #e9e3d4;padding-top:4mm;}
-
-  @media print{
-    @page{size:letter;margin:0;}
-    body{background:#fff;padding:0;}
-    .page{box-shadow:none;}
-  }
 </style></head><body>
 
-<!-- ====== LE DOCUMENT (rien d'autre, prêt à imprimer en PDF) ====== -->
+<div class="demobar">
+  <b>Démo</b> · facture artiste avec frais de production
+  <button id="b_repro" class="actif" onclick="rendre('repro')">Reproduction (avec frais)</button>
+  <button id="b_peint" onclick="rendre('peinture')">Peinture (sans frais)</button>
+  <span class="note">les lignes « Frais » et « Net » n'apparaissent que s'il y a des frais</span>
+</div>
+
+<!-- ====== LE DOCUMENT ====== -->
 <div class="page">
   <div class="head">
-    <img class="logo" src="actifs/logo-gvsj.png" alt="La Galerie du Vieux Saint-Jean">
+    <img class="logo" src="../gabarits/actifs/logo-gvsj.png" alt="La Galerie du Vieux Saint-Jean">
     <div class="fmeta">
       <div class="ft">Facture</div>
       <div class="fl">N° <span id="p_num"></span></div>
@@ -109,42 +117,11 @@
 </div>
 
 <script>
-/* ===================================================================
-   CONTRAT DE DONNÉES — ce que l'application doit fournir à remplir()
-
-   {
-     // Informations de la galerie (lues depuis les réglages de l'app)
-     galerie: {
-       nom, adresse_ligne1, adresse_ligne2, telephone, courriel
-     },
-     numero: "F-2026-001",
-     date:   "2026-06-05",          // ISO AAAA-MM-JJ
-     artiste: { nom, titre, adresse, telephone, courriel },
-     oeuvre:  { titre, inventaire, format },
-     montants: {
-       prix_regulier: 2970,         // nombres, pas de chaînes
-       rabais_artiste: 0,
-       rabais_galerie: 0,
-       frais_production: 0,         // reproductions : déduits avant la cote (0 sinon)
-       cote_pct: 50                 // pourcentage de commission de la galerie
-     },
-     taxes: {
-       actives: true,               // « l'artiste perçoit les taxes »
-       tps: { active: true,  taux: 5,     numero: "89211 9900 RT0001" },
-       tvq: { active: false, taux: 9.975, numero: "" }
-     },
-     paiement: { mode: "Dépôt direct", commentaire: "" }
-   }
-
-   Les totaux (prix de vente, cote, part, taxes, total) sont CALCULÉS ici.
-   Les coordonnées de la galerie viennent des réglages de l'app.
-   =================================================================== */
-
 var MOIS=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 function dateFr(iso){ if(!iso) return ""; var p=String(iso).split("-"); if(p.length!==3) return iso; return parseInt(p[2],10)+" "+MOIS[parseInt(p[1],10)-1]+" "+p[0]; }
 function n(x){ var v=parseFloat(x); return isNaN(v)?0:v; }
 function money(v){ var s=(Math.round(v*100)/100).toFixed(2).split('.'); return s[0].replace(/\B(?=(\d{3})+(?!\d))/g,' ')+','+s[1]+' $'; }
-function moneyNeg(v){ return '\u2212'+money(v); }
+function moneyNeg(v){ return '−'+money(v); }
 function rate(v){ return (''+v).replace('.',','); }
 function set(id,t){ var e=document.getElementById(id); if(e) e.textContent=t; }
 function show(id,on){ var e=document.getElementById(id); if(e) e.style.display=on?'':'none'; }
@@ -160,43 +137,33 @@ function piedGalerie(g){
   return parts.join(" · ");
 }
 
-/* La seule fonction que l'app appelle : remplir(donnees) */
+/* remplir(donnees) — version avec frais de production.
+   Règle reproduction : la galerie récupère ses frais d'abord, puis la cote
+   s'applique au NET (prix de vente − frais). Artiste = net × (100 − cote)/100. */
 function remplir(d){
   d=d||{}; var a=d.artiste||{}, o=d.oeuvre||{}, m=d.montants||{}, t=d.taxes||{}, pmt=d.paiement||{};
   var g=d.galerie||{};
   var tps=t.tps||{}, tvq=t.tvq||{};
-  set('g_nom', g.nom||'');
-  set('g_adr1', g.adresse_ligne1||'');
-  set('g_adr2', g.adresse_ligne2||'');
-  set('g_tel', g.telephone||'');
-  set('g_courriel', g.courriel||'');
-  set('g_pied', piedGalerie(g));
+  set('g_nom', g.nom||''); set('g_adr1', g.adresse_ligne1||''); set('g_adr2', g.adresse_ligne2||'');
+  set('g_tel', g.telephone||''); set('g_courriel', g.courriel||''); set('g_pied', piedGalerie(g));
 
-  set('p_num', d.numero||"");
-  set('p_date', dateFr(d.date));
-  set('p_art_nom', a.nom||"");
-  set('p_art_titre', a.titre||"");
-  set('p_art_adr', a.adresse||"");
-  set('p_art_tel', a.telephone||"");
-  set('p_art_courriel', a.courriel||"");
+  set('p_num', d.numero||""); set('p_date', dateFr(d.date));
+  set('p_art_nom', a.nom||""); set('p_art_titre', a.titre||""); set('p_art_adr', a.adresse||"");
+  set('p_art_tel', a.telephone||""); set('p_art_courriel', a.courriel||"");
   set('p_titre', o.titre||"");
   var inv=o.inventaire||"", fmt=o.format||"";
   set('p_inv_format', [inv?('N° '+inv):'', fmt].filter(Boolean).join('     ·     '));
-  set('p_mode', pmt.mode||"");
-  set('p_comm', pmt.commentaire||"");
+  set('p_mode', pmt.mode||""); set('p_comm', pmt.commentaire||"");
   show('r_comm', (pmt.commentaire||"").trim()!=='');
 
   var prixReg=n(m.prix_regulier), rabArt=n(m.rabais_artiste), rabGal=n(m.rabais_galerie);
   var prixVente=prixReg-rabArt-rabGal;
-  // Reproductions : la galerie récupère les frais de production d'abord, puis
-  // la cote s'applique au net (prix de vente − frais). Sans frais, le calcul
-  // est identique à avant (net = prix de vente).
   var frais=n(m.frais_production);
-  var fraisOn=frais>0;
+  var fraisOn = frais>0;
   var net=prixVente-frais;
   var cote=n(m.cote_pct);
-  var commission=net*cote/100;
-  var part=net-commission;
+  var commission=net*cote/100;     // cote appliquée au net
+  var part=net-commission;         // part de l'artiste
 
   set('p_prixreg', money(prixReg));
   show('r_rabart', rabArt>0); set('p_rabart', moneyNeg(rabArt));
@@ -224,27 +191,39 @@ function remplir(d){
   set('p_total', money(part+mTps+mTvq));
 }
 
-/* Données d'exemple pour visualiser le gabarit en l'ouvrant directement.
-   L'app remplacera cet appel par remplir(vraiesDonnees). */
-var DONNEES_EXEMPLE={
-  galerie:{
-    nom:"Galerie du Vieux Saint-Jean",
-    adresse_ligne1:"208 rue Richelieu",
-    adresse_ligne2:"Saint-Jean-sur-Richelieu (Québec) J3B 6X8",
-    telephone:"(450) 741-3939",
-    courriel:"info@galerievieuxstjean.com"
+var GALERIE={ nom:"Galerie du Vieux Saint-Jean", adresse_ligne1:"208 rue Richelieu",
+  adresse_ligne2:"Saint-Jean-sur-Richelieu (Québec) J3B 6X8", telephone:"(450) 741-3939",
+  courriel:"info@galerievieuxstjean.com" };
+
+var EXEMPLES={
+  // Reproduction (giclée) : prix 600, frais 150, cote 50 % → net 450, part 225.
+  repro:{
+    galerie:GALERIE, numero:"FA-2026-014", date:"2026-06-30",
+    artiste:{ nom:"Sofia (Sophie Lebeuf)", titre:"Artiste peintre",
+      adresse:"Saguenay (Québec)", telephone:"418 000-0000", courriel:"sofia@exemple.com" },
+    oeuvre:{ titre:"Silence des aiguilles", inventaire:"SLB1207", format:"16 × 20 po" },
+    montants:{ prix_regulier:600, rabais_artiste:0, rabais_galerie:0, frais_production:150, cote_pct:50 },
+    taxes:{ actives:true, tps:{active:true,taux:5,numero:"89211 9900 RT0001"}, tvq:{active:false,taux:9.975,numero:""} },
+    paiement:{ mode:"Dépôt direct", commentaire:"Reproduction — frais de production déduits avant le partage." }
   },
-  numero:"F-2026-001", date:"2026-06-05",
-  artiste:{ nom:"Clarence Bourgoin", titre:"Artiste peintre",
-            adresse:"43 rue Nadeau, St-Léonard (Nouveau-Brunswick)  E7E 2E9",
-            telephone:"506 432-1811", courriel:"clarence@exemple.com" },
-  oeuvre:{ titre:"Chaleur à l'horizon", inventaire:"1399", format:"30 × 36 po" },
-  montants:{ prix_regulier:2970, rabais_artiste:0, rabais_galerie:0, cote_pct:50 },
-  taxes:{ actives:true,
-          tps:{ active:true,  taux:5,     numero:"89211 9900 RT0001" },
-          tvq:{ active:false, taux:9.975, numero:"" } },
-  paiement:{ mode:"Dépôt direct", commentaire:"" }
+  // Peinture originale : aucun frais → comportement identique à aujourd'hui.
+  peinture:{
+    galerie:GALERIE, numero:"FA-2026-015", date:"2026-06-30",
+    artiste:{ nom:"Clarence Bourgoin", titre:"Artiste peintre",
+      adresse:"43 rue Nadeau, St-Léonard (Nouveau-Brunswick)  E7E 2E9",
+      telephone:"506 432-1811", courriel:"clarence@exemple.com" },
+    oeuvre:{ titre:"Chaleur à l'horizon", inventaire:"1399", format:"30 × 36 po" },
+    montants:{ prix_regulier:2970, rabais_artiste:0, rabais_galerie:0, frais_production:0, cote_pct:50 },
+    taxes:{ actives:true, tps:{active:true,taux:5,numero:"89211 9900 RT0001"}, tvq:{active:false,taux:9.975,numero:""} },
+    paiement:{ mode:"Dépôt direct", commentaire:"" }
+  }
 };
-window.addEventListener("load",function(){ remplir(DONNEES_EXEMPLE); });
+
+function rendre(cle){
+  remplir(EXEMPLES[cle]);
+  document.getElementById('b_repro').classList.toggle('actif', cle==='repro');
+  document.getElementById('b_peint').classList.toggle('actif', cle==='peinture');
+}
+window.addEventListener("load",function(){ rendre('repro'); });
 </script>
 </body></html>

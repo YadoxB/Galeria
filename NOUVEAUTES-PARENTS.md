@@ -42,6 +42,14 @@ de la galerie »** vous laisse ajuster le ton, la longueur et les règles
 d'écriture des descriptions. Chaque artiste a aussi ses propres consignes, sur
 sa fiche (section **« Aide à la description IA »**).
 
+## Frais de production des reproductions
+
+Sur la fiche d'une œuvre de type **reproduction** (ou giclée), un champ **« Frais
+de production »** apparaît. Quand vous le remplissez, la **facture à l'artiste**
+en tient compte automatiquement : la galerie récupère d'abord ses frais, puis le
+partage de la commission se fait sur le reste. Pour les autres œuvres, rien ne
+change.
+
 ## Installation et catalogue plus simples
 
 L'installation a été allégée et accélérée. À l'ouverture, si un nouveau

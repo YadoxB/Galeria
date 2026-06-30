@@ -636,7 +636,7 @@ function obtenirVente(id) {
       v.*,
       o.titre AS oeuvre_titre, o.numero_inventaire, o.image_path,
       o.type AS oeuvre_type, o.dimensions, o.medium, o.support, o.annee,
-      o.prix AS oeuvre_prix,
+      o.prix AS oeuvre_prix, o.frais_production,
       a.id AS artiste_id, TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
       c.nom AS client_nom, c.prenom AS client_prenom,
       c.courriel AS client_courriel, c.telephone AS client_telephone

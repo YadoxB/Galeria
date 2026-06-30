@@ -513,6 +513,16 @@ Application du document **`gabarits/Consignes-IA-descriptions-oeuvres.md`** (set
 - **Tests** : syntaxe OK ; dry-run du script = 19/19 appariés ; application réelle = 19 mis à jour (vérifié en base). **À confirmer par Dave dans l'app** : générer une description et vérifier le bilingue + le style par artiste (avec sa clé).
 - **Reste** : rien de bloquant. À la prochaine livraison, `build:catalogue` embarquera les consignes par artiste ; le set global part déjà avec le code.
 
+### Journal de session — 2026-06-30 (suite — Reproductions : frais de production)
+
+Premier chantier de la nouvelle feuille de route (ordre convenu : **1. reproductions · 2. sécurité · 3. Phase 5 Web · 4. Phase 4 Sage** — Phases 4 et 5 inversées sur demande de Dave). **Démo d'abord (validée)**, puis intégration. **Commité sur la branche + `master` (local), non poussé.**
+
+- **Décision (Dave)** : frais de production saisis sur la **fiche d'œuvre**, **affichés seulement pour les types reproduction/giclée**. (Tranche le point ouvert d'A-VALIDER « où saisir les frais de repro ».)
+- **Implémenté** : colonne `oeuvres.frais_production` (schema + migration additive + `COLONNES_OEUVRE`) ; champ conditionnel dans la carte Commerce de la fiche d'œuvre (`oeuvre-fiche.js`, helper `estReproType`, bascule sur le champ « type ») ; `obtenirVente` ramène `frais_production` ; `pdf.js` `preparerDonneesFactureArtiste` passe `frais_production` dans `montants`, **borné au type reproduction** (`estReproductionType`) ; gabarit `gabarit-facture-artiste.html` : lignes « Frais de production » + « Net après frais » (masquées si 0), cote au net (« 50 % du net »). Couvre génération + « version modifiée ».
+- **Calcul** : net = prix de vente − frais ; artiste = net × (100 − cote)/100 ; galerie = frais + cote sur net. Ex. repro 600 $, frais 150 $, cote 50 % → net 450, artiste 225, galerie 375. Sans frais → identique à avant.
+- **Tests** : syntaxe OK ; isolé `node:sqlite` 8/8 (colonne au schéma + migration base ancienne + idempotence + persistance) ; gabarit réel vérifié dans l'aperçu (repro + rétro-compat). **À confirmer par Dave dans l'app**.
+- **Reste de la feuille** : sécurité (impérative) → Phase 5 Web → Phase 4 Sage (« jamais d'écriture directe dans Sage »). Facture client parquée jusqu'à Phase 4. Voir la section « Plan structuré » et `A-VALIDER.md`.
+
 ---
 
 ## Notes techniques pour l'intervenant suivant

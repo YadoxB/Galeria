@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS oeuvres (
   support                TEXT,
   annee                  INTEGER,
   prix                   REAL,
+  frais_production       REAL,           -- reproductions : frais récupérés par la galerie avant le partage
   statut                 TEXT NOT NULL DEFAULT 'disponible'
                          CHECK (statut IN ('disponible', 'reserve', 'vendu', 'pretee')),
   format                 TEXT,

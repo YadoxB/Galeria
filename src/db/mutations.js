@@ -155,6 +155,7 @@ const COLONNES_OEUVRE = [
   ['particularite', vide],
   ['description', vide],
   ['prix', nombre],
+  ['frais_production', nombre],
   ['statut', vide],
   ['emplacement', vide],
   ['exposition_actuelle', vide],
