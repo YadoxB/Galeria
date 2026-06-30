@@ -105,6 +105,9 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('photo:enregistrer-recadree', { table, id, cropDataUrl, originaleDataUrl }),
   configGet: () => ipcRenderer.invoke('config:get'),
   configSauver: (partiel) => ipcRenderer.invoke('config:sauver', partiel),
+  catalogueVerifier: () => ipcRenderer.invoke('catalogue:verifier'),
+  catalogueRefuser: (id) => ipcRenderer.invoke('catalogue:refuser', id),
+  catalogueCharger: () => ipcRenderer.invoke('catalogue:charger'),
   configChoisirDossier: () => ipcRenderer.invoke('config:choisir-dossier'),
   backupRedemarrer: () => ipcRenderer.invoke('backup:redemarrer'),
 });

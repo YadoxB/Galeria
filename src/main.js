@@ -3,8 +3,8 @@ const { autoUpdater } = require('electron-updater');
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const { openDatabase, closeDatabase, getStats } = require('./db/database');
-const { getPhotosDir, getDataDir, getDocumentsDirAnnee } = require('./db/paths');
+const { openDatabase, closeDatabase, getStats, lireCatalogueId } = require('./db/database');
+const { getPhotosDir, getDataDir, getDocumentsDirAnnee, getDbPath, getSeedPath, getBackupsDir } = require('./db/paths');
 const { seedPhotosIfNeeded } = require('./db/seedPhotos');
 const { choisirPhoto, effacerPhoto, lireFichierImage, lireOriginale, lirePourRecadrage, enregistrerImageRecadree } = require('./photos');
 const { obtenirConfig, mettreAJourConfig } = require('./config');
@@ -460,15 +460,17 @@ app.whenReady().then(async () => {
 
   await progres(20, 'Préparation des photos…');
   try {
+    const forcer = !!obtenirConfig().forcer_photos_catalogue;
     const r = await seedPhotosIfNeeded(({ nbFichiers, total, pct }) => {
       progres(20 + Math.floor(pct * 0.6), `Préparation des photos… ${nbFichiers} / ${total}`);
-    });
+    }, { forcer });
+    if (forcer) mettreAJourConfig({ forcer_photos_catalogue: false });
     if (r) {
       const mo = (r.tailleTotale / (1024 * 1024)).toFixed(1);
-      console.log(`Photos initiales copiées : ${r.nbFichiers} fichiers, ${mo} Mo, en ${r.dureeMs} ms.`);
+      console.log(`Photos préparées : ${r.nbFichiers} fichiers, ${mo} Mo, en ${r.dureeMs} ms.`);
     }
   } catch (err) {
-    console.error('Échec de la copie initiale des photos :', err);
+    console.error('Échec de la préparation des photos :', err);
   }
 
   await progres(85, 'Chargement de l’interface…');
@@ -587,6 +589,43 @@ app.whenReady().then(async () => {
   ipcMain.handle('photo:enregistrer-recadree', (_e, opts) => enregistrerImageRecadree(opts));
   ipcMain.handle('config:get', () => obtenirConfig());
   ipcMain.handle('config:sauver', (_e, partiel) => mettreAJourConfig(partiel));
+
+  // --- Catalogue livré : proposer de charger un nouveau catalogue embarqué ---
+  // Ne propose que si un catalogue est embarqué (seed non vide) ET différent de
+  // celui de la base de l'utilisateur ET pas déjà refusé. Le build public
+  // (auto-update) n'a pas de catalogue → jamais de proposition.
+  ipcMain.handle('catalogue:verifier', () => {
+    const seedId = lireCatalogueId(getSeedPath());
+    if (!seedId) return { offrir: false };
+    if (seedId === lireCatalogueId(getDbPath())) return { offrir: false };
+    if (seedId === (obtenirConfig().catalogue_refuse || '')) return { offrir: false };
+    return { offrir: true, id: seedId };
+  });
+  ipcMain.handle('catalogue:refuser', (_e, id) => {
+    mettreAJourConfig({ catalogue_refuse: String(id || '') });
+    return { ok: true };
+  });
+  ipcMain.handle('catalogue:charger', () => {
+    const seedPath = getSeedPath();
+    const dbPath = getDbPath();
+    if (!lireCatalogueId(seedPath)) throw new Error('Aucun catalogue à charger.');
+    // 1. Sauvegarder la base actuelle.
+    if (fs.existsSync(dbPath)) {
+      const n = new Date();
+      const p = (x) => String(x).padStart(2, '0');
+      const stamp = `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}-${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`;
+      fs.mkdirSync(getBackupsDir(), { recursive: true });
+      fs.copyFileSync(dbPath, path.join(getBackupsDir(), `galerie-avant-catalogue-${stamp}.db`));
+    }
+    // 2. Fermer la base et la remplacer par le catalogue livré.
+    closeDatabase();
+    fs.copyFileSync(seedPath, dbPath);
+    // 3. Forcer le re-déballage des photos au prochain démarrage ; oublier un refus.
+    mettreAJourConfig({ forcer_photos_catalogue: true, catalogue_refuse: '' });
+    // 4. Redémarrer sur le nouveau catalogue.
+    app.relaunch();
+    app.exit(0);
+  });
   ipcMain.handle('config:choisir-dossier', async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     const { canceled, filePaths } = await dialog.showOpenDialog(win, {

@@ -46,6 +46,11 @@ const DEFAULTS = {
   // Tutoriel de bienvenue (#13) : passe à true une fois la visite vue au
   // premier lancement ; rejouable ensuite depuis l'aide.
   tutoriel_vu: false,
+  // Catalogue livré : identifiant du catalogue que l'utilisateur a refusé de
+  // charger (pour ne pas le reproposer) ; et drapeau « re-déballer les photos »
+  // après un chargement de catalogue (relu au prochain démarrage).
+  catalogue_refuse: '',
+  forcer_photos_catalogue: false,
 };
 
 function cheminConfig() {

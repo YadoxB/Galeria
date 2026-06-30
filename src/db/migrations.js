@@ -154,6 +154,12 @@ function migrer(db) {
     CREATE INDEX IF NOT EXISTS idx_annexes_artiste ON annexes(artiste_id);
   `);
 
+  // 1e. Table « meta » (clé/valeur). Porte notamment `catalogue_id` : l'identifiant
+  //     du catalogue livré avec un build. Sert à proposer le chargement d'un
+  //     nouveau catalogue quand la base de l'utilisateur en a un différent (ou
+  //     aucun, comme une vieille base 0.2.0).
+  db.exec(`CREATE TABLE IF NOT EXISTS meta (cle TEXT PRIMARY KEY, valeur TEXT);`);
+
   // 2. Backfill : artistes.numero_taxes (TPS unique) → artistes.numeros_taxes (liste JSON)
   const colsArtistes = db.prepare(`PRAGMA table_info(artistes)`).all().map((c) => c.name);
   if (colsArtistes.includes('numeros_taxes') && colsArtistes.includes('numero_taxes')) {

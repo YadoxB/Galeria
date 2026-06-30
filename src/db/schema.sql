@@ -170,6 +170,13 @@ CREATE TABLE IF NOT EXISTS annexes (
   cree_le     TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Table clé/valeur. `catalogue_id` = identifiant du catalogue livré avec un
+-- build, pour proposer le chargement d'un nouveau catalogue (voir database.js).
+CREATE TABLE IF NOT EXISTS meta (
+  cle     TEXT PRIMARY KEY,
+  valeur  TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_artistes_nom         ON artistes(nom);
 CREATE INDEX IF NOT EXISTS idx_oeuvres_artiste      ON oeuvres(artiste_id);
 CREATE INDEX IF NOT EXISTS idx_oeuvres_statut       ON oeuvres(statut);

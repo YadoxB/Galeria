@@ -33,6 +33,23 @@ function closeDatabase() {
   }
 }
 
+// Lit meta.catalogue_id d'un fichier de base (lecture seule), ou null si absent
+// (table meta inexistante, pas de ligne, base illisible). Sert à comparer le
+// catalogue embarqué (seed) et celui de la base de l'utilisateur.
+function lireCatalogueId(dbFilePath) {
+  if (!dbFilePath || !fs.existsSync(dbFilePath)) return null;
+  let d = null;
+  try {
+    d = new DatabaseSync(dbFilePath, { readOnly: true });
+    const row = d.prepare("SELECT valeur FROM meta WHERE cle = 'catalogue_id'").get();
+    return row && row.valeur ? row.valeur : null;
+  } catch {
+    return null;
+  } finally {
+    try { if (d) d.close(); } catch {}
+  }
+}
+
 function getStats() {
   const d = openDatabase();
   const count = (table) => d.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n;
@@ -45,4 +62,4 @@ function getStats() {
   };
 }
 
-module.exports = { openDatabase, closeDatabase, getStats };
+module.exports = { openDatabase, closeDatabase, getStats, lireCatalogueId };

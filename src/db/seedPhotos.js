@@ -84,21 +84,25 @@ async function copierDossier(seedDir, userDir, onProgress) {
   return { nbFichiers, tailleTotale, dureeMs: Date.now() - tStart };
 }
 
-async function seedPhotosIfNeeded(onProgress) {
+async function seedPhotosIfNeeded(onProgress, { forcer = false } = {}) {
   const userDir = getPhotosDir();
   const marqueur = path.join(userDir, NOM_MARQUEUR);
-  if (fs.existsSync(marqueur)) return null; // déjà appliqué
 
-  // L'utilisateur a déjà des photos → on ne touche à rien (on pose le marqueur).
-  if (fs.existsSync(userDir)) {
-    const entrees = fs.readdirSync(userDir).filter((n) => !n.startsWith('.'));
-    if (entrees.length > 0) {
-      try { fs.writeFileSync(marqueur, new Date().toISOString()); } catch {}
-      return null;
+  // Mode normal : ne rien faire si déjà appliqué ou si l'utilisateur a déjà des
+  // photos. Mode `forcer` (après chargement d'un nouveau catalogue) : on déballe
+  // quand même les nouvelles photos par-dessus (les anciens noms restent, mais
+  // la nouvelle base ne les référence plus).
+  if (!forcer) {
+    if (fs.existsSync(marqueur)) return null;
+    if (fs.existsSync(userDir)) {
+      const entrees = fs.readdirSync(userDir).filter((n) => !n.startsWith('.'));
+      if (entrees.length > 0) {
+        try { fs.writeFileSync(marqueur, new Date().toISOString()); } catch {}
+        return null;
+      }
     }
-  } else {
-    fs.mkdirSync(userDir, { recursive: true });
   }
+  fs.mkdirSync(userDir, { recursive: true });
 
   // 1. Paquet unique (préféré).
   const packPath = getSeedPackPath();

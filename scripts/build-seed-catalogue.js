@@ -98,6 +98,12 @@ for (const o of oeuvres) {
   if (exemples.length < 8) exemples.push(rel);
 }
 
+// Tampon du catalogue : identifiant unique de ce build. L'app le compare à celui
+// de la base de l'utilisateur pour proposer le chargement de ce catalogue.
+const catalogueId = new Date().toISOString();
+db.exec('CREATE TABLE IF NOT EXISTS meta (cle TEXT PRIMARY KEY, valeur TEXT)');
+db.prepare("INSERT INTO meta (cle, valeur) VALUES ('catalogue_id', ?) ON CONFLICT(cle) DO UPDATE SET valeur = excluded.valeur").run(catalogueId);
+
 db.exec('VACUUM');
 db.close();
 
