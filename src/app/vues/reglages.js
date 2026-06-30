@@ -4,6 +4,7 @@ import { confirmer, alerter } from '../dialogue.js';
 import { chargerConfig, invaliderCacheConfig, rafraichirEntete } from '../marque.js';
 import { fluxImport } from '../flux-import.js';
 import { abonnerEtatUpdater, libelleEtat, verifierManuellement, ouvrirModale } from '../updater.js';
+import { reappliquerVerrou } from '../verrou.js';
 
 const NIVEAUX_ZOOM = [
   { val: 0.8,  libelle: 'Très petit' },
@@ -191,6 +192,58 @@ export async function rendreReglages(contenu) {
             <p class="aide-champ">Consignes de base appliquées à <strong>toutes</strong> les générations (voix, langue et format, ancrage factuel, règles d'écriture). Modifiables ici. Les consignes propres à chaque artiste se règlent sur sa fiche (« Aide à la description IA »).</p>
             ${champTexte({ nom: 'ia_lien_chatgpt_defaut', libelle: 'Lien ChatGPT par défaut', valeur: config.ia?.lien_chatgpt_defaut || 'https://chat.openai.com/', attributs: 'placeholder="https://chat.openai.com/"' })}
             <p class="aide-champ">Pour « Copier pour ChatGPT » : utilisé quand l'artiste n'a pas de lien vers son propre GPT.</p>
+          </div>
+
+          <!-- Sécurité (6 col) — géré hors du formulaire principal -->
+          <div class="carte zone-securite">
+            <h3>Sécurité</h3>
+
+            <div class="sous-section">
+              <h4>Verrou de l'application</h4>
+              <div class="form-champ form-champ-checkbox">
+                <input type="checkbox" id="sec-verrou-actif">
+                <label for="sec-verrou-actif">Demander un code pour ouvrir l'application</label>
+              </div>
+              <p class="aide-champ" id="sec-aide-verrou">Définissez d'abord un code ci-dessous pour pouvoir activer le verrou.</p>
+            </div>
+
+            <div class="sous-section">
+              <h4>Code de déverrouillage</h4>
+              <div class="grille-form">
+                <div class="form-champ">
+                  <label for="sec-code">Code (4 à 6 chiffres)</label>
+                  <input type="password" id="sec-code" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••" spellcheck="false">
+                </div>
+                <div class="form-champ">
+                  <label for="sec-code2">Confirmer le code</label>
+                  <input type="password" id="sec-code2" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••" spellcheck="false">
+                </div>
+              </div>
+              <div class="ia-cle-actions">
+                <button type="button" class="btn-action btn-principal" id="sec-code-def">Enregistrer le code</button>
+                <button type="button" class="btn-action btn-secondaire-action" id="sec-code-suppr">Retirer le code</button>
+              </div>
+              <p class="securite-statut absent" id="sec-statut">Aucun code défini.</p>
+            </div>
+
+            <div class="sous-section">
+              <h4>Verrouillage automatique</h4>
+              <div class="form-champ">
+                <label for="sec-inactivite">Après une période d'inactivité</label>
+                <select id="sec-inactivite">
+                  <option value="0">Jamais (seulement à l'ouverture)</option>
+                  <option value="5">5 minutes</option>
+                  <option value="10">10 minutes</option>
+                  <option value="15">15 minutes</option>
+                  <option value="30">30 minutes</option>
+                </select>
+              </div>
+              <div class="form-champ form-champ-checkbox">
+                <input type="checkbox" id="sec-blur">
+                <label for="sec-blur">Verrouiller aussi quand on quitte la fenêtre</label>
+              </div>
+              <p class="aide-champ">Le compte à rebours se réarme à chaque mouvement de souris ou frappe au clavier. Le verrou empêche de consulter les fiches ; il ne chiffre pas encore la base.</p>
+            </div>
           </div>
 
           <!-- À propos (6 col) -->
@@ -444,6 +497,104 @@ export async function rendreReglages(contenu) {
         await alerter({ type: 'error', title: 'Échec', message: err.message });
       }
     });
+  }
+
+  // ---- Sécurité : verrou léger (géré hors du form, effet immédiat) ----
+  const secCode = contenu.querySelector('#sec-code');
+  const secCode2 = contenu.querySelector('#sec-code2');
+  const secStatut = contenu.querySelector('#sec-statut');
+  const secVerrou = contenu.querySelector('#sec-verrou-actif');
+  const secAide = contenu.querySelector('#sec-aide-verrou');
+  const secInact = contenu.querySelector('#sec-inactivite');
+  const secBlur = contenu.querySelector('#sec-blur');
+  if (secCode && secStatut && secVerrou) {
+    // Ces contrôles ne doivent pas marquer le formulaire principal « modifié ».
+    [secCode, secCode2, secVerrou, secInact, secBlur].forEach((el) => {
+      el.addEventListener('input', (e) => e.stopPropagation());
+      el.addEventListener('change', (e) => e.stopPropagation());
+    });
+    // Entrée dans un champ de code = enregistrer le code, pas soumettre le form.
+    [secCode, secCode2].forEach((el) => {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); contenu.querySelector('#sec-code-def').click(); }
+      });
+    });
+
+    let codeDefini = false;
+    const rafraichirSecurite = async () => {
+      try {
+        const s = await window.api.securiteEtat();
+        codeDefini = !!s.code_defini;
+        secVerrou.checked = !!s.verrou_actif;
+        secVerrou.disabled = !codeDefini;
+        secInact.value = String(s.inactivite_minutes ?? 10);
+        secBlur.checked = !!s.verrouiller_au_blur;
+        secAide.textContent = codeDefini
+          ? "Le code sera demandé à l'ouverture et après la période d'inactivité choisie."
+          : "Définissez d'abord un code ci-dessous pour pouvoir activer le verrou.";
+        secStatut.className = codeDefini ? 'securite-statut ok' : 'securite-statut absent';
+        secStatut.textContent = codeDefini ? '✓ Code défini' : 'Aucun code défini.';
+      } catch { /* silencieux */ }
+    };
+    await rafraichirSecurite();
+
+    contenu.querySelector('#sec-code-def').addEventListener('click', async () => {
+      const c1 = secCode.value.trim();
+      const c2 = secCode2.value.trim();
+      if (!/^\d{4,6}$/.test(c1)) {
+        secStatut.className = 'securite-statut erreur';
+        secStatut.textContent = 'Le code doit comporter de 4 à 6 chiffres.';
+        return;
+      }
+      if (c1 !== c2) {
+        secStatut.className = 'securite-statut erreur';
+        secStatut.textContent = 'Les deux codes ne correspondent pas.';
+        return;
+      }
+      try {
+        await window.api.securiteDefinirCode(c1);
+        secCode.value = ''; secCode2.value = '';
+        await rafraichirSecurite();
+        await reappliquerVerrou();
+        await alerter({ type: 'succes', title: 'Code enregistré', message: 'Le verrou de l\'application est maintenant actif.' });
+      } catch (err) {
+        secStatut.className = 'securite-statut erreur';
+        secStatut.textContent = err.message;
+      }
+    });
+
+    contenu.querySelector('#sec-code-suppr').addEventListener('click', async () => {
+      if (!codeDefini) return;
+      const r = await confirmer({
+        type: 'warning', title: 'Retirer le code ?',
+        message: 'Le verrou de l\'application sera désactivé.',
+        buttons: ['Retirer', 'Annuler'], defaultId: 1, cancelId: 1,
+      });
+      if (r !== 0) return;
+      try {
+        await window.api.securiteRetirerCode();
+        secCode.value = ''; secCode2.value = '';
+        await rafraichirSecurite();
+        await reappliquerVerrou();
+      } catch (err) {
+        await alerter({ type: 'error', title: 'Échec', message: err.message });
+      }
+    });
+
+    const enregistrerOptions = async () => {
+      try {
+        await window.api.securiteDefinirOptions({
+          verrou_actif: secVerrou.checked,
+          inactivite_minutes: Number(secInact.value),
+          verrouiller_au_blur: secBlur.checked,
+        });
+        await rafraichirSecurite();
+        await reappliquerVerrou();
+      } catch { /* silencieux */ }
+    };
+    secVerrou.addEventListener('change', enregistrerOptions);
+    secInact.addEventListener('change', enregistrerOptions);
+    secBlur.addEventListener('change', enregistrerOptions);
   }
 
   contenu.querySelector('#btn-annuler').addEventListener('click', async () => {

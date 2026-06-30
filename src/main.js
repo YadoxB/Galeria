@@ -137,6 +137,17 @@ function createWindow(splash) {
     }
   });
 
+  // Verrou léger : verrouiller quand la fenêtre perd le focus, si l'option est
+  // active (l'état réel est relu à chaque blur dans le processus principal).
+  win.on('blur', () => {
+    try {
+      const s = require('./securite').etatSecurite();
+      if (s.verrou_actif && s.verrouiller_au_blur && !win.isDestroyed()) {
+        win.webContents.send('securite:verrouiller');
+      }
+    } catch {}
+  });
+
   win.loadFile(path.join(__dirname, 'index.html'));
   win.webContents.on('did-finish-load', () => {
     try {
@@ -683,8 +694,21 @@ app.whenReady().then(async () => {
   ipcMain.handle('photo:lire-originale', (_e, opts) => lireOriginale(opts));
   ipcMain.handle('photo:lire-pour-recadrage', (_e, opts) => lirePourRecadrage(opts));
   ipcMain.handle('photo:enregistrer-recadree', (_e, opts) => enregistrerImageRecadree(opts));
-  ipcMain.handle('config:get', () => obtenirConfig());
+  ipcMain.handle('config:get', () => {
+    // Ne jamais exposer l'empreinte du code de verrouillage au renderer.
+    const cfg = JSON.parse(JSON.stringify(obtenirConfig()));
+    if (cfg.securite) { delete cfg.securite.code_hash; delete cfg.securite.code_sel; }
+    return cfg;
+  });
   ipcMain.handle('config:sauver', (_e, partiel) => mettreAJourConfig(partiel));
+
+  // --- Verrou léger de l'application (src/securite.js) ---
+  const securite = require('./securite');
+  ipcMain.handle('securite:etat', () => securite.etatSecurite());
+  ipcMain.handle('securite:definir-code', (_e, code) => securite.definirCode(code));
+  ipcMain.handle('securite:retirer-code', () => securite.retirerCode());
+  ipcMain.handle('securite:verifier-code', (_e, code) => securite.verifierCode(code));
+  ipcMain.handle('securite:definir-options', (_e, opts) => securite.definirOptions(opts));
 
   // --- Catalogue livré : proposer de charger un nouveau catalogue embarqué ---
   // Ne propose que si un catalogue est embarqué (seed non vide) ET différent de

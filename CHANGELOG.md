@@ -10,7 +10,28 @@ identifiants.
 
 ## [Non publié]
 
-_Rien pour l'instant._
+### Sécurité
+
+- **Verrou léger de l'application (volet 1 de la phase Sécurité).** Code court
+  (NIP de 4 à 6 chiffres) demandé à l'ouverture et/ou après une période
+  d'inactivité, pour empêcher une personne de passage de consulter les fiches
+  clients. **Le code n'est jamais conservé en clair** : seule une empreinte
+  **scrypt salée** (sel aléatoire de 16 octets) est enregistrée dans la config,
+  comparée à **temps constant** (`crypto.timingSafeEqual`) ; la vérification vit
+  dans le processus principal (`src/securite.js`) et l'empreinte est **retirée
+  de `config:get`** (jamais exposée au renderer). Écran de verrouillage plein
+  cadre avec pavé numérique (`src/app/verrou.js`), verrouillage **au démarrage**,
+  sur **inactivité** (délai réglable : jamais / 5 / 10 / 15 / 30 min, minuterie
+  réarmée à chaque activité) et, en option, à la **perte de focus** de la
+  fenêtre. Nouvelle carte **Réglages → Sécurité** (définir/retirer le code,
+  activer le verrou, choisir le délai). L'app derrière l'écran est rendue
+  `inert` pendant le verrouillage. Nouveaux IPC `securite:*`, défauts de config
+  `securite.*`. Démo `demos/verrou-securite.html`. Tests unitaires du module
+  (hachage, sel aléatoire, rejet, options). **Note :** barrière d'accès, pas du
+  chiffrement — la base reste lisible sur le disque (volet 2 à venir :
+  chiffrement du fichier au repos via safeStorage/DPAPI + BitLocker). ⚠️ Écran
+  non vérifié visuellement par Claude (la fenêtre Electron de dev n'est pas
+  captée) — **à confirmer par Dave dans l'app**.
 
 ---
 

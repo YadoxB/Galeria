@@ -116,4 +116,14 @@ contextBridge.exposeInMainWorld('api', {
   catalogueCharger: () => ipcRenderer.invoke('catalogue:charger'),
   configChoisirDossier: () => ipcRenderer.invoke('config:choisir-dossier'),
   backupRedemarrer: () => ipcRenderer.invoke('backup:redemarrer'),
+  securiteEtat: () => ipcRenderer.invoke('securite:etat'),
+  securiteDefinirCode: (code) => ipcRenderer.invoke('securite:definir-code', code),
+  securiteRetirerCode: () => ipcRenderer.invoke('securite:retirer-code'),
+  securiteVerifierCode: (code) => ipcRenderer.invoke('securite:verifier-code', code),
+  securiteDefinirOptions: (opts) => ipcRenderer.invoke('securite:definir-options', opts),
+  onSecuriteVerrouiller: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on('securite:verrouiller', handler);
+    return () => ipcRenderer.removeListener('securite:verrouiller', handler);
+  },
 });

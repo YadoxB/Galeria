@@ -56,6 +56,26 @@ L'installation a été allégée et accélérée. À l'ouverture, si un nouveau
 catalogue est disponible, l'application **propose de le charger** — et fait
 **une sauvegarde de vos données avant**, par sécurité.
 
+## Verrou de l'application (nouveau)
+
+Vous pouvez maintenant **protéger l'application par un code** court, pour
+éviter qu'une personne de passage consulte les fiches de vos clients quand
+l'écran est laissé sans surveillance.
+
+- Dans **Réglages → Sécurité**, vous **choisissez un code** de 4 à 6 chiffres.
+- Une fois activé, l'application **demande ce code à l'ouverture**, sur un grand
+  clavier numérique facile à utiliser.
+- Vous pouvez aussi la faire **se verrouiller toute seule** après un moment sans
+  activité (5, 10, 15 ou 30 minutes, à votre choix), et même quand vous passez à
+  un autre logiciel.
+- Le verrou est **facultatif** : tant que vous ne définissez pas de code,
+  l'application s'ouvre directement comme avant.
+
+**À savoir :** votre code n'est **jamais conservé en clair** dans l'ordinateur.
+Ce verrou empêche d'**ouvrir** l'application sans le code ; la protection
+complète du fichier de données (chiffrement) viendra dans une prochaine étape.
+Si vous oubliez le code, Dave peut le réinitialiser.
+
 ---
 
 *Vos données restent sur l'ordinateur. Seules les informations de catalogue

@@ -251,6 +251,11 @@ const ARTICLES = [
     `<p>Galeria garde tout en local et respecte la Loi 25 : suivi du <b>consentement courriel</b>, possibilité de <b>supprimer</b> une fiche client, aucune donnée envoyée en ligne.</p>`),
   A('securite', 'Protéger l\'ordinateur de la galerie', 'sécurité mot de passe session bitlocker verrouillage vol chiffrement',
     `<p>Comme l'ordinateur contient des renseignements de clients, protège-le : <b>mot de passe de session</b> Windows, <b>verrouillage automatique</b> après inactivité, et chiffrement <b>BitLocker</b> du disque. Garde aussi une sauvegarde hors site (clé USB chiffrée).</p>`),
+  A('securite', 'Verrouiller l\'application par un code', 'verrou code nip déverrouillage verrouillage inactivité confidentialité personne de passage',
+    `<p><b>Réglages → Sécurité</b> permet de protéger l'application par un <b>code de 4 à 6 chiffres</b>, pour qu'une personne de passage ne puisse pas consulter les fiches de clients.</p>
+     <h4>Activer le verrou</h4><p>Saisis un code et confirme-le, puis « Enregistrer le code ». L'application demandera ce code <b>à l'ouverture</b>.</p>
+     <h4>Verrouillage automatique</h4><p>Tu peux la faire se verrouiller seule après une période sans activité (5 à 30 minutes), et même quand on passe à un autre logiciel. Le compte à rebours se réarme dès qu'on bouge la souris ou tape au clavier.</p>
+     <h4>Code oublié ?</h4><p>Le code n'est <b>jamais conservé en clair</b>. En cas d'oubli, la personne qui gère l'application peut le réinitialiser. Ce verrou empêche d'<b>ouvrir</b> l'application ; il ne chiffre pas encore le fichier de données (étape à venir).</p>`),
 
   // ═══════ PROBLÈMES COURANTS ═══════
   A('depannage', 'Pourquoi le prix ne se calcule pas automatiquement ?', 'prix auto ne se remplit pas cote manquante médium typo faute frappe format hors normes manuel style',

@@ -3963,6 +3963,7 @@ details.bloc.pliable > .bloc-corps {
 .zone-affichage    { grid-column: span 3; padding: var(--s3) var(--s4); }
 .zone-import       { grid-column: span 3; padding: var(--s3) var(--s4); }
 .zone-ia           { grid-column: span 6; padding: var(--s3) var(--s4); }
+.zone-securite     { grid-column: span 6; padding: var(--s3) var(--s4); }
 .zone-apropos      { grid-column: span 6; padding: var(--s3) var(--s4); }
 
 /* Bouton large pour les cartes Sauvegardes/Import */
@@ -4028,6 +4029,7 @@ details.bloc.pliable > .bloc-corps {
   .zone-affichage,
   .zone-import       { grid-column: span 6; }
   .zone-ia,
+  .zone-securite,
   .zone-apropos      { grid-column: span 12; }
 }
 
@@ -5336,3 +5338,59 @@ select.lot-in.st-pretee { color: var(--info); }
 .ia-cle-statut { font-size: 12.5px; margin: 10px 0 6px; }
 .ia-cle-statut.ok { color: var(--succes); font-weight: 600; }
 .ia-cle-statut.absent { color: var(--stone); }
+
+/* ===== Sécurité (Réglages) — gestion du code de verrouillage ===== */
+.securite-statut { font-size: 12.5px; margin: 10px 0 6px; font-weight: 600; }
+.securite-statut.ok { color: var(--succes); }
+.securite-statut.absent { color: var(--stone); font-weight: 400; }
+.securite-statut.erreur { color: var(--erreur); }
+
+/* ===== Écran de verrouillage (verrou léger) ===== */
+#verrou-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(201,154,61,0.16), transparent 60%),
+    linear-gradient(160deg, var(--gallery-navy), var(--deep-navy));
+  font-family: var(--font-ui);
+}
+#verrou-overlay[hidden] { display: none; }
+.verrou-carte {
+  width: 380px; max-width: calc(100vw - 32px);
+  display: flex; flex-direction: column; align-items: center;
+  gap: var(--s3); padding: var(--s5) var(--s4);
+  text-align: center; color: var(--soft-ivory);
+}
+.verrou-marque { font-family: var(--font-titre); font-style: italic; font-size: 30px; color: var(--warm-gold); line-height: 1; }
+.verrou-cadenas {
+  width: 56px; height: 56px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(201,154,61,0.14); border: 1px solid rgba(201,154,61,0.4); color: var(--warm-gold);
+}
+.verrou-titre { margin: 0; font-family: var(--font-titre); font-weight: 500; font-size: 22px; color: var(--soft-ivory); }
+.verrou-sous { margin: 0; font-size: 13.5px; color: rgba(252,250,244,0.66); }
+.verrou-points { display: flex; gap: 12px; height: 18px; align-items: center; margin: var(--s2) 0; }
+.verrou-point { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid rgba(252,250,244,0.5); transition: transform .12s, background .12s; }
+.verrou-point.plein { background: var(--warm-gold); border-color: var(--warm-gold); transform: scale(1.08); }
+.verrou-pave { display: grid; grid-template-columns: repeat(3, 76px); gap: 14px; }
+.verrou-touche {
+  height: 64px; border-radius: 16px; cursor: pointer;
+  background: rgba(252,250,244,0.07); border: 1px solid rgba(252,250,244,0.14);
+  color: var(--soft-ivory); font-family: var(--font-ui); font-size: 24px; font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s, transform .06s; user-select: none;
+}
+.verrou-touche:hover { background: rgba(252,250,244,0.14); }
+.verrou-touche:active { transform: scale(0.95); }
+.verrou-touche.utilitaire { font-size: 18px; color: rgba(252,250,244,0.8); }
+.verrou-touche.valider { background: var(--warm-gold); border-color: var(--warm-gold); color: var(--deep-navy); }
+.verrou-touche.valider:hover { background: var(--warm-gold-hover); }
+.verrou-erreur { min-height: 18px; font-size: 13px; color: #F0B7A6; }
+.verrou-aide { margin-top: var(--s2); font-size: 12px; color: rgba(252,250,244,0.5); }
+.verrou-aide button { background: none; border: none; color: rgba(252,250,244,0.7); text-decoration: underline; cursor: pointer; font: inherit; }
+@keyframes verrou-secousse {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-9px); }
+  40%, 80% { transform: translateX(9px); }
+}
+.verrou-carte.secousse { animation: verrou-secousse .4s; }

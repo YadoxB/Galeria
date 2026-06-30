@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo Verrou de sécurité</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+
+    .demo-bar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: var(--s3); padding: var(--s2) var(--s4);
+      background: var(--deep-navy); color: var(--soft-ivory);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar button {
+      font-family: var(--font-ui); font-size: 13px; font-weight: 600;
+      padding: 8px 14px; border-radius: var(--r-btn); cursor: pointer;
+      border: 1px solid var(--warm-gold); background: var(--warm-gold); color: var(--soft-ivory);
+    }
+
+    main { max-width: 760px; margin: 0 auto; padding: var(--s5) var(--s4) calc(var(--s6) * 2); }
+    .page-entete h1 { margin: 0; font-family: var(--font-titre); font-weight: 500; font-size: 34px; color: var(--ink); }
+    .page-entete .meta { margin: var(--s2) 0 var(--s5); color: var(--slate); font-size: 14px; line-height: 1.5; }
+
+    /* ===== Carte Réglages — Sécurité (réplique du style bento) ===== */
+    .carte {
+      background: var(--porcelain); border: 1px solid var(--mist);
+      border-radius: var(--r-carte); padding: var(--s4); box-shadow: var(--ombre-carte);
+    }
+    .carte h3 { margin: 0 0 var(--s3); font-family: var(--font-titre); font-weight: 600; font-size: 24px; color: var(--gallery-navy); }
+    .sous-section { background: var(--soft-ivory); border: 1px solid var(--mist); border-radius: 12px; padding: var(--s3); margin-bottom: var(--s3); }
+    .sous-section:last-child { margin-bottom: 0; }
+    .sous-section h4 { margin: 0 0 var(--s2); font-size: 14px; font-weight: 600; color: var(--ink); }
+    .form-champ { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--s3); }
+    .form-champ:last-child { margin-bottom: 0; }
+    .form-champ label { font-size: 13px; color: var(--slate); }
+    .form-champ input[type=password], .form-champ input[type=text], .form-champ select {
+      height: 40px; padding: 0 12px; border: 1px solid var(--mist); border-radius: var(--r-btn);
+      background: var(--porcelain); color: var(--ink); font-family: var(--font-ui); font-size: 14px;
+    }
+    .form-champ input:focus, .form-champ select:focus { outline: none; border-color: var(--warm-gold); box-shadow: 0 0 0 4px rgba(201,154,61,0.18); }
+    .form-champ-checkbox { flex-direction: row; align-items: center; gap: 10px; }
+    .form-champ-checkbox input { width: 18px; height: 18px; accent-color: var(--warm-gold); }
+    .aide-champ { margin: 8px 0 0; font-size: 12.5px; color: var(--slate); line-height: 1.5; }
+    .actions-ligne { display: flex; gap: var(--s2); margin-top: var(--s2); flex-wrap: wrap; }
+    .btn-action {
+      font-family: var(--font-ui); font-size: 13px; font-weight: 600; padding: 9px 16px;
+      border-radius: var(--r-btn); cursor: pointer; border: 1px solid transparent;
+    }
+    .btn-principal { background: var(--warm-gold); color: var(--soft-ivory); }
+    .btn-principal:hover { background: var(--warm-gold-hover); }
+    .btn-secondaire-action { background: var(--porcelain); color: var(--ink); border-color: var(--mist); }
+    .statut { margin: var(--s2) 0 0; font-size: 13px; font-weight: 600; }
+    .statut.ok { color: var(--succes); }
+    .statut.absent { color: var(--slate); }
+    .statut.erreur { color: var(--erreur); }
+
+    /* ===== Écran de verrouillage ===== */
+    #verrou-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(201,154,61,0.16), transparent 60%),
+        linear-gradient(160deg, var(--gallery-navy), var(--deep-navy));
+      font-family: var(--font-ui);
+    }
+    #verrou-overlay[hidden] { display: none; }
+    .verrou-carte {
+      width: 380px; max-width: calc(100vw - 32px);
+      display: flex; flex-direction: column; align-items: center;
+      gap: var(--s3); padding: var(--s5) var(--s4);
+      text-align: center; color: var(--soft-ivory);
+    }
+    .verrou-marque { font-family: var(--font-titre); font-style: italic; font-size: 30px; color: var(--warm-gold); line-height: 1; }
+    .verrou-cadenas {
+      width: 56px; height: 56px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(201,154,61,0.14); border: 1px solid rgba(201,154,61,0.4); color: var(--warm-gold);
+    }
+    .verrou-titre { margin: 0; font-family: var(--font-titre); font-weight: 500; font-size: 22px; color: var(--soft-ivory); }
+    .verrou-sous { margin: 0; font-size: 13.5px; color: rgba(252,250,244,0.66); }
+    .verrou-points { display: flex; gap: 12px; height: 18px; align-items: center; margin: var(--s2) 0; }
+    .verrou-point { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid rgba(252,250,244,0.5); transition: transform .12s, background .12s; }
+    .verrou-point.plein { background: var(--warm-gold); border-color: var(--warm-gold); transform: scale(1.08); }
+    .verrou-pave { display: grid; grid-template-columns: repeat(3, 76px); gap: 14px; }
+    .verrou-touche {
+      height: 64px; border-radius: 16px; cursor: pointer;
+      background: rgba(252,250,244,0.07); border: 1px solid rgba(252,250,244,0.14);
+      color: var(--soft-ivory); font-family: var(--font-ui); font-size: 24px; font-weight: 500;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .12s, transform .06s; user-select: none;
+    }
+    .verrou-touche:hover { background: rgba(252,250,244,0.14); }
+    .verrou-touche:active { transform: scale(0.95); }
+    .verrou-touche.utilitaire { font-size: 18px; color: rgba(252,250,244,0.8); }
+    .verrou-touche.valider { background: var(--warm-gold); border-color: var(--warm-gold); color: var(--deep-navy); }
+    .verrou-touche.valider:hover { background: var(--warm-gold-hover); }
+    .verrou-erreur { min-height: 18px; font-size: 13px; color: #F0B7A6; }
+    .verrou-aide { margin-top: var(--s2); font-size: 12px; color: rgba(252,250,244,0.5); }
+    .verrou-aide button { background: none; border: none; color: rgba(252,250,244,0.7); text-decoration: underline; cursor: pointer; font: inherit; }
+    @keyframes secousse {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-9px); }
+      40%, 80% { transform: translateX(9px); }
+    }
+    .verrou-carte.secousse { animation: secousse .4s; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Démo verrou de sécurité</div>
+    <button id="btn-tester">Tester l'écran de verrouillage</button>
+  </div>
+
+  <main>
+    <div class="page-entete">
+      <h1>Réglages — carte « Sécurité »</h1>
+      <p class="meta">
+        Verrou léger pour empêcher une personne de passage de consulter les fiches de clients.
+        Le code n'est <strong>jamais conservé en clair</strong> : seule une empreinte salée (scrypt) est enregistrée.
+        Le verrou est une barrière d'accès ; il ne chiffre pas encore la base (ça vient au volet 2).
+        <br><br>Code de démonstration : <strong>2580</strong>.
+      </p>
+    </div>
+
+    <div class="carte">
+      <h3>Sécurité</h3>
+
+      <div class="sous-section">
+        <h4>Verrou de l'application</h4>
+        <div class="form-champ form-champ-checkbox">
+          <input type="checkbox" id="f-verrou_actif">
+          <label for="f-verrou_actif">Demander un code pour ouvrir l'application</label>
+        </div>
+        <p class="aide-champ" id="aide-verrou">Définis d'abord un code ci-dessous pour pouvoir activer le verrou.</p>
+      </div>
+
+      <div class="sous-section">
+        <h4>Code de déverrouillage</h4>
+        <div class="form-champ">
+          <label for="f-code">Code (4 à 6 chiffres)</label>
+          <input type="password" id="f-code" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••">
+        </div>
+        <div class="form-champ">
+          <label for="f-code2">Confirmer le code</label>
+          <input type="password" id="f-code2" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••">
+        </div>
+        <div class="actions-ligne">
+          <button type="button" class="btn-action btn-principal" id="btn-code-def">Enregistrer le code</button>
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-code-suppr">Retirer le code</button>
+        </div>
+        <p class="statut absent" id="statut-code">Aucun code défini.</p>
+      </div>
+
+      <div class="sous-section">
+        <h4>Verrouillage automatique</h4>
+        <div class="form-champ">
+          <label for="f-inactivite">Après une période d'inactivité</label>
+          <select id="f-inactivite">
+            <option value="0">Jamais (seulement à l'ouverture)</option>
+            <option value="5">5 minutes</option>
+            <option value="10" selected>10 minutes</option>
+            <option value="15">15 minutes</option>
+            <option value="30">30 minutes</option>
+          </select>
+        </div>
+        <div class="form-champ form-champ-checkbox">
+          <input type="checkbox" id="f-blur">
+          <label for="f-blur">Verrouiller aussi quand on quitte la fenêtre</label>
+        </div>
+        <p class="aide-champ">Le compte à rebours se réarme à chaque mouvement de souris ou frappe au clavier.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Écran de verrouillage (overlay) ===== -->
+  <div id="verrou-overlay" hidden>
+    <div class="verrou-carte" id="verrou-carte">
+      <div class="verrou-marque">Galeria</div>
+      <div class="verrou-cadenas" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="11" width="16" height="9" rx="2"/>
+          <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+        </svg>
+      </div>
+      <h2 class="verrou-titre">Application verrouillée</h2>
+      <p class="verrou-sous">Entre le code pour accéder à la galerie</p>
+      <div class="verrou-points" id="verrou-points" aria-hidden="true"></div>
+      <div class="verrou-erreur" id="verrou-erreur"></div>
+      <div class="verrou-pave" id="verrou-pave"></div>
+      <p class="verrou-aide"><button type="button" id="verrou-oubli">Code oublié ?</button></p>
+    </div>
+  </div>
+
+  <script>
+    // ---- Démo : « config » en mémoire (mock du coffre + scrypt côté main) ----
+    const demo = { code: '2580', verrou_actif: true, inactivite: 10, blur: false };
+
+    // ===== Carte Réglages =====
+    const cb = document.getElementById('f-verrou_actif');
+    const aideVerrou = document.getElementById('aide-verrou');
+    const statutCode = document.getElementById('statut-code');
+    function majEtatCarte() {
+      const aCode = !!demo.code;
+      cb.checked = demo.verrou_actif && aCode;
+      cb.disabled = !aCode;
+      aideVerrou.textContent = aCode
+        ? 'Le code sera demandé à l’ouverture et après la période d’inactivité choisie.'
+        : 'Définis d’abord un code ci-dessous pour pouvoir activer le verrou.';
+      statutCode.className = aCode ? 'statut ok' : 'statut absent';
+      statutCode.textContent = aCode ? '✓ Code défini' : 'Aucun code défini.';
+    }
+    cb.addEventListener('change', () => { demo.verrou_actif = cb.checked; });
+    document.getElementById('btn-code-def').addEventListener('click', () => {
+      const c1 = document.getElementById('f-code').value.trim();
+      const c2 = document.getElementById('f-code2').value.trim();
+      if (!/^\d{4,6}$/.test(c1)) { statutCode.className = 'statut erreur'; statutCode.textContent = 'Le code doit comporter de 4 à 6 chiffres.'; return; }
+      if (c1 !== c2) { statutCode.className = 'statut erreur'; statutCode.textContent = 'Les deux codes ne correspondent pas.'; return; }
+      demo.code = c1; demo.verrou_actif = true;
+      document.getElementById('f-code').value = ''; document.getElementById('f-code2').value = '';
+      majEtatCarte();
+    });
+    document.getElementById('btn-code-suppr').addEventListener('click', () => {
+      demo.code = ''; demo.verrou_actif = false; majEtatCarte();
+    });
+    document.getElementById('f-inactivite').addEventListener('change', (e) => { demo.inactivite = Number(e.target.value); });
+    document.getElementById('f-blur').addEventListener('change', (e) => { demo.blur = e.target.checked; });
+    majEtatCarte();
+
+    // ===== Écran de verrouillage =====
+    const overlay = document.getElementById('verrou-overlay');
+    const carte = document.getElementById('verrou-carte');
+    const pave = document.getElementById('verrou-pave');
+    const pointsBox = document.getElementById('verrou-points');
+    const erreur = document.getElementById('verrou-erreur');
+    const LONG_MAX = 6;
+    let saisie = '';
+
+    const TOUCHES = ['1','2','3','4','5','6','7','8','9','effacer','0','valider'];
+    pave.innerHTML = TOUCHES.map((t) => {
+      if (t === 'effacer') return '<button class="verrou-touche utilitaire" data-t="effacer" aria-label="Effacer">⌫</button>';
+      if (t === 'valider') return '<button class="verrou-touche valider" data-t="valider" aria-label="Valider">✓</button>';
+      return `<button class="verrou-touche" data-t="${t}">${t}</button>`;
+    }).join('');
+
+    function dessinerPoints() {
+      const n = Math.max(saisie.length, 4);
+      pointsBox.innerHTML = Array.from({ length: Math.min(n, LONG_MAX) }, (_, i) =>
+        `<span class="verrou-point ${i < saisie.length ? 'plein' : ''}"></span>`).join('');
+    }
+    function reinit() { saisie = ''; erreur.textContent = ''; dessinerPoints(); }
+
+    function valider() {
+      if (saisie === demo.code) {
+        overlay.hidden = true; reinit();
+      } else {
+        carte.classList.remove('secousse'); void carte.offsetWidth; carte.classList.add('secousse');
+        erreur.textContent = 'Code incorrect. Réessaie.';
+        saisie = ''; dessinerPoints();
+      }
+    }
+    function appui(t) {
+      if (t === 'effacer') { saisie = saisie.slice(0, -1); erreur.textContent = ''; dessinerPoints(); return; }
+      if (t === 'valider') { valider(); return; }
+      if (saisie.length >= LONG_MAX) return;
+      saisie += t; erreur.textContent = ''; dessinerPoints();
+      // Auto-validation quand on atteint la longueur exacte du code enregistré
+      if (saisie.length === demo.code.length) setTimeout(valider, 120);
+    }
+    pave.addEventListener('click', (e) => { const b = e.target.closest('[data-t]'); if (b) appui(b.dataset.t); });
+    document.addEventListener('keydown', (e) => {
+      if (overlay.hidden) return;
+      if (/^\d$/.test(e.key)) appui(e.key);
+      else if (e.key === 'Backspace') appui('effacer');
+      else if (e.key === 'Enter') appui('valider');
+    });
+    document.getElementById('verrou-oubli').addEventListener('click', () => {
+      erreur.textContent = 'Communique avec la personne qui gère l’application pour réinitialiser le code.';
+    });
+
+    document.getElementById('btn-tester').addEventListener('click', () => {
+      if (!demo.code) { alert('Définis d’abord un code dans la carte Réglages.'); return; }
+      reinit(); overlay.hidden = false;
+    });
+  </script>
+</body>
+</html>

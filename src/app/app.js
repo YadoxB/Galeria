@@ -20,6 +20,7 @@ import { initialiserUpdater } from './updater.js';
 import { initialiserAide } from './aide.js';
 import { initialiserTutoriel } from './tutoriel.js';
 import { proposerCatalogueLivreSiNouveau } from './catalogue-livraison.js';
+import { initialiserVerrou } from './verrou.js';
 
 enregistrer('accueil', rendreAccueil);
 enregistrer('artistes-liste', rendreArtistesListe);
@@ -63,6 +64,8 @@ document.addEventListener('input', (e) => {
 });
 
 (async () => {
+  // Verrou léger : verrouille immédiatement si activé, avant tout affichage.
+  await initialiserVerrou();
   await rafraichirEntete();
   await remplacer('accueil');
   await proposerCatalogueLivreSiNouveau();
