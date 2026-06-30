@@ -10,6 +10,17 @@ identifiants.
 
 ## [Non publié]
 
+_Rien pour l'instant._
+
+---
+
+## [0.7.0] — 2026-06-30
+
+> **Confirmé par Dave dans l'app.** Ajoute la **génération des descriptions
+> d'œuvres par IA (Claude)**. Distribué par auto-update (≥ 0.2.1), mais
+> **inactif sans clé** : aucun utilisateur ne génère ni ne dépense tant qu'une
+> clé API n'est pas saisie dans Réglages → IA.
+
 ### Ajouté
 
 - **Génération des descriptions d'œuvres par IA (Claude)** — sur la fiche
