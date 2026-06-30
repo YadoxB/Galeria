@@ -174,11 +174,23 @@ export async function rendreReglages(contenu) {
 
           <!-- IA (6 col) -->
           <div class="carte zone-ia">
-            <h3>Intelligence artificielle (ChatGPT)</h3>
+            <h3>Intelligence artificielle</h3>
+            <div class="ia-cle-bloc">
+              <div class="form-champ">
+                <label for="ia-cle">Clé API Anthropic (génération directe des descriptions)</label>
+                <input type="password" id="ia-cle" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+              </div>
+              <div class="ia-cle-actions">
+                <button type="button" class="btn-action btn-principal" id="btn-ia-cle-save">Enregistrer la clé</button>
+                <button type="button" class="btn-action btn-secondaire-action" id="btn-ia-cle-suppr">Retirer</button>
+              </div>
+              <p class="ia-cle-statut" id="ia-cle-statut"></p>
+              <p class="aide-champ">Active le bouton « Générer la description » sur la fiche d'œuvre. La clé est <strong>chiffrée dans le coffre de Windows</strong> (jamais affichée ni stockée en clair). À créer sur console.anthropic.com — facturé à l'usage (~0,4 ¢ par description). Sans clé, l'app fonctionne normalement (« Copier pour ChatGPT » reste disponible).</p>
+            </div>
             ${champTextarea({ nom: 'ia_instructions_galerie', libelle: 'Consignes générales de la galerie', valeur: config.ia?.instructions_galerie || '', lignes: 5 })}
             <p class="aide-champ">Ces consignes s'ajoutent à toutes les générations, peu importe l'artiste.</p>
             ${champTexte({ nom: 'ia_lien_chatgpt_defaut', libelle: 'Lien ChatGPT par défaut', valeur: config.ia?.lien_chatgpt_defaut || 'https://chat.openai.com/', attributs: 'placeholder="https://chat.openai.com/"' })}
-            <p class="aide-champ">Utilisé quand l'artiste n'a pas de lien spécifique vers son propre GPT.</p>
+            <p class="aide-champ">Pour « Copier pour ChatGPT » : utilisé quand l'artiste n'a pas de lien vers son propre GPT.</p>
           </div>
 
           <!-- À propos (6 col) -->
@@ -376,6 +388,63 @@ export async function rendreReglages(contenu) {
       });
     }
   });
+
+  // ---- Clé API Anthropic (chiffrée dans le coffre, gérée hors du form) ----
+  const inCle = contenu.querySelector('#ia-cle');
+  const statutCle = contenu.querySelector('#ia-cle-statut');
+  if (inCle && statutCle) {
+    // Ne pas marquer le formulaire « modifié » quand on tape la clé (gérée à part).
+    inCle.addEventListener('input', (e) => e.stopPropagation());
+    inCle.addEventListener('change', (e) => e.stopPropagation());
+    const rafraichirStatutCle = async () => {
+      try {
+        const r = await window.api.iaCleDefinie();
+        if (!r.chiffrement) {
+          statutCle.className = 'ia-cle-statut absent';
+          statutCle.textContent = "⚠ Le coffre de chiffrement n'est pas disponible sur cet ordinateur ; la clé ne peut pas être enregistrée en sécurité.";
+        } else if (r.definie) {
+          statutCle.className = 'ia-cle-statut ok';
+          statutCle.textContent = '✓ Clé définie · chiffrée dans le coffre Windows';
+          inCle.placeholder = '•••••••••••• (clé enregistrée — laisse vide pour la conserver)';
+        } else {
+          statutCle.className = 'ia-cle-statut absent';
+          statutCle.textContent = 'Aucune clé enregistrée — la génération directe est inactive.';
+          inCle.placeholder = 'sk-ant-…';
+        }
+      } catch { /* silencieux */ }
+    };
+    rafraichirStatutCle();
+    contenu.querySelector('#btn-ia-cle-save').addEventListener('click', async () => {
+      const cle = inCle.value.trim();
+      if (!cle) {
+        await alerter({ type: 'warning', title: 'Clé vide', message: 'Colle ta clé API Anthropic dans le champ.' });
+        return;
+      }
+      try {
+        await window.api.iaDefinirCle(cle);
+        inCle.value = '';
+        await rafraichirStatutCle();
+        await alerter({ type: 'succes', title: 'Clé enregistrée', message: 'La clé est chiffrée dans le coffre de Windows.' });
+      } catch (err) {
+        await alerter({ type: 'error', title: 'Enregistrement échoué', message: err.message });
+      }
+    });
+    contenu.querySelector('#btn-ia-cle-suppr').addEventListener('click', async () => {
+      const r = await confirmer({
+        type: 'warning', title: 'Retirer la clé ?',
+        message: 'La génération directe des descriptions sera désactivée.',
+        buttons: ['Retirer', 'Annuler'], defaultId: 1, cancelId: 1,
+      });
+      if (r !== 0) return;
+      try {
+        await window.api.iaEffacerCle();
+        inCle.value = '';
+        await rafraichirStatutCle();
+      } catch (err) {
+        await alerter({ type: 'error', title: 'Échec', message: err.message });
+      }
+    });
+  }
 
   contenu.querySelector('#btn-annuler').addEventListener('click', async () => {
     if (modifie) {

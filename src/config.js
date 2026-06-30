@@ -42,6 +42,9 @@ const DEFAULTS = {
   ia: {
     instructions_galerie: '',
     lien_chatgpt_defaut: 'https://chat.openai.com/',
+    // Clé API Anthropic CHIFFRÉE (safeStorage / coffre Windows), encodée en
+    // base64. Jamais en clair. Vide = génération directe inactive.
+    cle_anthropic: '',
   },
   // Tutoriel de bienvenue (#13) : passe à true une fois la visite vue au
   // premier lancement ; rejouable ensuite depuis l'aide.

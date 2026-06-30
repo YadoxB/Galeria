@@ -5329,3 +5329,10 @@ select.lot-in.st-pretee { color: var(--info); }
 
 .lot-toast { position: fixed; bottom: 84px; left: calc(50% + 125px); transform: translateX(-50%); background: var(--succes); color: #fff; padding: 11px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: var(--ombre-elevee); opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; z-index: 50; }
 .lot-toast.visible { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+
+/* ===== Clé API Anthropic (Réglages → IA) ===== */
+.ia-cle-bloc { padding: 12px 14px; margin-bottom: 16px; background: var(--soft-ivory); border: 1px solid var(--mist); border-radius: 12px; }
+.ia-cle-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.ia-cle-statut { font-size: 12.5px; margin: 10px 0 6px; }
+.ia-cle-statut.ok { color: var(--succes); font-weight: 600; }
+.ia-cle-statut.absent { color: var(--stone); }

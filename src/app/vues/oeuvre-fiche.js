@@ -1122,11 +1122,15 @@ export async function rendreOeuvreFiche(contenu, params) {
               <h3>Description</h3>
               ${champTextarea({ nom: 'description', libelle: '', valeur: o.description, lignes: 5 })}
               <div class="actions-ia">
+                <button type="button" class="btn-action btn-principal" id="btn-generer-ia">
+                  <span class="ia-icone" aria-hidden="true">✦</span>
+                  Générer la description
+                </button>
                 <button type="button" class="btn-action btn-secondaire-action" id="btn-copier-chatgpt">
                   <span class="ia-icone" aria-hidden="true">✦</span>
                   Copier pour ChatGPT
                 </button>
-                <p class="aide-champ">Copie le prompt assemblé (consignes galerie + consignes artiste + caractéristiques) et la photo dans le presse-papier, puis ouvre ChatGPT.</p>
+                <p class="aide-champ">« Générer » envoie la photo + les consignes (galerie + artiste) à Claude et remplit le champ ci-dessus (à relire). « Copier pour ChatGPT » copie le tout dans le presse-papier pour le coller à la main. La génération directe demande une clé API dans Réglages → IA.</p>
               </div>
             </div>
 
@@ -1269,9 +1273,10 @@ export async function rendreOeuvreFiche(contenu, params) {
     form.addEventListener('input', () => { modifie = true; });
     form.addEventListener('change', () => { modifie = true; });
 
-    async function collecterEtCopierInline() {
-      // Récupère ce que l'utilisateur a saisi dans le form (pas encore enregistré)
-      // + l'image en mémoire (imagePendingDataUrl) ou la version sauvegardée.
+    // Récupère ce que l'utilisateur a saisi dans le form (pas encore enregistré)
+    // + l'image en mémoire (imagePendingDataUrl) ou la version sauvegardée.
+    // Sert au mode création, pour ChatGPT comme pour la génération directe.
+    function collecterDonneesIA() {
       const fd = new FormData(form);
       const lire = (k) => {
         const v = fd.get(k);
@@ -1291,15 +1296,59 @@ export async function rendreOeuvreFiche(contenu, params) {
         emplacement_signature: lire('emplacement_signature'),
         description: lire('description'),
       };
-
       // En mode création, l'image vient toujours du data URL en mémoire (choix
       // de l'utilisateur, pas encore enregistré sur disque).
       const imageDataUrl = imagePendingDataUrl || null;
+      return { donneesOeuvre, artisteId, imageDataUrl };
+    }
 
-      return window.api.iaCopierPourChatGPTInline({
-        donneesOeuvre,
-        artisteId,
-        imageDataUrl,
+    async function collecterEtCopierInline() {
+      return window.api.iaCopierPourChatGPTInline(collecterDonneesIA());
+    }
+
+    // ---- Bouton « Générer la description » (Claude, directement dans l'app) ----
+    const btnGenererIA = contenu.querySelector('#btn-generer-ia');
+    if (btnGenererIA) {
+      const champDescription = () => form.elements['description'];
+      btnGenererIA.addEventListener('click', async () => {
+        const libelle = btnGenererIA.innerHTML;
+        btnGenererIA.disabled = true;
+        btnGenererIA.innerHTML = '<span class="ia-icone" aria-hidden="true">⏳</span> Génération…';
+        try {
+          const r = nouveau
+            ? await window.api.iaGenererDescriptionInline(collecterDonneesIA())
+            : await window.api.iaGenererDescription(o.id);
+          if (r && r.texte) {
+            const champ = champDescription();
+            if (champ) {
+              champ.value = r.texte;
+              champ.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            modifie = true;
+          }
+        } catch (err) {
+          const sansCle = (err && err.code === 'NO_KEY') || /clé API|Aucune clé/i.test(err?.message || '');
+          if (sansCle) {
+            const c = await confirmer({
+              type: 'info',
+              title: 'Clé API non configurée',
+              message: 'Pour générer une description automatiquement, ajoute ta clé Anthropic dans Réglages → IA.',
+              detail: 'La fonction est optionnelle — tu peux toujours utiliser « Copier pour ChatGPT ».',
+              buttons: ['Ouvrir les Réglages', 'Fermer'],
+              defaultId: 0, cancelId: 1,
+            });
+            if (c === 0) naviguer('reglages');
+          } else {
+            await alerter({
+              type: 'error',
+              title: 'Génération échouée',
+              message: nettoyerErreur(err),
+            });
+          }
+        } finally {
+          btnGenererIA.disabled = false;
+          btnGenererIA.innerHTML = libelle;
+        }
       });
     }
 

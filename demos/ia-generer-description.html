@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo « Générer la description » (Claude)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+
+    .demo-bar { position: sticky; top: 0; z-index: 30; display: flex; justify-content: space-between; align-items: center; gap: var(--s3); padding: var(--s2) var(--s4); background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .ctrl { display: flex; align-items: center; gap: 14px; font-size: 12.5px; color: rgba(255,255,255,0.8); }
+    .demo-bar label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 28px 28px 80px; display: grid; grid-template-columns: 1fr; gap: 26px; }
+    h1.section { font-family: var(--font-titre); font-size: 26px; color: var(--ink); margin: 0 0 4px; font-weight: 600; }
+    .aide-haut { font-size: 13px; color: var(--slate); margin: 0 0 14px; }
+
+    .carte { background: var(--porcelain); border: 1px solid var(--mist); border-radius: 16px; padding: 22px; box-shadow: var(--ombre-carte); }
+    .carte-titre { font-family: var(--font-titre); font-size: 22px; color: var(--gallery-navy); margin: 0 0 4px; }
+    .carte-soustitre { font-size: 12.5px; color: var(--stone); margin: 0 0 18px; }
+
+    /* Section Description de la fiche d'œuvre */
+    .desc-grille { display: grid; grid-template-columns: 220px 1fr; gap: 22px; align-items: start; }
+    .vignette { width: 220px; height: 220px; border-radius: 12px; background: linear-gradient(135deg,#cdb89a,#9a7b58); display: grid; place-items: center; color: rgba(255,255,255,0.85); font-family: var(--font-titre); font-size: 15px; text-align: center; padding: 12px; overflow: hidden; }
+    .vignette small { display: block; font-size: 11px; opacity: 0.75; margin-top: 6px; }
+
+    label.champ-lbl { display: block; font-size: 13px; color: var(--slate); font-weight: 500; margin-bottom: 6px; }
+    textarea.desc { width: 100%; min-height: 170px; resize: vertical; border: 1.5px solid var(--mist); border-radius: 10px; padding: 12px 14px; font-family: var(--font-ui); font-size: 13.5px; line-height: 1.6; color: var(--ink); background: var(--porcelain); outline: 0; }
+    textarea.desc:focus { border-color: var(--warm-gold); box-shadow: 0 0 0 4px rgba(201,154,61,0.16); }
+    textarea.desc.gen { background: #FCF8EE; }
+
+    .barre-actions { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+    .btn { font-family: inherit; font-size: 13px; border-radius: var(--r-btn); padding: 9px 16px; cursor: pointer; border: 1px solid transparent; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; }
+    .btn:disabled { opacity: 0.6; cursor: default; }
+    .btn-principal { background: var(--warm-gold); color: var(--soft-ivory); border-color: var(--warm-gold); font-weight: 600; }
+    .btn-principal:hover:not(:disabled) { background: var(--warm-gold-hover); }
+    .btn-secondaire { background: var(--porcelain); color: var(--ink); border-color: var(--mist); }
+    .btn-secondaire:hover:not(:disabled) { background: var(--cloud); }
+    .btn svg { width: 15px; height: 15px; }
+
+    .spin { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.45); border-top-color: #fff; border-radius: 50%; animation: tourne 0.7s linear infinite; }
+    @keyframes tourne { to { transform: rotate(360deg); } }
+
+    .note-ia { font-size: 11.5px; color: var(--stone); margin-top: 10px; display: flex; align-items: center; gap: 6px; }
+    .note-ia svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+    .curseur::after { content: '▍'; color: var(--warm-gold); animation: clign 1s steps(2) infinite; }
+    @keyframes clign { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
+
+    /* Réglages → IA */
+    .reglages-ia { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .bloc { background: var(--soft-ivory); border: 1px solid var(--mist); border-radius: 12px; padding: 16px 18px; }
+    .bloc h4 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--stone); }
+    .form-row { margin-bottom: 14px; }
+    .form-row input[type=password], .form-row input[type=text], .form-row textarea { width: 100%; border: 1.5px solid var(--mist); border-radius: 10px; padding: 9px 12px; font-family: var(--font-ui); font-size: 13px; color: var(--ink); background: var(--porcelain); outline: 0; }
+    .form-row input:focus, .form-row textarea:focus { border-color: var(--warm-gold); box-shadow: 0 0 0 4px rgba(201,154,61,0.16); }
+    .statut-cle { font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; }
+    .statut-cle.ok { color: var(--succes); }
+    .statut-cle.absent { color: var(--stone); }
+    .statut-cle svg { width: 14px; height: 14px; }
+    .aide-cle { font-size: 11.5px; color: var(--stone); margin-top: 8px; line-height: 1.5; }
+    .aide-cle a { color: var(--info); }
+
+    /* dialogue "pas de clé" */
+    .overlay { position: fixed; inset: 0; background: rgba(7,26,47,0.45); backdrop-filter: blur(2px); display: none; place-items: center; z-index: 50; }
+    .overlay.on { display: grid; }
+    .dialogue { background: var(--porcelain); border-radius: 18px; max-width: 440px; padding: 24px; box-shadow: var(--ombre-modal); }
+    .dialogue h3 { font-family: var(--font-titre); font-size: 21px; margin: 0 0 8px; color: var(--ink); }
+    .dialogue p { font-size: 13.5px; color: var(--slate); line-height: 1.55; margin: 0 0 18px; }
+    .dialogue .actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+    .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: var(--succes); color: #fff; padding: 11px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: var(--ombre-elevee); opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; z-index: 60; }
+    .toast.on { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — démo « Générer la description » (Claude Haiku 4.5)</div>
+    <div class="ctrl">
+      <label><input type="checkbox" id="sw-cle" checked> Clé API configurée</label>
+      <span style="opacity:.6">· maquette · aucun appel réel</span>
+    </div>
+  </div>
+
+  <main>
+    <section>
+      <h1 class="section">Fiche d'œuvre — section Description</h1>
+      <p class="aide-haut">Le bouton doré <strong>« Générer la description »</strong> envoie la photo de l'œuvre + les consignes (galerie + artiste) à Claude et remplit le champ. « Copier pour ChatGPT » reste comme repli (copier-coller, hors ligne).</p>
+      <div class="carte">
+        <div class="desc-grille">
+          <div class="vignette">« Le verger au crépuscule »<small>Marie Tremblay · acrylique sur toile · 24 × 36 po</small></div>
+          <div>
+            <label class="champ-lbl" for="desc">Description</label>
+            <textarea id="desc" class="desc" placeholder="Décris l'œuvre, ou clique sur « Générer la description » pour une première version…"></textarea>
+            <div class="barre-actions">
+              <button class="btn btn-principal" id="btn-generer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M19 14l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>
+                <span id="lbl-generer">Générer la description</span>
+              </button>
+              <button class="btn btn-secondaire" id="btn-copier">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                Copier pour ChatGPT
+              </button>
+              <button class="btn btn-secondaire" id="btn-vider" title="Vider le champ (démo)">Vider</button>
+            </div>
+            <div class="note-ia">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Seules les données de l'œuvre (image + caractéristiques) sont envoyées — jamais de données client. Relis et ajuste avant d'enregistrer.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h1 class="section">Réglages → IA</h1>
+      <p class="aide-haut">La clé est saisie une seule fois, chiffrée dans le coffre de Windows (jamais affichée ni stockée en clair).</p>
+      <div class="carte">
+        <h3 class="carte-titre">Assistant de description (Claude)</h3>
+        <p class="carte-soustitre">Optionnel — sans clé, l'app fonctionne normalement (le bouton renvoie ici).</p>
+        <div class="reglages-ia">
+          <div class="bloc">
+            <h4>Clé API Anthropic</h4>
+            <div class="form-row">
+              <input type="password" id="in-cle" placeholder="sk-ant-…" value="••••••••••••••••••••">
+            </div>
+            <div class="barre-actions" style="margin-top:0">
+              <button class="btn btn-principal" id="btn-save-cle">Enregistrer la clé</button>
+              <button class="btn btn-secondaire" id="btn-suppr-cle">Retirer</button>
+            </div>
+            <div class="statut-cle ok" id="statut-cle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              Clé définie · chiffrée dans le coffre Windows
+            </div>
+            <p class="aide-cle">À créer sur <a href="#" onclick="return false">console.anthropic.com</a> (payant à l'usage, ~0,4 ¢ par description). Distinct d'un abonnement Claude/ChatGPT.</p>
+          </div>
+          <div class="bloc">
+            <h4>Consignes générales de la galerie</h4>
+            <div class="form-row">
+              <textarea rows="6" style="resize:vertical" placeholder="Ton, longueur, vocabulaire à privilégier…">Rédige en français soigné, 90 à 130 mots, ton évocateur mais sobre. Évite le jargon. Mentionne la lumière, la matière et l'émotion.</textarea>
+            </div>
+            <p class="aide-cle">S'ajoute aux consignes propres à chaque artiste (champ « Aide à la description IA » sur la fiche artiste).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="overlay" id="overlay">
+    <div class="dialogue">
+      <h3>Clé API non configurée</h3>
+      <p>Pour générer une description automatiquement, ajoute ta clé Anthropic dans <strong>Réglages → IA</strong>. La fonction est optionnelle ; tu peux toujours utiliser « Copier pour ChatGPT ».</p>
+      <div class="actions">
+        <button class="btn btn-secondaire" id="dlg-fermer">Fermer</button>
+        <button class="btn btn-principal" id="dlg-reglages">Ouvrir les Réglages</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const DESCRIPTION = "Dans « Le verger au crépuscule », Marie Tremblay capte l'instant suspendu où la lumière décline sur les arbres fruitiers. Les empâtements d'acrylique, posés d'une main franche, font vibrer les ocres et les bleus profonds d'une fin de journée d'été. La composition, ouverte vers un horizon bas, laisse respirer le ciel et invite le regard à flâner entre les troncs. Œuvre généreuse et chaleureuse, elle traduit l'attachement de l'artiste à la campagne québécoise et à ses saisons. Son format moyen et sa palette feutrée en font une pièce d'atmosphère, idéale pour un séjour ou un bureau baigné de lumière naturelle.";
+
+    const $ = (s) => document.querySelector(s);
+    const desc = $('#desc'), btnGen = $('#btn-generer'), lblGen = $('#lbl-generer');
+    const swCle = $('#sw-cle');
+    let occupe = false;
+
+    function toast(msg) {
+      const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+      clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 2200);
+    }
+
+    function majStatutCle() {
+      const ok = swCle.checked;
+      const s = $('#statut-cle');
+      s.classList.toggle('ok', ok); s.classList.toggle('absent', !ok);
+      s.innerHTML = ok
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Clé définie · chiffrée dans le coffre Windows`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg> Aucune clé enregistrée`;
+      $('#in-cle').value = ok ? '••••••••••••••••••••' : '';
+    }
+    swCle.addEventListener('change', majStatutCle);
+
+    btnGen.addEventListener('click', async () => {
+      if (occupe) return;
+      if (!swCle.checked) { $('#overlay').classList.add('on'); return; }
+      occupe = true;
+      btnGen.disabled = true;
+      lblGen.textContent = 'Génération…';
+      btnGen.querySelector('svg').outerHTML = '<span class="spin"></span>';
+      desc.value = '';
+      desc.classList.add('gen');
+
+      // Simule la latence d'appel puis "stream" mot à mot.
+      await new Promise(r => setTimeout(r, 900));
+      const mots = DESCRIPTION.split(' ');
+      for (let i = 0; i < mots.length; i++) {
+        desc.value = mots.slice(0, i + 1).join(' ');
+        desc.scrollTop = desc.scrollHeight;
+        await new Promise(r => setTimeout(r, 22));
+      }
+      desc.classList.remove('gen');
+      occupe = false;
+      btnGen.disabled = false;
+      lblGen.textContent = 'Régénérer';
+      btnGen.querySelector('.spin').outerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M19 14l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>';
+      toast('Description générée — relis et ajuste');
+    });
+
+    $('#btn-vider').addEventListener('click', () => { desc.value = ''; lblGen.textContent = 'Générer la description'; });
+    $('#btn-copier').addEventListener('click', () => toast('Texte + image copiés (flux ChatGPT existant)'));
+    $('#btn-save-cle').addEventListener('click', () => { swCle.checked = true; majStatutCle(); toast('Clé enregistrée (chiffrée)'); });
+    $('#btn-suppr-cle').addEventListener('click', () => { swCle.checked = false; majStatutCle(); toast('Clé retirée'); });
+
+    $('#dlg-fermer').addEventListener('click', () => $('#overlay').classList.remove('on'));
+    $('#dlg-reglages').addEventListener('click', () => { $('#overlay').classList.remove('on'); document.querySelectorAll('.section')[1].scrollIntoView({ behavior: 'smooth' }); });
+    $('#overlay').addEventListener('click', (e) => { if (e.target === $('#overlay')) $('#overlay').classList.remove('on'); });
+
+    majStatutCle();
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, ipcMain, dialog, protocol, net, shell, clipboard, nativeImage, screen } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, protocol, net, shell, clipboard, nativeImage, screen, safeStorage } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -366,6 +366,91 @@ function preparerCopiePourChatGPTInline({ donneesOeuvre, artisteId, imageDataUrl
   };
 }
 
+// ====== Génération directe de descriptions via Claude (Anthropic) ======
+// La clé API est rangée CHIFFRÉE (safeStorage / coffre Windows) dans la config.
+// On ne la déchiffre qu'au moment d'appeler l'API.
+
+function definirCleAnthropic(cle) {
+  const c = String(cle || '').trim();
+  if (!c) throw new Error('Clé vide.');
+  if (!safeStorage.isEncryptionAvailable()) {
+    throw new Error("Le coffre de chiffrement n'est pas disponible sur cet ordinateur.");
+  }
+  const chiffre = safeStorage.encryptString(c).toString('base64');
+  require('./config').mettreAJourConfig({ ia: { cle_anthropic: chiffre } });
+  return { ok: true };
+}
+
+function effacerCleAnthropic() {
+  require('./config').mettreAJourConfig({ ia: { cle_anthropic: '' } });
+  return { ok: true };
+}
+
+function obtenirCleAnthropic() {
+  const cfg = require('./config').obtenirConfig();
+  const chiffre = cfg?.ia?.cle_anthropic;
+  if (!chiffre) return null;
+  if (!safeStorage.isEncryptionAvailable()) return null;
+  try {
+    return safeStorage.decryptString(Buffer.from(chiffre, 'base64'));
+  } catch {
+    return null;
+  }
+}
+
+function exigerCle() {
+  const apiKey = obtenirCleAnthropic();
+  if (!apiKey) {
+    const e = new Error('Aucune clé API configurée. Ajoute ta clé Anthropic dans Réglages → IA.');
+    e.code = 'NO_KEY';
+    throw e;
+  }
+  return apiKey;
+}
+
+async function genererDescriptionPourOeuvre(oeuvreId) {
+  const apiKey = exigerCle();
+  const oeuvre = require('./db/requetes').obtenirOeuvre(oeuvreId);
+  if (!oeuvre) throw new Error('Œuvre introuvable.');
+  const artiste = require('./db/requetes').obtenirArtiste(oeuvre.artiste_id);
+  const config = require('./config').obtenirConfig();
+
+  let image = null;
+  if (oeuvre.image_path) {
+    const r = chargerImageDepuisChemin(path.join(getPhotosDir(), oeuvre.image_path));
+    if (!r.erreur) image = r;
+  }
+  const prompt = assemblerPromptIA({ oeuvre, artiste, config, avecImage: !!image });
+  const texte = await require('./ia').genererDescription({
+    apiKey, prompt, imageDataUrl: image?.dataUrl || null,
+  });
+  return { texte };
+}
+
+async function genererDescriptionInline({ donneesOeuvre, artisteId, imageDataUrl }) {
+  const apiKey = exigerCle();
+  if (!donneesOeuvre) throw new Error("Données de l'œuvre manquantes.");
+  const artiste = artisteId ? require('./db/requetes').obtenirArtiste(artisteId) : null;
+  const config = require('./config').obtenirConfig();
+  const oeuvreVirtuelle = {
+    ...donneesOeuvre,
+    artiste_nom: artiste
+      ? [artiste.prenom, artiste.nom].filter(Boolean).join(' ')
+      : (donneesOeuvre.artiste_nom || ''),
+  };
+
+  let image = null;
+  if (imageDataUrl) {
+    const r = chargerImageDepuisDataUrl(imageDataUrl);
+    if (!r.erreur) image = r;
+  }
+  const prompt = assemblerPromptIA({ oeuvre: oeuvreVirtuelle, artiste, config, avecImage: !!image });
+  const texte = await require('./ia').genererDescription({
+    apiKey, prompt, imageDataUrl: image?.dataUrl || null,
+  });
+  return { texte };
+}
+
 // ====== Auto-update via electron-updater + GitHub Releases ======
 // Comportement : aucun téléchargement ni installation automatique. L'utilisateur
 // est notifié quand une mise à jour est disponible et décide quand télécharger
@@ -518,6 +603,14 @@ app.whenReady().then(async () => {
   }));
   ipcMain.handle('ia:copier-pour-chatgpt', (_e, oeuvreId) => preparerCopiePourChatGPT(oeuvreId));
   ipcMain.handle('ia:copier-pour-chatgpt-inline', (_e, params) => preparerCopiePourChatGPTInline(params || {}));
+  ipcMain.handle('ia:generer-description', (_e, oeuvreId) => genererDescriptionPourOeuvre(oeuvreId));
+  ipcMain.handle('ia:generer-description-inline', (_e, params) => genererDescriptionInline(params || {}));
+  ipcMain.handle('ia:definir-cle', (_e, cle) => definirCleAnthropic(cle));
+  ipcMain.handle('ia:effacer-cle', () => effacerCleAnthropic());
+  ipcMain.handle('ia:cle-definie', () => {
+    const cfg = require('./config').obtenirConfig();
+    return { definie: !!(cfg?.ia?.cle_anthropic), chiffrement: safeStorage.isEncryptionAvailable() };
+  });
   ipcMain.handle('ia:copier-image-seulement', (_e, imageDataUrl) => {
     const r = chargerImageDepuisDataUrl(imageDataUrl);
     if (r.erreur || !r.img) return { ok: false, erreur: r.erreur || 'Image non chargée' };

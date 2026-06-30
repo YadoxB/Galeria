@@ -10,7 +10,27 @@ identifiants.
 
 ## [Non publié]
 
-_Rien pour l'instant._
+### Ajouté
+
+- **Génération des descriptions d'œuvres par IA (Claude)** — sur la fiche
+  d'œuvre (création + édition), un bouton **« Générer la description »** envoie
+  la **photo de l'œuvre** + les consignes assemblées (galerie + artiste +
+  caractéristiques + description actuelle, via `assemblerPromptIA`) au modèle
+  **`claude-haiku-4-5`** (vision) et **remplit le champ Description** (à relire
+  avant d'enregistrer). « Copier pour ChatGPT » reste comme repli hors-ligne.
+  Module `src/ia.js` (dépendance `@anthropic-ai/sdk`, requise paresseusement) ;
+  IPC `ia:generer-description` / `…-inline`.
+- **Clé API Anthropic dans Réglages → IA** — champ de saisie masqué + statut
+  « Clé définie ✓ ». La clé est **chiffrée dans le coffre de Windows**
+  (`safeStorage` / DPAPI, liée à la session) et rangée chiffrée dans
+  `config.json` — **jamais en clair, jamais dans le code, jamais incluse dans un
+  build**. Déchiffrée seulement au moment de l'appel. IPC `ia:definir-cle` /
+  `ia:effacer-cle` / `ia:cle-definie`.
+- **Loi 25** : seules des **données de catalogue** (image + caractéristiques de
+  l'œuvre) sont envoyées à l'API ; **aucune donnée client**. La fonction est
+  **optionnelle** — sans clé, l'app fonctionne comme avant (le bouton renvoie
+  vers les Réglages). L'API Anthropic n'entraîne pas ses modèles sur les données
+  d'API. Démo `demos/ia-generer-description.html`.
 
 ---
 
