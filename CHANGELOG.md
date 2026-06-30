@@ -10,9 +10,17 @@ identifiants.
 
 ## [Non publié]
 
-> Travail committé sur `master` après la release v0.5.0. Sans effet sur les
-> installations auto-update (build public sans catalogue) ; concerne surtout
-> l'**installateur de livraison** (build catalogue) et le 1er lancement.
+_Rien pour l'instant._
+
+---
+
+## [0.6.0] — 2026-06-30
+
+> Inclut une **nouvelle fonctionnalité de l'app** (édition en lot des œuvres),
+> qui rejoint donc les installations par auto-update (≥ 0.2.1), **plus** les
+> améliorations de l'**installateur de livraison** (build catalogue) déjà
+> faites après la 0.5.0. Les parents (sur 0.2.0) restent à rejoindre par
+> installation manuelle d'un build catalogue.
 
 ### Ajouté
 
