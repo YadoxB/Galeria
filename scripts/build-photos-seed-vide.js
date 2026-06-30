@@ -14,4 +14,8 @@ if (fs.existsSync(DEST_DIR)) {
 fs.mkdirSync(DEST_DIR, { recursive: true });
 fs.writeFileSync(path.join(DEST_DIR, '.gitkeep'), '');
 
+// Effacer un éventuel paquet de photos d'un build catalogue/complet précédent,
+// pour que la release publique ne contienne aucune image.
+try { fs.unlinkSync(path.join(__dirname, '..', 'seed', 'photos.pack')); } catch {}
+
 console.log(`Seed-photos vide créé : ${DEST_DIR}`);

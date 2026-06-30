@@ -54,6 +54,16 @@ function getSeedPhotosPath() {
     : path.join(app.getAppPath(), 'seed-photos');
 }
 
+// Paquet unique des photos (toutes les images en un seul fichier). Embarqué via
+// le dossier seed/. Préféré au dossier seed-photos/ : l'installateur ne pose
+// qu'un fichier (rapide), et le déballage des centaines d'images se fait au 1er
+// lancement avec la barre de progression du splash.
+function getSeedPackPath() {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'seed', 'photos.pack')
+    : path.join(app.getAppPath(), 'seed', 'photos.pack');
+}
+
 function ensureDirectories() {
   // Migration de l'ancien dossier avant de créer les nouveaux (no-op si déjà migré)
   migrerAncienDossierSiPresent();
@@ -71,5 +81,6 @@ module.exports = {
   getDbPath,
   getSeedPath,
   getSeedPhotosPath,
+  getSeedPackPath,
   ensureDirectories,
 };
