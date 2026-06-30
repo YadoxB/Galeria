@@ -10,6 +10,15 @@ identifiants.
 
 ## [Non publié]
 
+_Rien pour l'instant._
+
+---
+
+## [0.9.0] — 2026-06-30
+
+> **Confirmé par Dave dans l'app.** Ajoute la prise en compte des **frais de
+> production des reproductions** sur la facture artiste.
+
 ### Ajouté
 
 - **Reproductions — frais de production sur la facture artiste.** Nouveau champ
