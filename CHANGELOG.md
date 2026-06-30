@@ -10,6 +10,16 @@ identifiants.
 
 ## [Non publié]
 
+_Rien pour l'instant._
+
+---
+
+## [0.8.0] — 2026-06-30
+
+> Affine la génération IA : consignes de rédaction par artiste, set global
+> éditable dans les Réglages, et descriptions bilingues français + anglais.
+> Distribué par auto-update (≥ 0.2.1) ; inactif sans clé API.
+
 ### Ajouté
 
 - **Consignes IA par artiste + set global de la galerie** (d'après

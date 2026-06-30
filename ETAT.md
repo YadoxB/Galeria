@@ -9,7 +9,11 @@
 
 ## ▶ Reprise — par où commencer (préparé le 2026-06-29)
 
-**État** : **v0.7.0 publiée** (2026-06-30, GitHub Releases, auto-update ≥ 0.2.1) — ajoute la **génération des descriptions d'œuvres par IA (Claude Haiku 4.5)**, **confirmée par Dave dans l'app** ; bouton « Générer la description » sur la fiche d'œuvre, clé API Anthropic chiffrée dans Réglages → IA (coffre Windows), inactif sans clé. *Historique :* v0.6.0 — édition en lot (tableur multi-lignes), confirmée. `master` = `v0.7.0`, **poussé, rien en attente**. L'**installateur de livraison** (build catalogue) reste à régénérer à la version courante (`npm run build:catalogue` → `dist\Galeria Setup 0.7.0 (catalogue).exe`) ; il embarque catalogue + photos en paquet unique, install/désinstall rapides, **français**, branding **Galeria**, **détection auto du catalogue** avec sauvegarde + redémarrage. **Livraison parents** : installer + « Charger le nouveau catalogue » + coller **la clé Anthropic de Dave** dans Réglages → IA.
+**État** : **v0.8.0 publiée** (2026-06-30, GitHub Releases, auto-update ≥ 0.2.1) — affine la génération IA : **consignes par artiste** (19, en base), **set global éditable** dans Réglages → IA, **descriptions bilingues FR + EN**. *Historique :* v0.7.0 — génération des descriptions par IA (Claude Haiku 4.5), bouton « Générer la description », clé chiffrée ; v0.6.0 — édition en lot (tableur). Toutes confirmées par Dave dans l'app. `master` = `v0.8.0`, **poussé, rien en attente**.
+
+**Journal pour les parents** : `NOUVEAUTES-PARENTS.md` (résumé non technique des nouveautés depuis v0.5.0) — **à tenir à jour à chaque session** ; sera remis avec la prochaine livraison. Dave continue le développement avant de livrer.
+
+**Livraison parents (différée, sur décision de Dave)** : `npm run build:catalogue` (depuis le worktree principal) → installateur à la version courante (embarque catalogue + photos + **consignes par artiste**), puis chez eux : installer → « Charger le nouveau catalogue » → coller **la clé Anthropic de Dave** dans Réglages → IA. Le set global de consignes part déjà avec le code.
 
 **⚠️ Non vérifié visuellement par Claude** (le résolveur computer-use ne capte pas la fenêtre Electron de dev) — sauf l'**édition en lot** et la **génération IA**, confirmées par Dave dans l'app.
 
