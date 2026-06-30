@@ -79,7 +79,9 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Galeria",
       "deleteAppDataOnUninstall": false,
-      "runAfterFinish": true
+      "runAfterFinish": true,
+      "installerLanguages": ["fr_FR"],
+      "displayLanguageSelector": false
     },
     "publish": [
       {
