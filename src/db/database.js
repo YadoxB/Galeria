@@ -50,6 +50,24 @@ function lireCatalogueId(dbFilePath) {
   }
 }
 
+// Inspecte un fichier de base candidat (lecture seule) sans toucher à la base
+// courante. Sert à valider une sauvegarde avant restauration et à montrer son
+// contenu. Renvoie { ok:true, artistes, oeuvres, clients, ventes } ou
+// { ok:false, erreur }. Un fichier chiffré (.enc) ou corrompu échoue ici.
+function inspecterFichierBase(dbFilePath) {
+  if (!dbFilePath || !fs.existsSync(dbFilePath)) return { ok: false, erreur: 'Fichier introuvable.' };
+  let d = null;
+  try {
+    d = new DatabaseSync(dbFilePath, { readOnly: true });
+    const n = (table) => d.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n;
+    return { ok: true, artistes: n('artistes'), oeuvres: n('oeuvres'), clients: n('clients'), ventes: n('ventes') };
+  } catch (e) {
+    return { ok: false, erreur: "Ce fichier n'est pas une base de données Galeria valide (ou il est chiffré)." };
+  } finally {
+    try { if (d) d.close(); } catch {}
+  }
+}
+
 function getStats() {
   const d = openDatabase();
   const count = (table) => d.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n;
@@ -62,4 +80,4 @@ function getStats() {
   };
 }
 
-module.exports = { openDatabase, closeDatabase, getStats, lireCatalogueId };
+module.exports = { openDatabase, closeDatabase, getStats, lireCatalogueId, inspecterFichierBase };

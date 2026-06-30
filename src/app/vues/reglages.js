@@ -150,6 +150,8 @@ export async function rendreReglages(contenu) {
             </div>
             <p class="aide-champ">Anciennes sauvegardes supprimées automatiquement. Minimum 5 minutes.</p>
             <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-sauvegarder-maintenant">Sauvegarder maintenant</button>
+            <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-restaurer">Restaurer une sauvegarde…</button>
+            <p class="aide-champ">Remplace les données actuelles par une sauvegarde (une copie de sécurité de la base actuelle est faite d'abord). L'application redémarre ensuite.</p>
           </div>
 
           <!-- Affichage (3 col) -->
@@ -242,7 +244,17 @@ export async function rendreReglages(contenu) {
                 <input type="checkbox" id="sec-blur">
                 <label for="sec-blur">Verrouiller aussi quand on quitte la fenêtre</label>
               </div>
-              <p class="aide-champ">Le compte à rebours se réarme à chaque mouvement de souris ou frappe au clavier. Le verrou empêche de consulter les fiches ; il ne chiffre pas encore la base.</p>
+              <p class="aide-champ">Le compte à rebours se réarme à chaque mouvement de souris ou frappe au clavier.</p>
+            </div>
+
+            <div class="sous-section">
+              <h4>Chiffrement de la base de données</h4>
+              <div class="form-champ form-champ-checkbox">
+                <input type="checkbox" id="sec-chiffrement">
+                <label for="sec-chiffrement">Chiffrer le fichier de la base au repos</label>
+              </div>
+              <p class="securite-statut absent" id="sec-chiffrement-statut">Chiffrement désactivé.</p>
+              <p class="aide-champ">Quand l'application est fermée, le fichier de la base devient illisible si on le copie sur un autre ordinateur (clé rangée dans le coffre de Windows, lié à ce compte). À <strong>compléter par BitLocker</strong> (chiffrement du disque) pour protéger aussi les photos et les sauvegardes. Les <strong>sauvegardes restent en clair</strong> sur le disque (pour qu'une restauration reste possible) : gardez-les sur un disque BitLocker et une clé USB chiffrée. Prend pleinement effet à la fermeture de l'application.</p>
             </div>
           </div>
 
@@ -374,6 +386,36 @@ export async function rendreReglages(contenu) {
       });
     } finally {
       btn.disabled = false;
+    }
+  });
+
+  contenu.querySelector('#btn-restaurer').addEventListener('click', async () => {
+    let choix;
+    try {
+      choix = await window.api.backupChoisirRestauration();
+    } catch (err) {
+      await alerter({ type: 'error', title: 'Restauration impossible', message: err.message });
+      return;
+    }
+    if (!choix || choix.cancelled) return;
+    if (choix.error) {
+      await alerter({ type: 'error', title: 'Fichier non valide', message: choix.error });
+      return;
+    }
+    const i = choix.infos || {};
+    const r = await confirmer({
+      type: 'warning',
+      title: 'Restaurer cette sauvegarde ?',
+      message: `Le fichier « ${choix.nom} » remplacera vos données actuelles. Une copie de sécurité de la base actuelle sera faite avant.`,
+      detail: `Contenu de la sauvegarde : ${i.artistes ?? '?'} artistes, ${i.oeuvres ?? '?'} œuvres, ${i.clients ?? '?'} clients, ${i.ventes ?? '?'} ventes.\n\nL'application va redémarrer.`,
+      buttons: ['Restaurer et redémarrer', 'Annuler'],
+      defaultId: 1, cancelId: 1,
+    });
+    if (r !== 0) return;
+    try {
+      await window.api.backupRestaurer(choix.path); // déclenche le redémarrage
+    } catch (err) {
+      await alerter({ type: 'error', title: 'Restauration échouée', message: err.message });
     }
   });
 
@@ -595,6 +637,64 @@ export async function rendreReglages(contenu) {
     secVerrou.addEventListener('change', enregistrerOptions);
     secInact.addEventListener('change', enregistrerOptions);
     secBlur.addEventListener('change', enregistrerOptions);
+  }
+
+  // ---- Sécurité : chiffrement de la base au repos (effet immédiat) ----
+  const secChiff = contenu.querySelector('#sec-chiffrement');
+  const secChiffStatut = contenu.querySelector('#sec-chiffrement-statut');
+  if (secChiff && secChiffStatut) {
+    secChiff.addEventListener('input', (e) => e.stopPropagation());
+    let chiffActif = false;
+    const rafraichirChiffrement = async () => {
+      try {
+        const e = await window.api.chiffrementEtat();
+        chiffActif = !!e.actif;
+        secChiff.checked = chiffActif;
+        secChiff.disabled = !e.disponible;
+        if (!e.disponible) {
+          secChiffStatut.className = 'securite-statut erreur';
+          secChiffStatut.textContent = "⚠ Le coffre de chiffrement n'est pas disponible sur cet ordinateur.";
+        } else if (chiffActif) {
+          secChiffStatut.className = 'securite-statut ok';
+          secChiffStatut.textContent = '✓ Base chiffrée au repos (coffre Windows)';
+        } else {
+          secChiffStatut.className = 'securite-statut absent';
+          secChiffStatut.textContent = 'Chiffrement désactivé.';
+        }
+      } catch { /* silencieux */ }
+    };
+    await rafraichirChiffrement();
+
+    secChiff.addEventListener('change', async (e) => {
+      e.stopPropagation();
+      const vouluActif = secChiff.checked;
+      // Confirmation : c'est une opération sensible.
+      const r = await confirmer({
+        type: vouluActif ? 'question' : 'warning',
+        title: vouluActif ? 'Chiffrer la base de données ?' : 'Désactiver le chiffrement ?',
+        message: vouluActif
+          ? "Le fichier de la base sera chiffré et lié à ce compte Windows. Pensez à activer BitLocker pour une protection complète. Les sauvegardes restent en clair."
+          : "Le fichier de la base ne sera plus chiffré au repos. La protection reposera sur BitLocker uniquement.",
+        buttons: [vouluActif ? 'Chiffrer' : 'Désactiver', 'Annuler'],
+        defaultId: 1, cancelId: 1,
+      });
+      if (r !== 0) { secChiff.checked = chiffActif; return; } // annulé : revenir à l'état réel
+      try {
+        if (vouluActif) await window.api.chiffrementActiver();
+        else await window.api.chiffrementDesactiver();
+        await rafraichirChiffrement();
+        await alerter({
+          type: 'succes',
+          title: vouluActif ? 'Chiffrement activé' : 'Chiffrement désactivé',
+          message: vouluActif
+            ? 'La base est maintenant chiffrée. Le fichier clair est retiré à la fermeture de l’application.'
+            : 'Le chiffrement de la base est désactivé.',
+        });
+      } catch (err) {
+        secChiff.checked = chiffActif;
+        await alerter({ type: 'error', title: 'Échec', message: err.message });
+      }
+    });
   }
 
   contenu.querySelector('#btn-annuler').addEventListener('click', async () => {

@@ -72,9 +72,38 @@ l'écran est laissé sans surveillance.
   l'application s'ouvre directement comme avant.
 
 **À savoir :** votre code n'est **jamais conservé en clair** dans l'ordinateur.
-Ce verrou empêche d'**ouvrir** l'application sans le code ; la protection
-complète du fichier de données (chiffrement) viendra dans une prochaine étape.
-Si vous oubliez le code, Dave peut le réinitialiser.
+Ce verrou empêche d'**ouvrir** l'application sans le code. Si vous oubliez le
+code, Dave peut le réinitialiser.
+
+## Chiffrement du fichier de données (nouveau)
+
+Dans **Réglages → Sécurité**, vous pouvez maintenant **chiffrer le fichier de la
+base de données**. Une fois activé, ce fichier devient **illisible si quelqu'un
+le copie** sur un autre ordinateur (la clé est gardée dans le coffre sécurisé de
+Windows, lié à votre compte).
+
+- C'est **facultatif** et **désactivé par défaut**.
+- À **combiner avec BitLocker** (le chiffrement du disque intégré à Windows) pour
+  une protection complète, qui couvre aussi vos photos et vos sauvegardes.
+- Les **sauvegardes restent lisibles** (non chiffrées) pour qu'une restauration
+  soit toujours possible : conservez-les sur un disque protégé par BitLocker et
+  une **clé USB chiffrée** gardée hors des lieux.
+
+**À savoir :** le fichier chiffré n'est lisible que sur **cet ordinateur et ce
+compte Windows**. Si l'ordinateur devait être remplacé, on restaure à partir
+d'une sauvegarde. Dave s'occupe d'activer cette option et BitLocker.
+
+## Restaurer une sauvegarde en un clic (nouveau)
+
+Dans **Réglages → Sauvegardes**, un nouveau bouton **« Restaurer une
+sauvegarde… »** permet de **revenir à une version antérieure** de vos données en
+cas de pépin (fausse manipulation, ordinateur remplacé, etc.).
+
+- Vous choisissez le fichier de sauvegarde voulu (son nom contient la date).
+- L'application **vous montre ce qu'il contient** (nombre d'artistes, d'œuvres,
+  de clients, de ventes) avant de confirmer.
+- Elle fait **une copie de sécurité** de vos données actuelles **avant** de les
+  remplacer, puis redémarre. Rien n'est perdu par accident.
 
 ---
 

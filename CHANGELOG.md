@@ -10,8 +10,46 @@ identifiants.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Restauration d'une sauvegarde en un clic.** Bouton **« Restaurer une
+  sauvegarde… »** dans Réglages → Sauvegardes : choisit un fichier `.db` (par
+  défaut dans le dossier des sauvegardes), **valide** que c'est bien une base
+  Galeria et **affiche son contenu** (nb d'artistes/œuvres/clients/ventes) avant
+  de confirmer, fait une **copie de sécurité de la base actuelle**
+  (`galerie-avant-restauration-…`), remplace, puis **redémarre**. Refuse un
+  fichier invalide ou chiffré. Si le chiffrement est actif, le coffre périmé est
+  retiré (la base restaurée fait foi). IPC `backup:choisir-restauration` /
+  `backup:restaurer`, helper `inspecterFichierBase` (lecture seule). Complète le
+  scénario de récupération après sinistre (restaurer une sauvegarde en clair sur
+  un PC neuf). La restauration manuelle reste documentée en repli.
+
 ### Sécurité
 
+> **Verrou léger confirmé par Dave dans l'app (2026-06-30).**
+
+- **Chiffrement de la base au repos (volet 2 de la phase Sécurité).** Option
+  **opt-in** (Réglages → Sécurité → « Chiffrer le fichier de la base au
+  repos »). `node:sqlite` n'ayant pas de chiffrement natif, on chiffre le
+  **fichier** au repos via **safeStorage / DPAPI** (coffre Windows, même
+  mécanisme que la clé IA) : app fermée → seul `galerie.db.enc` existe ; au
+  démarrage, déchiffrement vers `galerie.db` **avant** `openDatabase` ; à la
+  fermeture, re-chiffrement puis suppression du clair (+ `-wal`/`-shm`).
+  **Récupération après plantage** : un `galerie.db` clair résiduel **fait foi**
+  (jamais écrasé par le coffre), donc aucune perte. Écriture **atomique**
+  (`.tmp` + renommage). Activation immédiate (checkpoint WAL + création du
+  coffre), désactivation = retrait du coffre. Module `src/db/chiffrement.js`,
+  IPC `chiffrement:*`, défaut config `securite.chiffrement_actif`. **Choix
+  arrêté avec Dave (2026-06-30) : les sauvegardes restent EN CLAIR** (protégées
+  par **BitLocker** + clé USB chiffrée hors-site, cf. CLAUDE.md §10) pour que la
+  restauration ne dépende pas du compte Windows ; le résidu (sauvegarde copiée
+  hors média chiffré lisible) est couvert par BitLocker. Message clair au
+  démarrage si le coffre est inaccessible (autre compte/ordinateur). Articles
+  d'aide, démo `demos/verrou-securite.html` étendue. Tests unitaires de
+  l'orchestration (round-trip, préparer/finaliser/activer/désactiver, priorité
+  au clair résiduel). **Pendant l'exécution, la base est en clair sur le disque**
+  (limite de node:sqlite, couverte par BitLocker). ⚠️ Round-trip DPAPI réel
+  **à confirmer par Dave dans l'app**.
 - **Verrou léger de l'application (volet 1 de la phase Sécurité).** Code court
   (NIP de 4 à 6 chiffres) demandé à l'ouverture et/ou après une période
   d'inactivité, pour empêcher une personne de passage de consulter les fiches

@@ -175,6 +175,16 @@
         </div>
         <p class="aide-champ">Le compte à rebours se réarme à chaque mouvement de souris ou frappe au clavier.</p>
       </div>
+
+      <div class="sous-section">
+        <h4>Chiffrement de la base de données</h4>
+        <div class="form-champ form-champ-checkbox">
+          <input type="checkbox" id="f-chiffrement">
+          <label for="f-chiffrement">Chiffrer le fichier de la base au repos</label>
+        </div>
+        <p class="statut absent" id="statut-chiffrement">Chiffrement désactivé.</p>
+        <p class="aide-champ">Quand l'application est fermée, le fichier de la base devient illisible si on le copie sur un autre ordinateur (clé dans le coffre de Windows, liée à ce compte). À <strong>compléter par BitLocker</strong> (disque) pour protéger aussi photos et sauvegardes. Les <strong>sauvegardes restent en clair</strong> (pour qu'une restauration reste possible). Prend pleinement effet à la fermeture.</p>
+      </div>
     </div>
   </main>
 
@@ -230,6 +240,12 @@
     });
     document.getElementById('f-inactivite').addEventListener('change', (e) => { demo.inactivite = Number(e.target.value); });
     document.getElementById('f-blur').addEventListener('change', (e) => { demo.blur = e.target.checked; });
+    const chiff = document.getElementById('f-chiffrement');
+    const chiffStatut = document.getElementById('statut-chiffrement');
+    chiff.addEventListener('change', () => {
+      if (chiff.checked) { chiffStatut.className = 'statut ok'; chiffStatut.textContent = '✓ Base chiffrée au repos (coffre Windows)'; }
+      else { chiffStatut.className = 'statut absent'; chiffStatut.textContent = 'Chiffrement désactivé.'; }
+    });
     majEtatCarte();
 
     // ===== Écran de verrouillage =====

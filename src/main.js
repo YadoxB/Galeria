@@ -3,7 +3,7 @@ const { autoUpdater } = require('electron-updater');
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const { openDatabase, closeDatabase, getStats, lireCatalogueId } = require('./db/database');
+const { openDatabase, closeDatabase, getStats, lireCatalogueId, inspecterFichierBase } = require('./db/database');
 const { getPhotosDir, getDataDir, getDocumentsDirAnnee, getDbPath, getSeedPath, getBackupsDir } = require('./db/paths');
 const { seedPhotosIfNeeded } = require('./db/seedPhotos');
 const { choisirPhoto, effacerPhoto, lireFichierImage, lireOriginale, lirePourRecadrage, enregistrerImageRecadree } = require('./photos');
@@ -554,6 +554,20 @@ app.whenReady().then(async () => {
   };
 
   await progres(12, 'Ouverture de la base de données…');
+  // Chiffrement au repos (volet 2) : déchiffrer le coffre vers le fichier clair
+  // AVANT d'ouvrir la base. En cas d'échec (coffre inaccessible), prévenir
+  // l'utilisateur plutôt que de planter en silence.
+  try {
+    require('./db/chiffrement').preparerBaseAuDemarrage();
+  } catch (err) {
+    console.error('Préparation de la base chiffrée échouée :', err);
+    dialog.showErrorBox(
+      'Base de données protégée',
+      String(err?.message || err) +
+        '\n\nLe fichier de la base est chiffré et lié à ce compte Windows. ' +
+        'Ouvrez une session sur l’ordinateur d’origine, ou restaurez une sauvegarde.'
+    );
+  }
   openDatabase();
 
   await progres(20, 'Préparation des photos…');
@@ -710,6 +724,12 @@ app.whenReady().then(async () => {
   ipcMain.handle('securite:verifier-code', (_e, code) => securite.verifierCode(code));
   ipcMain.handle('securite:definir-options', (_e, opts) => securite.definirOptions(opts));
 
+  // --- Chiffrement de la base au repos (src/db/chiffrement.js) ---
+  const chiffrement = require('./db/chiffrement');
+  ipcMain.handle('chiffrement:etat', () => chiffrement.etatChiffrement());
+  ipcMain.handle('chiffrement:activer', () => chiffrement.activerChiffrement());
+  ipcMain.handle('chiffrement:desactiver', () => chiffrement.desactiverChiffrement());
+
   // --- Catalogue livré : proposer de charger un nouveau catalogue embarqué ---
   // Ne propose que si un catalogue est embarqué (seed non vide) ET différent de
   // celui de la base de l'utilisateur ET pas déjà refusé. Le build public
@@ -740,6 +760,9 @@ app.whenReady().then(async () => {
     // 2. Fermer la base et la remplacer par le catalogue livré.
     closeDatabase();
     fs.copyFileSync(seedPath, dbPath);
+    // Retirer un éventuel coffre chiffré périmé : la nouvelle base claire fait
+    // foi et sera re-chiffrée à la fermeture si le chiffrement est actif.
+    try { require('./db/chiffrement').supprimerCoffreSiPresent(); } catch {}
     // 3. Forcer le re-déballage des photos au prochain démarrage ; oublier un refus.
     mettreAJourConfig({ forcer_photos_catalogue: true, catalogue_refuse: '' });
     // 4. Redémarrer sur le nouveau catalogue.
@@ -758,6 +781,49 @@ app.whenReady().then(async () => {
   ipcMain.handle('backup:redemarrer', () => {
     arreterSauvegardePeriodique();
     demarrerSauvegardePeriodique();
+  });
+  // Restauration d'une sauvegarde : étape 1, choisir + valider le fichier.
+  ipcMain.handle('backup:choisir-restauration', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    const cfg = obtenirConfig();
+    const dossierDefaut = (cfg.sauvegardes?.dossier && cfg.sauvegardes.dossier.trim()) || getBackupsDir();
+    const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+      title: 'Choisir une sauvegarde à restaurer',
+      defaultPath: dossierDefaut,
+      filters: [{ name: 'Sauvegardes Galeria', extensions: ['db'] }],
+      properties: ['openFile'],
+    });
+    if (canceled || !filePaths || !filePaths.length) return { cancelled: true };
+    const chemin = filePaths[0];
+    const infos = inspecterFichierBase(chemin);
+    if (!infos.ok) return { error: infos.erreur };
+    return { path: chemin, nom: path.basename(chemin), infos };
+  });
+  // Restauration : étape 2, sauvegarde de sécurité de la base actuelle, copie
+  // du fichier choisi, puis redémarrage. Refuse une base chiffrée/invalide.
+  ipcMain.handle('backup:restaurer', (_e, chemin) => {
+    if (!chemin || !fs.existsSync(chemin)) throw new Error('Fichier de sauvegarde introuvable.');
+    if (!inspecterFichierBase(chemin).ok) {
+      throw new Error("Ce fichier n'est pas une base de données Galeria valide.");
+    }
+    const dbPath = getDbPath();
+    // 1. Sauvegarde de sécurité de la base actuelle.
+    if (fs.existsSync(dbPath)) {
+      const n = new Date();
+      const p = (x) => String(x).padStart(2, '0');
+      const stamp = `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}-${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`;
+      fs.mkdirSync(getBackupsDir(), { recursive: true });
+      fs.copyFileSync(dbPath, path.join(getBackupsDir(), `galerie-avant-restauration-${stamp}.db`));
+    }
+    // 2. Fermer la base et la remplacer par la sauvegarde choisie.
+    closeDatabase();
+    fs.copyFileSync(chemin, dbPath);
+    // 3. Retirer un coffre chiffré périmé (la base claire restaurée fait foi ;
+    //    elle sera re-chiffrée à la fermeture si le chiffrement est actif).
+    try { require('./db/chiffrement').supprimerCoffreSiPresent(); } catch {}
+    // 4. Redémarrer sur la base restaurée.
+    app.relaunch();
+    app.exit(0);
   });
   ipcMain.handle('oeuvres:types', () => listerTypesOeuvre());
   ipcMain.handle('oeuvres:mediums', () => listerMediumsOeuvre());
@@ -837,4 +903,11 @@ app.on('before-quit', () => {
     console.error('Sauvegarde à la fermeture échouée :', e);
   }
   closeDatabase();
+  // Chiffrement au repos (volet 2) : re-chiffrer puis supprimer le clair. Sans
+  // effet si le chiffrement est désactivé.
+  try {
+    require('./db/chiffrement').finaliserBaseALaFermeture();
+  } catch (e) {
+    console.error('Chiffrement à la fermeture échoué :', e);
+  }
 });

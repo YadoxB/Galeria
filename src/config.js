@@ -72,6 +72,10 @@ const DEFAULTS = {
     verrouiller_au_demarrage: true,
     // Verrouiller aussi quand la fenêtre perd le focus.
     verrouiller_au_blur: false,
+    // Chiffrement du fichier de la base au repos (DPAPI / coffre Windows).
+    // Opt-in. Les sauvegardes, elles, restent en clair (BitLocker + USB
+    // chiffrée, cf. CLAUDE.md §10).
+    chiffrement_actif: false,
   },
   ia: {
     // Consignes générales de la galerie pour la génération IA (modifiable dans

@@ -116,11 +116,16 @@ contextBridge.exposeInMainWorld('api', {
   catalogueCharger: () => ipcRenderer.invoke('catalogue:charger'),
   configChoisirDossier: () => ipcRenderer.invoke('config:choisir-dossier'),
   backupRedemarrer: () => ipcRenderer.invoke('backup:redemarrer'),
+  backupChoisirRestauration: () => ipcRenderer.invoke('backup:choisir-restauration'),
+  backupRestaurer: (chemin) => ipcRenderer.invoke('backup:restaurer', chemin),
   securiteEtat: () => ipcRenderer.invoke('securite:etat'),
   securiteDefinirCode: (code) => ipcRenderer.invoke('securite:definir-code', code),
   securiteRetirerCode: () => ipcRenderer.invoke('securite:retirer-code'),
   securiteVerifierCode: (code) => ipcRenderer.invoke('securite:verifier-code', code),
   securiteDefinirOptions: (opts) => ipcRenderer.invoke('securite:definir-options', opts),
+  chiffrementEtat: () => ipcRenderer.invoke('chiffrement:etat'),
+  chiffrementActiver: () => ipcRenderer.invoke('chiffrement:activer'),
+  chiffrementDesactiver: () => ipcRenderer.invoke('chiffrement:desactiver'),
   onSecuriteVerrouiller: (callback) => {
     const handler = () => callback();
     ipcRenderer.on('securite:verrouiller', handler);

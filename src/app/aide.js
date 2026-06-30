@@ -222,13 +222,15 @@ const ARTICLES = [
     `<p><b>Réglages → Sauvegardes → Sauvegarder maintenant</b>. Une copie horodatée est créée immédiatement.</p>`),
   A('sauvegardes', 'Sauvegardes automatiques', 'sauvegarde automatique fréquence rétention nombre copies dossier',
     `<p>Galeria sauvegarde tout seul à intervalle réglable (60 min par défaut) et <b>à la fermeture</b>. Tu choisis la <b>fréquence</b> (min. 5 min), le <b>nombre de copies</b> conservées (50 par défaut, les plus anciennes sont supprimées) et le <b>dossier</b> de destination.</p>`),
-  A('sauvegardes', 'Restaurer une sauvegarde', 'restaurer récupérer perte données backup restore galerie.db revenir',
-    `<ol><li><b>Ferme Galeria.</b></li>
+  A('sauvegardes', 'Restaurer une sauvegarde', 'restaurer récupérer perte données backup restore galerie.db revenir bouton',
+    `<p><b>Le plus simple :</b> <b>Réglages → Sauvegardes → « Restaurer une sauvegarde… »</b>. Choisis le fichier (son nom contient la date), confirme, et l'application redémarre sur les données restaurées. Une <b>copie de sécurité</b> de la base actuelle est faite automatiquement avant de remplacer.</p>
+     <h4>À la main (si besoin)</h4>
+     <ol><li><b>Ferme Galeria.</b></li>
      <li>Ouvre le dossier des sauvegardes (chemin indiqué dans <b>Réglages → Sauvegardes</b>).</li>
      <li>Repère la sauvegarde voulue (le nom contient la date).</li>
      <li>Copie-la par-dessus le fichier <code>galerie.db</code> du dossier de données (<code>Documents\\Galeria</code>).</li>
      <li>Rouvre Galeria.</li></ol>
-     <div class="attention">Une restauration <b>écrase</b> les données actuelles. Dans le doute, contacte le soutien avant de remplacer un fichier.</div>`),
+     <div class="attention">Une restauration <b>écrase</b> les données actuelles. Le bouton fait une copie de sécurité avant ; à la main, fais-la toi-même d'abord.</div>`),
   A('sauvegardes', 'Où sont mes données', 'dossier données emplacement base galerie.db photos documents config',
     `<p>Tout vit dans <code>Documents\\Galeria</code> : la base <code>galerie.db</code>, les <b>Photos</b>, les <b>Documents</b> (PDF par année) et les <b>Sauvegardes</b>. <b>Réglages → À propos</b> affiche le chemin et un bouton pour l'ouvrir.</p>`),
   A('sauvegardes', 'Importer des données (CSV)', 'import csv airtable mettre à jour ajouter doublons artistes œuvres',
@@ -255,7 +257,12 @@ const ARTICLES = [
     `<p><b>Réglages → Sécurité</b> permet de protéger l'application par un <b>code de 4 à 6 chiffres</b>, pour qu'une personne de passage ne puisse pas consulter les fiches de clients.</p>
      <h4>Activer le verrou</h4><p>Saisis un code et confirme-le, puis « Enregistrer le code ». L'application demandera ce code <b>à l'ouverture</b>.</p>
      <h4>Verrouillage automatique</h4><p>Tu peux la faire se verrouiller seule après une période sans activité (5 à 30 minutes), et même quand on passe à un autre logiciel. Le compte à rebours se réarme dès qu'on bouge la souris ou tape au clavier.</p>
-     <h4>Code oublié ?</h4><p>Le code n'est <b>jamais conservé en clair</b>. En cas d'oubli, la personne qui gère l'application peut le réinitialiser. Ce verrou empêche d'<b>ouvrir</b> l'application ; il ne chiffre pas encore le fichier de données (étape à venir).</p>`),
+     <h4>Code oublié ?</h4><p>Le code n'est <b>jamais conservé en clair</b>. En cas d'oubli, la personne qui gère l'application peut le réinitialiser. Ce verrou empêche d'<b>ouvrir</b> l'application ; pour rendre le fichier de données lui-même illisible, voir « Chiffrer le fichier de la base ».</p>`),
+  A('securite', 'Chiffrer le fichier de la base', 'chiffrement base données dpapi coffre windows bitlocker au repos confidentialité copie',
+    `<p><b>Réglages → Sécurité → Chiffrement de la base</b> rend le fichier de la base <b>illisible si on le copie</b> sur un autre ordinateur : la clé est rangée dans le <b>coffre de Windows</b>, liée à ce compte.</p>
+     <h4>À combiner avec BitLocker</h4><p>Pendant que l'application est ouverte, la base est en clair sur le disque. Active aussi <b>BitLocker</b> (chiffrement du disque) pour une vraie protection en cas de vol, et pour protéger les photos et les sauvegardes.</p>
+     <h4>Sauvegardes</h4><p>Les sauvegardes <b>restent en clair</b> pour qu'une restauration reste toujours possible. Garde-les sur un disque BitLocker et une <b>clé USB chiffrée</b> hors site.</p>
+     <h4>Important</h4><p>Le fichier chiffré n'est lisible que sur <b>ce compte Windows</b>. Si l'ordinateur est remplacé, restaure à partir d'une sauvegarde. Le chiffrement prend pleinement effet à la fermeture de l'application.</p>`),
 
   // ═══════ PROBLÈMES COURANTS ═══════
   A('depannage', 'Pourquoi le prix ne se calcule pas automatiquement ?', 'prix auto ne se remplit pas cote manquante médium typo faute frappe format hors normes manuel style',
