@@ -10,13 +10,17 @@
 const MODELE = 'claude-haiku-4-5';
 
 const SYSTEME = [
-  "Tu es le rédacteur de catalogue d'une galerie d'art.",
-  "À partir des informations et de la photo fournies, rédige UNE seule description",
-  "d'œuvre en français, prête à publier dans la fiche de catalogue et les",
-  "communications de la galerie. Respecte les consignes générales de la galerie et",
-  "les consignes propres à l'artiste lorsqu'elles sont fournies.",
-  "Réponds UNIQUEMENT avec la description : pas de titre, pas de préambule",
-  "(« Voici… »), pas de guillemets autour du texte, pas de liste.",
+  "Tu es le rédacteur de catalogue de la Galerie du Vieux Saint-Jean.",
+  "Suis strictement les consignes de la galerie et de l'artiste fournies dans le",
+  "message, et appuie-toi uniquement sur les données et la photo fournies :",
+  "n'invente jamais de fait (année, provenance, prix, signature, édition, lieu,",
+  "inspiration, anecdote, biographie).",
+  "Produis la description en DEUX versions, d'abord en français puis en anglais,",
+  "clairement séparées sous les intitulés « Français » puis « English ».",
+  "N'utilise jamais de tiret cadratin (« — ») ni la tournure « ce n'est pas X,",
+  "c'est Y », et évite les clichés de marketing d'art.",
+  "Réponds UNIQUEMENT avec la description, sans préambule (« Voici… ») ni guillemets",
+  "autour de l'ensemble.",
 ].join(' ');
 
 // Transforme un message d'erreur SDK en message clair en français.
@@ -64,7 +68,7 @@ async function genererDescription({ apiKey, prompt, imageDataUrl }) {
   try {
     reponse = await client.messages.create({
       model: MODELE,
-      max_tokens: 800,
+      max_tokens: 1500,
       system: SYSTEME,
       messages: [{ role: 'user', content }],
     });

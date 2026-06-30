@@ -10,7 +10,28 @@ identifiants.
 
 ## [Non publié]
 
-_Rien pour l'instant._
+### Ajouté
+
+- **Consignes IA par artiste + set global de la galerie** (d'après
+  `gabarits/Consignes-IA-descriptions-oeuvres.md`). Le **set global**
+  (voix, ancrage factuel strict, ouverture « Œuvre originale. », règles
+  d'écriture — pas de tiret cadratin, pas de « ce n'est pas X, c'est Y »,
+  pas de clichés) est intégré **dans le code** (constante `CONSIGNES_GLOBALES`,
+  `src/main.js`) afin de toujours s'appliquer et de suivre dans le build. Les
+  **consignes par artiste** (19) sont écrites dans `artistes.instructions_ia`
+  (script `scripts/appliquer-consignes-ia.js`, qui parse le document, sauvegarde
+  la base et apparie par nom) — elles suivront aux parents via
+  `npm run build:catalogue`.
+
+### Modifié
+
+- **Génération des descriptions** désormais **bilingue (français puis
+  anglais)**, conforme aux consignes : `assemblerPromptIA` et le prompt système
+  de `src/ia.js` demandent les deux versions séparées (« Français » / « English »)
+  et rappellent l'ancrage factuel et les règles d'écriture. `max_tokens` relevé
+  (800 → 1500) pour les deux versions. Le champ Description n'apparaissant dans
+  aucun document PDF (vérifié), le bilingue ne touche pas les documents français.
+  S'applique aussi au flux « Copier pour ChatGPT » (même assemblage).
 
 ---
 

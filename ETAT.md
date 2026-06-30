@@ -499,6 +499,16 @@ Nouvelle fonction décidée avec Dave : générer la description d'une œuvre **
 - ⚠️ **Pour tester/exécuter** : le SDK est installé (`--no-save`) dans le `node_modules` du **worktree principal**, et `src/ia.js` est sur la **branche** → il faut **fusionner la branche dans `master`** (ou disposer de `node_modules` dans le worktree) pour lancer l'app avec la fonction. `@anthropic-ai/sdk` est ajouté à `package.json` (donc empaqueté par electron-builder dans le build des parents).
 - **Reste** : Dave teste (colle sa clé dans Réglages → IA, génère sur une fiche) ; ensuite éventuel bump/release.
 
+### Journal de session — 2026-06-30 (suite — Consignes IA + sortie bilingue)
+
+Application du document **`gabarits/Consignes-IA-descriptions-oeuvres.md`** (set global galerie + 19 sets par artiste, déduits du corpus du site). **Commité sur `master`, non poussé.**
+
+- **Set par artiste → base** : `artistes.instructions_ia` rempli pour les 19 artistes (la « Consigne IA prête à l'emploi » de chacun) via `scripts/appliquer-consignes-ia.js` (parse le doc, **sauvegarde la base** dans `Sauvegardes\galerie-avant-consignes-ia-*.db`, apparie par nom complet insensible accents/casse, idempotent). Les 19 ont matché exactement (pseudonymes « LO (Laurent Torregrossa) » / « Sofia (Sophie Lebeuf) » inclus) ; « Dave Belisle » (test) laissé tel quel. **Suit aux parents via `build:catalogue`** (seed depuis la base live).
+- **Set global → code** : constante `CONSIGNES_GLOBALES` dans `src/main.js`, injectée par `assemblerPromptIA` (donc s'applique à la **génération directe ET au flux ChatGPT**). Choisi le code plutôt que `config.json` car ce dernier **ne suit pas** dans le build ; le set global s'applique donc toujours et part chez les parents. `config.ia.instructions_galerie` reste une **note facultative** ajoutée par-dessus.
+- **Sortie bilingue (FR puis EN)** : exigence du document. `assemblerPromptIA` (demande bilingue) + `SYSTEME` de `src/ia.js` (deux versions « Français » / « English », ancrage factuel, pas de tiret cadratin ni « ce n'est pas X, c'est Y », pas de clichés). `max_tokens` 800 → 1500. **Vérifié** : le champ `description` n'est utilisé dans **aucun gabarit PDF** ni `pdf.js` → le bilingue ne casse aucun document français (il alimente la fiche + le futur site).
+- **Tests** : syntaxe OK ; dry-run du script = 19/19 appariés ; application réelle = 19 mis à jour (vérifié en base). **À confirmer par Dave dans l'app** : générer une description et vérifier le bilingue + le style par artiste (avec sa clé).
+- **Reste** : rien de bloquant. À la prochaine livraison, `build:catalogue` embarquera les consignes par artiste ; le set global part déjà avec le code.
+
 ---
 
 ## Notes techniques pour l'intervenant suivant

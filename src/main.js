@@ -212,12 +212,32 @@ function sauvegarderEtRetourner() {
   return { path: dest, nom: path.basename(dest), dossier: path.dirname(dest) };
 }
 
+// Set global de la galerie pour la génération de descriptions, transcrit de
+// gabarits/Consignes-IA-descriptions-oeuvres.md. Il vit dans le code (et non
+// dans config.json) pour TOUJOURS s'appliquer et suivre dans le build : le
+// config.json n'est pas inclus dans l'installateur, contrairement au code.
+const CONSIGNES_GLOBALES = [
+  "Rôle. Tu rédiges des descriptions d'œuvres pour la Galerie du Vieux Saint-Jean : aider un visiteur à apprécier l'œuvre et à se projeter, dans une voix soignée et chaleureuse, fidèle à l'artiste.",
+  "Voix et ton. Troisième personne, ton évocateur mais sobre, qui valorise l'œuvre sans exagération commerciale. Tu peux nommer l'artiste. Élégant et accessible.",
+  "Langue et format. Produis TOUJOURS deux versions : d'abord le français, puis l'anglais. L'anglais dit la même chose, en adaptation naturelle (pas une traduction mot à mot). Sépare-les clairement sous les intitulés « Français » puis « English ».",
+  "Ancrage factuel (la règle la plus importante). N'invente jamais de fait. Appuie-toi uniquement sur le titre, le médium, le support, les dimensions, le sujet, le format, l'orientation, et ce qui est réellement visible sur la photo. N'invente jamais d'année, de provenance, de prix, de signature, de numéro d'édition, d'anecdote, de lieu géographique précis, d'inspiration, de référence à un autre artiste, ni d'élément biographique. Si une information manque, n'en parle pas ; dans le doute, reste descriptif et sobre.",
+  "Ouverture. Pour une œuvre originale, tu peux ouvrir par « Œuvre originale. ». Pour une reproduction ou une giclée, indique clairement qu'il s'agit d'une reproduction (et l'édition si elle est fournie) ; ne présente jamais une reproduction comme une pièce unique.",
+  "Longueur. Adapte-toi au sujet et au style de l'artiste. Par défaut, vise court à moyen ; étoffe seulement quand l'œuvre et le style le justifient. Mieux vaut court et juste que long et inventé.",
+  "Adapter au type d'œuvre. Peinture : la scène, la palette, la lumière, la touche. Sculpture : le matériau, la forme, le volume, le procédé. Reproduction : reste factuel sur la technique d'impression.",
+  "Préférences d'écriture (à respecter strictement). N'utilise jamais de tiret cadratin (le trait long « — ») ; sépare plutôt par une virgule, un deux-points ou une parenthèse. N'utilise jamais la tournure « ce n'est pas X, c'est Y ». Évite les clichés de marketing d'art (« incontournable », « véritable chef-d'œuvre », « ne vous laissera pas indifférent »). Écris en phrases complètes, dans une prose claire.",
+  "Qualité. Décris ce qui se voit et ce que l'œuvre évoque, sans sur-interpréter. Si la photo et les données sont minces, une à deux phrases honnêtes valent mieux qu'un paragraphe spéculatif.",
+].join('\n');
+
 function assemblerPromptIA({ oeuvre, artiste, config, avecImage = true }) {
   const sections = [];
 
-  const instGalerie = (config?.ia?.instructions_galerie || '').trim();
-  if (instGalerie) {
-    sections.push(`[Consignes générales de la galerie]\n${instGalerie}`);
+  sections.push(`[Consignes de la galerie]\n${CONSIGNES_GLOBALES}`);
+
+  // Notes facultatives ajoutées par la galerie dans Réglages → IA (en plus du
+  // set global ci-dessus).
+  const instGalerieSup = (config?.ia?.instructions_galerie || '').trim();
+  if (instGalerieSup) {
+    sections.push(`[Notes supplémentaires de la galerie]\n${instGalerieSup}`);
   }
 
   const instArtiste = (artiste?.instructions_ia || '').trim();
@@ -252,10 +272,10 @@ function assemblerPromptIA({ oeuvre, artiste, config, avecImage = true }) {
     ? "La photo de l'œuvre est jointe à ce message."
     : "(Aucune photo n'a encore été jointe — base-toi uniquement sur les caractéristiques ci-dessus.)";
   sections.push(
-    `[Demande]\nRédige une description de cette œuvre en français, à insérer dans sa fiche de catalogue et dans les communications de la galerie. ${
+    `[Demande]\nRédige la description de cette œuvre en respectant les consignes ci-dessus (galerie et artiste), pour sa fiche de catalogue. Produis d'abord la version française, puis la version anglaise, clairement séparées (« Français » puis « English »). ${
       descActuelle
         ? 'Retravaille la description actuelle ci-dessus en respectant les consignes.'
-        : 'Une seule version, prête à utiliser.'
+        : ''
     } ${mentionImage}`
   );
 
