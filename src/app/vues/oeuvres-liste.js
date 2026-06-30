@@ -6,6 +6,7 @@ import {
 } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
 import { proposerAnnexeApres } from '../annexe.js';
+import { monterEditeurLot } from './oeuvres-batch.js';
 
 const CLE_PREF_VUE = 'oeuvres-vue';
 const CLE_PREF_TRI = 'oeuvres-tri';
@@ -643,6 +644,37 @@ export async function rendreOeuvresListe(contenu, params = {}) {
   }
 
   recherche.addEventListener('input', dessiner);
+
+  // ===== Édition en lot (tableur multi-lignes) =====
+  const vueListeEl = contenu.querySelector('.vue-liste');
+  const enteteActions = contenu.querySelector('.entete-page-actions');
+  if (enteteActions) {
+    const btnLot = document.createElement('button');
+    btnLot.type = 'button';
+    btnLot.className = 'btn-action btn-secondaire-action';
+    btnLot.id = 'btn-edition-lot';
+    btnLot.textContent = 'Édition en lot';
+    enteteActions.insertBefore(btnLot, enteteActions.firstChild);
+    btnLot.addEventListener('click', () => {
+      if (modeSelection) quitterModeSelection();
+      fermerPanneau();
+      vueListeEl.classList.add('mode-lot');
+      conteneur.className = '';
+      conteneur.innerHTML = '';
+      monterEditeurLot({
+        hote: conteneur,
+        oeuvres,
+        types,
+        surFermer: async () => {
+          vueListeEl.classList.remove('mode-lot');
+          const filtresMaj = { inclureArchives };
+          if (params.artiste_id != null) filtresMaj.artiste_id = params.artiste_id;
+          oeuvres = await window.api.oeuvresListe(filtresMaj);
+          dessiner();
+        },
+      });
+    });
+  }
 
   dessiner();
   recherche.focus();

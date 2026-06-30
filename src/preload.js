@@ -45,6 +45,7 @@ contextBridge.exposeInMainWorld('api', {
   oeuvreFicheBundle: (id) => ipcRenderer.invoke('oeuvres:fiche-bundle', id),
   oeuvreVoisins: (id) => ipcRenderer.invoke('oeuvres:voisins', id),
   oeuvreModifier: (id, data) => ipcRenderer.invoke('oeuvres:modifier', id, data),
+  oeuvresModifierLot: (modifs) => ipcRenderer.invoke('oeuvres:modifier-lot', modifs),
   oeuvreCreer: (data) => ipcRenderer.invoke('oeuvres:creer', data),
   oeuvreApercuNumeroInventaire: (artisteId) => ipcRenderer.invoke('oeuvres:apercu-numero-inventaire', artisteId),
   oeuvreReserverNumeroInventaire: (artisteId) => ipcRenderer.invoke('oeuvres:reserver-numero-inventaire', artisteId),

@@ -60,7 +60,7 @@ const {
 } = require('./db/requetes');
 const {
   modifierArtiste, creerArtiste, supprimerArtiste,
-  modifierOeuvre, creerOeuvre, supprimerOeuvre, majPreparationOeuvre,
+  modifierOeuvre, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre,
   modifierClient, creerClient, supprimerClient,
   creerVente, modifierVente, supprimerVente, majCycleVente,
   apercuProchainNumeroFacture, reserverProchainNumeroFacture,
@@ -574,6 +574,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('oeuvres:fiche-bundle', (_e, id) => obtenirFicheOeuvreBundle(id));
   ipcMain.handle('oeuvres:voisins', (_e, id) => voisinsOeuvre(id));
   ipcMain.handle('oeuvres:modifier', (_e, id, data) => modifierOeuvre(id, data));
+  ipcMain.handle('oeuvres:modifier-lot', (_e, modifs) => modifierOeuvresLot(modifs));
   ipcMain.handle('oeuvres:creer', (_e, data) => creerOeuvre(data));
   ipcMain.handle('oeuvres:supprimer', (_e, id) => supprimerOeuvre(id));
   ipcMain.handle('oeuvres:maj-preparation', (_e, id, data) => majPreparationOeuvre(id, data));

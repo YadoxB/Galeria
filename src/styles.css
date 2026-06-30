@@ -5230,3 +5230,102 @@ details.bloc.pliable > .bloc-corps {
   .rapport-doc { width: 100% !important; border: 0; border-radius: 0; box-shadow: none; padding: 12mm 14mm; }
   @page { size: letter; margin: 0; }
 }
+
+/* =====================================================================
+   Édition en lot des œuvres (tableur multi-lignes + remplissage groupé)
+   Module src/app/vues/oeuvres-batch.js — démo demos/edition-batch.html
+   ===================================================================== */
+
+/* En mode lot, on masque l'en-tête et les contrôles de la liste : l'éditeur
+   fournit son propre en-tête, sa recherche et sa barre d'outils. */
+.vue-liste.mode-lot > .entete-page,
+.vue-liste.mode-lot > .controles-vue,
+.vue-liste.mode-lot > .barre-selection,
+.vue-liste.mode-lot > .barre-recherche,
+.vue-liste.mode-lot > .filtre-actif { display: none !important; }
+
+.editeur-lot { display: flex; flex-direction: column; gap: var(--s3); }
+
+.lot-entete { display: flex; align-items: flex-start; gap: var(--s3); flex-wrap: wrap; }
+.lot-titre-bloc { flex: 1 1 auto; min-width: 220px; }
+.lot-titre-bloc h2 { font-family: var(--font-titre); font-size: 30px; color: var(--ink); margin: 0; font-weight: 600; }
+.lot-sous-titre { font-size: 13px; color: var(--slate); margin: 4px 0 0; max-width: 640px; }
+.lot-recherche { display: flex; align-items: center; gap: 8px; background: var(--porcelain); border: 1px solid var(--mist); border-radius: 999px; padding: 8px 16px; color: var(--slate); min-width: 280px; align-self: center; }
+.lot-recherche svg { width: 15px; height: 15px; flex-shrink: 0; }
+.lot-recherche input { border: 0; outline: 0; background: transparent; font-family: inherit; font-size: 13px; color: var(--ink); width: 100%; }
+
+.lot-barre-outils { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; }
+.lot-groupes { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lot-etiq { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--stone); font-weight: 600; }
+.lot-chip { border: 1px solid var(--mist); background: var(--porcelain); color: var(--slate); border-radius: 999px; padding: 5px 13px; font-size: 12.5px; font-family: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.lot-chip .pastille { width: 9px; height: 9px; border-radius: 50%; background: var(--mist); }
+.lot-chip.actif { background: var(--gallery-navy); border-color: var(--gallery-navy); color: #fff; }
+.lot-chip.g-ident.actif .pastille { background: #7FA8D6; }
+.lot-chip.g-mat.actif .pastille { background: #C4A35A; }
+.lot-chip.g-com.actif .pastille { background: var(--tuile-terracotta-icone); }
+.lot-chip.g-loc.actif .pastille { background: #6B8A6B; }
+.lot-nb { font-size: 12.5px; color: var(--slate); }
+.lot-nb strong { color: var(--ink); }
+
+/* Bandeau « appliquer à la sélection » */
+.lot-bandeau { display: none; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--gallery-navy); color: #fff; border-radius: 12px; padding: 11px 16px; box-shadow: var(--ombre-carte); }
+.lot-bandeau.visible { display: flex; }
+.lot-nb-sel { font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
+.lot-nb-sel .puce { background: var(--warm-gold); color: var(--deep-navy); border-radius: 999px; min-width: 24px; height: 24px; padding: 0 7px; display: inline-grid; place-items: center; font-size: 12px; font-weight: 700; }
+.lot-sep { width: 1px; align-self: stretch; background: rgba(255,255,255,0.18); }
+.lot-mini { font-size: 12px; color: rgba(255,255,255,0.75); }
+.lot-bandeau select, .lot-bandeau input { font-family: inherit; font-size: 13px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.10); color: #fff; border-radius: 8px; padding: 6px 10px; height: 34px; }
+.lot-bandeau select option { color: var(--ink); }
+.lot-bandeau input::placeholder { color: rgba(255,255,255,0.5); }
+.lot-bandeau .lot-deselect { margin-left: auto; color: rgba(255,255,255,0.85); }
+.lot-bandeau .lot-deselect:hover { color: #fff; }
+
+/* Le tableur */
+.lot-cadre { background: var(--porcelain); border: 1px solid var(--mist); border-radius: 16px; overflow: hidden; }
+.lot-defil { overflow-x: auto; }
+table.lot-grille { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 13px; white-space: nowrap; }
+table.lot-grille thead th { background: var(--entete-tableau); color: var(--gallery-navy); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.03em; text-align: left; padding: 10px; border-bottom: 1px solid var(--mist); position: sticky; top: 0; z-index: 5; }
+table.lot-grille tbody td { padding: 0; border-bottom: 1px solid var(--mist); vertical-align: middle; }
+table.lot-grille tbody tr:last-child td { border-bottom: 0; }
+table.lot-grille tbody tr { background: var(--porcelain); }
+table.lot-grille tbody tr:hover { background: #FBF8F1; }
+table.lot-grille tbody tr.modifiee { background: #FCF6E8; }
+table.lot-grille tbody tr.modifiee:hover { background: #FBF2DD; }
+table.lot-grille tbody tr.selectionnee { background: #EFF4F9; }
+table.lot-grille tbody tr.selectionnee.modifiee { background: #F4F1E6; }
+
+.lot-c-case { width: 42px; }
+.lot-case { display: grid; place-items: center; height: 44px; }
+table.lot-grille input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--warm-gold); cursor: pointer; }
+
+.lot-in { width: 100%; height: 44px; border: 1.5px solid transparent; background: transparent; font-family: inherit; font-size: 13px; color: var(--ink); padding: 0 10px; outline: 0; border-radius: 6px; }
+.lot-in:hover { border-color: var(--mist); }
+.lot-in:focus { border-color: var(--warm-gold); background: var(--porcelain); box-shadow: 0 0 0 3px rgba(201,154,61,0.16); position: relative; z-index: 2; }
+.lot-in.num { text-align: right; }
+.lot-in.modifiee { background: #FBEFD2; font-weight: 600; }
+.lot-in.modifiee:focus { background: var(--porcelain); }
+td.lot-lecture { padding: 0 10px; color: var(--slate); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
+td.lot-lecture span { color: var(--ink); font-weight: 500; font-size: 13px; }
+select.lot-in { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235D6875' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 24px; cursor: pointer; }
+select.lot-in.st-disponible { color: var(--badge-disponible-texte); }
+select.lot-in.st-reserve { color: var(--badge-reservee-texte); }
+select.lot-in.st-vendu { color: var(--badge-vendue-texte); }
+select.lot-in.st-pretee { color: var(--info); }
+
+.w-inv { width: 120px; } .w-titre { width: 230px; } .w-artiste { width: 150px; }
+.w-annee { width: 76px; } .w-type { width: 130px; } .w-medium { width: 150px; } .w-support { width: 130px; }
+.w-dim { width: 58px; } .w-prix { width: 110px; } .w-statut { width: 132px; }
+.w-empl { width: 150px; } .w-expo { width: 150px; } .w-style { width: 130px; }
+
+.lot-masque { display: none !important; }
+.lot-vide { padding: 28px 16px; text-align: center; color: var(--stone); font-style: italic; }
+
+/* Barre d'enregistrement collée en bas du viewport */
+.lot-barre-save { position: fixed; left: 250px; right: 0; bottom: 0; z-index: 40; display: none; align-items: center; justify-content: space-between; gap: var(--s3); padding: 12px 28px; background: rgba(252,250,244,0.88); backdrop-filter: blur(6px); border-top: 1px solid var(--mist); box-shadow: 0 -6px 20px rgba(7,26,47,0.08); }
+.lot-barre-save.visible { display: flex; }
+.lot-resume { font-size: 13.5px; color: var(--ink); }
+.lot-resume strong { color: var(--terracotta); }
+.lot-save-actions { display: flex; gap: 10px; }
+
+.lot-toast { position: fixed; bottom: 84px; left: calc(50% + 125px); transform: translateX(-50%); background: var(--succes); color: #fff; padding: 11px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: var(--ombre-elevee); opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; z-index: 50; }
+.lot-toast.visible { opacity: 1; transform: translateX(-50%) translateY(-6px); }

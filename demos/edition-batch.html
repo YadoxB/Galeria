@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo « Édition en lot » des œuvres</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+
+    .demo-bar { position: sticky; top: 0; z-index: 30; display: flex; justify-content: space-between; align-items: center; gap: var(--s3); padding: var(--s2) var(--s4); background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .note { font-size: 12px; color: rgba(255,255,255,0.6); }
+
+    main { max-width: 1340px; margin: 0 auto; padding: 26px 28px 120px; }
+
+    .page-entete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: var(--s3); }
+    .page-entete h1 { font-family: var(--font-titre); font-size: 32px; color: var(--ink); margin: 0; font-weight: 600; }
+    .recherche { display: flex; align-items: center; gap: 8px; background: var(--porcelain); border: 1px solid var(--mist); border-radius: 999px; padding: 8px 16px; color: var(--slate); font-size: 13px; min-width: 280px; }
+    .recherche svg { width: 15px; height: 15px; flex-shrink: 0; }
+    .recherche input { border: 0; outline: 0; background: transparent; font-family: inherit; font-size: 13px; color: var(--ink); width: 100%; }
+
+    .intro { background: #EAF0F6; border: 1px solid #CEDDEC; border-radius: 12px; padding: 12px 16px; font-size: 13px; color: var(--gallery-navy); margin-bottom: 18px; line-height: 1.5; }
+    .intro strong { color: var(--deep-navy); }
+
+    /* ===== Barre d'outils (groupes de colonnes + sélection) ===== */
+    .barre-outils { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; margin-bottom: 12px; }
+    .groupes-col { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .groupes-col .etiq { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--stone); font-weight: 600; margin-right: 2px; }
+    .chip-col { border: 1px solid var(--mist); background: var(--porcelain); color: var(--slate); border-radius: 999px; padding: 5px 13px; font-size: 12.5px; font-family: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .chip-col .pastille { width: 9px; height: 9px; border-radius: 50%; background: var(--mist); }
+    .chip-col.actif { background: var(--gallery-navy); border-color: var(--gallery-navy); color: #fff; }
+    .chip-col.actif .pastille { background: var(--warm-gold); }
+    .chip-col.g-ident.actif .pastille { background: #7FA8D6; }
+    .chip-col.g-mat.actif   .pastille { background: #C4A35A; }
+    .chip-col.g-com.actif   .pastille { background: #C2552B; }
+    .chip-col.g-loc.actif   .pastille { background: #6B8A6B; }
+
+    .info-nb { font-size: 12.5px; color: var(--slate); }
+    .info-nb strong { color: var(--ink); }
+
+    /* ===== Bandeau « Appliquer à la sélection » ===== */
+    .bandeau-selection { display: none; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--gallery-navy); color: #fff; border-radius: 12px; padding: 11px 16px; margin-bottom: 14px; box-shadow: var(--ombre-carte); }
+    .bandeau-selection.visible { display: flex; }
+    .bandeau-selection .nb-sel { font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
+    .bandeau-selection .nb-sel .puce { background: var(--warm-gold); color: var(--deep-navy); border-radius: 999px; min-width: 24px; height: 24px; padding: 0 7px; display: inline-grid; place-items: center; font-size: 12px; font-weight: 700; }
+    .bandeau-selection .sep { width: 1px; align-self: stretch; background: rgba(255,255,255,0.18); }
+    .bandeau-selection label.mini { font-size: 12px; color: rgba(255,255,255,0.75); }
+    .bandeau-selection select, .bandeau-selection input { font-family: inherit; font-size: 13px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.10); color: #fff; border-radius: 8px; padding: 6px 10px; height: 34px; }
+    .bandeau-selection select option { color: var(--ink); }
+    .bandeau-selection input::placeholder { color: rgba(255,255,255,0.5); }
+    .bandeau-selection .pousse { margin-left: auto; display: flex; gap: 8px; }
+
+    .btn { font-family: inherit; font-size: 13px; border-radius: var(--r-btn); padding: 8px 16px; cursor: pointer; border: 1px solid transparent; font-weight: 500; }
+    .btn-or { background: var(--warm-gold); color: var(--soft-ivory); border-color: var(--warm-gold); font-weight: 600; }
+    .btn-or:hover { background: var(--warm-gold-hover); }
+    .btn-fant { background: transparent; color: #fff; border-color: rgba(255,255,255,0.35); }
+    .btn-fant:hover { background: rgba(255,255,255,0.12); }
+    .btn-clair { background: var(--porcelain); color: var(--ink); border-color: var(--mist); }
+    .btn-clair:hover { background: var(--cloud); }
+
+    /* ===== Le tableur ===== */
+    .cadre-table { background: var(--porcelain); border: 1px solid var(--mist); border-radius: 16px; overflow: hidden; }
+    .defil { overflow-x: auto; }
+    table.grille { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 13px; white-space: nowrap; }
+    table.grille thead th { background: var(--entete-tableau); color: var(--gallery-navy); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.03em; text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--mist); position: sticky; top: 0; z-index: 5; }
+    table.grille tbody td { padding: 0; border-bottom: 1px solid var(--mist); vertical-align: middle; }
+    table.grille tbody tr:last-child td { border-bottom: 0; }
+    table.grille tbody tr { background: var(--porcelain); }
+    table.grille tbody tr:hover { background: #FBF8F1; }
+    table.grille tbody tr.modifiee { background: #FCF6E8; }
+    table.grille tbody tr.modifiee:hover { background: #FBF2DD; }
+    table.grille tbody tr.selectionnee { background: #EFF4F9; }
+    table.grille tbody tr.selectionnee.modifiee { background: #F4F1E6; }
+
+    /* La case à cocher */
+    .c-case { width: 42px; }
+    .cell-case { display: grid; place-items: center; height: 44px; }
+    input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--warm-gold); cursor: pointer; }
+
+    /* Cellules éditables : look texte, deviennent un champ au focus */
+    .cell-in { width: 100%; height: 44px; border: 1.5px solid transparent; background: transparent; font-family: inherit; font-size: 13px; color: var(--ink); padding: 0 10px; outline: 0; border-radius: 6px; }
+    .cell-in:hover { border-color: var(--mist); }
+    .cell-in:focus { border-color: var(--warm-gold); background: var(--porcelain); box-shadow: 0 0 0 3px rgba(201,154,61,0.16); position: relative; z-index: 2; }
+    .cell-in.num { text-align: right; }
+    .cell-in.modifiee { background: #FBEFD2; font-weight: 600; }
+    .cell-in.modifiee:focus { background: var(--porcelain); }
+    td.lecture { padding: 0 10px; color: var(--slate); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
+    td.lecture .artiste { color: var(--ink); font-weight: 500; font-size: 13px; }
+
+    select.cell-in { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235D6875' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 24px; cursor: pointer; }
+
+    /* largeurs indicatives */
+    .w-inv { width: 120px; } .w-titre { width: 230px; } .w-artiste { width: 150px; }
+    .w-annee { width: 76px; } .w-type { width: 130px; } .w-medium { width: 150px; } .w-support { width: 130px; }
+    .w-dim { width: 62px; } .w-prix { width: 110px; } .w-statut { width: 132px; }
+    .w-empl { width: 150px; } .w-expo { width: 150px; } .w-style { width: 130px; }
+
+    .grp-dim th, .grp-dim td { background-clip: padding-box; }
+
+    /* badge couleur statut dans le select */
+    select.st-disponible { color: var(--badge-disponible-texte); }
+    select.st-reserve    { color: var(--badge-reservee-texte); }
+    select.st-vendu      { color: var(--badge-vendue-texte); }
+    select.st-pretee     { color: var(--info); }
+
+    /* ===== Barre d'enregistrement collée en bas ===== */
+    .barre-save { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; display: none; align-items: center; justify-content: space-between; gap: var(--s3); padding: 12px 28px; background: rgba(252,250,244,0.85); backdrop-filter: blur(6px); border-top: 1px solid var(--mist); box-shadow: 0 -6px 20px rgba(7,26,47,0.08); }
+    .barre-save.visible { display: flex; }
+    .barre-save .resume { font-size: 13.5px; color: var(--ink); }
+    .barre-save .resume strong { color: var(--terracotta); }
+    .barre-save .actions { display: flex; gap: 10px; }
+    .btn-annuler { background: var(--porcelain); color: var(--ink); border: 1px solid var(--mist); }
+    .btn-annuler:hover { background: var(--cloud); }
+    .btn-enreg { background: var(--warm-gold); color: var(--soft-ivory); border: 1px solid var(--warm-gold); font-weight: 600; }
+    .btn-enreg:hover { background: var(--warm-gold-hover); }
+
+    /* col masquée */
+    .masque { display: none !important; }
+
+    .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--succes); color: #fff; padding: 11px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: var(--ombre-elevee); opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; }
+    .toast.visible { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — démo « Édition en lot » des œuvres</div>
+    <div class="note">Maquette autonome · données fictives · aucune sauvegarde réelle</div>
+  </div>
+
+  <main>
+    <div class="page-entete">
+      <h1>Édition en lot</h1>
+      <div class="recherche">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="recherche" placeholder="Filtrer : titre, artiste, n° d'inventaire…">
+      </div>
+    </div>
+
+    <div class="intro">
+      Deux façons d'éditer plusieurs œuvres d'un coup :
+      <strong>1)</strong> modifie n'importe quelle cellule directement dans le tableau (comme un tableur) ;
+      <strong>2)</strong> coche des lignes puis utilise <strong>« Appliquer à la sélection »</strong> pour poser une même valeur sur toutes (ex. passer 12 œuvres en « vendu »).
+      Rien n'est enregistré tant que tu ne cliques pas sur <strong>Enregistrer tout</strong> en bas.
+    </div>
+
+    <div class="barre-outils">
+      <div class="groupes-col">
+        <span class="etiq">Colonnes</span>
+        <button class="chip-col g-ident actif" data-groupe="ident"><span class="pastille"></span>Identité</button>
+        <button class="chip-col g-mat actif" data-groupe="mat"><span class="pastille"></span>Matériel</button>
+        <button class="chip-col g-com actif" data-groupe="com"><span class="pastille"></span>Commerce</button>
+        <button class="chip-col g-loc actif" data-groupe="loc"><span class="pastille"></span>Localisation</button>
+      </div>
+      <div class="info-nb"><strong id="nb-affiche">0</strong> œuvre(s) affichée(s)</div>
+    </div>
+
+    <div class="bandeau-selection" id="bandeau-selection">
+      <span class="nb-sel"><span class="puce" id="puce-sel">0</span> sélectionnée(s)</span>
+      <span class="sep"></span>
+      <label class="mini">Champ</label>
+      <select id="champ-batch">
+        <option value="statut">Statut</option>
+        <option value="type">Type d'œuvre</option>
+        <option value="medium">Médium</option>
+        <option value="support">Support</option>
+        <option value="annee">Année</option>
+        <option value="prix">Prix ($)</option>
+        <option value="emplacement">Emplacement</option>
+        <option value="exposition">Exposition actuelle</option>
+        <option value="style">Style</option>
+      </select>
+      <label class="mini">Valeur</label>
+      <span id="zone-valeur"></span>
+      <button class="btn btn-or" id="btn-appliquer">Appliquer à la sélection</button>
+      <div class="pousse">
+        <button class="btn btn-fant" id="btn-deselect">Tout désélectionner</button>
+      </div>
+    </div>
+
+    <div class="cadre-table">
+      <div class="defil">
+        <table class="grille">
+          <thead>
+            <tr id="entete-tr">
+              <th class="c-case"><input type="checkbox" id="case-tout" title="Tout cocher"></th>
+              <th class="w-inv">N° inventaire</th>
+              <th class="w-titre">Titre</th>
+              <th class="w-artiste">Artiste</th>
+              <th class="w-annee col-ident">Année</th>
+              <th class="w-type col-ident">Type</th>
+              <th class="w-medium col-mat">Médium</th>
+              <th class="w-support col-mat">Support</th>
+              <th class="w-dim col-mat" title="Hauteur (po)">H</th>
+              <th class="w-dim col-mat" title="Largeur (po)">L</th>
+              <th class="w-dim col-mat" title="Profondeur (po)">P</th>
+              <th class="w-prix col-com">Prix</th>
+              <th class="w-statut col-com">Statut</th>
+              <th class="w-empl col-loc">Emplacement</th>
+              <th class="w-expo col-loc">Exposition</th>
+              <th class="w-style col-loc">Style</th>
+            </tr>
+          </thead>
+          <tbody id="corps"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div class="barre-save" id="barre-save">
+    <div class="resume"><strong id="nb-modif">0</strong> œuvre(s) modifiée(s) — non enregistrées</div>
+    <div class="actions">
+      <button class="btn btn-annuler" id="btn-annuler">Annuler les changements</button>
+      <button class="btn btn-enreg" id="btn-enregistrer">Enregistrer tout</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ===== Données fictives =====
+    const TYPES   = ['Peinture', 'Sculpture', 'Reproduction', 'Photographie', 'Dessin', 'Estampe', 'Autre'];
+    const STATUTS = [['disponible','Disponible'], ['reserve','Réservée'], ['vendu','Vendue'], ['pretee','Prêtée']];
+
+    const DONNEES = [
+      { id:1,  inv:'MTR1042', titre:'Le verger au crépuscule', artiste:'Marie Tremblay',  annee:2021, type:'Peinture',     medium:'Acrylique', support:'Toile',   h:24, l:36, p:null, prix:1850, statut:'disponible', emplacement:'Salle avant', expo:'Murs de juin',  style:'Figuratif' },
+      { id:2,  inv:'MTR1043', titre:'Brume sur la rivière',    artiste:'Marie Tremblay',  annee:2021, type:'Peinture',     medium:'Acrylique', support:'Toile',   h:30, l:30, p:null, prix:1650, statut:'disponible', emplacement:'Salle avant', expo:'Murs de juin',  style:'Figuratif' },
+      { id:3,  inv:'LTO0210', titre:'Chrysalide',              artiste:'Laurent Torregrossa', annee:2020, type:'Sculpture', medium:'Bronze',    support:'Socle',   h:18, l:12, p:12, prix:3200, statut:'reserve',    emplacement:'Vitrine',     expo:'',              style:'Abstrait' },
+      { id:4,  inv:'LTO0211', titre:'Envol',                   artiste:'Laurent Torregrossa', annee:2022, type:'Sculpture', medium:'Acier',     support:'Socle',   h:42, l:20, p:18, prix:5400, statut:'disponible', emplacement:'Hall',        expo:'',              style:'Abstrait' },
+      { id:5,  inv:'SLB0455', titre:'Matin d’hiver',      artiste:'Sophie Lebeuf',   annee:2019, type:'Reproduction', medium:'Giclée',    support:'Papier',  h:16, l:20, p:null, prix:380,  statut:'disponible', emplacement:'Réserve',     expo:'',              style:'Réaliste' },
+      { id:6,  inv:'SLB0456', titre:'Reflets',                 artiste:'Sophie Lebeuf',   annee:2019, type:'Reproduction', medium:'Giclée',    support:'Papier',  h:16, l:20, p:null, prix:380,  statut:'vendu',      emplacement:'—',           expo:'',              style:'Réaliste' },
+      { id:7,  inv:'JBR0788', titre:'Quai de l’aube',     artiste:'Jean Brassard',   annee:2023, type:'Peinture',     medium:'Huile',     support:'Toile',   h:48, l:60, p:null, prix:4200, statut:'disponible', emplacement:'Salle arrière', expo:'Grandes toiles', style:'Impressionniste' },
+      { id:8,  inv:'JBR0789', titre:'Port de Saint-Jean',      artiste:'Jean Brassard',   annee:2023, type:'Peinture',     medium:'Huile',     support:'Toile',   h:36, l:48, p:null, prix:3100, statut:'disponible', emplacement:'Salle arrière', expo:'Grandes toiles', style:'Impressionniste' },
+      { id:9,  inv:'CDU0102', titre:'Nature morte aux poires', artiste:'Claire Dubé',     annee:2018, type:'Peinture',     medium:'Aquarelle', support:'Papier',  h:12, l:16, p:null, prix:720,  statut:'disponible', emplacement:'Salle avant', expo:'',              style:'Classique' },
+      { id:10, inv:'CDU0103', titre:'Bouquet d’été',      artiste:'Claire Dubé',     annee:2018, type:'Peinture',     medium:'Aquarelle', support:'Papier',  h:12, l:16, p:null, prix:720,  statut:'reserve',    emplacement:'Salle avant', expo:'',              style:'Classique' },
+      { id:11, inv:'POU0330', titre:'Silence boréal',          artiste:'Pierre Ouellet',  annee:2022, type:'Photographie', medium:'Tirage',    support:'Aluminium', h:24, l:36, p:null, prix:980, statut:'disponible', emplacement:'Corridor',   expo:'Nordicité',     style:'Documentaire' },
+      { id:12, inv:'POU0331', titre:'Toundra',                 artiste:'Pierre Ouellet',  annee:2022, type:'Photographie', medium:'Tirage',    support:'Aluminium', h:24, l:36, p:null, prix:980, statut:'disponible', emplacement:'Corridor',   expo:'Nordicité',     style:'Documentaire' },
+    ];
+
+    // état d'édition : map id -> { champ: nouvelleValeur }
+    const modifs = new Map();      // id -> {champ:val}
+    const selection = new Set();   // ids cochés
+
+    const ech = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    const corps = document.getElementById('corps');
+
+    function valCourante(o, champ) {
+      const m = modifs.get(o.id);
+      if (m && champ in m) return m[champ];
+      return o[champ];
+    }
+    function estModifiee(id, champ) {
+      const m = modifs.get(id);
+      return m && champ in m;
+    }
+
+    function optionsType(sel) {
+      return TYPES.map((t) => `<option value="${ech(t)}" ${t === sel ? 'selected' : ''}>${ech(t)}</option>`).join('');
+    }
+    function optionsStatut(sel) {
+      return STATUTS.map(([v, lib]) => `<option value="${v}" ${v === sel ? 'selected' : ''}>${lib}</option>`).join('');
+    }
+
+    function ligneHtml(o) {
+      const coche = selection.has(o.id);
+      const champ = (nom, type, cls = '') => {
+        const v = valCourante(o, nom);
+        const mod = estModifiee(o.id, nom) ? 'modifiee' : '';
+        const valAff = v == null ? '' : v;
+        if (type === 'num') {
+          return `<input class="cell-in num ${cls} ${mod}" data-champ="${nom}" type="number" value="${ech(valAff)}">`;
+        }
+        return `<input class="cell-in ${cls} ${mod}" data-champ="${nom}" type="text" value="${ech(valAff)}">`;
+      };
+      const selType = valCourante(o, 'type');
+      const selStatut = valCourante(o, 'statut');
+      const modType = estModifiee(o.id, 'type') ? 'modifiee' : '';
+      const modStatut = estModifiee(o.id, 'statut') ? 'modifiee' : '';
+      return `
+        <tr data-id="${o.id}" class="${coche ? 'selectionnee' : ''} ${modifs.has(o.id) ? 'modifiee' : ''}">
+          <td class="c-case"><div class="cell-case"><input type="checkbox" class="case-ligne" ${coche ? 'checked' : ''}></div></td>
+          <td class="w-inv">${champ('inv', 'text')}</td>
+          <td class="w-titre">${champ('titre', 'text')}</td>
+          <td class="lecture w-artiste"><span class="artiste">${ech(o.artiste)}</span></td>
+          <td class="w-annee col-ident">${champ('annee', 'num')}</td>
+          <td class="w-type col-ident"><select class="cell-in ${modType}" data-champ="type">${optionsType(selType)}</select></td>
+          <td class="w-medium col-mat">${champ('medium', 'text')}</td>
+          <td class="w-support col-mat">${champ('support', 'text')}</td>
+          <td class="w-dim col-mat">${champ('h', 'num')}</td>
+          <td class="w-dim col-mat">${champ('l', 'num')}</td>
+          <td class="w-dim col-mat">${champ('p', 'num')}</td>
+          <td class="w-prix col-com">${champ('prix', 'num')}</td>
+          <td class="w-statut col-com"><select class="cell-in st-${selStatut} ${modStatut}" data-champ="statut">${optionsStatut(selStatut)}</select></td>
+          <td class="w-empl col-loc">${champ('emplacement', 'text')}</td>
+          <td class="w-expo col-loc">${champ('expo', 'text')}</td>
+          <td class="w-style col-loc">${champ('style', 'text')}</td>
+        </tr>`;
+    }
+
+    let filtre = '';
+    function donneesFiltrees() {
+      if (!filtre) return DONNEES;
+      const f = filtre.toLowerCase();
+      return DONNEES.filter((o) =>
+        (o.titre + ' ' + o.artiste + ' ' + o.inv).toLowerCase().includes(f));
+    }
+
+    function rendre() {
+      const liste = donneesFiltrees();
+      corps.innerHTML = liste.map(ligneHtml).join('');
+      document.getElementById('nb-affiche').textContent = liste.length;
+      majSelection();
+      majSave();
+      appliquerGroupes();
+    }
+
+    // ===== Édition d'une cellule =====
+    function noter(id, champ, valeur, valeurOrig) {
+      let m = modifs.get(id);
+      // normalise pour comparer (nombres vs texte)
+      const orig = valeurOrig == null ? '' : String(valeurOrig);
+      const nouv = valeur == null ? '' : String(valeur);
+      if (orig === nouv) {
+        if (m) { delete m[champ]; if (Object.keys(m).length === 0) modifs.delete(id); }
+      } else {
+        if (!m) { m = {}; modifs.set(id, m); }
+        m[champ] = valeur;
+      }
+    }
+
+    corps.addEventListener('input', (e) => {
+      const cell = e.target.closest('.cell-in');
+      if (!cell) return;
+      const tr = e.target.closest('tr');
+      const id = Number(tr.dataset.id);
+      const champ = cell.dataset.champ;
+      const o = DONNEES.find((x) => x.id === id);
+      let val = cell.value;
+      if (cell.type === 'number') val = val === '' ? null : Number(val);
+      noter(id, champ, val, o[champ]);
+      // maj visuel de la cellule + de la ligne
+      cell.classList.toggle('modifiee', estModifiee(id, champ));
+      tr.classList.toggle('modifiee', modifs.has(id));
+      if (champ === 'statut') cell.className = 'cell-in st-' + val + (estModifiee(id, champ) ? ' modifiee' : '');
+      majSave();
+    });
+
+    // ===== Sélection (cases à cocher) =====
+    corps.addEventListener('change', (e) => {
+      if (!e.target.classList.contains('case-ligne')) return;
+      const tr = e.target.closest('tr');
+      const id = Number(tr.dataset.id);
+      if (e.target.checked) selection.add(id); else selection.delete(id);
+      tr.classList.toggle('selectionnee', e.target.checked);
+      majSelection();
+    });
+
+    document.getElementById('case-tout').addEventListener('change', (e) => {
+      const ids = donneesFiltrees().map((o) => o.id);
+      if (e.target.checked) ids.forEach((id) => selection.add(id));
+      else ids.forEach((id) => selection.delete(id));
+      rendre();
+    });
+
+    function majSelection() {
+      const n = selection.size;
+      document.getElementById('puce-sel').textContent = n;
+      document.getElementById('bandeau-selection').classList.toggle('visible', n > 0);
+      const ids = donneesFiltrees().map((o) => o.id);
+      const caseTout = document.getElementById('case-tout');
+      const tousCoches = ids.length > 0 && ids.every((id) => selection.has(id));
+      caseTout.checked = tousCoches;
+      caseTout.indeterminate = !tousCoches && ids.some((id) => selection.has(id));
+    }
+
+    document.getElementById('btn-deselect').addEventListener('click', () => {
+      selection.clear();
+      rendre();
+    });
+
+    // ===== Appliquer à la sélection =====
+    const champBatch = document.getElementById('champ-batch');
+    const zoneValeur = document.getElementById('zone-valeur');
+
+    function rendreValeurBatch() {
+      const champ = champBatch.value;
+      if (champ === 'statut') {
+        zoneValeur.innerHTML = `<select id="val-batch">${optionsStatut('disponible')}</select>`;
+      } else if (champ === 'type') {
+        zoneValeur.innerHTML = `<select id="val-batch">${optionsType('Peinture')}</select>`;
+      } else if (champ === 'annee' || champ === 'prix') {
+        zoneValeur.innerHTML = `<input id="val-batch" type="number" placeholder="${champ === 'prix' ? 'ex. 1500' : 'ex. 2024'}" style="width:120px">`;
+      } else {
+        zoneValeur.innerHTML = `<input id="val-batch" type="text" placeholder="nouvelle valeur" style="width:170px">`;
+      }
+    }
+    champBatch.addEventListener('change', rendreValeurBatch);
+    rendreValeurBatch();
+
+    // correspondance champ batch -> clé de donnée
+    const CLE = { statut:'statut', type:'type', medium:'medium', support:'support', annee:'annee', prix:'prix', emplacement:'emplacement', exposition:'expo', style:'style' };
+
+    document.getElementById('btn-appliquer').addEventListener('click', () => {
+      if (selection.size === 0) return;
+      const champUI = champBatch.value;
+      const cle = CLE[champUI];
+      const ctrl = document.getElementById('val-batch');
+      let val = ctrl.value;
+      if (ctrl.type === 'number') val = val === '' ? null : Number(val);
+      selection.forEach((id) => {
+        const o = DONNEES.find((x) => x.id === id);
+        noter(id, cle, val, o[cle]);
+      });
+      rendre();
+      toast(`Valeur appliquée à ${selection.size} œuvre(s) — pense à enregistrer`);
+    });
+
+    // ===== Barre d'enregistrement =====
+    function majSave() {
+      const n = modifs.size;
+      document.getElementById('nb-modif').textContent = n;
+      document.getElementById('barre-save').classList.toggle('visible', n > 0);
+    }
+
+    document.getElementById('btn-annuler').addEventListener('click', () => {
+      modifs.clear();
+      rendre();
+      toast('Changements annulés');
+    });
+
+    document.getElementById('btn-enregistrer').addEventListener('click', () => {
+      // démo : applique les modifs aux données en mémoire et vide le tampon
+      let n = 0;
+      modifs.forEach((m, id) => {
+        const o = DONNEES.find((x) => x.id === id);
+        Object.assign(o, m);
+        n++;
+      });
+      modifs.clear();
+      rendre();
+      toast(`${n} œuvre(s) enregistrée(s) ✓`);
+    });
+
+    // ===== Groupes de colonnes (afficher/masquer cellule par cellule) =====
+    const MAP_GROUPE = { ident:'col-ident', mat:'col-mat', com:'col-com', loc:'col-loc' };
+    const groupesActifs = new Set(['ident','mat','com','loc']);
+
+    function appliquerGroupes() {
+      Object.entries(MAP_GROUPE).forEach(([g, cls]) => {
+        const visible = groupesActifs.has(g);
+        document.querySelectorAll('.' + cls).forEach((el) => el.classList.toggle('masque', !visible));
+      });
+    }
+    document.querySelectorAll('.chip-col').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const g = chip.dataset.groupe;
+        if (groupesActifs.has(g)) groupesActifs.delete(g); else groupesActifs.add(g);
+        chip.classList.toggle('actif', groupesActifs.has(g));
+        appliquerGroupes();
+      });
+    });
+
+    // ===== Recherche =====
+    document.getElementById('recherche').addEventListener('input', (e) => {
+      filtre = e.target.value.trim();
+      rendre();
+    });
+
+    // ===== Toast =====
+    let toastTimer;
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('visible'), 2200);
+    }
+
+    rendre();
+  </script>
+</body>
+</html>

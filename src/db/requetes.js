@@ -100,6 +100,7 @@ function listerOeuvres(filtres = {}) {
   return db.prepare(`
     SELECT o.id, o.titre, o.numero_inventaire, o.numero_delivrance,
            o.type, o.annee, o.medium, o.support, o.dimensions, o.format, o.style,
+           o.hauteur, o.largeur, o.profondeur, o.emplacement, o.exposition_actuelle,
            o.prix, o.statut, o.image_path, o.archive, o.sage_cree,
            a.id AS artiste_id, TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom
     FROM oeuvres o

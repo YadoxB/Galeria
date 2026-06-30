@@ -22,6 +22,43 @@ const entier = (v) => {
 
 const STATUTS_VALIDES = new Set(['disponible', 'reserve', 'vendu', 'pretee']);
 
+// ===== Dérivés des dimensions (mêmes règles que le formulaire d'œuvre) =====
+// Seuils empiriques calés sur 476 œuvres déjà étiquetées (cf. oeuvre-fiche.js
+// et scripts/analyse-seuils-format.js). La profondeur est ignorée (châssis).
+const SEUILS_FORMAT = [
+  { max: 16, libelle: 'Petit' },
+  { max: 30, libelle: 'Moyen' },
+  { max: 42, libelle: 'Grand' },
+  { max: Infinity, libelle: 'Très grand' },
+];
+function calculerFormat(h, l) {
+  const H = Number(h) || 0;
+  const L = Number(l) || 0;
+  if (H <= 0 || L <= 0) return '';
+  const equivalent = Math.sqrt(H * L);
+  for (const seuil of SEUILS_FORMAT) {
+    if (equivalent <= seuil.max) return seuil.libelle;
+  }
+  return '';
+}
+function calculerOrientation(h, l) {
+  const H = Number(h) || 0;
+  const L = Number(l) || 0;
+  if (H <= 0 || L <= 0) return '';
+  if (L > H * 1.05) return 'Horizontale';
+  if (H > L * 1.05) return 'Verticale';
+  return 'Carrée';
+}
+function formaterDimensionsTexte(h, l, p) {
+  const arr = [h, l, p].map((v) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  });
+  const visibles = arr[2] != null ? arr : arr.slice(0, 2);
+  if (!visibles.some((v) => v != null)) return '';
+  return visibles.map((v) => (v != null ? String(v) : '?')).join(' × ') + ' po';
+}
+
 const TAILLES_COTES = new Set(['Tous', 'Petit', 'Moyen', 'Grand', 'Très grand']);
 const UNITES_COTES = new Set(['lineaire', 'carre']);
 
@@ -198,6 +235,90 @@ function creerOeuvre(data) {
   const placeholders = cols.map(() => '?').join(', ');
   const info = db.prepare(`INSERT INTO oeuvres (${colNames}) VALUES (${placeholders})`).run(...valeurs);
   return obtenirOeuvre(info.lastInsertRowid);
+}
+
+// ===== Édition en lot — mise à jour partielle de plusieurs œuvres =====
+
+// Colonnes modifiables en lot (sous-ensemble de COLONNES_OEUVRE). Tout autre
+// champ reçu est ignoré silencieusement (garde-fou).
+const COLS_OEUVRE_MAP = new Map(COLONNES_OEUVRE);
+const COLS_LOT_AUTORISEES = new Set([
+  'titre', 'numero_inventaire', 'annee', 'type',
+  'medium', 'support', 'hauteur', 'largeur', 'profondeur',
+  'prix', 'statut', 'emplacement', 'exposition_actuelle', 'style',
+]);
+
+// Met à jour, en une seule transaction, plusieurs œuvres — chacune avec
+// uniquement les champs réellement modifiés. `modifs` = [{ id, champs:{col:val} }].
+// Quand une dimension (H/L/P) change, on régénère le texte des dimensions et,
+// si format/orientation n'ont pas été saisis à la main, on les recalcule —
+// exactement comme le formulaire d'une œuvre.
+function modifierOeuvresLot(modifs) {
+  const liste = Array.isArray(modifs) ? modifs : [];
+  if (!liste.length) return { modifiees: 0 };
+  const db = openDatabase();
+  let n = 0;
+  db.exec('BEGIN');
+  try {
+    for (const m of liste) {
+      const id = entier(m && m.id);
+      if (id == null) continue;
+      const champs = (m && m.champs && typeof m.champs === 'object') ? m.champs : {};
+      const cols = [];
+      const valeurs = [];
+      const set = (col, val) => { cols.push(col); valeurs.push(val); };
+
+      let toucheDim = false;
+      for (const [col, brut] of Object.entries(champs)) {
+        if (!COLS_LOT_AUTORISEES.has(col)) continue;
+        const norm = COLS_OEUVRE_MAP.get(col);
+        if (!norm) continue;
+        if (col === 'statut') {
+          const s = vide(brut);
+          if (s && !STATUTS_VALIDES.has(s)) throw new Error(`Statut invalide : ${s}.`);
+          set('statut', s || 'disponible');
+          continue;
+        }
+        if (col === 'titre') {
+          const t = vide(brut);
+          if (!t) throw new Error("Le titre d'une œuvre ne peut pas être vide.");
+          set('titre', t);
+          continue;
+        }
+        if (col === 'hauteur' || col === 'largeur' || col === 'profondeur') toucheDim = true;
+        set(col, norm(brut));
+      }
+
+      if (toucheDim) {
+        const actuel = obtenirOeuvre(id) || {};
+        const idxH = cols.indexOf('hauteur');
+        const idxL = cols.indexOf('largeur');
+        const idxP = cols.indexOf('profondeur');
+        const h = idxH >= 0 ? valeurs[idxH] : actuel.hauteur;
+        const l = idxL >= 0 ? valeurs[idxL] : actuel.largeur;
+        const p = idxP >= 0 ? valeurs[idxP] : actuel.profondeur;
+        set('dimensions', formaterDimensionsTexte(h, l, p) || null);
+        const formatAuto = !actuel.format
+          || actuel.format === calculerFormat(actuel.hauteur, actuel.largeur);
+        const orientationAuto = !actuel.orientation
+          || actuel.orientation === calculerOrientation(actuel.hauteur, actuel.largeur);
+        if (formatAuto) { const f = calculerFormat(h, l); if (f) set('format', f); }
+        if (orientationAuto) { const ori = calculerOrientation(h, l); if (ori) set('orientation', ori); }
+      }
+
+      if (!cols.length) continue;
+      const setSql = cols.map((c) => `${c} = ?`).join(', ');
+      const info = db.prepare(
+        `UPDATE oeuvres SET ${setSql}, modifie_le = datetime('now') WHERE id = ?`
+      ).run(...valeurs, id);
+      n += info.changes;
+    }
+    db.exec('COMMIT');
+  } catch (e) {
+    db.exec('ROLLBACK');
+    throw e;
+  }
+  return { modifiees: n };
 }
 
 function supprimerOeuvre(id) {
@@ -795,7 +916,7 @@ function majPresentationArtiste(id, pdfPath, sig) {
 module.exports = {
   enregistrerAnnexe, majAnnexePdfPath, majPresentationArtiste,
   modifierArtiste, creerArtiste, supprimerArtiste,
-  modifierOeuvre, creerOeuvre, supprimerOeuvre, majPreparationOeuvre,
+  modifierOeuvre, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre,
   modifierClient, creerClient, supprimerClient,
   creerVente, modifierVente, supprimerVente, majCycleVente,
   apercuProchainNumeroFacture, reserverProchainNumeroFacture,

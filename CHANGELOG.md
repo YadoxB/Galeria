@@ -16,6 +16,25 @@ identifiants.
 
 ### Ajouté
 
+- **Édition en lot des œuvres** — sur la page Œuvres, un bouton **« Édition en
+  lot »** ouvre un **tableur multi-lignes** où chaque cellule (n° inventaire,
+  titre, année, type, médium, support, H/L/P, prix, statut, emplacement,
+  exposition, style) se modifie directement. Deux modes complémentaires : édition
+  cellule par cellule, et **« Appliquer à la sélection »** (cocher des lignes →
+  poser une même valeur sur un champ pour toutes). Cellules/lignes modifiées
+  surlignées ; remettre la valeur d'origine démarque automatiquement ; **barre
+  « Enregistrer tout / Annuler »** (rien n'est écrit avant). Pastilles pour
+  afficher/masquer des groupes de colonnes (Identité / Matériel / Commerce /
+  Localisation). Enregistrement **transactionnel** via l'IPC `oeuvres:modifier-lot`
+  (`modifierOeuvresLot`) : mise à jour **partielle** (seuls les champs changés),
+  et **recalcul auto** du texte des dimensions + format/orientation quand H/L/P
+  changent (mêmes règles que le formulaire d'une œuvre, l'override manuel du
+  format est préservé). Garde-fous : titre non vidable, statut validé, colonnes
+  hors-liste ignorées. Démo `demos/edition-batch.html` ; module
+  `src/app/vues/oeuvres-batch.js`. ⚠️ **À confirmer par Dave dans l'app** (vérifié
+  par Claude en banc d'essai navigateur + tests unitaires de la mutation, pas
+  dans la fenêtre Electron).
+
 - **Détection automatique du catalogue livré** — chaque build catalogue est
   tamponné (`meta.catalogue_id`). Au démarrage, si la base de l'utilisateur a un
   catalogue différent (ou aucun tampon, ex. base 0.2.0) et que ce catalogue n'a
