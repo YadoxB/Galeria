@@ -105,6 +105,13 @@ cas de pépin (fausse manipulation, ordinateur remplacé, etc.).
 - Elle fait **une copie de sécurité** de vos données actuelles **avant** de les
   remplacer, puis redémarre. Rien n'est perdu par accident.
 
+## Page Réglages plus claire (nouveau)
+
+La page **Réglages** est réorganisée avec une **liste de catégories à gauche**
+(Documents, Données, Sécurité, Intelligence artificielle, Application). On clique
+une catégorie pour voir seulement ses réglages, au lieu de tout afficher d'un
+coup. Un rappel apparaît si vous changez de catégorie sans avoir enregistré.
+
 ---
 
 *Vos données restent sur l'ordinateur. Seules les informations de catalogue

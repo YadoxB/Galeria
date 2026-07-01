@@ -10,6 +10,22 @@ identifiants.
 
 ## [Non publié]
 
+### Modifié
+
+- **Page Réglages réorganisée en sous-navigation par catégories.** Fini la
+  mosaïque de 8 cartes hétérogènes : une **liste de catégories à gauche**
+  (Documents · Données · Sécurité · Intelligence artificielle · Application) et
+  un panneau à droite, une catégorie à la fois. Regroupements logiques
+  (numéros + taxes + signataire dans Documents ; sauvegardes + restauration +
+  import dans Données ; **carte Sécurité scindée** en « Verrou » et
+  « Chiffrement » ; affichage + à propos/mises à jour dans Application). Barre
+  **Enregistrer collante** avec **indicateur « Modifications non enregistrées »**
+  toujours visible, et **avertissement au changement de catégorie** si des
+  modifications ne sont pas enregistrées (Enregistrer et continuer / Continuer
+  sans enregistrer / Rester). Aucun changement de logique : mêmes réglages,
+  mêmes effets. Démos `demos/reglages-reorg.html` (sections visibles) et
+  `demos/reglages-nav.html` (sous-navigation retenue).
+
 ### Ajouté
 
 - **Restauration d'une sauvegarde en un clic.** Bouton **« Restaurer une

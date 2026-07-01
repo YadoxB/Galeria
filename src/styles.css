@@ -3959,12 +3959,13 @@ details.bloc.pliable > .bloc-corps {
 
 .zone-numerotation { grid-column: span 8; padding: var(--s3) var(--s4); }
 .zone-taxes-cote   { grid-column: span 4; padding: var(--s3) var(--s4); }
-.zone-sauvegardes  { grid-column: span 6; padding: var(--s3) var(--s4); }
-.zone-affichage    { grid-column: span 3; padding: var(--s3) var(--s4); }
-.zone-import       { grid-column: span 3; padding: var(--s3) var(--s4); }
-.zone-ia           { grid-column: span 6; padding: var(--s3) var(--s4); }
-.zone-securite     { grid-column: span 6; padding: var(--s3) var(--s4); }
-.zone-apropos      { grid-column: span 6; padding: var(--s3) var(--s4); }
+.zone-sauvegardes  { grid-column: span 8; padding: var(--s3) var(--s4); }
+.zone-import       { grid-column: span 4; padding: var(--s3) var(--s4); }
+.zone-affichage    { grid-column: span 4; padding: var(--s3) var(--s4); }
+.zone-ia           { grid-column: span 12; padding: var(--s3) var(--s4); }
+.zone-verrou       { grid-column: span 6; padding: var(--s3) var(--s4); }
+.zone-chiffrement  { grid-column: span 6; padding: var(--s3) var(--s4); }
+.zone-apropos      { grid-column: span 8; padding: var(--s3) var(--s4); }
 
 /* Bouton large pour les cartes Sauvegardes/Import */
 .btn-gros-bento {
@@ -3972,6 +3973,15 @@ details.bloc.pliable > .bloc-corps {
   height: 44px;
   margin-top: var(--s3);
 }
+
+/* Boutons d'action côte à côte (ex. Sauvegarder / Restaurer) */
+.boutons-ligne-bento {
+  display: flex;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  margin-top: var(--s3);
+}
+.boutons-ligne-bento .btn-action { flex: 1 1 auto; }
 
 /* Tableau d'infos app dans la carte À propos */
 .infos-app-bento {
@@ -4022,15 +4032,102 @@ details.bloc.pliable > .bloc-corps {
   margin: 0 0 var(--s2);
 }
 
+/* ===== Réglages : disposition maître-détail (sous-navigation) ===== */
+.reglages-layout {
+  display: grid;
+  grid-template-columns: 224px minmax(0, 1fr);
+  gap: var(--s4);
+  align-items: start;
+}
+.cat-nav {
+  position: sticky;
+  top: var(--s3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cat-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 13px;
+  border-radius: var(--r-btn);
+  cursor: pointer;
+  color: var(--slate);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  background: none;
+  text-align: left;
+  width: 100%;
+}
+.cat-item:hover { background: var(--cloud); color: var(--ink); }
+.cat-item.actif {
+  background: var(--porcelain);
+  border-color: var(--mist);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: var(--ombre-carte);
+}
+.cat-item.actif::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 9px; bottom: 9px;
+  width: 3px; border-radius: 3px;
+  background: var(--warm-gold);
+}
+.cat-item .cat-ic { width: 18px; height: 18px; flex: none; color: var(--stone); }
+.cat-item.actif .cat-ic { color: var(--warm-gold); }
+
+.cat-zone { min-width: 0; }
+.cat-panneau { display: none; }
+.cat-panneau.actif { display: block; animation: cat-fade .18s ease; }
+@keyframes cat-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.panneau-tete { margin-bottom: var(--s3); }
+.panneau-tete h2 {
+  font-family: var(--font-titre);
+  font-weight: 600;
+  font-size: 26px;
+  color: var(--ink);
+  margin: 0;
+}
+.panneau-tete .desc { color: var(--slate); font-size: 13px; margin: 4px 0 0; line-height: 1.5; }
+
+/* Barre d'actions collante + indicateur « non enregistré » */
+.reglages-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-top: var(--s4);
+  padding: 12px 0;
+  background: linear-gradient(transparent, var(--soft-ivory) 35%);
+}
+.reglages-actions .actions-boutons { display: flex; gap: var(--s2); }
+.reglages-indicateur {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--avertissement);
+}
+.reglages-indicateur[hidden] { display: none; }
+
 @media (max-width: 1200px) {
-  .zone-numerotation { grid-column: span 12; }
-  .zone-taxes-cote   { grid-column: span 12; }
-  .zone-sauvegardes  { grid-column: span 12; }
+  .zone-numerotation,
+  .zone-taxes-cote,
+  .zone-sauvegardes,
+  .zone-import,
   .zone-affichage,
-  .zone-import       { grid-column: span 6; }
   .zone-ia,
-  .zone-securite,
+  .zone-verrou,
+  .zone-chiffrement,
   .zone-apropos      { grid-column: span 12; }
+  .reglages-layout   { grid-template-columns: 1fr; }
+  .cat-nav           { position: static; flex-direction: row; flex-wrap: wrap; }
+  .cat-item          { width: auto; }
 }
 
 /* ====== Page Profil galerie (bento) ====== */
