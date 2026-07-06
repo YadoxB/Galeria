@@ -10,7 +10,50 @@ identifiants.
 
 ## [Non publié]
 
-_Rien pour l'instant._
+> **Audit de robustesse — Lot 1 « Filets de sécurité »**. **Confirmé par Dave
+> dans l'app (2026-07-06)** : démarrage normal, restauration proposée avec la
+> bonne date, restauration complète testée. Premier lot du chantier de
+> solidification issu de l'audit du 2026-07-06 (aucun changement visuel,
+> aucun changement de données).
+
+### Corrigé
+
+- **Démarrage protégé.** Si une étape du démarrage échoue (base de données
+  illisible ou verrouillée, dossier Documents inaccessible, migration
+  impossible), l'app affiche désormais un **message clair en français** et se
+  ferme proprement — au lieu de rester figée pour toujours sur l'écran de
+  démarrage (fenêtre non fermable et absente de la barre des tâches). Le
+  renommage `GalerieApp` → `Galeria` qui échoue (dossier verrouillé par
+  OneDrive/Explorateur) **ne bloque plus le démarrage** : l'app continue avec
+  l'ancien dossier et retentera au prochain lancement (`src/db/paths.js`).
+- **Base disparue → restauration proposée.** Si le fichier de base est absent
+  ou vide alors que des **sauvegardes existent** (dossier par défaut ou dossier
+  personnalisé des Réglages), l'app propose au démarrage de **restaurer la plus
+  récente** (datée), au lieu de recréer silencieusement un catalogue vide. Le
+  fichier abîmé éventuel est mis de côté (`galerie.db.remplace-…`), les restes
+  de journal `-wal`/`-shm` sont nettoyés. La date d'une sauvegarde est lue
+  depuis l'**horodatage de son nom de fichier** (repli : date de modification) —
+  Windows préservant la date de modification lors d'une copie, s'y fier
+  faisait proposer et afficher une date plus vieille que la vraie (constaté
+  par Dave au premier essai).
+- **Vue Suivi : plus d'échec muet.** Cocher/décocher une étape de préparation
+  (Sage/Stock/Site) ou du cycle de vente (paiement, emballage, envoi,
+  livraison) affiche maintenant un **dialogue d'erreur** si l'enregistrement
+  échoue, puis repeint l'état réel — l'affichage ne peut plus laisser croire
+  qu'un statut a été enregistré alors qu'il ne l'a pas été
+  (`src/app/vues/suivi.js`).
+
+### Ajouté
+
+- **Filets globaux d'erreur.** Côté moteur : toute erreur imprévue est
+  consignée dans `Documents\Galeria\erreurs.log` (horodatée, avec détail
+  technique) et signalée par une boîte en français — au plus une par 10 s
+  (`uncaughtException`/`unhandledRejection` dans `src/main.js`). Côté
+  interface : toute promesse rejetée ou exception non attrapée affiche le
+  dialogue d'erreur standard de l'app — au plus un par 5 s — au lieu d'un clic
+  qui ne fait rien (`unhandledrejection`/`error` dans `src/app/app.js`). Le
+  démarrage de l'interface est aussi protégé (une entête qui échoue n'empêche
+  plus l'accueil de s'afficher).
 
 ---
 

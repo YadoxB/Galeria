@@ -5,18 +5,34 @@ const fs = require('node:fs');
 const NOM_DOSSIER = 'Galeria';
 const ANCIEN_NOM_DOSSIER = 'GalerieApp';
 
+// Si le renommage GalerieApp → Galeria échoue (dossier verrouillé par
+// l'Explorateur, OneDrive en cours de synchronisation…), on continue avec
+// l'ancien dossier plutôt que de bloquer le démarrage ou de repartir sur un
+// dossier vide. La migration sera retentée au prochain démarrage.
+let dossierDonneesResolu = null;
+
 function getDataDir() {
-  return path.join(app.getPath('documents'), NOM_DOSSIER);
+  return dossierDonneesResolu || path.join(app.getPath('documents'), NOM_DOSSIER);
 }
 
 // Migration unique : si l'ancien dossier existe et le nouveau pas,
 // renomme. Préserve DB, photos, sauvegardes, config et PDFs.
 function migrerAncienDossierSiPresent() {
   const ancien = path.join(app.getPath('documents'), ANCIEN_NOM_DOSSIER);
-  const nouveau = getDataDir();
+  const nouveau = path.join(app.getPath('documents'), NOM_DOSSIER);
   if (fs.existsSync(ancien) && !fs.existsSync(nouveau)) {
-    fs.renameSync(ancien, nouveau);
-    console.log(`Dossier migré : ${ANCIEN_NOM_DOSSIER} → ${NOM_DOSSIER}`);
+    try {
+      fs.renameSync(ancien, nouveau);
+      console.log(`Dossier migré : ${ANCIEN_NOM_DOSSIER} → ${NOM_DOSSIER}`);
+    } catch (e) {
+      console.error(
+        `Renommage ${ANCIEN_NOM_DOSSIER} → ${NOM_DOSSIER} impossible, on continue avec l'ancien dossier :`,
+        e
+      );
+      dossierDonneesResolu = ancien;
+      return false;
+    }
+    dossierDonneesResolu = nouveau;
     return true;
   }
   return false;

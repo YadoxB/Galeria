@@ -15,7 +15,8 @@ import { rendreReglages } from './vues/reglages.js';
 import { rendreProfilGalerie } from './vues/profil-galerie.js';
 import { rendreOutils } from './vues/outils.js';
 import { rafraichirEntete } from './marque.js';
-import { formaterTelephone } from './commun.js';
+import { formaterTelephone, nettoyerErreur } from './commun.js';
+import { alerter } from './dialogue.js';
 import { initialiserUpdater } from './updater.js';
 import { initialiserAide } from './aide.js';
 import { initialiserTutoriel } from './tutoriel.js';
@@ -62,11 +63,37 @@ document.addEventListener('input', (e) => {
   }
 });
 
+// Filet global : toute erreur imprévue (promesse rejetée hors try/catch,
+// exception dans un gestionnaire d'événement) affiche le dialogue d'erreur
+// standard, au lieu d'un clic qui ne fait rien. Une seule alerte par tranche
+// de 5 s pour qu'une erreur en boucle ne submerge pas l'utilisateur.
+let dernierFiletMs = 0;
+function filetErreur(raison) {
+  console.error('Erreur imprévue :', raison);
+  const maintenant = Date.now();
+  if (maintenant - dernierFiletMs < 5000) return;
+  dernierFiletMs = maintenant;
+  alerter({
+    type: 'error',
+    title: 'Erreur imprévue',
+    message: "L'opération en cours n'a pas pu être terminée.",
+    detail: nettoyerErreur(raison),
+  });
+}
+window.addEventListener('unhandledrejection', (e) => {
+  e.preventDefault();
+  filetErreur(e.reason);
+});
+window.addEventListener('error', (e) => {
+  filetErreur(e.error || e.message);
+});
+
 (async () => {
-  await rafraichirEntete();
+  // L'entête est cosmétique : son échec ne doit pas empêcher l'accueil de s'afficher.
+  await rafraichirEntete().catch((err) => console.error('Entête non rafraîchie :', err));
   await remplacer('accueil');
   await proposerCatalogueLivreSiNouveau();
   initialiserUpdater();
   initialiserAide();
   initialiserTutoriel();
-})();
+})().catch(filetErreur);

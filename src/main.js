@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { openDatabase, closeDatabase, getStats, lireCatalogueId } = require('./db/database');
-const { getPhotosDir, getDataDir, getDocumentsDirAnnee, getDbPath, getSeedPath, getBackupsDir } = require('./db/paths');
+const { getPhotosDir, getDataDir, getDocumentsDirAnnee, getDbPath, getSeedPath, getBackupsDir, ensureDirectories } = require('./db/paths');
 const { seedPhotosIfNeeded } = require('./db/seedPhotos');
 const { choisirPhoto, effacerPhoto, lireFichierImage, lireOriginale, lirePourRecadrage, enregistrerImageRecadree } = require('./photos');
 const { obtenirConfig, mettreAJourConfig } = require('./config');
@@ -71,6 +71,119 @@ const {
   definirArchive, definirRetraitOeuvre, definirRetraitOeuvresLot,
   reserverOeuvre, libererOeuvre,
 } = require('./db/mutations');
+
+// ===== Journal d'erreurs + filets globaux du processus principal =====
+// Toute erreur imprévue est consignée dans Documents\Galeria\erreurs.log et
+// signalée en français, au lieu de laisser l'app disparaître ou rester figée
+// sans explication.
+
+function journaliserErreur(contexte, err) {
+  try {
+    const ligne = `[${new Date().toISOString()}] ${contexte} : ${err && err.stack ? err.stack : String(err)}\n`;
+    fs.appendFileSync(path.join(getDataDir(), 'erreurs.log'), ligne, 'utf-8');
+  } catch {}
+}
+
+// Une seule boîte de dialogue par tranche de 10 s, pour qu'une erreur qui se
+// répète en boucle ne submerge pas l'utilisateur.
+let dernierFiletMs = 0;
+function filetErreurProcessus(origine, err) {
+  journaliserErreur(origine, err);
+  console.error(`${origine} :`, err);
+  const maintenant = Date.now();
+  if (maintenant - dernierFiletMs < 10000) return;
+  dernierFiletMs = maintenant;
+  try {
+    dialog.showErrorBox(
+      'Galeria — erreur imprévue',
+      "Une erreur imprévue est survenue. L'opération en cours a peut-être échoué.\n"
+      + "Si le problème se répète, fermez puis rouvrez l'application.\n\n"
+      + `Détails techniques consignés dans :\n${path.join(getDataDir(), 'erreurs.log')}`
+    );
+  } catch {}
+}
+
+process.on('uncaughtException', (err) => filetErreurProcessus('Erreur non attrapée', err));
+process.on('unhandledRejection', (raison) => filetErreurProcessus('Promesse rejetée non gérée', raison));
+
+// Date réelle d'une sauvegarde : l'horodatage encodé dans son nom de fichier.
+// On ne se fie PAS à la date de modification : Windows la préserve lors d'une
+// copie, donc toutes les sauvegardes portent la date du contenu de la base,
+// pas celle où la copie a été faite. Reconnaît les deux formats de noms
+// (`galerie-AAAA-MM-JJ_HH-MM-SS.db` et `galerie-avant-…-AAAAMMJJ-HHMMSS.db`) ;
+// repli sur la date de modification pour un nom inattendu.
+function dateDeSauvegarde(nomFichier, mtimeMs) {
+  let m = nomFichier.match(/(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})\.db$/);
+  if (!m) m = nomFichier.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})\.db$/);
+  if (m) {
+    const t = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime();
+    if (Number.isFinite(t)) return t;
+  }
+  return mtimeMs;
+}
+
+// Si la base a disparu (ou est un fichier vide) alors que des sauvegardes
+// existent, proposer de restaurer la plus récente au lieu de repartir en
+// silence sur une base vide — l'utilisateur croirait avoir tout perdu.
+function proposerRestaurationSiBaseManquante(splash) {
+  const dbPath = getDbPath();
+  let taille = 0;
+  try {
+    if (fs.existsSync(dbPath)) taille = fs.statSync(dbPath).size;
+  } catch {}
+  if (taille > 0) return;
+
+  // Sauvegardes candidates : dossier par défaut + dossier personnalisé s'il y en a un.
+  const dossiers = [getBackupsDir()];
+  try {
+    const perso = obtenirConfig()?.sauvegardes?.dossier;
+    if (perso && perso.trim()) dossiers.push(perso.trim());
+  } catch {}
+  const candidates = [];
+  for (const dir of dossiers) {
+    try {
+      for (const f of fs.readdirSync(dir)) {
+        if (!/^galerie-.*\.db$/.test(f)) continue;
+        const p = path.join(dir, f);
+        candidates.push({ p, quand: dateDeSauvegarde(f, fs.statSync(p).mtimeMs) });
+      }
+    } catch {}
+  }
+  if (!candidates.length) return; // vraie première installation : rien à proposer
+
+  candidates.sort((a, b) => b.quand - a.quand);
+  const recente = candidates[0];
+  const quand = new Date(recente.quand).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'short' });
+  const options = {
+    type: 'warning',
+    title: 'Galeria',
+    message: 'La base de données est introuvable.',
+    detail:
+      `Une sauvegarde du ${quand} a été trouvée.\n\n`
+      + 'Voulez-vous la restaurer ?\n\n'
+      + 'Si vous continuez sans restaurer, Galeria ouvrira un catalogue vide '
+      + '(vos sauvegardes resteront disponibles).',
+    buttons: ['Restaurer la sauvegarde', 'Continuer sans restaurer'],
+    defaultId: 0,
+    cancelId: 1,
+    noLink: true,
+  };
+  const choix = (splash && !splash.isDestroyed())
+    ? dialog.showMessageBoxSync(splash, options)
+    : dialog.showMessageBoxSync(options);
+  if (choix !== 0) return;
+
+  // Mettre de côté un éventuel fichier vide/abîmé et les restes de journal,
+  // puis restaurer la copie choisie.
+  try {
+    if (fs.existsSync(dbPath)) fs.renameSync(dbPath, `${dbPath}.remplace-${Date.now()}`);
+  } catch {}
+  for (const suffixe of ['-wal', '-shm']) {
+    try { fs.rmSync(dbPath + suffixe, { force: true }); } catch {}
+  }
+  fs.copyFileSync(recente.p, dbPath);
+  console.log(`Base restaurée depuis : ${recente.p}`);
+}
 
 function createSplashWindow() {
   const splash = new BrowserWindow({
@@ -514,7 +627,41 @@ async function verifierMisesAJour({ silencieux = false } = {}) {
   }
 }
 
+// Démarrage protégé : si une étape échoue (base illisible, dossier
+// inaccessible, migration impossible…), on affiche un message clair en
+// français et on quitte proprement — plutôt que de rester figé sur le
+// splash (non fermable) sans explication.
 app.whenReady().then(async () => {
+  try {
+    await demarrerApplication();
+  } catch (err) {
+    journaliserErreur('Échec du démarrage', err);
+    console.error('Échec du démarrage :', err);
+    for (const w of BrowserWindow.getAllWindows()) {
+      try { w.destroy(); } catch {}
+    }
+    try {
+      dialog.showMessageBoxSync({
+        type: 'error',
+        title: 'Galeria',
+        message: "Galeria n'a pas pu démarrer.",
+        detail:
+          'Le plus souvent, la base de données n\'a pas pu être ouverte : '
+          + 'fichier ouvert dans un autre programme, dossier Documents inaccessible, '
+          + 'ou fichier endommagé.\n\n'
+          + 'Que faire : redémarrez l\'ordinateur, puis rouvrez Galeria. '
+          + 'Si le problème persiste, contactez Dave — vos sauvegardes se trouvent '
+          + 'dans Documents\\Galeria\\Sauvegardes.\n\n'
+          + `Détail technique (consigné dans erreurs.log) :\n${String((err && err.message) || err)}`,
+        buttons: ['Fermer'],
+        noLink: true,
+      });
+    } catch {}
+    app.exit(1);
+  }
+});
+
+async function demarrerApplication() {
   protocol.handle('galerie', async (request) => {
     const url = new URL(request.url);
     if (url.host !== 'photos') return new Response('Not Found', { status: 404 });
@@ -543,6 +690,8 @@ app.whenReady().then(async () => {
   };
 
   await progres(12, 'Ouverture de la base de données…');
+  ensureDirectories();
+  proposerRestaurationSiBaseManquante(splash);
   openDatabase();
 
   await progres(20, 'Préparation des photos…');
@@ -799,7 +948,7 @@ app.whenReady().then(async () => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
-});
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

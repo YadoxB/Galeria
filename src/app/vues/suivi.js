@@ -1,6 +1,6 @@
 import { naviguer } from '../router.js';
-import { ech, sansAccents, formaterDate, urlPhoto } from '../commun.js';
-import { confirmer } from '../dialogue.js';
+import { ech, sansAccents, formaterDate, urlPhoto, nettoyerErreur } from '../commun.js';
+import { confirmer, alerter } from '../dialogue.js';
 
 // ===== Icônes (SVG inline, stroke courant) =====
 const ICO = {
@@ -78,11 +78,23 @@ export async function rendreSuivi(contenu) {
   const btComp = contenu.querySelector('#suivi-bt-comp');
 
   async function recharger() {
-    data = await window.api.suiviDonnees();
+    try {
+      data = await window.api.suiviDonnees();
+    } catch (err) {
+      await alerter({
+        type: 'error',
+        title: 'Chargement échoué',
+        message: 'La liste du suivi n\'a pas pu être rechargée.',
+        detail: nettoyerErreur(err),
+      });
+      return;
+    }
     peindre();
   }
 
   // ----- Sauvegardes inline -----
+  // En cas d'échec, on avertit puis on repeint l'état réel (recharger) pour
+  // que l'affichage ne laisse jamais croire qu'un statut a été enregistré.
   async function sauverPrep(o, cle, fait) {
     const payload = {
       sage_cree: o.sage_cree, sage_cree_date: o.sage_cree_date,
@@ -91,7 +103,16 @@ export async function rendreSuivi(contenu) {
     };
     payload[PREP_COL[cle]] = fait ? 1 : 0;
     payload[PREP_DATE[cle]] = fait ? (o[PREP_DATE[cle]] || aujourdHuiISO()) : null;
-    await window.api.oeuvreMajPreparation(o.id, payload);
+    try {
+      await window.api.oeuvreMajPreparation(o.id, payload);
+    } catch (err) {
+      await alerter({
+        type: 'error',
+        title: 'Enregistrement échoué',
+        message: 'Le changement de statut n\'a pas été enregistré.',
+        detail: nettoyerErreur(err),
+      });
+    }
     await recharger();
   }
   async function sauverCycle(v, changes) {
@@ -103,7 +124,16 @@ export async function rendreSuivi(contenu) {
       livraison_date: v.livraison_date || null,
       ...changes,
     };
-    await window.api.venteMajCycle(v.id, payload);
+    try {
+      await window.api.venteMajCycle(v.id, payload);
+    } catch (err) {
+      await alerter({
+        type: 'error',
+        title: 'Enregistrement échoué',
+        message: 'Le changement de statut n\'a pas été enregistré.',
+        detail: nettoyerErreur(err),
+      });
+    }
     await recharger();
   }
 

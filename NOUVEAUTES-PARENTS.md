@@ -50,6 +50,20 @@ en tient compte automatiquement : la galerie récupère d'abord ses frais, puis 
 partage de la commission se fait sur le reste. Pour les autres œuvres, rien ne
 change.
 
+## L'application explique ce qui ne va pas, au lieu de se taire
+
+Nous avons renforcé l'application pour qu'un pépin ne passe plus jamais
+inaperçu :
+
+- Si l'application **ne peut pas démarrer** (par exemple un fichier occupé par
+  un autre programme), elle affiche maintenant **un message qui explique quoi
+  faire**, au lieu de rester bloquée sur l'écran bleu du démarrage.
+- Si le fichier de vos données était **introuvable**, l'application **propose
+  d'elle-même de récupérer la sauvegarde la plus récente** (elle en garde
+  toujours plusieurs, automatiquement).
+- Dans la section **Suivi**, si un changement (paiement reçu, envoi, livraison)
+  ne s'enregistre pas, un message vous le dit tout de suite.
+
 ## Installation et catalogue plus simples
 
 L'installation a été allégée et accélérée. À l'ouverture, si un nouveau
