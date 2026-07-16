@@ -10,6 +10,41 @@ identifiants.
 
 ## [Non publié]
 
+> **Audit de robustesse — Lot 2 « Réglages et compteurs »** (à confirmer par
+> Dave dans l'app). Protège `config.json` — le fichier qui porte les
+> compteurs de numéros de factures — contre la troncature et la perte
+> silencieuse.
+
+### Corrigé
+
+- **Écriture atomique de `config.json`** — le fichier des réglages est écrit
+  dans un fichier temporaire puis basculé d'un coup à sa place
+  (`rename`). Une coupure de courant pendant l'enregistrement laisse soit
+  l'ancien fichier intact, soit le nouveau complet — plus jamais un JSON
+  tronqué (`src/config.js`, `ecrireFichierConfig`, appliqué aussi à la
+  création initiale du fichier).
+- **Config illisible : conservée et signalée.** Si `config.json` est malgré
+  tout illisible, il est **copié** sous `config.json.corrompu-{date}` avant
+  que l'app reparte sur les défauts, et un **message au démarrage** explique
+  la réinitialisation et où retrouver l'ancien fichier — au lieu du repli
+  silencieux qui écrasait tout à la première écriture suivante.
+
+### Ajouté
+
+- **Garde-fou anti-doublons des compteurs de numérotation**
+  (`rehausserCompteursSelonBase`, `src/db/mutations.js`, appelé au
+  démarrage). Si un compteur (facture client, facture artiste, certificat
+  ancien format `C-2026-NNN`) est **en retard sur les numéros déjà utilisés
+  en base** — config perdue, ou « Prochain numéro » abaissé par erreur dans
+  les Réglages — il est rehaussé à max + 1. Plus aucun numéro de facture en
+  double possible, même après une perte de configuration. Le **numéro
+  composé** des nouveaux certificats (`{inventaire}-{seq}-{sage}`) est exclu
+  du calcul (son dernier segment est un n° Sage), et le **compteur
+  d'inventaire n'est pas touché** (numéros historiques Airtable au format
+  libre ; une suggestion erronée y est visible et corrigeable à la saisie).
+  Vérifié par banc d'essai d'intégration (schéma complet, idempotence, ancien
+  préfixe `F-2026` compté, numéro Sage exclu).
+
 > **Audit de robustesse — Lot 1 « Filets de sécurité »**. **Confirmé par Dave
 > dans l'app (2026-07-06)** : démarrage normal, restauration proposée avec la
 > bonne date, restauration complète testée. Premier lot du chantier de

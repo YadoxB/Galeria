@@ -63,6 +63,11 @@ inaperçu :
   toujours plusieurs, automatiquement).
 - Dans la section **Suivi**, si un changement (paiement reçu, envoi, livraison)
   ne s'enregistre pas, un message vous le dit tout de suite.
+- Vos **réglages et vos numéros de factures** sont maintenant à l'épreuve des
+  pannes de courant : même si le fichier des réglages était abîmé,
+  l'application vous préviendrait, garderait l'ancien fichier de côté, et
+  s'assurerait toute seule de **ne jamais émettre deux factures avec le même
+  numéro**.
 
 ## Installation et catalogue plus simples
 

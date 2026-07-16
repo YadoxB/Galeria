@@ -7,7 +7,7 @@ const { openDatabase, closeDatabase, getStats, lireCatalogueId } = require('./db
 const { getPhotosDir, getDataDir, getDocumentsDirAnnee, getDbPath, getSeedPath, getBackupsDir, ensureDirectories } = require('./db/paths');
 const { seedPhotosIfNeeded } = require('./db/seedPhotos');
 const { choisirPhoto, effacerPhoto, lireFichierImage, lireOriginale, lirePourRecadrage, enregistrerImageRecadree } = require('./photos');
-const { obtenirConfig, mettreAJourConfig } = require('./config');
+const { obtenirConfig, mettreAJourConfig, infoConfigCorrompue } = require('./config');
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'galerie', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
@@ -70,6 +70,7 @@ const {
   apercuProchainNumeroInventaire, reserverProchainNumeroInventaire,
   definirArchive, definirRetraitOeuvre, definirRetraitOeuvresLot,
   reserverOeuvre, libererOeuvre,
+  rehausserCompteursSelonBase,
 } = require('./db/mutations');
 
 // ===== Journal d'erreurs + filets globaux du processus principal =====
@@ -693,6 +694,43 @@ async function demarrerApplication() {
   ensureDirectories();
   proposerRestaurationSiBaseManquante(splash);
   openDatabase();
+
+  // Garde-fou anti-doublons : recale les compteurs de numéros de documents
+  // sur ce qui existe déjà en base (protège même si config.json a été perdu).
+  try {
+    rehausserCompteursSelonBase();
+  } catch (err) {
+    journaliserErreur('Rehaussement des compteurs échoué', err);
+  }
+
+  // Si le fichier des réglages était illisible, on a redémarré sur les
+  // défauts : prévenir clairement (l'ancien fichier a été conservé).
+  const cfgCorrompue = infoConfigCorrompue();
+  if (cfgCorrompue) {
+    journaliserErreur(
+      'Configuration illisible au chargement',
+      new Error(`config.json illisible ; copie conservée : ${cfgCorrompue.copie || 'aucune'}`)
+    );
+    const optionsCfg = {
+      type: 'warning',
+      title: 'Galeria',
+      message: "Les réglages n'ont pas pu être lus.",
+      detail:
+        'Le fichier des réglages (config.json) était illisible — probablement '
+        + 'abîmé lors d\'un arrêt brutal de l\'ordinateur. Galeria repart sur '
+        + 'les réglages par défaut.\n\n'
+        + (cfgCorrompue.copie
+          ? `L'ancien fichier a été conservé ici :\n${cfgCorrompue.copie}\n\n`
+          : '')
+        + 'À faire : revérifiez vos Réglages et le Profil de la galerie. '
+        + 'Les compteurs de numéros de factures se réajustent automatiquement '
+        + 'selon les documents déjà créés.',
+      buttons: ['Continuer'],
+      noLink: true,
+    };
+    if (splash && !splash.isDestroyed()) dialog.showMessageBoxSync(splash, optionsCfg);
+    else dialog.showMessageBoxSync(optionsCfg);
+  }
 
   await progres(20, 'Préparation des photos…');
   try {

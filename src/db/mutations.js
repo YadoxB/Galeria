@@ -455,6 +455,77 @@ function formaterNumero(prefixe, n) {
   return p ? `${p}-${num}` : num;
 }
 
+// ===== Garde-fou anti-doublons des compteurs de numérotation =====
+// Appelé au démarrage : si un compteur est en retard sur les numéros déjà
+// utilisés en base (config perdue ou réinitialisée, « prochain numéro »
+// abaissé par erreur dans les Réglages), il est rehaussé à max + 1. Couvre
+// les trois compteurs de documents (facture client, facture artiste,
+// certificat) — un numéro de facture en double est un problème comptable.
+// Le compteur d'inventaire n'est volontairement pas touché : ses numéros
+// historiques (Airtable, par artiste) ont un format libre, et une suggestion
+// d'inventaire erronée est visible et modifiable à la saisie.
+
+function echapperRegex(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Plus grand suffixe numérique des numéros existants (`PREFIXE-NNN` ou `NNN`).
+function maxSuffixeNumerique(rows) {
+  let max = 0;
+  for (const r of rows) {
+    const s = String(r.n || '');
+    const m = s.match(/-(\d+)$/) || s.match(/^(\d+)$/);
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return max;
+}
+
+function rehausserCompteursSelonBase() {
+  const db = openDatabase();
+  const d = obtenirConfig().documents || {};
+  const maj = {};
+
+  const maxFacture = maxSuffixeNumerique(
+    db.prepare('SELECT numero_facture AS n FROM ventes WHERE numero_facture IS NOT NULL').all()
+  );
+  if (maxFacture >= (d.prochain_numero_facture || 1)) {
+    maj.prochain_numero_facture = maxFacture + 1;
+  }
+
+  const maxFactureArtiste = maxSuffixeNumerique(
+    db.prepare('SELECT numero_facture_artiste AS n FROM ventes WHERE numero_facture_artiste IS NOT NULL').all()
+  );
+  if (maxFactureArtiste >= (d.prochain_numero_facture_artiste || 1)) {
+    maj.prochain_numero_facture_artiste = maxFactureArtiste + 1;
+  }
+
+  // Certificats : seuls les numéros à l'ancien format `${prefixe}-NNN`
+  // consomment ce compteur. Le format composé `{inventaire}-{seq}-{sage}`
+  // (ex. MTR1042-003-5567) ne doit surtout pas entrer dans le calcul — son
+  // dernier segment est un numéro Sage, pas un compteur.
+  const prefixeCert = (d.prefixe_certificat || '').trim();
+  if (prefixeCert) {
+    const re = new RegExp(`^${echapperRegex(prefixeCert)}-(\\d+)$`);
+    const rows = db
+      .prepare('SELECT numero_delivrance AS n FROM certificats WHERE numero_delivrance LIKE ?')
+      .all(`${prefixeCert}-%`);
+    let maxCert = 0;
+    for (const r of rows) {
+      const m = String(r.n || '').match(re);
+      if (m) maxCert = Math.max(maxCert, parseInt(m[1], 10));
+    }
+    if (maxCert >= (d.prochain_numero_certificat || 1)) {
+      maj.prochain_numero_certificat = maxCert + 1;
+    }
+  }
+
+  if (Object.keys(maj).length) {
+    mettreAJourConfig({ documents: maj });
+    console.log('Compteurs de numérotation rehaussés selon la base :', maj);
+  }
+  return maj;
+}
+
 function apercuProchainNumeroFacture() {
   const cfg = obtenirConfig();
   return formaterNumero(cfg.documents.prefixe_facture, cfg.documents.prochain_numero_facture);
@@ -928,6 +999,7 @@ module.exports = {
   apercuNumeroCertificat, composerNumeroCertificat,
   apercuProchainNumeroInventaire, reserverProchainNumeroInventaire,
   formaterNumero,
+  rehausserCompteursSelonBase,
   definirArchive,
   definirRetraitOeuvre,
   definirRetraitOeuvresLot,

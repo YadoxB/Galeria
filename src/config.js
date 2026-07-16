@@ -123,13 +123,32 @@ function migrerConfig(cfg) {
 
 let cache = null;
 
+// Renseigné si le dernier chargement a trouvé un config.json illisible :
+// { fichier, copie } (copie = chemin de sauvegarde du fichier abîmé, ou null).
+// Le processus principal le consulte au démarrage pour avertir l'utilisateur.
+let configCorrompue = null;
+
+function infoConfigCorrompue() {
+  return configCorrompue;
+}
+
+// Écriture atomique : on écrit d'abord un fichier temporaire, puis on le
+// bascule à sa place d'un coup (rename). Une coupure de courant laisse soit
+// l'ancien fichier intact, soit le nouveau complet — jamais un JSON tronqué.
+// Crucial : ce fichier porte les compteurs de numéros de factures.
+function ecrireFichierConfig(p, objet) {
+  const tmp = `${p}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(objet, null, 2), 'utf-8');
+  fs.renameSync(tmp, p);
+}
+
 function chargerConfig() {
   if (cache) return cache;
   const p = cheminConfig();
   if (!fs.existsSync(p)) {
     cache = clone(DEFAULTS);
     try { fs.mkdirSync(getDataDir(), { recursive: true }); } catch {}
-    fs.writeFileSync(p, JSON.stringify(cache, null, 2), 'utf-8');
+    ecrireFichierConfig(p, cache);
     return cache;
   }
   try {
@@ -139,6 +158,17 @@ function chargerConfig() {
     return cache;
   } catch (e) {
     console.error('Configuration illisible, valeurs par défaut utilisées :', e);
+    // Conserver le fichier abîmé (une prochaine écriture repartira des
+    // défauts) et le signaler pour que le démarrage avertisse l'utilisateur.
+    let copie = null;
+    try {
+      const stamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
+      copie = `${p}.corrompu-${stamp}`;
+      fs.copyFileSync(p, copie);
+    } catch {
+      copie = null;
+    }
+    configCorrompue = { fichier: p, copie };
     cache = clone(DEFAULTS);
     return cache;
   }
@@ -147,7 +177,7 @@ function chargerConfig() {
 function sauverConfig(nouvelle) {
   const p = cheminConfig();
   fs.mkdirSync(getDataDir(), { recursive: true });
-  fs.writeFileSync(p, JSON.stringify(nouvelle, null, 2), 'utf-8');
+  ecrireFichierConfig(p, nouvelle);
   cache = nouvelle;
 }
 
@@ -162,4 +192,4 @@ function mettreAJourConfig(partiel) {
   return nouveau;
 }
 
-module.exports = { chargerConfig, sauverConfig, obtenirConfig, mettreAJourConfig, DEFAULTS };
+module.exports = { chargerConfig, sauverConfig, obtenirConfig, mettreAJourConfig, infoConfigCorrompue, DEFAULTS };
