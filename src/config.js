@@ -71,6 +71,9 @@ const DEFAULTS = {
   // Tutoriel de bienvenue (#13) : passe à true une fois la visite vue au
   // premier lancement ; rejouable ensuite depuis l'aide.
   tutoriel_vu: false,
+  // Dernière version de l'app démarrée avec cette config. Quand elle change,
+  // une copie de la base est faite AVANT les migrations de schéma.
+  derniere_version_app: '',
   // Catalogue livré : identifiant du catalogue que l'utilisateur a refusé de
   // charger (pour ne pas le reproposer) ; et drapeau « re-déballer les photos »
   // après un chargement de catalogue (relu au prochain démarrage).

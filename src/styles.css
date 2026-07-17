@@ -5336,3 +5336,60 @@ select.lot-in.st-pretee { color: var(--info); }
 .ia-cle-statut { font-size: 12.5px; margin: 10px 0 6px; }
 .ia-cle-statut.ok { color: var(--succes); font-weight: 600; }
 .ia-cle-statut.absent { color: var(--stone); }
+
+/* ====== Sauvegardes : boutons + modale de restauration (Lot 3 audit) ====== */
+
+.ligne-boutons-sauvegardes {
+  display: flex;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+.ligne-boutons-sauvegardes .btn-gros-bento { flex: 1 1 auto; }
+
+.modale-restauration {
+  background: var(--porcelain);
+  border-radius: var(--r-modal);
+  padding: var(--s4);
+  width: min(560px, 92vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  box-shadow: var(--ombre-modal);
+}
+
+.modale-restauration h3 {
+  font-family: var(--font-titre);
+  font-size: 22px;
+  color: var(--gallery-navy);
+  margin: 0;
+}
+
+.liste-restauration {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  border: 1px solid var(--mist);
+  border-radius: var(--r-btn);
+  padding: var(--s1);
+}
+
+.ligne-restauration {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--s2) var(--s3);
+  border: none;
+  border-radius: var(--r-btn);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+}
+.ligne-restauration:hover { background: var(--cloud); }
+
+.ligne-restauration-date { font-weight: 600; }
+.ligne-restauration-detail { font-size: 12px; color: var(--slate); }

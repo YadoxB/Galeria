@@ -165,7 +165,7 @@ Nom, adresse, téléphone, courriel, site web, numéro de TPS, numéro de TVQ, l
 
 **Les sauvegardes**
 - Fréquence des sauvegardes automatiques (toutes les X minutes, configurable).
-- Nombre de copies à conserver avant suppression automatique des plus anciennes (défaut : 30).
+- Nombre de copies à conserver avant suppression automatique des plus anciennes (défaut : 50).
 - Dossier de destination des sauvegardes, avec bouton pour en choisir un autre.
 - Bouton « Sauvegarder maintenant » pour une copie manuelle immédiate.
 

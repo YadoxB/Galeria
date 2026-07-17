@@ -69,6 +69,19 @@ inaperçu :
   s'assurerait toute seule de **ne jamais émettre deux factures avec le même
   numéro**.
 
+## Des sauvegardes plus solides — et restaurables en deux clics
+
+- Chaque copie de sécurité est maintenant **vérifiée** après sa création.
+- Si le dossier de sauvegarde choisi devient inaccessible (une clé USB
+  retirée, par exemple), les copies continuent dans le dossier habituel de
+  l'ordinateur et **l'application vous avertit**.
+- Une copie supplémentaire est faite automatiquement **avant chaque mise à
+  jour** de l'application et **avant chaque import** de données.
+- Nouveau bouton **« Restaurer une sauvegarde… »** dans les Réglages : en cas
+  de pépin, vous choisissez une copie dans la liste (avec sa date), vous
+  confirmez, et l'application redémarre avec vos données retrouvées — sans
+  aucune manipulation de fichiers.
+
 ## Installation et catalogue plus simples
 
 L'installation a été allégée et accélérée. À l'ouverture, si un nouveau

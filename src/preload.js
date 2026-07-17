@@ -35,6 +35,14 @@ contextBridge.exposeInMainWorld('api', {
   importChoisirFichier: () => ipcRenderer.invoke('import:choisir-fichier'),
   importExecuter: (path, mode) => ipcRenderer.invoke('import:executer', path, mode),
   backupNow: () => ipcRenderer.invoke('backup:now'),
+  backupEtat: () => ipcRenderer.invoke('backup:etat'),
+  backupListe: () => ipcRenderer.invoke('backup:liste'),
+  backupRestaurer: (chemin) => ipcRenderer.invoke('backup:restaurer', chemin),
+  onBackupAlerte: (callback) => {
+    const handler = (_e, alerte) => callback(alerte);
+    ipcRenderer.on('backup:alerte', handler);
+    return () => ipcRenderer.removeListener('backup:alerte', handler);
+  },
   artistesListe: (filtres) => ipcRenderer.invoke('artistes:liste', filtres),
   ficheArchiver: (table, id, archive) => ipcRenderer.invoke('fiche:archiver', table, id, archive),
   artisteGet: (id) => ipcRenderer.invoke('artistes:get', id),

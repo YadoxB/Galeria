@@ -14,6 +14,10 @@ protocol.registerSchemesAsPrivileged([
 ]);
 const {
   sauvegarder,
+  sauvegarderSous,
+  sauvegardeAvantMigrationSiNouvelleVersion,
+  listerSauvegardes,
+  obtenirEtatSauvegardes,
   demarrerSauvegardePeriodique,
   arreterSauvegardePeriodique,
 } = require('./db/backup');
@@ -107,22 +111,6 @@ function filetErreurProcessus(origine, err) {
 process.on('uncaughtException', (err) => filetErreurProcessus('Erreur non attrapée', err));
 process.on('unhandledRejection', (raison) => filetErreurProcessus('Promesse rejetée non gérée', raison));
 
-// Date réelle d'une sauvegarde : l'horodatage encodé dans son nom de fichier.
-// On ne se fie PAS à la date de modification : Windows la préserve lors d'une
-// copie, donc toutes les sauvegardes portent la date du contenu de la base,
-// pas celle où la copie a été faite. Reconnaît les deux formats de noms
-// (`galerie-AAAA-MM-JJ_HH-MM-SS.db` et `galerie-avant-…-AAAAMMJJ-HHMMSS.db`) ;
-// repli sur la date de modification pour un nom inattendu.
-function dateDeSauvegarde(nomFichier, mtimeMs) {
-  let m = nomFichier.match(/(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})\.db$/);
-  if (!m) m = nomFichier.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})\.db$/);
-  if (m) {
-    const t = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime();
-    if (Number.isFinite(t)) return t;
-  }
-  return mtimeMs;
-}
-
 // Si la base a disparu (ou est un fichier vide) alors que des sauvegardes
 // existent, proposer de restaurer la plus récente au lieu de repartir en
 // silence sur une base vide — l'utilisateur croirait avoir tout perdu.
@@ -134,26 +122,10 @@ function proposerRestaurationSiBaseManquante(splash) {
   } catch {}
   if (taille > 0) return;
 
-  // Sauvegardes candidates : dossier par défaut + dossier personnalisé s'il y en a un.
-  const dossiers = [getBackupsDir()];
-  try {
-    const perso = obtenirConfig()?.sauvegardes?.dossier;
-    if (perso && perso.trim()) dossiers.push(perso.trim());
-  } catch {}
-  const candidates = [];
-  for (const dir of dossiers) {
-    try {
-      for (const f of fs.readdirSync(dir)) {
-        if (!/^galerie-.*\.db$/.test(f)) continue;
-        const p = path.join(dir, f);
-        candidates.push({ p, quand: dateDeSauvegarde(f, fs.statSync(p).mtimeMs) });
-      }
-    } catch {}
-  }
+  const candidates = listerSauvegardes();
   if (!candidates.length) return; // vraie première installation : rien à proposer
 
-  candidates.sort((a, b) => b.quand - a.quand);
-  const recente = candidates[0];
+  const recente = { p: candidates[0].chemin, quand: candidates[0].quand };
   const quand = new Date(recente.quand).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'short' });
   const options = {
     type: 'warning',
@@ -315,6 +287,16 @@ async function importChoisirFichier(senderWebContents) {
 function importExecuter(filePath, mode) {
   const preview = previewFile(filePath);
   if (!preview.type) throw new Error('Type de fichier non reconnu.');
+  // Copie de sécurité avant d'écrire (promise par l'aide intégrée) : un
+  // mauvais CSV en mode « Mettre à jour » devient réversible. Si la copie
+  // échoue, l'import est refusé — pas d'écriture sans filet.
+  try {
+    sauvegarderSous('avant-import');
+  } catch (e) {
+    throw new Error(
+      `La sauvegarde de sécurité avant l'import a échoué (${e.message}) — l'import a été annulé, rien n'a été modifié.`
+    );
+  }
   const db = openDatabase();
   return preview.type === 'artistes'
     ? importArtistes(db, preview.rows, mode)
@@ -322,8 +304,51 @@ function importExecuter(filePath, mode) {
 }
 
 function sauvegarderEtRetourner() {
-  const dest = sauvegarder();
-  return { path: dest, nom: path.basename(dest), dossier: path.dirname(dest) };
+  const r = sauvegarder();
+  return { path: r.path, nom: path.basename(r.path), dossier: path.dirname(r.path), repli: r.repli };
+}
+
+// Réaction aux sauvegardes périodiques : on n'avertit l'utilisateur que sur
+// CHANGEMENT d'état (ok → échec, ok → repli, retour à la normale), pour
+// qu'un problème durable ne déclenche pas une alerte à chaque heure.
+let dernierEtatBackupNotifie = 'ok';
+function surEvenementSauvegarde(evt) {
+  if (evt.type === 'echec' || evt.type === 'repli') {
+    journaliserErreur(
+      evt.type === 'echec' ? 'Sauvegarde automatique échouée' : 'Sauvegarde automatique en repli',
+      new Error(evt.message || evt.path || '')
+    );
+  }
+  if (evt.type === dernierEtatBackupNotifie) return;
+  dernierEtatBackupNotifie = evt.type;
+  const messages = {
+    echec: {
+      niveau: 'error',
+      titre: 'Sauvegarde automatique échouée',
+      message:
+        'La dernière sauvegarde automatique a échoué. Vos données ne sont pas '
+        + 'perdues, mais aucune nouvelle copie de sécurité n\'a été créée.\n\n'
+        + 'Vérifiez le dossier de sauvegarde dans Réglages → Sauvegardes.',
+    },
+    repli: {
+      niveau: 'warning',
+      titre: 'Dossier de sauvegarde inaccessible',
+      message:
+        'Le dossier de sauvegarde configuré est introuvable (clé USB retirée ?). '
+        + 'Les copies vont pour l\'instant dans le dossier par défaut '
+        + '(Documents\\Galeria\\Sauvegardes).',
+    },
+    ok: {
+      niveau: 'succes',
+      titre: 'Sauvegardes rétablies',
+      message: 'Les sauvegardes automatiques fonctionnent de nouveau normalement.',
+    },
+  };
+  const m = messages[evt.type];
+  if (!m) return;
+  for (const w of BrowserWindow.getAllWindows()) {
+    if (!w.isDestroyed()) w.webContents.send('backup:alerte', m);
+  }
 }
 
 function assemblerPromptIA({ oeuvre, artiste, config, avecImage = true }) {
@@ -693,7 +718,24 @@ async function demarrerApplication() {
   await progres(12, 'Ouverture de la base de données…');
   ensureDirectories();
   proposerRestaurationSiBaseManquante(splash);
+
+  // Copie de la base AVANT les migrations de schéma quand la version de
+  // l'app a changé (galerie-avant-migration-…, conservées : 3 dernières).
+  try {
+    const copieMigration = sauvegardeAvantMigrationSiNouvelleVersion(app.getVersion());
+    if (copieMigration) console.log(`Copie avant migration : ${copieMigration}`);
+  } catch (err) {
+    journaliserErreur('Copie avant migration échouée', err);
+  }
+
   openDatabase();
+  try {
+    if ((obtenirConfig().derniere_version_app || '') !== app.getVersion()) {
+      mettreAJourConfig({ derniere_version_app: app.getVersion() });
+    }
+  } catch (err) {
+    journaliserErreur('Enregistrement de la version échoué', err);
+  }
 
   // Garde-fou anti-doublons : recale les compteurs de numéros de documents
   // sur ce qui existe déjà en base (protège même si config.json a été perdu).
@@ -841,6 +883,54 @@ async function demarrerApplication() {
   ipcMain.handle('import:choisir-fichier', (event) => importChoisirFichier(event.sender));
   ipcMain.handle('import:executer', (_e, filePath, mode) => importExecuter(filePath, mode));
   ipcMain.handle('backup:now', () => sauvegarderEtRetourner());
+  ipcMain.handle('backup:etat', () => obtenirEtatSauvegardes());
+  ipcMain.handle('backup:liste', () => listerSauvegardes());
+  // Restauration d'une sauvegarde choisie dans les Réglages. Étapes :
+  // 1. valider que le chemin vient bien de la liste (pas un chemin arbitraire) ;
+  // 2. vérifier l'intégrité de la copie choisie AVANT de toucher à la base ;
+  // 3. mettre la base actuelle de côté (galerie-avant-restauration-…) ;
+  // 4. remplacer, répondre au renderer, PUIS redémarrer (la réponse part
+  //    avant le relaunch — contrairement au chargement de catalogue).
+  ipcMain.handle('backup:restaurer', (_e, chemin) => {
+    const candidates = listerSauvegardes();
+    const choisie = candidates.find((c) => c.chemin === chemin);
+    if (!choisie) return { ok: false, erreur: 'Cette sauvegarde est introuvable. Rouvre la liste et réessaie.' };
+
+    let d = null;
+    try {
+      d = new (require('node:sqlite').DatabaseSync)(choisie.chemin, { readOnly: true });
+      const r = d.prepare('PRAGMA quick_check').get();
+      if (!r || r.quick_check !== 'ok') {
+        return { ok: false, erreur: 'Cette sauvegarde est abîmée et ne peut pas être restaurée. Choisis-en une autre.' };
+      }
+    } catch (err) {
+      return { ok: false, erreur: 'Cette sauvegarde n\'a pas pu être lue. Choisis-en une autre.' };
+    } finally {
+      try { if (d) d.close(); } catch {}
+    }
+
+    const dbPath = getDbPath();
+    try {
+      if (fs.existsSync(dbPath)) sauvegarderSous('avant-restauration');
+      closeDatabase();
+      for (const suffixe of ['', '-wal', '-shm']) {
+        try { fs.rmSync(dbPath + suffixe, { force: true }); } catch {}
+      }
+      fs.copyFileSync(choisie.chemin, dbPath);
+    } catch (err) {
+      journaliserErreur('Restauration échouée', err);
+      return {
+        ok: false,
+        erreur: 'La restauration a échoué en cours de route. Ne ferme pas l\'app et réessaie ; '
+          + 'en cas de doute, contacte Dave (une copie de secours a été faite avant).',
+      };
+    }
+    setTimeout(() => {
+      app.relaunch();
+      app.exit(0);
+    }, 400);
+    return { ok: true };
+  });
   ipcMain.handle('artistes:liste', (_e, filtres) => listerArtistes(filtres));
   ipcMain.handle('fiche:archiver', (_e, table, id, archive) => definirArchive(table, id, archive));
   ipcMain.handle('artistes:get', (_e, id) => obtenirArtiste(id));
@@ -920,7 +1010,7 @@ async function demarrerApplication() {
   });
   ipcMain.handle('backup:redemarrer', () => {
     arreterSauvegardePeriodique();
-    demarrerSauvegardePeriodique();
+    demarrerSauvegardePeriodique(surEvenementSauvegarde);
   });
   ipcMain.handle('oeuvres:types', () => listerTypesOeuvre());
   ipcMain.handle('oeuvres:mediums', () => listerMediumsOeuvre());
@@ -978,7 +1068,7 @@ async function demarrerApplication() {
   });
   createWindow(splash);
   progres(100, 'Prêt');
-  demarrerSauvegardePeriodique();
+  demarrerSauvegardePeriodique(surEvenementSauvegarde);
 
   // Vérification silencieuse des mises à jour ~5 s après le démarrage,
   // pour laisser l'app finir de se charger.
@@ -997,7 +1087,20 @@ app.on('before-quit', () => {
   try {
     sauvegarder();
   } catch (e) {
+    // Dernier filet avant la fermeture : un échec ici doit être vu, sinon
+    // l'utilisateur peut vivre des mois sans aucune copie de sécurité.
     console.error('Sauvegarde à la fermeture échouée :', e);
+    journaliserErreur('Sauvegarde à la fermeture échouée', e);
+    try {
+      dialog.showErrorBox(
+        'Galeria — sauvegarde échouée',
+        'La copie de sécurité faite à la fermeture a échoué.\n\n'
+        + 'Vos données restent intactes, mais aucune nouvelle sauvegarde '
+        + 'n\'a été créée. Vérifiez le dossier de sauvegarde dans '
+        + 'Réglages → Sauvegardes à la prochaine ouverture.\n\n'
+        + `Détail : ${String(e && e.message || e)}`
+      );
+    } catch {}
   }
   closeDatabase();
 });

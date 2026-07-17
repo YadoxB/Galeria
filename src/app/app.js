@@ -88,6 +88,13 @@ window.addEventListener('error', (e) => {
   filetErreur(e.error || e.message);
 });
 
+// Alertes du système de sauvegarde (émises par le processus principal
+// seulement quand l'état change : échec, repli sur le dossier par défaut,
+// retour à la normale).
+window.api.onBackupAlerte((a) => {
+  alerter({ type: a.niveau || 'warning', title: a.titre || 'Sauvegardes', message: a.message || '' });
+});
+
 (async () => {
   // L'entête est cosmétique : son échec ne doit pas empêcher l'accueil de s'afficher.
   await rafraichirEntete().catch((err) => console.error('Entête non rafraîchie :', err));

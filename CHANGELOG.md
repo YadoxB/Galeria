@@ -10,6 +10,51 @@ identifiants.
 
 ## [Non publié]
 
+> **Audit de robustesse — Lot 3 « Sauvegardes »** (à confirmer par Dave dans
+> l'app). Le filet ultime de l'app devient fiable, vérifié et utilisable par
+> les parents eux-mêmes.
+
+### Ajouté
+
+- **Bouton « Restaurer une sauvegarde… »** (Réglages → Sauvegardes). Liste
+  les copies des deux dossiers (défaut + personnalisé) avec leur **date lue
+  du nom de fichier**, la plus récente en tête. Après confirmation
+  explicite : l'intégrité de la copie choisie est vérifiée **avant** de
+  toucher à la base, la base actuelle est mise de côté
+  (`galerie-avant-restauration-…`), puis l'app redémarre sur les données
+  restaurées. La réponse part au renderer **avant** le redémarrage (pas
+  d'erreur avalée). IPC `backup:liste` / `backup:restaurer` / `backup:etat`.
+- **Ligne d'état des sauvegardes** dans les Réglages : date de la dernière
+  copie sur disque, nombre de copies, et avertissement si le dernier essai a
+  échoué ou est parti en repli.
+- **Copie automatique avant migration.** Quand la version de l'app change
+  (`derniere_version_app` dans la config), la base est copiée **avant**
+  l'ouverture et les migrations de schéma (`galerie-avant-migration-…`,
+  avec ses fichiers `-wal`/`-shm` s'ils existent ; 3 copies conservées).
+- **Sauvegarde réelle avant chaque import CSV** (`galerie-avant-import-…`,
+  5 conservées) — l'aide intégrée la promettait déjà, le code ne la faisait
+  pas. Si cette copie échoue, l'import est **refusé** (pas d'écriture sans
+  filet).
+
+### Corrigé
+
+- **Copie de sauvegarde fiable et vérifiée** (`src/db/backup.js` refondu).
+  La copie passe par **`VACUUM INTO`** (instantané cohérent produit par
+  SQLite, indépendant de l'état du journal WAL, compacté) au lieu d'un
+  `copyFile` dont le checkpoint pouvait échouer silencieusement. Chaque
+  copie est ensuite **vérifiée** (taille non nulle + `PRAGMA quick_check`
+  en lecture seule) ; une copie invalide est supprimée et l'erreur remontée.
+  Deux copies dans la même seconde reçoivent des noms distincts, désormais
+  correctement **datés et couverts par la rotation** (suffixe `-2`).
+- **Échec de sauvegarde impossible à manquer.** Dossier configuré
+  inaccessible (clé USB retirée) → **repli automatique sur le dossier par
+  défaut** + alerte dans l'app. Les alertes ne partent qu'au **changement
+  d'état** (échec, repli, retour à la normale) — pas une par heure. Échec de
+  la sauvegarde de fermeture → boîte de dialogue explicite + `erreurs.log`.
+  « Sauvegarder maintenant » signale aussi le repli.
+- **Défaut de rétention officialisé à 50 copies** (décision Dave 2026-07-17 ;
+  `CLAUDE.md` §11 mis à jour, la doc disait 30).
+
 > **Audit de robustesse — Lot 2 « Réglages et compteurs »** (à confirmer par
 > Dave dans l'app). Protège `config.json` — le fichier qui porte les
 > compteurs de numéros de factures — contre la troncature et la perte

@@ -1,5 +1,5 @@
 import { retour, poserGardien, leverGardien } from '../router.js';
-import { ech, champTexte, champTextarea, champCheckbox } from '../commun.js';
+import { ech, champTexte, champTextarea, champCheckbox, nettoyerErreur } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
 import { chargerConfig, invaliderCacheConfig, rafraichirEntete } from '../marque.js';
 import { fluxImport } from '../flux-import.js';
@@ -17,6 +17,66 @@ const NIVEAUX_ZOOM = [
 function libelleZoomCourant(z) {
   const exact = NIVEAUX_ZOOM.find((n) => Math.abs(n.val - z) < 0.001);
   return exact ? exact.libelle : `Personnalisé (${Math.round(z * 100)} %)`;
+}
+
+function formaterTaille(octets) {
+  if (!Number.isFinite(octets)) return '';
+  if (octets >= 1024 * 1024) return `${(octets / (1024 * 1024)).toFixed(1)} Mo`;
+  return `${Math.max(1, Math.round(octets / 1024))} Ko`;
+}
+
+// Modale de choix d'une sauvegarde à restaurer. Résout avec l'entrée choisie,
+// ou null si l'utilisateur annule (bouton, Échap, clic hors de la fenêtre).
+function ouvrirModaleRestauration(liste, formaterDateHeure) {
+  return new Promise((resolve) => {
+    const MAX_AFFICHEES = 30;
+    const visibles = liste.slice(0, MAX_AFFICHEES);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay-modale';
+    overlay.innerHTML = `
+      <div class="modale-restauration" role="dialog" aria-modal="true">
+        <h3>Restaurer une sauvegarde</h3>
+        <p class="aide-champ">Choisissez la copie à restaurer. La plus récente est en haut.${
+          liste.length > MAX_AFFICHEES ? ` (${MAX_AFFICHEES} plus récentes affichées sur ${liste.length}.)` : ''
+        }</p>
+        <div class="liste-restauration">
+          ${visibles.map((s, i) => `
+            <button type="button" class="ligne-restauration" data-i="${i}">
+              <span class="ligne-restauration-date">${ech(formaterDateHeure(s.quand))}</span>
+              <span class="ligne-restauration-detail">${ech(s.nom)} · ${formaterTaille(s.taille)}${
+                s.personnalise ? ' · dossier personnalisé' : ''
+              }</span>
+            </button>
+          `).join('')}
+        </div>
+        <div class="dialogue-actions">
+          <button type="button" class="btn-action btn-secondaire-action" data-annuler>Annuler</button>
+        </div>
+      </div>
+    `;
+
+    function fermer(valeur) {
+      window.removeEventListener('keydown', onKey);
+      overlay.remove();
+      resolve(valeur);
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        fermer(null);
+      }
+    }
+    overlay.addEventListener('mousedown', (e) => {
+      if (e.target === overlay) fermer(null);
+    });
+    overlay.querySelector('[data-annuler]').addEventListener('click', () => fermer(null));
+    overlay.querySelectorAll('.ligne-restauration').forEach((b) => {
+      b.addEventListener('click', () => fermer(visibles[Number(b.dataset.i)]));
+    });
+    window.addEventListener('keydown', onKey);
+    document.body.appendChild(overlay);
+  });
 }
 
 export async function rendreReglages(contenu) {
@@ -148,7 +208,11 @@ export async function rendreReglages(contenu) {
               </div>
             </div>
             <p class="aide-champ">Anciennes sauvegardes supprimées automatiquement. Minimum 5 minutes.</p>
-            <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-sauvegarder-maintenant">Sauvegarder maintenant</button>
+            <p class="aide-champ" id="backup-etat">Vérification des sauvegardes…</p>
+            <div class="ligne-boutons-sauvegardes">
+              <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-sauvegarder-maintenant">Sauvegarder maintenant</button>
+              <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-restaurer-sauvegarde">Restaurer une sauvegarde…</button>
+            </div>
           </div>
 
           <!-- Affichage (3 col) -->
@@ -301,15 +365,43 @@ export async function rendreReglages(contenu) {
     }
   });
 
+  // ---- État des sauvegardes (dernière copie sur disque) ----
+  const elEtatBackup = contenu.querySelector('#backup-etat');
+  const formaterDateHeure = (t) =>
+    new Date(t).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'short' });
+  async function rafraichirEtatBackup() {
+    if (!elEtatBackup || !document.body.contains(elEtatBackup)) return;
+    try {
+      const [liste, etat] = await Promise.all([window.api.backupListe(), window.api.backupEtat()]);
+      const morceaux = [];
+      if (liste.length) {
+        morceaux.push(`Dernière copie : ${formaterDateHeure(liste[0].quand)} (${liste.length} sur disque).`);
+      } else {
+        morceaux.push('Aucune sauvegarde sur le disque pour l\'instant.');
+      }
+      if (etat.dernier_echec && (!etat.derniere_reussite || etat.dernier_echec > etat.derniere_reussite)) {
+        morceaux.push(`⚠ Dernier essai échoué (${formaterDateHeure(Date.parse(etat.dernier_echec))}).`);
+      } else if (etat.repli) {
+        morceaux.push('⚠ Dossier configuré inaccessible : copies faites dans le dossier par défaut.');
+      }
+      elEtatBackup.textContent = morceaux.join(' ');
+    } catch {
+      elEtatBackup.textContent = 'État des sauvegardes indisponible.';
+    }
+  }
+  rafraichirEtatBackup();
+
   contenu.querySelector('#btn-sauvegarder-maintenant').addEventListener('click', async (e) => {
     const btn = e.currentTarget;
     btn.disabled = true;
     try {
       const r = await window.api.backupNow();
       await alerter({
-        type: 'succes',
+        type: r.repli ? 'warning' : 'succes',
         title: 'Sauvegarde créée',
-        message: 'La sauvegarde a été créée avec succès.',
+        message: r.repli
+          ? 'La sauvegarde a été créée, mais dans le dossier PAR DÉFAUT : le dossier configuré est inaccessible (clé USB retirée ?).'
+          : 'La sauvegarde a été créée et vérifiée avec succès.',
         detail: `Fichier : ${r.nom}\nDossier : ${r.dossier}`,
       });
     } catch (err) {
@@ -317,7 +409,64 @@ export async function rendreReglages(contenu) {
         type: 'error',
         title: 'Erreur de sauvegarde',
         message: 'La sauvegarde a échoué.',
-        detail: err.message,
+        detail: nettoyerErreur(err),
+      });
+    } finally {
+      btn.disabled = false;
+      rafraichirEtatBackup();
+    }
+  });
+
+  // ---- Restauration d'une sauvegarde ----
+  contenu.querySelector('#btn-restaurer-sauvegarde').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try {
+      const liste = await window.api.backupListe();
+      if (!liste.length) {
+        await alerter({
+          type: 'info',
+          title: 'Aucune sauvegarde',
+          message: 'Aucune sauvegarde n\'a été trouvée sur le disque.',
+        });
+        return;
+      }
+      const choix = await ouvrirModaleRestauration(liste, formaterDateHeure);
+      if (!choix) return;
+
+      const i = await confirmer({
+        type: 'warning',
+        title: 'Restaurer cette sauvegarde ?',
+        message: `La base actuelle sera remplacée par la copie du ${formaterDateHeure(choix.quand)}.`,
+        detail:
+          'Tout ce qui a été fait APRÈS cette copie sera perdu. Par sécurité, '
+          + 'une copie de la base actuelle est faite juste avant. '
+          + 'L\'application redémarrera automatiquement.',
+        buttons: ['Restaurer et redémarrer', 'Annuler'],
+        defaultId: 1,
+        cancelId: 1,
+      });
+      if (i !== 0) return;
+
+      const r = await window.api.backupRestaurer(choix.chemin);
+      if (r && r.ok) {
+        await alerter({
+          type: 'succes',
+          title: 'Sauvegarde restaurée',
+          message: 'L\'application va redémarrer sur les données restaurées…',
+        });
+      } else {
+        await alerter({
+          type: 'error',
+          title: 'Restauration impossible',
+          message: (r && r.erreur) || 'Une erreur est survenue.',
+        });
+      }
+    } catch (err) {
+      await alerter({
+        type: 'error',
+        title: 'Restauration impossible',
+        message: nettoyerErreur(err),
       });
     } finally {
       btn.disabled = false;
