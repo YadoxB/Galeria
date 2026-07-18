@@ -98,6 +98,17 @@ commettre :
 - Un montant **collé** depuis un tableur (avec des espaces) qui n'est pas un
   vrai nombre est signalé, au lieu de disparaître sans un mot.
 
+## Des messages plus clairs, des boutons qui répondent
+
+- Quand quelque chose échoue (par exemple si vous essayez de refaire un PDF
+  qui est **encore ouvert dans Acrobat**), l'application l'explique maintenant
+  en français simple, au lieu d'afficher un code technique.
+- Le bouton **« + Ajouter un sujet »** sur une fiche d'œuvre fonctionne de
+  nouveau (une petite fenêtre s'ouvre pour saisir le sujet).
+- Le lien **« Écrire au soutien »** dans l'aide ouvre bien votre logiciel de
+  courriel.
+- Le bouton **« Produire un certificat »** ne peut plus rester sans réaction.
+
 ## Installation et catalogue plus simples
 
 L'installation a été allégée et accélérée. À l'ouverture, si un nouveau

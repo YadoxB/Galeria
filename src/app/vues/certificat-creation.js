@@ -1,4 +1,4 @@
-import { ech, champTexte, champTextarea, champNombreInvalide, soumissionUnique } from '../commun.js';
+import { ech, champTexte, champTextarea, champNombreInvalide, soumissionUnique, nettoyerErreur } from '../commun.js';
 import { alerter } from '../dialogue.js';
 import { chargerConfig } from '../marque.js';
 
@@ -19,20 +19,32 @@ function dateAujourdhui() {
  * @param {{oeuvre: object, vente?: object}} ctx
  * @returns {Promise<object|null>} le certificat créé ou null si annulé
  */
-export function ouvrirCreationCertificat({ oeuvre, vente = null }) {
-  return new Promise(async (resolve) => {
-    const config = await chargerConfig();
-    const signataireDefaut = config.documents.signataire_certificat || '';
-    const valeurDefaut = (vente?.prix_vente ?? oeuvre.prix ?? '').toString();
-    const sageDefaut = (vente?.numero_facture_sage ?? '').toString();
+export async function ouvrirCreationCertificat({ oeuvre, vente = null }) {
+  // Les appels asynchrones se font AVANT de créer la promesse d'interaction :
+  // ainsi un échec de préparation affiche une erreur et renvoie null, au lieu
+  // de laisser une promesse jamais résolue (fenêtre qui ne s'ouvre jamais).
+  let config, apercu;
+  try {
+    config = await chargerConfig();
+    apercu = (await window.api.certificatApercu(oeuvre.id)) || {};
+  } catch (err) {
+    await alerter({
+      type: 'error', title: 'Certificat',
+      message: 'Impossible de préparer le certificat.',
+      detail: nettoyerErreur(err),
+    });
+    return null;
+  }
+  const signataireDefaut = config.documents.signataire_certificat || '';
+  const valeurDefaut = (vente?.prix_vente ?? oeuvre.prix ?? '').toString();
+  const sageDefaut = (vente?.numero_facture_sage ?? '').toString();
+  // Composantes du numéro : n° d'inventaire de l'œuvre + prochain séquentiel
+  // de l'artiste (calculés côté base).
+  const numeroInventaire = (apercu.numero_inventaire || oeuvre.numero_inventaire || '').toString();
+  const prochainSeq = apercu.prochain_seq || 1;
+  const seqAffiche = String(prochainSeq).padStart(3, '0');
 
-    // Composantes du numéro : n° d'inventaire de l'œuvre + prochain séquentiel
-    // de l'artiste (calculés côté base).
-    const apercu = (await window.api.certificatApercu(oeuvre.id)) || {};
-    const numeroInventaire = (apercu.numero_inventaire || oeuvre.numero_inventaire || '').toString();
-    const prochainSeq = apercu.prochain_seq || 1;
-    const seqAffiche = String(prochainSeq).padStart(3, '0');
-
+  return new Promise((resolve) => {
     function composerNumero() {
       // Numéro de délivrance : {n° inventaire}-{séquentiel artiste}-{n° Sage}
       // (sans année). L'année reste dans l'horodatage du nom de fichier.
@@ -154,7 +166,7 @@ export function ouvrirCreationCertificat({ oeuvre, vente = null }) {
         const cree = await window.api.certificatCreer(data);
         fermer(cree);
       } catch (err) {
-        await alerter({ type: 'error', title: 'Enregistrement échoué', message: err.message });
+        await alerter({ type: 'error', title: 'Enregistrement échoué', message: nettoyerErreur(err) });
       }
     }));
 

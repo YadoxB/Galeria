@@ -1,5 +1,5 @@
 import { naviguer } from '../router.js';
-import { ech, pluriel, formaterPrix, formaterDate, badgeStatut, urlPhoto, nomComplet } from '../commun.js';
+import { ech, pluriel, formaterPrix, formaterDate, badgeStatut, urlPhoto, nomComplet, nettoyerErreur } from '../commun.js';
 import { chargerConfig } from '../marque.js';
 
 // Icônes du stepper « Commandes non complétées » (SVG inline, stroke courant)
@@ -136,7 +136,7 @@ export async function rendreAccueil(contenu) {
     remplirOeuvresEnPreparation(contenu, d.oeuvresEnPreparation);
   } catch (err) {
     const zone = contenu.querySelector('#dashboard-stats');
-    if (zone) zone.innerHTML = `<p class="erreur">Impossible de charger le tableau de bord : ${ech(err.message)}</p>`;
+    if (zone) zone.innerHTML = `<p class="erreur">Impossible de charger le tableau de bord : ${ech(nettoyerErreur(err))}</p>`;
   }
 }
 

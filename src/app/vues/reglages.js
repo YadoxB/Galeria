@@ -327,7 +327,7 @@ export async function rendreReglages(contenu) {
           });
         }
       } catch (err) {
-        await alerter({ type: 'error', title: 'Impossible d\'ouvrir le dossier', message: err.message });
+        await alerter({ type: 'error', title: 'Impossible d\'ouvrir le dossier', message: nettoyerErreur(err) });
       }
     });
   }
@@ -533,7 +533,7 @@ export async function rendreReglages(contenu) {
       await alerter({
         type: 'error',
         title: 'Enregistrement échoué',
-        message: err.message,
+        message: nettoyerErreur(err),
       });
     }
   });
@@ -575,7 +575,7 @@ export async function rendreReglages(contenu) {
         await rafraichirStatutCle();
         await alerter({ type: 'succes', title: 'Clé enregistrée', message: 'La clé est chiffrée dans le coffre de Windows.' });
       } catch (err) {
-        await alerter({ type: 'error', title: 'Enregistrement échoué', message: err.message });
+        await alerter({ type: 'error', title: 'Enregistrement échoué', message: nettoyerErreur(err) });
       }
     });
     contenu.querySelector('#btn-ia-cle-suppr').addEventListener('click', async () => {
@@ -590,7 +590,7 @@ export async function rendreReglages(contenu) {
         inCle.value = '';
         await rafraichirStatutCle();
       } catch (err) {
-        await alerter({ type: 'error', title: 'Échec', message: err.message });
+        await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) });
       }
     });
   }

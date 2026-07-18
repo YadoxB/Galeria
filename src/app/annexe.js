@@ -4,7 +4,7 @@
 // la génération manuelle « hors flux ». La numérotation et le rendu PDF se font
 // côté main (IPC pdf:annexe-generer).
 
-import { ech, nomComplet } from './commun.js';
+import { ech, nomComplet, nettoyerErreur } from './commun.js';
 import { confirmer } from './dialogue.js';
 import { calculerPrixSuggere } from './calcul-prix.js';
 
@@ -98,7 +98,7 @@ export async function proposerAnnexeApres({ type, artisteId, oeuvreIds }) {
     if (!artiste || !oeuvres || !oeuvres.length) return null;
     return await produireAnnexe({ artiste, oeuvres, type });
   } catch (err) {
-    await confirmer({ type: 'error', title: 'Échec', message: (err && err.message) || String(err), buttons: ['OK'] });
+    await confirmer({ type: 'error', title: 'Échec', message: nettoyerErreur(err), buttons: ['OK'] });
     return null;
   }
 }
@@ -188,7 +188,7 @@ export function ouvrirAnnexeModale({ artiste, oeuvres, type = 'depot' }) {
       } catch (err) {
         btn.disabled = false;
         btn.textContent = libelle;
-        await confirmer({ type: 'error', title: 'Échec', message: (err && err.message) || String(err), buttons: ['OK'] });
+        await confirmer({ type: 'error', title: 'Échec', message: nettoyerErreur(err), buttons: ['OK'] });
       }
     }
     overlay.querySelector('#annexe-produire').addEventListener('click', (e) => lancer(false, e.currentTarget));

@@ -12,14 +12,38 @@ export function sansAccents(s) {
   return (s ?? '').toString().normalize('NFD').replace(/\p{Mn}/gu, '').toLowerCase();
 }
 
+// Traduit les erreurs techniques courantes (codes système, SQLite) en une
+// phrase claire en français. Renvoie null si le message n'est pas un cas connu
+// (on garde alors le message d'origine, souvent déjà en français).
+function traduireErreurTechnique(msg) {
+  const s = String(msg);
+  if (/\bEBUSY\b|resource busy or locked|\bEPERM\b|\bEACCES\b|being used by another process/i.test(s)) {
+    return "Le fichier est ouvert dans un autre programme (par exemple un PDF dans Acrobat). Ferme-le, puis réessaie.";
+  }
+  if (/\bENOSPC\b|no space left/i.test(s)) {
+    return "Le disque est plein. Libère de l'espace, puis réessaie.";
+  }
+  if (/\bENOENT\b|no such file|cannot find the (file|path)/i.test(s)) {
+    return "Un fichier ou un dossier est introuvable. Il a peut-être été déplacé ou supprimé.";
+  }
+  if (/SQLITE_BUSY|database is locked/i.test(s)) {
+    return "La base de données est occupée un instant. Attends quelques secondes, puis réessaie.";
+  }
+  if (/SQLITE_CORRUPT|file is not a database|malformed|disk I\/O error/i.test(s)) {
+    return "La base de données semble abîmée. Contacte Dave — une sauvegarde peut être restaurée.";
+  }
+  return null;
+}
+
 // Electron préfixe les rejets d'IPC par « Error invoking remote method
-// 'canal:methode': Error: <vrai message> ». On retire ce préfixe technique
-// pour n'afficher que le message métier dans les dialogues.
+// 'canal:methode': Error: <vrai message> ». On retire ce préfixe technique,
+// puis on traduit les codes techniques connus, pour n'afficher qu'un message
+// clair dans les dialogues.
 export function nettoyerErreur(err) {
   const brut = (err && err.message) ? String(err.message) : String(err || 'Erreur inconnue');
   const m = brut.match(/Error invoking remote method '[^']*':\s*(?:Error:\s*)?([\s\S]*)$/);
   const propre = (m ? m[1] : brut).trim();
-  return propre || 'Une erreur est survenue.';
+  return traduireErreurTechnique(propre) || propre || 'Une erreur est survenue.';
 }
 
 export function formaterPrix(n) {
@@ -427,7 +451,7 @@ export async function basculerArchive({ table, fiche, libelleFiche, confirmer, s
     await confirmer({
       type: 'error',
       title: 'Action impossible',
-      message: err.message,
+      message: nettoyerErreur(err),
       buttons: ['OK'],
     });
     return false;

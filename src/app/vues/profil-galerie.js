@@ -1,5 +1,5 @@
 import { retour, poserGardien, leverGardien } from '../router.js';
-import { ech, champTexte } from '../commun.js';
+import { ech, champTexte, nettoyerErreur } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
 import { chargerConfig, invaliderCacheConfig, rafraichirEntete } from '../marque.js';
 
@@ -117,7 +117,7 @@ export async function rendreProfilGalerie(contenu) {
       await alerter({
         type: 'error',
         title: 'Enregistrement échoué',
-        message: err.message,
+        message: nettoyerErreur(err),
       });
     }
   });

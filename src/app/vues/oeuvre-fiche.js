@@ -9,7 +9,7 @@ import {
 } from '../commun.js';
 import { calculerPrixSuggere } from '../calcul-prix.js';
 import { visionner } from '../visionneuse.js';
-import { confirmer, alerter } from '../dialogue.js';
+import { confirmer, alerter, demanderTexte } from '../dialogue.js';
 import { ouvrirCreationCertificat } from './certificat-creation.js';
 import { proposerAnnexeApres } from '../annexe.js';
 import { ouvrirCreationClient } from './vente-fiche.js';
@@ -176,7 +176,7 @@ function ouvrirModaleEnvoyerChatGPT(r) {
             statut.className = 'chatgpt-image-statut erreur';
           }
         } catch (err) {
-          statut.textContent = `Échec : ${err.message}`;
+          statut.textContent = `Échec : ${nettoyerErreur(err)}`;
           statut.className = 'chatgpt-image-statut erreur';
         } finally {
           btnCopierImage.disabled = false;
@@ -862,7 +862,7 @@ export async function rendreOeuvreFiche(contenu, params) {
             type: 'warning',
             title: 'Certificat enregistré, PDF non généré',
             message: `Le certificat ${cree.numero_delivrance} est enregistré mais le PDF n'a pas pu être généré.`,
-            detail: err.message + "\n\nTu peux ré-essayer avec le bouton « Générer le PDF » dans la liste.",
+            detail: nettoyerErreur(err) + "\n\nTu peux ré-essayer avec le bouton « Générer le PDF » dans la liste.",
           });
         }
         await rafraichirCertificats();
@@ -1267,7 +1267,12 @@ export async function rendreOeuvreFiche(contenu, params) {
       const btnAjouter = contenu.querySelector('#btn-sujet-ajouter');
       if (btnAjouter) {
         btnAjouter.addEventListener('click', async () => {
-          const nv = (window.prompt('Nouveau sujet :') || '').trim();
+          const nv = (await demanderTexte({
+            title: 'Ajouter un sujet',
+            message: 'Nom du nouveau sujet :',
+            placeholder: 'ex. Paysage',
+            okLabel: 'Ajouter',
+          }) || '').trim();
           if (!nv) return;
           sujetsActifs.add(nv);
           majChampSujets();

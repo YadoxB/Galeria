@@ -5393,3 +5393,21 @@ select.lot-in.st-pretee { color: var(--info); }
 
 .ligne-restauration-date { font-weight: 600; }
 .ligne-restauration-detail { font-size: 12px; color: var(--slate); }
+
+/* ====== Champ de saisie du dialogue « demanderTexte » (Lot 7 audit) ====== */
+.dialogue-prompt { display: flex; flex-direction: column; gap: var(--s3); }
+.dialogue-prompt-champ {
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--s3);
+  background: var(--porcelain);
+  border: 1px solid var(--mist);
+  border-radius: var(--r-btn);
+  color: var(--ink);
+  font: inherit;
+}
+.dialogue-prompt-champ:focus {
+  outline: none;
+  border-color: var(--warm-gold);
+  box-shadow: 0 0 0 4px rgba(201, 154, 61, 0.18);
+}

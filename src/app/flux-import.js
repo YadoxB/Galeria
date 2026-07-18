@@ -1,4 +1,5 @@
 import { confirmer, alerter } from './dialogue.js';
+import { nettoyerErreur } from './commun.js';
 
 export async function fluxImport() {
   const choix = await window.api.importChoisirFichier();
@@ -50,7 +51,7 @@ export async function fluxImport() {
       type: 'error',
       title: "Erreur pendant l'import",
       message: "L'importation a échoué. Aucun changement n'a été enregistré.",
-      detail: err.message,
+      detail: nettoyerErreur(err),
     });
     return false;
   }

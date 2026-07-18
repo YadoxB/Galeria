@@ -107,3 +107,55 @@ export function confirmer(opts) {
 export function alerter(opts) {
   return confirmer({ ...opts, buttons: ['OK'], defaultId: 0, cancelId: 0 });
 }
+
+// Remplace window.prompt (non supporté par Electron) : une petite fenêtre de
+// saisie interne, au style de l'app. Résout avec le texte saisi (non vide),
+// ou null si annulé (bouton, Échap, clic hors de la fenêtre).
+export function demanderTexte(opts = {}) {
+  return new Promise((resolve) => {
+    const titre = opts.title || '';
+    const message = opts.message || '';
+    const placeholder = opts.placeholder || '';
+    const valeur = opts.value || '';
+    const boutonOk = opts.okLabel || 'OK';
+    const boutonAnnuler = opts.cancelLabel || 'Annuler';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay-modale overlay-dialogue';
+    overlay.innerHTML = `
+      <div class="dialogue" role="dialog" aria-modal="true">
+        <div class="dialogue-entete">
+          ${titre ? `<h3 class="dialogue-titre">${ech(titre)}</h3>` : ''}
+        </div>
+        ${message ? `<p class="dialogue-message">${ech(message)}</p>` : ''}
+        <form class="dialogue-prompt">
+          <input type="text" class="dialogue-prompt-champ" value="${ech(valeur)}" placeholder="${ech(placeholder)}" />
+          <div class="dialogue-actions">
+            <button type="button" class="btn-action btn-secondaire-action" data-annuler>${ech(boutonAnnuler)}</button>
+            <button type="submit" class="btn-action btn-principal">${ech(boutonOk)}</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    const champ = overlay.querySelector('.dialogue-prompt-champ');
+    function fermer(v) {
+      window.removeEventListener('keydown', onKey);
+      overlay.remove();
+      resolve(v);
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); fermer(null); }
+    }
+    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) fermer(null); });
+    overlay.querySelector('[data-annuler]').addEventListener('click', () => fermer(null));
+    overlay.querySelector('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const v = champ.value.trim();
+      fermer(v || null);
+    });
+    window.addEventListener('keydown', onKey);
+    document.body.appendChild(overlay);
+    champ.focus();
+  });
+}

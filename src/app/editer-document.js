@@ -4,6 +4,7 @@
 //        { type:'lettre', vente_id }, { type:'certificat', certificat_id },
 //        { type:'facture-artiste', vente_id }, { type:'catalogue', artiste_id }.
 import { confirmer } from './dialogue.js';
+import { nettoyerErreur } from './commun.js';
 
 export async function lancerEditionDocument(spec) {
   try {
@@ -20,7 +21,7 @@ export async function lancerEditionDocument(spec) {
     if (rep === 0) { try { await window.api.pdfOuvrir(res.pdf_path); } catch {} }
     return res;
   } catch (err) {
-    await confirmer({ type: 'error', title: 'Échec', message: (err && err.message) || String(err), buttons: ['OK'] });
+    await confirmer({ type: 'error', title: 'Échec', message: nettoyerErreur(err), buttons: ['OK'] });
     return null;
   }
 }

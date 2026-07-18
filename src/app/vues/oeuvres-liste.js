@@ -421,7 +421,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
           if (idx >= 0) oeuvres.splice(idx, 1);
           dessiner();
         } catch (err) {
-          await alerter({ type: 'error', title: 'Suppression refusée', message: err.message });
+          await alerter({ type: 'error', title: 'Suppression refusée', message: nettoyerErreur(err) });
         }
       }
     });

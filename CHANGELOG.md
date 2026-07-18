@@ -10,6 +10,38 @@ identifiants.
 
 ## [Non publié]
 
+> **Audit de robustesse — Lot 7 « Messages clairs & clics qui répondent »**
+> (à confirmer par Dave dans l'app). Rend les pépins visibles et
+> compréhensibles, et répare des boutons qui ne faisaient rien.
+
+### Corrigé
+
+- **Erreurs techniques traduites en français.** `nettoyerErreur`
+  (`src/app/commun.js`) reconnaît désormais les cas courants et affiche une
+  phrase claire : fichier ouvert dans un autre programme (EBUSY/EPERM — un PDF
+  dans Acrobat), disque plein (ENOSPC), fichier introuvable (ENOENT), base
+  occupée (SQLITE_BUSY) ou abîmée (SQLITE_CORRUPT). Bénéficie à tous les
+  dialogues d'erreur de l'app.
+- **Messages d'erreur bruts remplacés partout.** Les ~15 endroits qui
+  affichaient encore le message technique d'origine (Réglages, Profil,
+  édition en lot, import, annexes, éditeur de document, rapport, tableau de
+  bord, routeur, certificat…) passent maintenant par `nettoyerErreur`.
+- **« Produire un certificat » ne peut plus geler.** La préparation
+  (chargement de la config + aperçu du numéro) se fait avant d'ouvrir la
+  fenêtre ; un échec affiche une erreur et referme proprement, au lieu de
+  laisser un bouton sans réponse (`ouvrirCreationCertificat` restructurée,
+  `src/app/vues/certificat-creation.js`).
+- **Bouton « Écrire au soutien » réparé.** Le handler d'ouverture d'URL
+  accepte désormais les liens `mailto:` (`src/main.js`), qui étaient rejetés.
+- **Bouton « + Ajouter un sujet » réparé.** Il utilisait `window.prompt`, que
+  l'application Electron ne supporte pas (clic sans effet). Remplacé par une
+  petite fenêtre de saisie interne au style de l'app (nouveau
+  `demanderTexte`, `src/app/dialogue.js`).
+- **Sélecteurs d'œuvre et de client pendant une vente** : un échec de
+  chargement affiche un message dans la zone au lieu d'une liste vide sans
+  explication (`src/app/vues/vente-fiche.js`). Les autres clics dont l'appel
+  échoue sont déjà rattrapés par le filet global d'erreur du Lot 1.
+
 > **Audit de robustesse — Lot 6 « Validation des saisies »** (à confirmer par
 > Dave dans l'app). Empêche les mauvaises données d'entrer, en langage clair
 > et sans jargon.

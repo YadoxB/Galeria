@@ -1,4 +1,5 @@
 import { majSidebarActif } from './marque.js';
+import { nettoyerErreur } from './commun.js';
 
 const vues = new Map();
 let pile = [];
@@ -80,7 +81,7 @@ async function rendre(fn, params) {
     await fn(contenu, params);
     contenu.scrollTop = 0;
   } catch (err) {
-    contenu.innerHTML = `<p class="erreur">Erreur d'affichage : ${err.message}</p>`;
+    contenu.innerHTML = `<p class="erreur">Erreur d'affichage : ${nettoyerErreur(err)}</p>`;
     console.error(err);
   }
   const nomCourant = pile.length > 0 ? pile[pile.length - 1].nom : '';

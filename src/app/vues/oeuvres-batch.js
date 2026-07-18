@@ -1,7 +1,7 @@
 // Éditeur « Édition en lot » des œuvres : tableur multi-lignes + remplissage
 // groupé sur une sélection. Monté dans un hôte par oeuvres-liste.js.
 // Validé d'abord en démo standalone : demos/edition-batch.html.
-import { ech, sansAccents, STATUTS, pluriel } from '../commun.js';
+import { ech, sansAccents, STATUTS, pluriel, nettoyerErreur } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
 
 // Colonnes du tableur. `col` = nom de colonne en base (= data-champ, = clé du
@@ -316,7 +316,7 @@ export function monterEditeurLot({ hote, oeuvres, types = [], surFermer }) {
       majSave();
       toast(`${pluriel(res.modifiees || 0, 'œuvre')} enregistrée(s) ✓`);
     } catch (err) {
-      await alerter({ type: 'error', title: 'Échec de l\'enregistrement', message: err.message });
+      await alerter({ type: 'error', title: 'Échec de l\'enregistrement', message: nettoyerErreur(err) });
     } finally {
       btn.disabled = false;
     }

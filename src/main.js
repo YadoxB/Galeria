@@ -853,7 +853,8 @@ async function demarrerApplication() {
     }
   });
   ipcMain.handle('app:ouvrir-url', (_e, url) => {
-    if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) {
+    // http(s) pour les liens web, mailto: pour « Écrire au soutien ».
+    if (typeof url !== 'string' || !/^(https?:\/\/|mailto:)/i.test(url)) {
       return { ok: false, erreur: 'URL invalide' };
     }
     shell.openExternal(url);

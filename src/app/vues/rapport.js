@@ -222,7 +222,7 @@ export async function rendreRapport(contenu) {
       peindreEcran(r);
       peindreImpression(r);
     } catch (err) {
-      ecran.innerHTML = `<p class="erreur">Erreur : ${ech(err.message)}</p>`;
+      ecran.innerHTML = `<p class="erreur">Erreur : ${ech(nettoyerErreur(err))}</p>`;
     }
   }
 

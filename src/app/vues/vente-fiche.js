@@ -604,7 +604,7 @@ export async function rendreVenteFiche(contenu, params) {
               type: 'warning',
               title: 'Certificat enregistré, PDF non généré',
               message: `Le certificat ${cree.numero_delivrance} est enregistré mais le PDF n'a pas pu être généré.`,
-              detail: err.message + "\n\nTu peux ré-essayer avec le bouton « Générer le PDF » dans la liste.",
+              detail: nettoyerErreur(err) + "\n\nTu peux ré-essayer avec le bouton « Générer le PDF » dans la liste.",
             });
           }
           await rafraichirCertificatsVente();
@@ -1094,7 +1094,14 @@ export async function rendreVenteFiche(contenu, params) {
       </div>
     `;
 
-    const oeuvres = await window.api.oeuvresListe({ statut: 'disponible' });
+    let oeuvres;
+    try {
+      oeuvres = await window.api.oeuvresListe({ statut: 'disponible' });
+    } catch (err) {
+      const res0 = contenu.querySelector('#res-oeuvre');
+      if (res0) res0.innerHTML = `<p class="liste-vide">La liste des œuvres n'a pas pu être chargée. ${ech(nettoyerErreur(err))}</p>`;
+      return;
+    }
     const input = contenu.querySelector('#rech-oeuvre');
     const res = contenu.querySelector('#res-oeuvre');
 
@@ -1213,7 +1220,14 @@ export async function rendreVenteFiche(contenu, params) {
       </div>
     `;
 
-    const clients = await window.api.clientsListe();
+    let clients;
+    try {
+      clients = await window.api.clientsListe();
+    } catch (err) {
+      const res0 = contenu.querySelector('#res-client');
+      if (res0) res0.innerHTML = `<p class="liste-vide">La liste des clients n'a pas pu être chargée. ${ech(nettoyerErreur(err))}</p>`;
+      return;
+    }
     const input = contenu.querySelector('#rech-client');
     const res = contenu.querySelector('#res-client');
 
