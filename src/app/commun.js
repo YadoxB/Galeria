@@ -356,6 +356,36 @@ export function nomComplet(c) {
   return parts.length ? parts.join(' ') : (c?.nom || '');
 }
 
+// Repère un champ numérique dont la saisie est illisible : le navigateur laisse
+// alors `value` vide (le nombre serait effacé en silence à l'enregistrement).
+// Cas typique : « 1 234,56 » collé depuis Excel. Renvoie le premier champ
+// fautif (pour message + focus), ou null si tout est bon.
+export function champNombreInvalide(form) {
+  for (const inp of form.querySelectorAll('input[type="number"]')) {
+    if (inp.validity && inp.validity.badInput) return inp;
+  }
+  return null;
+}
+
+// Emballe un gestionnaire de soumission pour empêcher la double-soumission
+// (double-clic, double Entrée) : les soumissions concurrentes sont ignorées et
+// le bouton d'envoi est désactivé pendant tout le traitement asynchrone.
+export function soumissionUnique(handler) {
+  let enCours = false;
+  return async (e) => {
+    if (enCours) { e.preventDefault(); return; }
+    enCours = true;
+    const btn = e.submitter || (e.target && e.target.querySelector && e.target.querySelector('button[type="submit"]'));
+    if (btn) btn.disabled = true;
+    try {
+      await handler(e);
+    } finally {
+      enCours = false;
+      if (btn) btn.disabled = false;
+    }
+  };
+}
+
 // ====== Archivage ======
 
 const ETIQUETTES_ARCHIVE = {

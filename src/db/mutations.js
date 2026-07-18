@@ -20,6 +20,22 @@ const entier = (v) => {
   return Number.isInteger(n) ? n : null;
 };
 
+// ===== Garde-fous de valeurs (dernier rempart : protège toutes les voies,
+// y compris l'édition en lot et un futur import) =====
+// Rejette une valeur négative avec un message clair nommant le champ. `valeur`
+// est déjà normalisée (null accepté = champ laissé vide).
+const exigerPositifOuNul = (valeur, libelle) => {
+  if (valeur != null && valeur < 0) {
+    throw new Error(`${libelle} : une valeur négative n'est pas permise.`);
+  }
+};
+// Une année saisie doit être un nombre à quatre chiffres plausible.
+const exigerAnneePlausible = (annee) => {
+  if (annee != null && (annee < 1000 || annee > 2999)) {
+    throw new Error("L'année doit être un nombre à quatre chiffres (par exemple 2024).");
+  }
+};
+
 const STATUTS_VALIDES = new Set(['disponible', 'reserve', 'vendu', 'pretee']);
 
 // ===== Dérivés des dimensions (mêmes règles que le formulaire d'œuvre) =====
@@ -210,6 +226,12 @@ function _valeursOeuvre(data) {
   if (statut && !STATUTS_VALIDES.has(statut)) {
     throw new Error(`Statut invalide : ${statut}.`);
   }
+  exigerPositifOuNul(nombre(data.prix), 'Prix');
+  exigerPositifOuNul(nombre(data.frais_production), 'Frais de production');
+  exigerPositifOuNul(nombre(data.hauteur), 'Hauteur');
+  exigerPositifOuNul(nombre(data.largeur), 'Largeur');
+  exigerPositifOuNul(nombre(data.profondeur), 'Profondeur');
+  exigerAnneePlausible(entier(data.annee));
   const cols = COLONNES_OEUVRE.map(([c]) => c);
   const valeurs = COLONNES_OEUVRE.map(([c, n]) => n(data[c]));
   const idxStatut = cols.indexOf('statut');
@@ -287,7 +309,13 @@ function modifierOeuvresLot(modifs) {
           continue;
         }
         if (col === 'hauteur' || col === 'largeur' || col === 'profondeur') toucheDim = true;
-        set(col, norm(brut));
+        const valNorm = norm(brut);
+        if (col === 'prix') exigerPositifOuNul(valNorm, 'Prix');
+        if (col === 'hauteur') exigerPositifOuNul(valNorm, 'Hauteur');
+        if (col === 'largeur') exigerPositifOuNul(valNorm, 'Largeur');
+        if (col === 'profondeur') exigerPositifOuNul(valNorm, 'Profondeur');
+        if (col === 'annee') exigerAnneePlausible(valNorm);
+        set(col, valNorm);
       }
 
       if (toucheDim) {
@@ -593,6 +621,10 @@ function _valeursVente(data) {
   if (!vide(data.date_vente)) throw new Error('La date de vente est requise.');
   const prix = nombre(data.prix_vente);
   if (prix == null || prix < 0) throw new Error('Le prix de vente est requis et doit être positif ou nul.');
+  exigerPositifOuNul(nombre(data.rabais_artiste), 'Rabais artiste');
+  exigerPositifOuNul(nombre(data.rabais_galerie), 'Rabais galerie');
+  exigerPositifOuNul(nombre(data.tps), 'TPS');
+  exigerPositifOuNul(nombre(data.tvq), 'TVQ');
   const cols = COLONNES_VENTE.map(([c]) => c);
   const valeurs = COLONNES_VENTE.map(([c, n]) => n(data[c]));
   // Forcer TPS/TVQ et rabais à 0 plutôt que null pour cohérence avec NOT NULL
@@ -676,8 +708,25 @@ function modifierVente(id, data) {
       `UPDATE ventes SET ${set}, modifie_le = datetime('now') WHERE id = ?`
     ).run(...valeurs, id);
 
-    // Si on change d'œuvre : remettre l'ancienne dispo si plus aucune vente ne la lie ; passer la nouvelle à vendu
+    // Si on change d'œuvre : appliquer à la nouvelle les mêmes garde-fous que
+    // la création (existe, pas déjà vendue, créée dans Sage), remettre
+    // l'ancienne dispo si plus aucune vente ne la lie, puis passer la nouvelle
+    // à vendu en effaçant une éventuelle réservation résiduelle.
     if (ancienneOeuvreId !== nouvelleOeuvreId) {
+      const nouvelle = db.prepare('SELECT id, statut, sage_cree FROM oeuvres WHERE id = ?').get(nouvelleOeuvreId);
+      if (!nouvelle) throw new Error('Œuvre introuvable.');
+      if (nouvelle.statut === 'vendu') {
+        throw new Error("Cette œuvre est déjà marquée comme vendue. Vérifie la liste des ventes existantes.");
+      }
+      if (!nouvelle.sage_cree) {
+        const nomFichier = construireNomFichier(obtenirOeuvre(nouvelleOeuvreId));
+        const ref = nomFichier ? `\n\nNom de référence (= item Sage / nom de fichier photo) :\n${nomFichier}` : '';
+        throw new Error(
+          "Cette œuvre n'a pas été créée dans Sage 50. "
+          + "Crée-la dans Sage, puis coche « Créée dans Sage » sur sa fiche avant d'enregistrer la vente."
+          + ref
+        );
+      }
       const nbAutres = db
         .prepare('SELECT COUNT(*) AS n FROM ventes WHERE oeuvre_id = ? AND id <> ?')
         .get(ancienneOeuvreId, id).n;
@@ -685,7 +734,7 @@ function modifierVente(id, data) {
         db.prepare(`UPDATE oeuvres SET statut = 'disponible', modifie_le = datetime('now') WHERE id = ?`)
           .run(ancienneOeuvreId);
       }
-      db.prepare(`UPDATE oeuvres SET statut = 'vendu', modifie_le = datetime('now') WHERE id = ?`)
+      db.prepare(`UPDATE oeuvres SET statut = 'vendu', reservation_client_id = NULL, reservation_date = NULL, reservation_echeance = NULL, reservation_notes = NULL, modifie_le = datetime('now') WHERE id = ?`)
         .run(nouvelleOeuvreId);
     }
 
@@ -865,6 +914,7 @@ function _valeursCertificat(data) {
   if (!entier(data.oeuvre_id)) throw new Error("Une œuvre doit être choisie pour le certificat.");
   if (!vide(data.numero_delivrance)) throw new Error("Le numéro de délivrance est requis.");
   if (!vide(data.date_delivrance)) throw new Error("La date de délivrance est requise.");
+  exigerPositifOuNul(nombre(data.valeur), 'Valeur');
   const cols = COLONNES_CERTIFICAT.map(([c]) => c);
   const valeurs = COLONNES_CERTIFICAT.map(([c, n]) => n(data[c]));
   return { cols, valeurs };
@@ -908,6 +958,7 @@ function creerCertificat(data) {
   if (!dateDelivrance) throw new Error("La date de délivrance est requise.");
   const numeroSage = vide(data.numero_sage);
   if (!numeroSage) throw new Error("Le numéro de facture (Sage) est requis pour produire un certificat.");
+  exigerPositifOuNul(nombre(data.valeur), 'Valeur');
 
   // Séquentiel par artiste : MAX existant + 1 (les anciens « C- » ont seq NULL → 0).
   const row = db.prepare(`

@@ -6,6 +6,7 @@ import {
   champPays, champSubdivision, brancherChangementPays,
   parserNumerosTaxes, urlPhoto, sansAccents, nomComplet,
   badgeArchive, boutonArchive, basculerArchive, nettoyerErreur,
+  champNombreInvalide, soumissionUnique,
 } from '../commun.js';
 import { parserCotes, TAILLES_COTES, formaterMontant } from '../calcul-prix.js';
 import { ouvrirAnnexeModale } from '../annexe.js';
@@ -990,8 +991,19 @@ export async function rendreArtisteFiche(contenu, params) {
     if (elPrenom) elPrenom.addEventListener('input', majPrefixe);
     if (elNom)    elNom.addEventListener('input', majPrefixe);
 
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', soumissionUnique(async (e) => {
       e.preventDefault();
+      const champInvalide = champNombreInvalide(form);
+      if (champInvalide) {
+        await confirmer({
+          type: 'warning', title: 'Nombre non valide',
+          message: 'Un montant de cote saisi n\'est pas un nombre valide.',
+          detail: 'Vérifie le champ surligné. Écris le nombre sans espaces.',
+          buttons: ['OK'],
+        });
+        champInvalide.focus();
+        return;
+      }
       const fd = new FormData(form);
       const data = Object.fromEntries(fd);
       data.percoit_taxes = form.elements.percoit_taxes.checked;
@@ -1096,7 +1108,7 @@ export async function rendreArtisteFiche(contenu, params) {
           buttons: ['OK'],
         });
       }
-    });
+    }));
 
     contenu.querySelector('#btn-annuler').addEventListener('click', async () => {
       if (modifie || nouveau) {

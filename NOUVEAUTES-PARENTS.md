@@ -82,6 +82,22 @@ inaperçu :
   confirmez, et l'application redémarre avec vos données retrouvées — sans
   aucune manipulation de fichiers.
 
+## Des saisies mieux protégées
+
+L'application vous évite maintenant les erreurs de saisie les plus faciles à
+commettre :
+
+- Un **prix ou un montant négatif**, ou une **année farfelue**, sont refusés
+  avec un message clair qui indique le champ à corriger.
+- Si vous enregistrez une **vente à 0 $**, l'application demande d'abord si
+  c'est bien voulu.
+- Si vous **cliquez deux fois** sur « Enregistrer », vous n'obtenez plus deux
+  fiches identiques par accident.
+- En **modifiant plusieurs œuvres à la fois**, si vous quittez la page sans
+  enregistrer, l'application vous prévient au lieu de tout perdre.
+- Un montant **collé** depuis un tableur (avec des espaces) qui n'est pas un
+  vrai nombre est signalé, au lieu de disparaître sans un mot.
+
 ## Installation et catalogue plus simples
 
 L'installation a été allégée et accélérée. À l'ouverture, si un nouveau

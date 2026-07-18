@@ -5,6 +5,7 @@ import {
   champPays, champSubdivision, brancherChangementPays,
   formaterPrix, formaterDate, formaterTelephone, nomComplet, urlPhoto,
   badgeArchive, boutonArchive, basculerArchive, nettoyerErreur,
+  soumissionUnique,
 } from '../commun.js';
 import { confirmer } from '../dialogue.js';
 
@@ -424,7 +425,7 @@ export async function rendreClientFiche(contenu, params) {
 
     brancherChangementPays(form, { paysNom: 'pays', subNom: 'province', subZoneId: 'zone-province-client' });
 
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', soumissionUnique(async (e) => {
       e.preventDefault();
       const fd = new FormData(form);
       const data = Object.fromEntries(fd);
@@ -449,7 +450,7 @@ export async function rendreClientFiche(contenu, params) {
           message: nettoyerErreur(err), buttons: ['OK'],
         });
       }
-    });
+    }));
 
     contenu.querySelector('#btn-annuler').addEventListener('click', async () => {
       if (modifie || nouveau) {

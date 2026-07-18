@@ -1,4 +1,4 @@
-import { naviguer, remplacerCourant } from '../router.js';
+import { naviguer, remplacerCourant, poserGardien, leverGardien } from '../router.js';
 import {
   ech, sansAccents, formaterPrix, badgeStatut, pluriel, STATUTS, urlPhoto,
   gabaritEntetePage, gabaritBoutonFiltres, badgeArchive, nomComplet,
@@ -661,17 +661,30 @@ export async function rendreOeuvresListe(contenu, params = {}) {
       vueListeEl.classList.add('mode-lot');
       conteneur.className = '';
       conteneur.innerHTML = '';
-      monterEditeurLot({
+      const editeur = monterEditeurLot({
         hote: conteneur,
         oeuvres,
         types,
         surFermer: async () => {
+          leverGardien();
           vueListeEl.classList.remove('mode-lot');
           const filtresMaj = { inclureArchives };
           if (params.artiste_id != null) filtresMaj.artiste_id = params.artiste_id;
           oeuvres = await window.api.oeuvresListe(filtresMaj);
           dessiner();
         },
+      });
+      // Garde-fou : quitter la page (sidebar, etc.) pendant une édition en lot
+      // non enregistrée demande confirmation au lieu de tout perdre.
+      poserGardien(async () => {
+        if (!editeur || !editeur.aDesModifs()) return true;
+        const r = await confirmer({
+          type: 'warning', title: 'Quitter sans enregistrer ?',
+          message: 'Des œuvres modifiées en lot ne sont pas encore enregistrées.',
+          detail: 'Si tu quittes maintenant, ces changements seront perdus.',
+          buttons: ['Quitter sans enregistrer', 'Rester'], defaultId: 1, cancelId: 1,
+        });
+        return r === 0;
       });
     });
   }

@@ -4,6 +4,7 @@ import {
   champTexte, champTextarea, champCheckbox, champSelect,
   champPays, champSubdivision, brancherChangementPays,
   formaterPrix, formaterDate, nomComplet, urlPhoto, nettoyerErreur,
+  champNombreInvalide, soumissionUnique,
 } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
 import { chargerConfig } from '../marque.js';
@@ -919,7 +920,7 @@ export async function rendreVenteFiche(contenu, params) {
       else sortirEdition();
     });
 
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', soumissionUnique(async (e) => {
       e.preventDefault();
       const fd = new FormData(form);
       const val = (k) => (fd.get(k) ?? '').toString().trim();
@@ -927,6 +928,17 @@ export async function rendreVenteFiche(contenu, params) {
         const x = Number(val(k));
         return Number.isFinite(x) ? x : null;
       };
+
+      const champInvalide = champNombreInvalide(form);
+      if (champInvalide) {
+        await alerter({
+          type: 'warning', title: 'Nombre non valide',
+          message: 'Un montant saisi n\'est pas un nombre valide.',
+          detail: 'Vérifie le champ surligné. Écris le nombre sans espaces (par exemple 1234,56 ou 1234.56).',
+        });
+        champInvalide.focus();
+        return;
+      }
 
       if (!v.oeuvre_id) {
         await alerter({ type: 'warning', title: 'Œuvre manquante', message: 'Choisis une œuvre avant d\'enregistrer.' });
@@ -942,6 +954,30 @@ export async function rendreVenteFiche(contenu, params) {
       const tvqActif = form.elements.tvq_actif.checked;
       const tpsTaux = numVal('tps_taux') ?? 0;
       const tvqTaux = numVal('tvq_taux') ?? 0;
+
+      // Bornes des taux (0 à 100 %) : un taux hors bornes fausserait la facture.
+      for (const [taux, nom] of [[tpsTaux, 'TPS'], [tvqTaux, 'TVQ']]) {
+        if (taux < 0 || taux > 100) {
+          await alerter({
+            type: 'warning', title: 'Taux de taxe non valide',
+            message: `Le taux de ${nom} doit être compris entre 0 et 100 %.`,
+          });
+          return;
+        }
+      }
+
+      // Vente à 0 $ : demander confirmation (prix oublié ?).
+      if (prix === 0) {
+        const rep = await confirmer({
+          type: 'warning', title: 'Vente à 0 $ ?',
+          message: 'Le prix de vente est de 0 $.',
+          detail: 'Est-ce bien voulu (don, échange…) ? Sinon, annule et saisis le prix.',
+          buttons: ['Enregistrer à 0 $', 'Annuler'],
+          defaultId: 1, cancelId: 1,
+        });
+        if (rep !== 0) return;
+      }
+
       const tps = calculerTaxe(prix, tpsActif, tpsTaux);
       const tvq = calculerTaxe(prix, tvqActif, tvqTaux);
 
@@ -1011,7 +1047,7 @@ export async function rendreVenteFiche(contenu, params) {
       } catch (err) {
         await alerter({ type: 'error', title: 'Enregistrement échoué', message: nettoyerErreur(err) });
       }
-    });
+    }));
   }
 
   // ===== Sélecteur d'œuvre =====
@@ -1356,7 +1392,7 @@ export function ouvrirCreationClient() {
     brancherChangementPays(form, { paysNom: 'pays', subNom: 'province', subZoneId: 'zone-province-client-rapide' });
 
     overlay.querySelector('#btn-annuler-cli').addEventListener('click', () => fermer(null));
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', soumissionUnique(async (e) => {
       e.preventDefault();
       const fd = new FormData(form);
       const val = (k) => (fd.get(k) ?? '').toString().trim();
@@ -1386,7 +1422,7 @@ export function ouvrirCreationClient() {
       } catch (err) {
         await alerter({ type: 'error', title: 'Création échouée', message: nettoyerErreur(err) });
       }
-    });
+    }));
 
     overlay.querySelector('#f-prenom')?.focus();
   });

@@ -10,6 +10,39 @@ identifiants.
 
 ## [Non publié]
 
+> **Audit de robustesse — Lot 6 « Validation des saisies »** (à confirmer par
+> Dave dans l'app). Empêche les mauvaises données d'entrer, en langage clair
+> et sans jargon.
+
+### Corrigé
+
+- **Valeurs numériques invalides refusées au cœur de l'app** (dernier rempart,
+  `src/db/mutations.js`). Prix, frais de production, dimensions (H/L/P),
+  rabais, montants de taxes et valeur de certificat **négatifs** sont refusés
+  avec un message nommant le champ ; l'**année** doit être un nombre à quatre
+  chiffres plausible. S'applique à la création **et** à l'édition en lot
+  (protège aussi tout import futur). Vérifié par banc d'essai (16 cas).
+- **Nombre illisible collé** (ex. « 1 234,56 » depuis Excel, qui vidait le
+  champ en silence) : détecté à l'enregistrement (œuvre, vente, certificat,
+  cotes) → message clair + focus sur le champ, au lieu d'une perte muette.
+- **Vente à 0 $** : demande de confirmation explicite avant d'enregistrer
+  (prix oublié ?), au lieu d'un enregistrement silencieux
+  (`src/app/vues/vente-fiche.js`).
+- **Taux de taxe hors bornes** (0 à 100 %) refusé dans le formulaire de vente.
+- **Double-clic sur « Enregistrer » : plus de fiche/vente en double.** Un
+  utilitaire partagé (`soumissionUnique`, `src/app/commun.js`) ignore les
+  soumissions concurrentes et désactive le bouton d'envoi pendant tout le
+  traitement — appliqué aux formulaires œuvre, artiste, client, vente
+  (+ modale « Nouveau client ») et certificat.
+- **Édition en lot : garde-fou « modifications non enregistrées ».** Quitter
+  la page (barre latérale, etc.) pendant une édition en lot non enregistrée
+  demande maintenant confirmation au lieu de tout perdre
+  (`src/app/vues/oeuvres-liste.js`).
+- **« Modifier une vente » aussi strict que la création.** Faire pointer une
+  vente vers une autre œuvre applique désormais les mêmes garde-fous :
+  œuvre déjà vendue refusée, garde-fou Sage 50, et nettoyage d'une éventuelle
+  réservation résiduelle (`modifierVente`, `src/db/mutations.js`).
+
 > **Audit de robustesse — Lot 3 « Sauvegardes »** (à confirmer par Dave dans
 > l'app). Le filet ultime de l'app devient fiable, vérifié et utilisable par
 > les parents eux-mêmes.

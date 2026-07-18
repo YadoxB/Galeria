@@ -5,6 +5,7 @@ import {
   champMedium, brancherDropdownMedium, chargerMediumsConnus,
   formaterDate, nomComplet, sansAccents, nettoyerErreur,
   badgeArchive, boutonArchive, basculerArchive,
+  champNombreInvalide, soumissionUnique,
 } from '../commun.js';
 import { calculerPrixSuggere } from '../calcul-prix.js';
 import { visionner } from '../visionneuse.js';
@@ -1672,8 +1673,18 @@ export async function rendreOeuvreFiche(contenu, params) {
       });
     }
 
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', soumissionUnique(async (e) => {
       e.preventDefault();
+      const champInvalide = champNombreInvalide(form);
+      if (champInvalide) {
+        await alerter({
+          type: 'warning', title: 'Nombre non valide',
+          message: 'Un nombre saisi n\'est pas valide (prix, dimensions ou année).',
+          detail: 'Vérifie le champ surligné. Écris le nombre sans espaces (par exemple 1234,56).',
+        });
+        champInvalide.focus();
+        return;
+      }
       const fd = new FormData(form);
       const data = Object.fromEntries(fd);
 
@@ -1750,7 +1761,7 @@ export async function rendreOeuvreFiche(contenu, params) {
           buttons: ['OK'],
         });
       }
-    });
+    }));
 
     contenu.querySelector('#btn-annuler').addEventListener('click', async () => {
       if (modifie || nouveau) {

@@ -1,4 +1,4 @@
-import { ech, champTexte, champTextarea } from '../commun.js';
+import { ech, champTexte, champTextarea, champNombreInvalide, soumissionUnique } from '../commun.js';
 import { alerter } from '../dialogue.js';
 import { chargerConfig } from '../marque.js';
 
@@ -112,7 +112,7 @@ export function ouvrirCreationCertificat({ oeuvre, vente = null }) {
     overlay.querySelector('#f-date_delivrance').addEventListener('input', rafraichir);
     overlay.querySelector('#btn-annuler-certif').addEventListener('click', () => fermer(null));
 
-    overlay.querySelector('#form-certif').addEventListener('submit', async (e) => {
+    overlay.querySelector('#form-certif').addEventListener('submit', soumissionUnique(async (e) => {
       e.preventDefault();
       const form = e.currentTarget;
       const fd = new FormData(form);
@@ -121,6 +121,17 @@ export function ouvrirCreationCertificat({ oeuvre, vente = null }) {
         const x = Number(val(k));
         return Number.isFinite(x) ? x : null;
       };
+
+      const champInvalide = champNombreInvalide(form);
+      if (champInvalide) {
+        await alerter({
+          type: 'warning', title: 'Nombre non valide',
+          message: 'La valeur saisie n\'est pas un nombre valide.',
+          detail: 'Écris le montant sans espaces (par exemple 1500 ou 1500,00).',
+        });
+        champInvalide.focus();
+        return;
+      }
 
       const numeroSage = val('numero_sage');
       if (!numeroSage) {
@@ -145,7 +156,7 @@ export function ouvrirCreationCertificat({ oeuvre, vente = null }) {
       } catch (err) {
         await alerter({ type: 'error', title: 'Enregistrement échoué', message: err.message });
       }
-    });
+    }));
 
     rafraichir();
     overlay.querySelector('#f-numero_sage')?.focus();
