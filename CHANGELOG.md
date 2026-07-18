@@ -10,6 +10,46 @@ identifiants.
 
 ## [Non publié]
 
+> **Audit de robustesse — Lot 8 « Cohérence & ménage »** (à confirmer par Dave
+> dans l'app). Dernier lot du chantier issu de l'audit du 2026-07-06.
+
+### Corrigé
+
+- **Le calculateur de commission suit les Réglages.** Il appliquait 50 % en
+  dur, alors que la facture artiste utilise la cote configurée : changer la
+  cote (ex. 45 %) donnait un montant annoncé différent du montant facturé. Le
+  calculateur, le menu « Type d'œuvre » et la carte « Commissions par type »
+  lisent désormais la même règle que la facture (`src/app/vues/outils.js`).
+- **Supprimer un client vérifie ses réservations.** La suppression n'était
+  bloquée que par les ventes : on pouvait effacer un client et laisser une
+  œuvre « réservée pour personne » (et des notes de réservation orphelines à
+  son nom — angle Loi 25). Refus clair nommant la ou les œuvres concernées,
+  avec la marche à suivre (`supprimerClient`, `src/db/mutations.js`).
+
+### Modifié
+
+- **Règles de calcul regroupées.** Le format d'œuvre (√(H×L), seuils
+  16/30/42), l'orientation et le texte des dimensions étaient écrits en trois
+  exemplaires ; les deux copies côté interface sont réunies dans
+  `src/app/calcul-prix.js` (source unique pour la fiche d'œuvre et les
+  Outils). La cote par type y est aussi exposée. **Aucune règle de calcul
+  n'est changée** — les copies étaient identiques. La copie du processus
+  principal (`src/db/mutations.js`, CommonJS, utilisée par l'édition en lot)
+  subsiste faute de module partageable entre les deux mondes : les deux
+  fichiers portent maintenant un avertissement croisé explicite.
+
+### Retiré
+
+- **15 passerelles mortes entre l'interface et le cœur** (`preload.js` +
+  handlers `main.js`), vérifiées inutilisées : `dbStats`, les quatre
+  `*Voisins`, `venteGet`, `certificatGet`, `certificatModifier`,
+  `certificatApercuNumero`, `certificatReserverNumero`, `oeuvresStats`,
+  `clientVentes`, `oeuvreVentes`, `pdfPresentationPersonnalisee`,
+  `photoLireOriginale` — ainsi que les imports devenus inutiles. Les
+  fonctions sous-jacentes sont conservées. Vérification croisée automatisée
+  après coup : **99 passerelles, toutes utilisées, toutes branchées, aucun
+  handler orphelin**.
+
 > **Audit de robustesse — Lot 7 « Messages clairs & clics qui répondent »**
 > (à confirmer par Dave dans l'app). Rend les pépins visibles et
 > compréhensibles, et répare des boutons qui ne faisaient rien.

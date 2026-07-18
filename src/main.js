@@ -3,10 +3,10 @@ const { autoUpdater } = require('electron-updater');
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const { openDatabase, closeDatabase, getStats, lireCatalogueId } = require('./db/database');
+const { openDatabase, closeDatabase, lireCatalogueId } = require('./db/database');
 const { getPhotosDir, getDataDir, getDocumentsDirAnnee, getDbPath, getSeedPath, getBackupsDir, ensureDirectories } = require('./db/paths');
 const { seedPhotosIfNeeded } = require('./db/seedPhotos');
-const { choisirPhoto, effacerPhoto, lireFichierImage, lireOriginale, lirePourRecadrage, enregistrerImageRecadree } = require('./photos');
+const { choisirPhoto, effacerPhoto, lireFichierImage, lirePourRecadrage, enregistrerImageRecadree } = require('./photos');
 const { obtenirConfig, mettreAJourConfig, infoConfigCorrompue } = require('./config');
 
 protocol.registerSchemesAsPrivileged([
@@ -22,35 +22,26 @@ const {
   arreterSauvegardePeriodique,
 } = require('./db/backup');
 const { previewFile, importArtistes, importOeuvres } = require('./import/importer');
-const { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPresentationPersonnalisee, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette, indexerTousLesDocuments } = require('./pdf');
+const { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette, indexerTousLesDocuments } = require('./pdf');
 const {
   listerArtistes,
   obtenirArtiste,
   obtenirFicheArtisteBundle,
-  voisinsArtiste,
   listerOeuvres,
   oeuvresDetailArtiste,
   oeuvresParIds,
   obtenirOeuvre,
   obtenirFicheOeuvreBundle,
-  voisinsOeuvre,
   listerTypesOeuvre,
   listerMediumsOeuvre,
   listerMediumsArtiste,
-  statsOeuvres,
   listerClients,
   obtenirClient,
   obtenirFicheClientBundle,
-  voisinsClient,
-  listerVentesClient,
-  listerVentesOeuvre,
   listerVentes,
-  obtenirVente,
   obtenirFicheVenteBundle,
-  voisinsVente,
   listerCertificatsParOeuvre,
   listerCertificatsParVente,
-  obtenirCertificat,
   oeuvresRecentes,
   ventesRecentes,
   oeuvresReservees,
@@ -68,8 +59,7 @@ const {
   modifierClient, creerClient, supprimerClient,
   creerVente, modifierVente, supprimerVente, majCycleVente,
   apercuProchainNumeroFacture, reserverProchainNumeroFacture,
-  creerCertificat, modifierCertificat, supprimerCertificat,
-  apercuProchainNumeroCertificat, reserverProchainNumeroCertificat,
+  creerCertificat, supprimerCertificat,
   apercuNumeroCertificat,
   apercuProchainNumeroInventaire, reserverProchainNumeroInventaire,
   definirArchive, definirRetraitOeuvre, definirRetraitOeuvresLot,
@@ -790,7 +780,6 @@ async function demarrerApplication() {
   }
 
   await progres(85, 'Chargement de l’interface…');
-  ipcMain.handle('db:stats', () => getStats());
   ipcMain.handle('updater:etat', () => etatUpdater);
   ipcMain.handle('updater:verifier', () => verifierMisesAJour({ silencieux: false }));
   ipcMain.handle('updater:telecharger', async () => {
@@ -936,7 +925,6 @@ async function demarrerApplication() {
   ipcMain.handle('fiche:archiver', (_e, table, id, archive) => definirArchive(table, id, archive));
   ipcMain.handle('artistes:get', (_e, id) => obtenirArtiste(id));
   ipcMain.handle('artistes:fiche-bundle', (_e, id) => obtenirFicheArtisteBundle(id));
-  ipcMain.handle('artistes:voisins', (_e, id) => voisinsArtiste(id));
   ipcMain.handle('artistes:modifier', (_e, id, data) => modifierArtiste(id, data));
   ipcMain.handle('artistes:creer', (_e, data) => creerArtiste(data));
   ipcMain.handle('artistes:supprimer', (_e, id) => supprimerArtiste(id));
@@ -945,7 +933,6 @@ async function demarrerApplication() {
   ipcMain.handle('oeuvres:detail-artiste', (_e, artisteId) => oeuvresDetailArtiste(artisteId));
   ipcMain.handle('oeuvres:par-ids', (_e, ids) => oeuvresParIds(ids));
   ipcMain.handle('oeuvres:fiche-bundle', (_e, id) => obtenirFicheOeuvreBundle(id));
-  ipcMain.handle('oeuvres:voisins', (_e, id) => voisinsOeuvre(id));
   ipcMain.handle('oeuvres:modifier', (_e, id, data) => modifierOeuvre(id, data));
   ipcMain.handle('oeuvres:modifier-lot', (_e, modifs) => modifierOeuvresLot(modifs));
   ipcMain.handle('oeuvres:creer', (_e, data) => creerOeuvre(data));
@@ -958,7 +945,6 @@ async function demarrerApplication() {
   ipcMain.handle('photo:choisir', (e, opts) => choisirPhoto(e.sender, opts));
   ipcMain.handle('photo:effacer', (_e, opts) => effacerPhoto(opts));
   ipcMain.handle('photo:lire-fichier', (e) => lireFichierImage(e.sender));
-  ipcMain.handle('photo:lire-originale', (_e, opts) => lireOriginale(opts));
   ipcMain.handle('photo:lire-pour-recadrage', (_e, opts) => lirePourRecadrage(opts));
   ipcMain.handle('photo:enregistrer-recadree', (_e, opts) => enregistrerImageRecadree(opts));
   ipcMain.handle('config:get', () => obtenirConfig());
@@ -1016,20 +1002,14 @@ async function demarrerApplication() {
   ipcMain.handle('oeuvres:types', () => listerTypesOeuvre());
   ipcMain.handle('oeuvres:mediums', () => listerMediumsOeuvre());
   ipcMain.handle('oeuvres:mediums-artiste', (_e, artisteId) => listerMediumsArtiste(artisteId));
-  ipcMain.handle('oeuvres:stats', () => statsOeuvres());
   ipcMain.handle('clients:liste', (_e, filtres) => listerClients(filtres));
   ipcMain.handle('clients:get', (_e, id) => obtenirClient(id));
   ipcMain.handle('clients:fiche-bundle', (_e, id) => obtenirFicheClientBundle(id));
-  ipcMain.handle('clients:voisins', (_e, id) => voisinsClient(id));
   ipcMain.handle('clients:modifier', (_e, id, data) => modifierClient(id, data));
   ipcMain.handle('clients:creer', (_e, data) => creerClient(data));
   ipcMain.handle('clients:supprimer', (_e, id) => supprimerClient(id));
-  ipcMain.handle('clients:ventes', (_e, id) => listerVentesClient(id));
-  ipcMain.handle('oeuvres:ventes', (_e, id) => listerVentesOeuvre(id));
   ipcMain.handle('ventes:liste', () => listerVentes());
-  ipcMain.handle('ventes:get', (_e, id) => obtenirVente(id));
   ipcMain.handle('ventes:fiche-bundle', (_e, id) => obtenirFicheVenteBundle(id));
-  ipcMain.handle('ventes:voisins', (_e, id) => voisinsVente(id));
   ipcMain.handle('ventes:creer', (_e, data) => creerVente(data));
   ipcMain.handle('ventes:modifier', (_e, id, data) => modifierVente(id, data));
   ipcMain.handle('ventes:maj-cycle', (_e, id, data) => majCycleVente(id, data));
@@ -1040,19 +1020,14 @@ async function demarrerApplication() {
   ipcMain.handle('ventes:reserver-numero-facture', () => reserverProchainNumeroFacture());
   ipcMain.handle('certificats:liste-oeuvre', (_e, oeuvreId) => listerCertificatsParOeuvre(oeuvreId));
   ipcMain.handle('certificats:liste-vente', (_e, venteId) => listerCertificatsParVente(venteId));
-  ipcMain.handle('certificats:get', (_e, id) => obtenirCertificat(id));
   ipcMain.handle('certificats:creer', (_e, data) => creerCertificat(data));
-  ipcMain.handle('certificats:modifier', (_e, id, data) => modifierCertificat(id, data));
   ipcMain.handle('certificats:supprimer', (_e, id) => supprimerCertificat(id));
-  ipcMain.handle('certificats:apercu-numero', () => apercuProchainNumeroCertificat());
-  ipcMain.handle('certificats:reserver-numero', () => reserverProchainNumeroCertificat());
   ipcMain.handle('certificats:apercu', (_e, oeuvreId) => apercuNumeroCertificat(oeuvreId));
   ipcMain.handle('pdf:certificat-generer', (_e, id) => genererCertificatPdf(id));
   ipcMain.handle('pdf:facture-artiste-generer', (_e, venteId) => genererFactureArtistePdf(venteId));
   ipcMain.handle('pdf:catalogue-generer', (_e, artisteId) => genererCataloguePdf(artisteId));
   ipcMain.handle('pdf:annexe-generer', (_e, payload) => genererAnnexePdf(payload));
   ipcMain.handle('pdf:presentation-generer', (_e, artisteId) => genererPresentationPdf(artisteId));
-  ipcMain.handle('pdf:presentation-personnalisee', (_e, artisteId, overrides) => genererPresentationPersonnalisee(artisteId, overrides));
   ipcMain.handle('pdf:pochette-generer', (_e, venteId) => genererPochette(venteId));
   ipcMain.handle('pdf:editer-document', (_e, spec) => editerDocument(spec));
   ipcMain.handle('pdf:pochette-fichier', (_e, venteId, type) => cheminPochetteSiExiste(venteId, type));

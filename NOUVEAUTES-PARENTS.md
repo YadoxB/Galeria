@@ -109,6 +109,16 @@ commettre :
   courriel.
 - Le bouton **« Produire un certificat »** ne peut plus rester sans réaction.
 
+## Deux corrections de cohérence
+
+- Le **calculateur de commission** (page Outils) suit maintenant le
+  pourcentage inscrit dans vos Réglages. Avant, il affichait toujours 50 %,
+  même si vous aviez changé la cote : le montant annoncé pouvait différer de
+  celui de la facture à l'artiste.
+- Vous ne pouvez plus **supprimer un client par erreur** s'il a une œuvre
+  réservée : l'application vous dit laquelle et vous invite à libérer la
+  réservation d'abord.
+
 ## Installation et catalogue plus simples
 
 L'installation a été allégée et accélérée. À l'ouverture, si un nouveau

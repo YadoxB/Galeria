@@ -117,6 +117,11 @@ function typeContrat(typeOeuvre) {
 // défaut configurable de la galerie (50 %). Pour les reproductions, la cote
 // s'applique au NET (prix de vente − frais de production) ; voir le calcul du
 // gabarit facture artiste et estReproductionType().
+//
+// ⚠ COPIE MIROIR de `coteGaleriePourType()` dans `src/app/calcul-prix.js`
+// (côté interface), utilisée par le calculateur de commission. Les deux
+// doivent rester identiques, sinon le montant annoncé au galeriste diffère du
+// montant réellement facturé à l'artiste.
 function coteGaleriePourType(typeOeuvre, cfg) {
   const defaut = cfg?.documents?.cote_galerie_pourcent || 50;
   const t = (typeOeuvre || '').toLowerCase();

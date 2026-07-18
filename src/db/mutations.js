@@ -39,8 +39,13 @@ const exigerAnneePlausible = (annee) => {
 const STATUTS_VALIDES = new Set(['disponible', 'reserve', 'vendu', 'pretee']);
 
 // ===== Dérivés des dimensions (mêmes règles que le formulaire d'œuvre) =====
-// Seuils empiriques calés sur 476 œuvres déjà étiquetées (cf. oeuvre-fiche.js
-// et scripts/analyse-seuils-format.js). La profondeur est ignorée (châssis).
+// Seuils empiriques calés sur 476 œuvres déjà étiquetées (cf.
+// scripts/analyse-seuils-format.js). La profondeur est ignorée (châssis).
+//
+// ⚠ COPIE MIROIR de `src/app/calcul-prix.js` (côté interface, ESM), qui sert
+// à la fiche d'œuvre et au calculateur. Les deux copies existent parce que le
+// processus principal (CommonJS) et l'interface (modules ES) ne partagent pas
+// de module. Toute modification doit être reportée dans les DEUX fichiers.
 const SEUILS_FORMAT = [
   { max: 16, libelle: 'Petit' },
   { max: 30, libelle: 'Moyen' },
@@ -447,6 +452,22 @@ function supprimerClient(id) {
   const nbVentes = db.prepare('SELECT COUNT(*) AS n FROM ventes WHERE client_id = ?').get(id).n;
   if (nbVentes > 0) {
     throw new Error(`Impossible de supprimer ce client : ${nbVentes} vente(s) y sont rattachée(s).`);
+  }
+  // Réservations actives : refus clair plutôt qu'une œuvre « réservée pour
+  // personne » (et des notes de réservation orphelines au nom du client).
+  const reservees = db.prepare(
+    `SELECT titre FROM oeuvres WHERE reservation_client_id = ? ORDER BY titre`
+  ).all(entier(id));
+  if (reservees.length > 0) {
+    const titres = reservees.map((o) => `« ${o.titre || 'sans titre'} »`).join(', ');
+    const multiple = reservees.length > 1;
+    const phrase = multiple
+      ? `${reservees.length} œuvres lui sont réservées (${titres})`
+      : `1 œuvre lui est réservée (${titres})`;
+    const consigne = multiple
+      ? `Libère ces réservations depuis les fiches des œuvres, puis réessaie.`
+      : `Libère la réservation depuis la fiche de l'œuvre, puis réessaie.`;
+    throw new Error(`Impossible de supprimer ce client : ${phrase}. ${consigne}`);
   }
   const info = db.prepare('DELETE FROM clients WHERE id = ?').run(id);
   return { supprime: info.changes > 0 };

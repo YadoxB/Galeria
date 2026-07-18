@@ -126,3 +126,62 @@ export function cotesParDefaut() {
   // Mode simplifié : une seule cote « Tous médiums + Toutes tailles ».
   return [{ medium: 'Tous', taille: 'Tous', unite: 'lineaire', prix_pref: 0 }];
 }
+
+// ===== Dérivés des dimensions (source unique côté interface) =====
+// Le format vient de la moyenne géométrique √(H × L) : le côté d'un carré de
+// même surface, ce qui colle au « ressenti » pour les œuvres très allongées
+// (ex. 12 × 72 → 29" → Moyen). Seuils calés empiriquement sur 476 œuvres déjà
+// étiquetées (cf. scripts/analyse-seuils-format.js). La profondeur est ignorée
+// (épaisseur du châssis, pas la taille perçue).
+//
+// ⚠ Ces trois règles existent en double dans `src/db/mutations.js` (processus
+// principal, CommonJS — utilisées par l'édition en lot). Les deux copies
+// doivent rester identiques : toute modification ici doit y être reportée.
+export const SEUILS_FORMAT = [
+  { max: 16, libelle: 'Petit' },
+  { max: 30, libelle: 'Moyen' },
+  { max: 42, libelle: 'Grand' },
+  { max: Infinity, libelle: 'Très grand' },
+];
+
+export function calculerFormat(h, l) {
+  const H = Number(h) || 0;
+  const L = Number(l) || 0;
+  if (H <= 0 || L <= 0) return '';
+  const equivalent = Math.sqrt(H * L);
+  for (const seuil of SEUILS_FORMAT) {
+    if (equivalent <= seuil.max) return seuil.libelle;
+  }
+  return '';
+}
+
+export function calculerOrientation(h, l) {
+  const H = Number(h) || 0;
+  const L = Number(l) || 0;
+  if (H <= 0 || L <= 0) return '';
+  if (L > H * 1.05) return 'Horizontale';
+  if (H > L * 1.05) return 'Verticale';
+  return 'Carrée';
+}
+
+export function formaterDimensionsTexte(h, l, p) {
+  const arr = [h, l, p].map((v) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  });
+  // On garde au moins H et L si présents ; on inclut P seulement s'il y a une valeur.
+  const visibles = arr[2] != null ? arr : arr.slice(0, 2);
+  if (!visibles.some((v) => v != null)) return '';
+  return visibles.map((v) => (v != null ? String(v) : '?')).join(' × ') + ' po';
+}
+
+// Cote (commission) de la galerie selon le type d'œuvre.
+// ⚠ Miroir de `coteGaleriePourType()` dans `src/pdf.js` (processus principal),
+// qui produit la facture artiste. Les deux doivent rester identiques, sinon le
+// montant annoncé au calculateur diffère du montant facturé.
+export function coteGaleriePourType(typeOeuvre, config) {
+  const defaut = config?.documents?.cote_galerie_pourcent || 50;
+  const t = (typeOeuvre || '').toLowerCase();
+  if (t.includes('sculpt')) return 33;
+  return defaut;
+}

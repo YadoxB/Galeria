@@ -7,7 +7,10 @@ import {
   badgeArchive, boutonArchive, basculerArchive,
   champNombreInvalide, soumissionUnique,
 } from '../commun.js';
-import { calculerPrixSuggere } from '../calcul-prix.js';
+import {
+  calculerPrixSuggere,
+  calculerFormat, calculerOrientation, formaterDimensionsTexte,
+} from '../calcul-prix.js';
 import { visionner } from '../visionneuse.js';
 import { confirmer, alerter, demanderTexte } from '../dialogue.js';
 import { ouvrirCreationCertificat } from './certificat-creation.js';
@@ -59,51 +62,8 @@ const GABARIT_VIDE = {
   image_path: null,
 };
 
-// Seuils en pouces, sur la moyenne géométrique √(H × L). Ce critère a été
-// dérivé empiriquement du catalogue existant : il classe correctement 93,7 %
-// des 476 œuvres déjà étiquetées par la galerie, contre 85,5 % pour le max
-// et 78,2 % pour le min. Intuition : la moyenne géométrique = côté équivalent
-// d'un carré ayant la même surface, ce qui colle au « ressenti » de format
-// pour les œuvres très allongées (ex. 12 × 72 → 29" → Moyen).
-// La profondeur (P) est ignorée : c'est l'épaisseur du châssis, pas la taille
-// perçue de l'œuvre.
-const SEUILS_FORMAT = [
-  { max: 16, libelle: 'Petit' },
-  { max: 30, libelle: 'Moyen' },
-  { max: 42, libelle: 'Grand' },
-  { max: Infinity, libelle: 'Très grand' },
-];
-
-function calculerFormat(h, l, _p) {
-  const H = Number(h) || 0;
-  const L = Number(l) || 0;
-  if (H <= 0 || L <= 0) return '';
-  const equivalent = Math.sqrt(H * L);
-  for (const seuil of SEUILS_FORMAT) {
-    if (equivalent <= seuil.max) return seuil.libelle;
-  }
-  return '';
-}
-
-function calculerOrientation(h, l) {
-  const H = Number(h) || 0;
-  const L = Number(l) || 0;
-  if (H <= 0 || L <= 0) return '';
-  if (L > H * 1.05) return 'Horizontale';
-  if (H > L * 1.05) return 'Verticale';
-  return 'Carrée';
-}
-
-function formaterDimensionsTexte(h, l, p) {
-  const arr = [h, l, p].map((v) => {
-    const n = Number(v);
-    return Number.isFinite(n) && n > 0 ? n : null;
-  });
-  // On garde au moins H et L si présents ; on inclut P seulement s'il y a une valeur.
-  const visibles = arr[2] != null ? arr : arr.slice(0, 2);
-  if (!visibles.some((v) => v != null)) return '';
-  return visibles.map((v) => (v != null ? String(v) : '?')).join(' × ') + ' po';
-}
+// Les règles de format / orientation / texte des dimensions vivent dans
+// `calcul-prix.js` (source unique côté interface, partagée avec Outils).
 
 function ouvrirModaleEnvoyerChatGPT(r) {
   return new Promise((resolve) => {
@@ -1489,7 +1449,7 @@ export async function rendreOeuvreFiche(contenu, params) {
     // L'utilisateur peut écraser format/orientation à la main ; on cesse alors
     // de les auto-remplir tant qu'il est dans cette session d'édition.
     let formatAuto = !o.format
-      || o.format === calculerFormat(o.hauteur, o.largeur, o.profondeur);
+      || o.format === calculerFormat(o.hauteur, o.largeur);
     let orientationAuto = !o.orientation
       || o.orientation === calculerOrientation(o.hauteur, o.largeur);
 
@@ -1519,7 +1479,7 @@ export async function rendreOeuvreFiche(contenu, params) {
       }
 
       if (formatAuto) {
-        const f = calculerFormat(h, l, p);
+        const f = calculerFormat(h, l);
         if (f) elFormat.value = f;
       }
       if (orientationAuto) {

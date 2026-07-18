@@ -1,5 +1,8 @@
 import { ech, sansAccents, nomComplet, brancherDropdownMedium, chargerMediumsConnus } from '../commun.js';
-import { calculerPrixSuggere, parserCotes, TAILLES_COTES } from '../calcul-prix.js';
+import {
+  calculerPrixSuggere, parserCotes, TAILLES_COTES,
+  calculerFormat, coteGaleriePourType,
+} from '../calcul-prix.js';
 
 export async function rendreOutils(contenu) {
   const artistes = await window.api.artistesListe({ inclureArchives: false });
@@ -11,6 +14,13 @@ export async function rendreOutils(contenu) {
   const config = await window.api.configGet();
   const tauxTps = config?.documents?.tps_taux ?? 5;
   const tauxTvq = config?.documents?.tvq_taux ?? 9.975;
+
+  // Cotes affichées : elles suivent les Réglages (même règle que la facture
+  // artiste), pour ne jamais annoncer un pourcentage différent de celui facturé.
+  const pct = (v) => String(v).replace('.', ',');
+  const cotePeinture = coteGaleriePourType('peinture', config);
+  const coteSculpture = coteGaleriePourType('sculpture', config);
+  const coteRepro = coteGaleriePourType('reproduction', config);
 
   contenu.innerHTML = `
     <div class="vue-fiche vue-fiche-bento">
@@ -80,9 +90,9 @@ export async function rendreOutils(contenu) {
             <div class="form-champ">
               <label for="comm-type">Type d'œuvre</label>
               <select id="comm-type">
-                <option value="peinture">Peinture (50 %)</option>
-                <option value="sculpture">Sculpture (33 %)</option>
-                <option value="reproduction">Reproduction (50 % après frais)</option>
+                <option value="peinture">Peinture (${pct(cotePeinture)} %)</option>
+                <option value="sculpture">Sculpture (${pct(coteSculpture)} %)</option>
+                <option value="reproduction">Reproduction (${pct(coteRepro)} % après frais)</option>
                 <option value="autre">Autre…</option>
               </select>
             </div>
@@ -132,12 +142,12 @@ export async function rendreOutils(contenu) {
               <tr><th>Type d'œuvre</th><th>Cote galerie</th></tr>
             </thead>
             <tbody>
-              <tr><td class="cote-cible">Peinture</td><td class="cote-prix">50 %</td></tr>
-              <tr><td class="cote-cible">Sculpture</td><td class="cote-prix">33 %</td></tr>
-              <tr><td class="cote-cible">Reproduction</td><td class="cote-prix">50 %&nbsp;*</td></tr>
+              <tr><td class="cote-cible">Peinture</td><td class="cote-prix">${pct(cotePeinture)} %</td></tr>
+              <tr><td class="cote-cible">Sculpture</td><td class="cote-prix">${pct(coteSculpture)} %</td></tr>
+              <tr><td class="cote-cible">Reproduction</td><td class="cote-prix">${pct(coteRepro)} %&nbsp;*</td></tr>
             </tbody>
           </table>
-          <p class="aide-champ" style="margin-top:var(--s2);">* Pour une reproduction, la galerie récupère d'abord ses frais de production, puis partage le reste 50/50 avec l'artiste.</p>
+          <p class="aide-champ" style="margin-top:var(--s2);">* Pour une reproduction, la galerie récupère d'abord ses frais de production, puis applique la cote (${pct(coteRepro)} %) sur le reste. Les cotes suivent les Réglages ; la sculpture est fixée à ${pct(coteSculpture)} %.</p>
         </div>
 
       </div>
@@ -212,13 +222,10 @@ export async function rendreOutils(contenu) {
       return;
     }
     // On calcule directement à partir des cotes en simulant une œuvre.
-    // Pour récupérer la « taille » (format), on utilise la même logique
-    // que calculerFormat dans oeuvre-fiche : √(H×L), seuils 16/30/42.
+    // Le format vient de la règle partagée (calcul-prix.js), la même que la
+    // fiche d'œuvre : √(H×L) avec les seuils 16/30/42.
     const moyGeo = Math.sqrt(h * l);
-    let taille = 'Très grand';
-    if (moyGeo <= 16) taille = 'Petit';
-    else if (moyGeo <= 30) taille = 'Moyen';
-    else if (moyGeo <= 42) taille = 'Grand';
+    const taille = calculerFormat(h, l) || 'Très grand';
 
     const oeuvreVirt = { hauteur: h, largeur: l, medium: inMedium.value.trim(), format: taille };
     const res = calculerPrixSuggere({ artiste: artisteCharge, oeuvre: oeuvreVirt });
@@ -283,8 +290,10 @@ export async function rendreOutils(contenu) {
 
   // ====== Calculateur de commission (net versé à l'artiste) ======
   // Mêmes formules que gabarit-facture-artiste.html. Reproduction : la galerie
-  // récupère ses frais de production avant le partage 50/50 du net.
-  const COMM_COTE_DEFAUT = { peinture: 50, sculpture: 33, reproduction: 50 };
+  // récupère ses frais de production avant le partage du net.
+  // La cote vient de la règle partagée (calcul-prix.js), miroir de celle qui
+  // produit la facture artiste : sculpture 33 %, sinon la cote configurée dans
+  // Réglages — pour que le montant annoncé ici soit celui qui sera facturé.
   const commType = contenu.querySelector('#comm-type');
   const commChampCote = contenu.querySelector('#comm-cote-champ');
   const commCote = contenu.querySelector('#comm-cote');
@@ -310,7 +319,7 @@ export async function rendreOutils(contenu) {
     commChampCote.hidden = type !== 'autre';
     commChampFrais.hidden = type !== 'reproduction';
     if (type === 'autre') return commNum(commCote.value);
-    return COMM_COTE_DEFAUT[type] ?? 50;
+    return coteGaleriePourType(type, config);
   }
 
   function commCalculer() {
