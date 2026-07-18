@@ -1,36 +1,58 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-06-29.
+> Date de cette sauvegarde : 2026-07-18.
 >
 > **Voir aussi** : `CHANGELOG.md` (historique versionné détaillé) et `A-VALIDER.md` (questions ouvertes avec les parents).
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-06-29)
+## ▶ Reprise — par où commencer (préparé le 2026-07-18)
 
-**État** : **v0.9.0 publiée** (2026-06-30, GitHub Releases, auto-update ≥ 0.2.1) — **reproductions : frais de production déduits sur la facture artiste** (champ sur la fiche d'œuvre, affiché pour les types reproduction/giclée). *Historique :* v0.8.0 — consignes IA par artiste + set global éditable + descriptions bilingues FR/EN ; v0.7.0 — génération des descriptions par IA (Claude Haiku 4.5) ; v0.6.0 — édition en lot (tableur). **Toutes confirmées par Dave dans l'app.** `master` = `v0.9.0`, **poussé, rien en attente**.
+**État** : **v0.10.0 fusionnée dans `master`, NON poussée et NON publiée.** `package.json` = `0.10.0`. Version entièrement consacrée à la **robustesse** (aucune fonctionnalité métier nouvelle) : les 7 lots du chantier d'audit sont livrés et **tous confirmés par Dave dans l'app**. *Historique :* v0.9.0 — frais de production des reproductions ; v0.8.0 — consignes IA par artiste ; v0.7.0 — génération des descriptions par IA ; v0.6.0 — édition en lot.
 
-**▶ Prochaine étape (feuille de route convenue le 2026-06-30)** — ordre : **① reproductions ✓** · **② Sécurité** ← *à attaquer* · **③ Phase 5 — Web (WooCommerce)** · **④ Phase 4 — Sage 50**. *(Phases 4 et 5 inversées sur demande de Dave.)* La **② Sécurité** est **impérative** et autonome : sa propre phase (verrou léger = code court / inactivité, puis chiffrement de la base ; fondation déjà là — le coffre Windows `safeStorage` sert déjà à la clé IA). **Facture client** parquée jusqu'à la Phase 4 (son n°/rôle dépend de Sage). Pour Sage : **jamais d'écriture directe** (fichier d'import + lecture ODBC, cf. CLAUDE.md §8). Réglés et retirés de la liste : lettre de remerciement, cotes, documents, nomenclature. Modèle éco : reste à valider avec les parents la liste complète des types d'œuvre + % (le reste du modèle éco est réglé). Détail dans « Plan structuré » + `A-VALIDER.md`.
+**⚠️ Deux gestes restent à faire par Dave pour livrer** (volontairement non faits par Claude — ils sortent vers l'extérieur) :
+```
+git push origin master     # publie le code sur GitHub
+npm run release            # bâtit et publie la release → auto-update chez les parents
+```
+Dave a indiqué le 2026-07-18 avoir **d'autres modifications à apporter avant** — d'où la numérotation **0.10.0** plutôt que 1.0.0, la 1.0 étant réservée pour plus tard.
 
-**Journal pour les parents** : `NOUVEAUTES-PARENTS.md` (résumé non technique des nouveautés depuis v0.5.0) — **à tenir à jour à chaque session** ; sera remis avec la prochaine livraison. Dave continue le développement avant de livrer.
+### Le chantier de robustesse (audit du 2026-07-06) — TERMINÉ
 
-**Livraison parents (différée, sur décision de Dave)** : `npm run build:catalogue` (depuis le worktree principal) → installateur à la version courante (embarque catalogue + photos + **consignes par artiste**), puis chez eux : installer → « Charger le nouveau catalogue » → coller **la clé Anthropic de Dave** dans Réglages → IA. Le set global de consignes part déjà avec le code.
+Audit complet en 7 axes, rapport priorisé, puis correction **par lots approuvés un à un** par Dave (sa méthode : plan en mots simples → « oui » → un seul lot → tests à faire). Les 8 lots ont été traités : **7 livrés et confirmés**, 1 écarté.
 
-**⚠️ Non vérifié visuellement par Claude** (le résolveur computer-use ne capte pas la fenêtre Electron de dev) — sauf l'**édition en lot** et la **génération IA**, confirmées par Dave dans l'app.
+| Lot | Commit | Contenu |
+|---|---|---|
+| 1 — Filets de sécurité | `3cafae6` | Démarrage protégé (plus de splash figé), restauration proposée si base absente, vue Suivi qui avertit, filets globaux + `erreurs.log` |
+| 2 — Réglages & compteurs | `0c09bc9` | `config.json` atomique, fichier corrompu conservé + signalé, garde-fou anti-doublons des numéros de factures |
+| 3 — Sauvegardes | `5a34875` | `VACUUM INTO` + vérification, repli si dossier inaccessible, copie avant migration et avant import, **bouton « Restaurer une sauvegarde… »** |
+| 4 — Chargement de catalogue | — | **Écarté** : Dave ne refera plus de build à base intégrée, ce chemin est mort |
+| 5 — Documents | `35f4d32` | Certificat n'imprime plus « 2024 » si l'année est vide (**exception gabarit approuvée**), lettre sans « Bonjour , », numéro d'annexe libéré, noms de fichiers tronqués |
+| 6 — Saisies | `e2df75e` | Négatifs et années absurdes refusés, vente à 0 $ confirmée, anti double-clic, garde-fou de l'édition en lot, `modifierVente` durci |
+| 7 — Messages & clics | `1e032da` | Erreurs techniques traduites (EBUSY, ENOSPC, SQLITE_*), certificat qui ne gèle plus, `mailto:` et « + Ajouter un sujet » réparés |
+| 8 — Cohérence & ménage | `750ee61` | Calculateur aligné sur la cote des Réglages, suppression client vérifie les réservations, formules regroupées, 15 passerelles IPC mortes retirées |
 
-**Prochaine étape n°1 — livraison aux parents (hors-code, côté Dave) :**
-1. Base **propre** : fermer l'app, retirer les entrées de test du catalogue (ex. artiste « Dave Belisle »), au besoin renommer `Galeria BU` → `Galeria` pour repartir des bonnes données.
-2. `npm run build:catalogue` (depuis le worktree **principal**) → `dist\Galeria Setup 0.5.0 (catalogue).exe`.
-3. Installer chez les parents (en 0.2.0) → ouvrir l'app → **« Charger le nouveau catalogue »** (leur ancienne base est sauvegardée). Tester sur une copie d'abord si possible.
+**Points laissés ouverts par le chantier :**
+- **Cote à 0 %** : une cote réglée à 0 dans les Réglages retombe silencieusement sur 50 % (`|| 50`). Signalé à Dave, **non corrigé faute de mandat** (ça change un calcul). À corriger dans **les deux fichiers ensemble** : `src/pdf.js` (`coteGaleriePourType`) et `src/app/calcul-prix.js` (même fonction, miroir).
+- **Certificats déjà produits** pour des œuvres sans année : ils portent « 2024 ». À vérifier côté Dave dans `Documents\Galeria\Documents\{année}\Certificats\`.
+- **Duplication assumée** : les règles de format/dimensions et la cote existent en double entre le processus principal (CommonJS) et l'interface (modules ES), faute de module partageable. Les deux copies portent un **avertissement croisé explicite** dans le code.
 
-**Ensuite — chantiers code ouverts (par priorité suggérée) :**
-- **Reproductions** : frais de production sur la facture artiste (champ persistant — fiche œuvre ou vente, à trancher — + adaptation `gabarit-facture-artiste.html`). Voir `A-VALIDER.md`.
-- **Facture client (Phase 3D)** : gabarit + rôle **FC vs Sage** (le n° vient-il de Sage ?). Lié au numéro de certificat qui intègre déjà le n° Sage.
-- ~~**Édition en batch (#2)**~~ — **✓ Livré (2026-06-30, à confirmer par Dave)** : bouton « Édition en lot » sur la page Œuvres → tableur multi-lignes (édition cellule par cellule + « Appliquer à la sélection »), enregistrement transactionnel partiel avec recalcul auto dimensions/format/orientation. Démo `demos/edition-batch.html`, module `src/app/vues/oeuvres-batch.js`, IPC `oeuvres:modifier-lot`. Vérifié en banc d'essai navigateur + tests unitaires de la mutation ; **pas encore dans la fenêtre Electron**.
-- **Détail nomenclature** : confirmer si chaque copie d'une édition est une œuvre distincte (n° d'inventaire différent) → impacte le nom de fichier du certificat.
+### ▶ Prochaine étape (feuille de route)
 
-**Pour démarrer la nouvelle conversation** : faire lire `CLAUDE.md`, puis ce `ETAT.md` (ce bloc + le « Journal de session — 2026-06-29 » plus bas).
+Ordre convenu : **① reproductions ✓** · **② robustesse ✓ (ce chantier)** · **③ Sécurité** ← *à attaquer* · **④ Phase 5 — Web (WooCommerce)** · **⑤ Phase 4 — Sage 50**. *(Phases 4 et 5 inversées sur demande de Dave.)*
+
+La **③ Sécurité** est impérative et autonome : verrou léger (code court / inactivité), puis chiffrement de la base. La fondation existe déjà — le coffre Windows `safeStorage` sert à la clé IA. **Note** : un bloc `securite` (verrou, hash, sel, inactivité) est déjà présent dans `config.json` chez Dave, sans code correspondant — à reprendre ou à nettoyer au début de cette phase.
+
+**Facture client** parquée jusqu'à la Phase 4 (son n°/rôle dépend de Sage). Pour Sage : **jamais d'écriture directe** (fichier d'import + lecture ODBC, cf. CLAUDE.md §8). Modèle éco : reste à valider avec les parents la liste complète des types d'œuvre + %.
+
+**Journal pour les parents** : `NOUVEAUTES-PARENTS.md` — à jour au 2026-07-18 (inclut les nouveautés de robustesse en langage non technique), prêt à remettre avec la livraison.
+
+**Livraison parents** : les parents reçoivent la 0.10.0 par **auto-update** dès que Dave aura poussé et publié — plus besoin d'installation manuelle. Leur base migrera sans risque (migrations additives + copie de sécurité automatique avant toute migration, ajoutée au Lot 3).
+
+**Vérification visuelle** : Claude ne capte pas la fenêtre Electron de dev ; tout le chantier a été validé par bancs d'essai d'intégration + tests de fumée, puis **confirmé par Dave dans l'app à chaque lot**. Exception notable : le correctif du certificat (Lot 5) a pu être **vérifié directement dans un navigateur**, le gabarit étant une page HTML autonome.
+
+**Pour démarrer la nouvelle conversation** : faire lire `CLAUDE.md`, puis ce `ETAT.md` (ce bloc).
 
 ---
 

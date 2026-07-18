@@ -147,6 +147,26 @@ et vérifier les noms produits dans `Documents\Galeria\Documents\{année}\`.
   - Chemin de l'exécutable Sage sur la machine des parents.
   - Voir si Sage accepte des arguments en ligne de commande pour pré-remplir une transaction.
 
+## Robustesse (chantier du 2026-07 — questions restées ouvertes)
+
+- **Cote de galerie à 0 %.** Aujourd'hui, une cote réglée à **0 %** dans les
+  Réglages retombe silencieusement sur **50 %** (le `|| 50` historique). À
+  confirmer : une entente à 0 % (l'artiste garde tout) est-elle un cas réel ?
+  Si oui, correction à faire **dans les deux fichiers ensemble**
+  (`src/pdf.js` et `src/app/calcul-prix.js`, fonctions miroirs). Signalé à
+  Dave le 2026-07-18, non corrigé faute de mandat (ça modifie un calcul).
+
+- **Certificats déjà produits pour des œuvres sans année.** Avant la 0.10.0,
+  ils portaient **« 2024 »** (année inventée). À vérifier dans
+  `Documents\Galeria\Documents\{année}\Certificats\` — et à décider : faut-il
+  les régénérer ou les remplacer auprès des clients concernés ?
+
+- **PDF verrouillé (ouvert dans Acrobat) lors d'une re-génération.** Choix
+  retenu : **refus explicite** avec message clair, plutôt qu'un repli
+  silencieux vers un fichier « (2) » — pour le certificat et la facture
+  artiste, qui sont des documents numérotés. À confirmer si ce comportement
+  convient à l'usage réel.
+
 ## Préférences UI
 
 - **Dimensions de fenêtre** : confirmer la résolution du moniteur des parents. Actuellement 1600×900, à ajuster si nécessaire.
@@ -168,3 +188,6 @@ et vérifier les noms produits dans `Documents\Galeria\Documents\{année}\`.
 - **Extrants = retraits** (2026-06-18) : « retirer » une œuvre = la rendre à l'artiste (la sortir du catalogue actif), distinct d'une vente. « Retirer » remplace « Archiver » sur l'œuvre. Vendue = non retirable.
 - **Documents générés en format Lettre** (8.5×11) — standard pour tous les documents.
 - **Tableau de bord** (2026-06-18) : « Résumé du catalogue » (valeur cumulée) retiré au profit d'« Œuvres en préparation ».
+- **Rétention des sauvegardes** (2026-07-17) : défaut fixé à **50 copies** (le code faisait déjà 50, la doc disait 30 — `CLAUDE.md` §11 corrigé).
+- **Chargement de catalogue** (2026-07-17) : correctif écarté — Dave ne produira plus de build à base intégrée, la base étant déjà livrée aux parents. Le chemin « Charger le nouveau catalogue » ne se déclenche pas avec les builds d'auto-update (catalogue vide).
+- **Exception au périmètre « ne pas toucher aux gabarits »** (2026-07-18) : accordée pour corriger l'année fantôme du certificat, **limitée à la fonction `setOptionAnnee`** du bloc « Intégration Galeria » de `gabarit-certificat.html` — aucun style ni élément du design d'origine, comportement autonome inchangé.

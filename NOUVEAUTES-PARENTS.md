@@ -1,8 +1,14 @@
 # Galeria — Nouveautés depuis la dernière version installée
 
 > Petit résumé, en mots simples, de ce qui a été ajouté à l'application
-> **depuis la version 0.5.0**. À remettre avec la prochaine mise à jour.
+> **depuis la version 0.5.0** (jusqu'à la **version 0.10.0**).
+> À remettre avec la prochaine mise à jour.
 > Document mis à jour au fil du développement.
+
+> **Une grande partie de la version 0.10.0 ne se voit pas** : c'est un travail
+> de fond pour que l'application soit solide et ne vous laisse jamais dans le
+> doute. Si quelque chose ne fonctionne pas, elle vous le dit maintenant
+> clairement, en français, et vous propose quoi faire.
 
 ---
 

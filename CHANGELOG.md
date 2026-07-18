@@ -10,8 +10,32 @@ identifiants.
 
 ## [Non publié]
 
-> **Audit de robustesse — Lot 5 « Documents »** (à confirmer par Dave dans
-> l'app). Corrige des données fausses ou maladroites sur les documents remis
+_Rien pour l'instant._
+
+---
+
+## [0.10.0] — 2026-07-18
+
+> **Chantier de robustesse — audit du 2026-07-06, 7 lots livrés.**
+> Version entièrement consacrée à la fiabilité : aucune fonctionnalité
+> nouvelle côté métier, mais l'application ne peut plus échouer en silence.
+> Les huit lots de l'audit ont été traités — sept livrés et **confirmés par
+> Dave dans l'app**, un (chargement de catalogue) écarté puisque les builds à
+> base intégrée ne seront plus produits.
+>
+> **En bref, ce qui n'est plus possible** : rester figée au démarrage sans
+> message · recréer un catalogue vide en silence quand la base a disparu ·
+> perdre les compteurs de numéros de factures · cesser de sauvegarder sans le
+> dire · enregistrer un prix négatif ou une vente à 0 $ par inadvertance ·
+> créer une fiche en double sur un double-clic · afficher un code d'erreur
+> technique en anglais · imprimer une année inventée sur un certificat
+> d'authenticité.
+>
+> Le détail par lot suit, du plus récent au plus ancien.
+
+### Lot 5 — Documents
+
+> Corrige des données fausses ou maladroites sur les documents remis
 > aux clients et aux artistes.
 
 ### Corrigé
@@ -51,8 +75,9 @@ identifiants.
   volontairement **pas** été appliqué à ces deux documents numérotés : un
   refus explicite vaut mieux qu'un doublon silencieux.
 
-> **Audit de robustesse — Lot 8 « Cohérence & ménage »** (à confirmer par Dave
-> dans l'app). Dernier lot du chantier issu de l'audit du 2026-07-06.
+### Lot 8 — Cohérence & ménage
+
+> Aligne ce qui pouvait diverger, et retire le code mort.
 
 ### Corrigé
 
@@ -91,9 +116,10 @@ identifiants.
   après coup : **99 passerelles, toutes utilisées, toutes branchées, aucun
   handler orphelin**.
 
-> **Audit de robustesse — Lot 7 « Messages clairs & clics qui répondent »**
-> (à confirmer par Dave dans l'app). Rend les pépins visibles et
-> compréhensibles, et répare des boutons qui ne faisaient rien.
+### Lot 7 — Messages clairs & clics qui répondent
+
+> Rend les pépins visibles et compréhensibles, et répare des boutons qui ne
+> faisaient rien.
 
 ### Corrigé
 
@@ -123,9 +149,9 @@ identifiants.
   explication (`src/app/vues/vente-fiche.js`). Les autres clics dont l'appel
   échoue sont déjà rattrapés par le filet global d'erreur du Lot 1.
 
-> **Audit de robustesse — Lot 6 « Validation des saisies »** (à confirmer par
-> Dave dans l'app). Empêche les mauvaises données d'entrer, en langage clair
-> et sans jargon.
+### Lot 6 — Validation des saisies
+
+> Empêche les mauvaises données d'entrer, en langage clair et sans jargon.
 
 ### Corrigé
 
@@ -156,9 +182,10 @@ identifiants.
   œuvre déjà vendue refusée, garde-fou Sage 50, et nettoyage d'une éventuelle
   réservation résiduelle (`modifierVente`, `src/db/mutations.js`).
 
-> **Audit de robustesse — Lot 3 « Sauvegardes »** (à confirmer par Dave dans
-> l'app). Le filet ultime de l'app devient fiable, vérifié et utilisable par
-> les parents eux-mêmes.
+### Lot 3 — Sauvegardes
+
+> Le filet ultime de l'app devient fiable, vérifié, et utilisable par les
+> parents eux-mêmes.
 
 ### Ajouté
 
@@ -201,10 +228,10 @@ identifiants.
 - **Défaut de rétention officialisé à 50 copies** (décision Dave 2026-07-17 ;
   `CLAUDE.md` §11 mis à jour, la doc disait 30).
 
-> **Audit de robustesse — Lot 2 « Réglages et compteurs »** (à confirmer par
-> Dave dans l'app). Protège `config.json` — le fichier qui porte les
-> compteurs de numéros de factures — contre la troncature et la perte
-> silencieuse.
+### Lot 2 — Réglages & compteurs
+
+> Protège `config.json` — le fichier qui porte les compteurs de numéros de
+> factures — contre la troncature et la perte silencieuse.
 
 ### Corrigé
 
@@ -236,11 +263,10 @@ identifiants.
   Vérifié par banc d'essai d'intégration (schéma complet, idempotence, ancien
   préfixe `F-2026` compté, numéro Sage exclu).
 
-> **Audit de robustesse — Lot 1 « Filets de sécurité »**. **Confirmé par Dave
-> dans l'app (2026-07-06)** : démarrage normal, restauration proposée avec la
-> bonne date, restauration complète testée. Premier lot du chantier de
-> solidification issu de l'audit du 2026-07-06 (aucun changement visuel,
-> aucun changement de données).
+### Lot 1 — Filets de sécurité
+
+> Premier lot du chantier : plus aucun échec ne peut passer inaperçu.
+> Aucun changement visuel, aucun changement de données.
 
 ### Corrigé
 
