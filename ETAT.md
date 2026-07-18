@@ -40,31 +40,27 @@ Audit complet en 7 axes, rapport priorisé, puis correction **par lots approuvé
 
 ### ▶ Prochaine étape (feuille de route)
 
-Ordre convenu : **① reproductions ✓** · **② robustesse ✓ (ce chantier)** · **③ Sécurité** ← *à attaquer* · **④ Phase 5 — Web (WooCommerce)** · **⑤ Phase 4 — Sage 50**. *(Phases 4 et 5 inversées sur demande de Dave.)*
+Ordre convenu : **① reproductions ✓** · **② robustesse ✓** · **③ Sécurité** ← *en cours* · **④ Phase 5 — Web (WooCommerce)** · **⑤ Phase 4 — Sage 50**. *(Phases 4 et 5 inversées sur demande de Dave.)*
 
-La **③ Sécurité** est impérative et autonome : verrou léger (code court / inactivité), puis chiffrement de la base. La fondation existe déjà — le coffre Windows `safeStorage` sert à la clé IA.
+### ③ Sécurité — en cours (branche `claude/galeria-security-phase-f35c87`)
 
-> ### ⚠️ À LIRE AVANT D'ATTAQUER LA SÉCURITÉ (constaté le 2026-07-18)
->
-> **Une bonne partie de cette phase est déjà écrite, dans un worktree parqué et
-> non fusionné** : `.claude/worktrees/nice-carson-51b234`, branche
-> `claude/nice-carson-51b234`. Trois commits absents de `master` :
->
-> - `e1ee4da` feat(securite) : **verrou léger** de l'app (code NIP, inactivité, blur)
-> - `9f212f3` feat(securite) : **chiffrement de la base au repos** + restauration 1-clic
-> - `121c01a` refactor(reglages) : refonte de la page en sous-navigation par catégories
->
-> C'est aussi ce qui explique le bloc `securite` (`verrou_actif`, `code_hash`,
-> `code_sel`, `inactivite_minutes`, `chiffrement_actif`) déjà présent dans le
-> `config.json` de Dave sans code correspondant sur `master` : cette config a
-> été écrite par cette branche.
->
-> **Ne pas repartir de zéro.** Première étape de la phase : examiner cette
-> branche, décider si on la reprend, la rebase sur la 0.10.0 (elle est
-> antérieure au chantier de robustesse — attention aux fichiers très
-> retouchés : `main.js`, `config.js`, `reglages.js`, `preload.js`), ou si on
-> ne garde que des morceaux. **Ne pas supprimer ce worktree** tant que la
-> décision n'est pas prise.
+**Décision du 2026-07-18 : reprise dirigée de la branche parquée**, pas un rebase et pas un redémarrage à zéro. Examen fait avec Dave ; le travail parqué (`claude/nice-carson-51b234`, worktree `nice-carson-51b234`) est de bonne qualité mais n'était pas reprenable tel quel, pour trois raisons :
+
+1. Elle contenait **son propre bouton « Restaurer une sauvegarde… »**, doublon d'une version **meilleure livrée depuis** sur `master` par le Lot 3 (modale de choix, copie de sécurité, gestion d'erreur). → **abandonné**, on garde celui de `master`.
+2. Son 3ᵉ commit (`121c01a`) est une **refonte visuelle de la page Réglages**, pas de la sécurité, et la principale source de conflits. → **mis de côté**, décision séparée à prendre avec Dave.
+3. **Piège d'intégration à régler au volet 2** : quand la base est chiffrée et l'app fermée, `galerie.db` n'existe pas. Or le Lot 1 a ajouté au démarrage « base introuvable → proposer de restaurer une sauvegarde ». Sans précaution, les deux ensemble proposeraient une restauration **à chaque démarrage**. → il faut appeler `preparerBaseAuDemarrage()` **avant** `proposerRestaurationSiBaseManquante()` (~`src/main.js:710`).
+
+| Volet | État |
+|---|---|
+| **1 — Verrou léger** (code 4–6 chiffres, inactivité, blur) | **✓ repris sur la 0.10.0**, 33 contrôles automatisés au vert — *à confirmer par Dave dans l'app* |
+| **2 — Chiffrement de la base au repos** (safeStorage/DPAPI) | à reprendre depuis `9f212f3`, en réglant le point 3 ci-dessus |
+| **3 — Refonte page Réglages** (`121c01a`) | parqué, hors périmètre sécurité |
+
+**Limite connue du volet 1 — code oublié** : il n'y a pas de réinitialisation dans l'interface (l'article d'aide dit « la personne qui gère l'application peut le réinitialiser »). Le seul recours est de **retirer le bloc `securite` de `Documents\Galeria\config.json`** à la main. À décider avec Dave : suffisant, ou faut-il une porte de sortie dans l'app ?
+
+**Limite connue du volet 2, à dire à Dave avant de l'activer** : pendant que l'app est ouverte, la base est **en clair** sur le disque (contrainte de `node:sqlite`, pas de SQLCipher — cf. décision #1). Le chiffrement protège contre la copie du fichier et l'ordinateur volé/revendu, pas contre quelqu'un assis devant l'app ouverte. À compléter par BitLocker. Noter aussi une **contradiction à trancher** : l'ancien `ETAT.md` de la branche disait « chiffrer aussi les sauvegardes », alors que `src/db/chiffrement.js` documente le choix inverse (sauvegardes **en clair**, pour qu'une récupération ne dépende pas du compte Windows).
+
+> **Ne pas supprimer le worktree `nice-carson-51b234`** tant que le volet 2 n'est pas repris et confirmé.
 
 **Facture client** parquée jusqu'à la Phase 4 (son n°/rôle dépend de Sage). Pour Sage : **jamais d'écriture directe** (fichier d'import + lecture ODBC, cf. CLAUDE.md §8). Modèle éco : reste à valider avec les parents la liste complète des types d'œuvre + %.
 

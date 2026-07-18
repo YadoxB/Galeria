@@ -56,6 +56,23 @@ const DEFAULTS = {
   affichage: {
     zoom: 1.0,
   },
+  securite: {
+    // Verrou léger : barrière d'accès (un code court), pas du chiffrement. Le
+    // code n'est JAMAIS conservé en clair — seules une empreinte scrypt et son
+    // sel (hex) sont enregistrés. La vérification se fait dans le processus
+    // principal (src/securite.js) ; ces deux champs sont retirés de config:get
+    // pour ne pas exposer l'empreinte au renderer.
+    verrou_actif: false,
+    code_hash: '',
+    code_sel: '',
+    // 0 = jamais (verrou seulement à l'ouverture). Sinon délai en minutes avant
+    // le verrouillage automatique sur inactivité.
+    inactivite_minutes: 10,
+    // Demander le code au démarrage de l'application.
+    verrouiller_au_demarrage: true,
+    // Verrouiller aussi quand la fenêtre perd le focus.
+    verrouiller_au_blur: false,
+  },
   ia: {
     // Consignes générales de la galerie pour la génération IA (modifiable dans
     // Réglages → IA). Par défaut = set global du document de consignes.

@@ -21,6 +21,7 @@ import { initialiserUpdater } from './updater.js';
 import { initialiserAide } from './aide.js';
 import { initialiserTutoriel } from './tutoriel.js';
 import { proposerCatalogueLivreSiNouveau } from './catalogue-livraison.js';
+import { initialiserVerrou } from './verrou.js';
 
 enregistrer('accueil', rendreAccueil);
 enregistrer('artistes-liste', rendreArtistesListe);
@@ -96,6 +97,8 @@ window.api.onBackupAlerte((a) => {
 });
 
 (async () => {
+  // Verrou léger : verrouille immédiatement si activé, avant tout affichage.
+  await initialiserVerrou();
   // L'entête est cosmétique : son échec ne doit pas empêcher l'accueil de s'afficher.
   await rafraichirEntete().catch((err) => console.error('Entête non rafraîchie :', err));
   await remplacer('accueil');
