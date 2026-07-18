@@ -42,7 +42,29 @@ Audit complet en 7 axes, rapport priorisé, puis correction **par lots approuvé
 
 Ordre convenu : **① reproductions ✓** · **② robustesse ✓ (ce chantier)** · **③ Sécurité** ← *à attaquer* · **④ Phase 5 — Web (WooCommerce)** · **⑤ Phase 4 — Sage 50**. *(Phases 4 et 5 inversées sur demande de Dave.)*
 
-La **③ Sécurité** est impérative et autonome : verrou léger (code court / inactivité), puis chiffrement de la base. La fondation existe déjà — le coffre Windows `safeStorage` sert à la clé IA. **Note** : un bloc `securite` (verrou, hash, sel, inactivité) est déjà présent dans `config.json` chez Dave, sans code correspondant — à reprendre ou à nettoyer au début de cette phase.
+La **③ Sécurité** est impérative et autonome : verrou léger (code court / inactivité), puis chiffrement de la base. La fondation existe déjà — le coffre Windows `safeStorage` sert à la clé IA.
+
+> ### ⚠️ À LIRE AVANT D'ATTAQUER LA SÉCURITÉ (constaté le 2026-07-18)
+>
+> **Une bonne partie de cette phase est déjà écrite, dans un worktree parqué et
+> non fusionné** : `.claude/worktrees/nice-carson-51b234`, branche
+> `claude/nice-carson-51b234`. Trois commits absents de `master` :
+>
+> - `e1ee4da` feat(securite) : **verrou léger** de l'app (code NIP, inactivité, blur)
+> - `9f212f3` feat(securite) : **chiffrement de la base au repos** + restauration 1-clic
+> - `121c01a` refactor(reglages) : refonte de la page en sous-navigation par catégories
+>
+> C'est aussi ce qui explique le bloc `securite` (`verrou_actif`, `code_hash`,
+> `code_sel`, `inactivite_minutes`, `chiffrement_actif`) déjà présent dans le
+> `config.json` de Dave sans code correspondant sur `master` : cette config a
+> été écrite par cette branche.
+>
+> **Ne pas repartir de zéro.** Première étape de la phase : examiner cette
+> branche, décider si on la reprend, la rebase sur la 0.10.0 (elle est
+> antérieure au chantier de robustesse — attention aux fichiers très
+> retouchés : `main.js`, `config.js`, `reglages.js`, `preload.js`), ou si on
+> ne garde que des morceaux. **Ne pas supprimer ce worktree** tant que la
+> décision n'est pas prise.
 
 **Facture client** parquée jusqu'à la Phase 4 (son n°/rôle dépend de Sage). Pour Sage : **jamais d'écriture directe** (fichier d'import + lecture ODBC, cf. CLAUDE.md §8). Modèle éco : reste à valider avec les parents la liste complète des types d'œuvre + %.
 
