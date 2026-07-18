@@ -10,6 +10,34 @@ identifiants.
 
 ## [Non publié]
 
+### Corrigé
+
+- **Écran de verrouillage : le pavé numérique ne répondait pas quand NumLock
+  était éteint.** Signalé par Dave le 2026-07-18 (« ça marche seulement avec la
+  souris »), puis reproduit en banc d'essai Electron. `clavier()` ne regardait
+  que `e.key` (le caractère produit) ; or, NumLock éteint, le pavé n'envoie pas
+  de chiffres mais des touches de navigation (`Numpad5` → `Clear`, `Numpad2` →
+  `ArrowDown`, `Numpad1` → `End`…), que l'écran jetait **en silence, sans aucun
+  message**. Défaut intermittent et déroutant : il disparaît dès que NumLock est
+  rallumé par inadvertance. Nouvelle fonction `toucheVersAction()` qui lit
+  d'abord `e.code` (l'emplacement physique de la touche, indépendant de
+  NumLock), puis retombe sur `e.key` pour la rangée du haut. `NumpadEnter` =
+  valider, `NumpadDecimal`/`Suppr` = effacer ; les raccourcis système
+  (Ctrl/Alt/Meta) ne sont plus détournés.
+- **Écran de verrouillage : le clavier pouvait ne pas y arriver du tout.** La
+  carte reçoit maintenant le focus au verrouillage (`tabindex="-1"`) et le
+  reprend quand la fenêtre redevient active — sans ça, les frappes partaient
+  vers ce qui avait le focus avant, ou nulle part après un changement de
+  fenêtre. Ajout d'un indice visible « Cliquez les chiffres, ou tapez le code au
+  clavier. »
+- **Écran de verrouillage : asymétrie souris/clavier.** Le clavier vérifiait que
+  l'écran était bien verrouillé avant d'agir, mais **pas les clics du pavé**.
+  Les deux chemins portent désormais la même garde — c'est exactement ce type
+  d'asymétrie qui produit un écran « qui répond à la souris mais pas au
+  clavier ». Démo `demos/verrou-clavier.html` (mouchard des touches + case pour
+  simuler NumLock éteint). Banc d'essai Electron avec vraies frappes : vérifié
+  qu'il échoue sur l'ancien code et passe sur le nouveau.
+
 ### Sécurité
 
 - **Verrou léger de l'application (volet 1 de la phase Sécurité).** Code court

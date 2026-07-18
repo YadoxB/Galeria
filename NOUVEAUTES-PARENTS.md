@@ -158,6 +158,10 @@ l'écran est laissé sans surveillance.
 - Le verrou est **facultatif** : tant que vous ne définissez pas de code,
   l'application s'ouvre directement comme avant.
 
+- Vous pouvez taper le code **au clavier** (le pavé de chiffres à droite
+  fonctionne, que la petite lumière « NumLock » soit allumée ou éteinte) ou
+  **cliquer** les chiffres à l'écran, comme vous préférez.
+
 **À savoir :** votre code n'est **jamais conservé en clair** dans l'ordinateur.
 Ce verrou empêche d'**ouvrir** l'application sans le code ; la protection
 complète du fichier de données (chiffrement) viendra dans une prochaine étape.

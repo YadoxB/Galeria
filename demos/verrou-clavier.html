@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo Verrou au clavier (pavé numérique)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+
+    .demo-bar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: var(--s3); padding: var(--s2) var(--s4);
+      background: var(--deep-navy); color: var(--soft-ivory);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+
+    .mode-eteint {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; color: var(--soft-ivory);
+      background: rgba(255,255,255,0.08); padding: 6px 12px; border-radius: 999px;
+    }
+
+    main { max-width: 860px; margin: 0 auto; padding: var(--s4); }
+    h2 { font-family: var(--font-titre); font-size: 26px; color: var(--gallery-navy); margin: 0 0 8px; }
+    p.intro { font-size: 14.5px; line-height: 1.6; color: var(--slate); margin: 0 0 18px; }
+    .encart {
+      background: #fff; border: 1px solid var(--mist); border-radius: 12px;
+      padding: 16px 18px; margin: 0 0 20px; font-size: 14px; line-height: 1.6;
+    }
+    .encart h3 { margin: 0 0 8px; font-size: 15px; color: var(--gallery-navy); }
+    .encart ol { margin: 8px 0 0; padding-left: 20px; }
+    .encart li { margin-bottom: 6px; }
+    kbd {
+      background: var(--porcelain); border: 1px solid var(--mist); border-bottom-width: 2px;
+      border-radius: 5px; padding: 1px 6px; font-family: monospace; font-size: 12.5px;
+    }
+    .btn-ouvrir {
+      background: var(--warm-gold); color: var(--soft-ivory); border: none;
+      border-radius: 10px; padding: 12px 22px; font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: var(--font-ui);
+    }
+
+    /* Mouchard : montre ce que le clavier envoie réellement */
+    .mouchard {
+      margin-top: 20px; background: var(--deep-navy); color: var(--soft-ivory);
+      border-radius: 12px; padding: 14px 16px; font-family: monospace; font-size: 12.5px;
+      max-height: 220px; overflow: auto;
+    }
+    .mouchard h3 { margin: 0 0 8px; font-family: var(--font-ui); font-size: 13px; color: var(--warm-gold); }
+    .mouchard .ligne { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .mouchard .oui { color: #9BD8A8; }
+    .mouchard .non { color: #F0B7A6; }
+
+    /* ===== Écran de verrouillage : copie conforme de src/styles.css ===== */
+    #verrou-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(201,154,61,0.16), transparent 60%),
+        linear-gradient(160deg, var(--gallery-navy), var(--deep-navy));
+      font-family: var(--font-ui);
+    }
+    #verrou-overlay[hidden] { display: none; }
+    .verrou-carte {
+      width: 380px; max-width: calc(100vw - 32px);
+      display: flex; flex-direction: column; align-items: center;
+      gap: var(--s3); padding: var(--s5) var(--s4); text-align: center; color: var(--soft-ivory);
+    }
+    .verrou-carte:focus, .verrou-carte:focus-visible { outline: none; }
+    .verrou-marque { font-family: var(--font-titre); font-style: italic; font-size: 30px; color: var(--warm-gold); line-height: 1; }
+    .verrou-cadenas {
+      width: 56px; height: 56px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(201,154,61,0.14); border: 1px solid rgba(201,154,61,0.4); color: var(--warm-gold);
+    }
+    .verrou-titre { margin: 0; font-family: var(--font-titre); font-weight: 500; font-size: 22px; color: var(--soft-ivory); }
+    .verrou-sous { margin: 0; font-size: 13.5px; color: rgba(252,250,244,0.66); }
+    .verrou-points { display: flex; gap: 12px; height: 18px; align-items: center; margin: var(--s2) 0; }
+    .verrou-point { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid rgba(252,250,244,0.5); transition: transform .12s, background .12s; }
+    .verrou-point.plein { background: var(--warm-gold); border-color: var(--warm-gold); transform: scale(1.08); }
+    .verrou-pave { display: grid; grid-template-columns: repeat(3, 76px); gap: 14px; }
+    .verrou-touche {
+      height: 64px; border-radius: 16px; cursor: pointer;
+      background: rgba(252,250,244,0.07); border: 1px solid rgba(252,250,244,0.14);
+      color: var(--soft-ivory); font-family: var(--font-ui); font-size: 24px; font-weight: 500;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .12s, transform .06s; user-select: none;
+    }
+    .verrou-touche:hover { background: rgba(252,250,244,0.14); }
+    .verrou-touche:active { transform: scale(0.95); }
+    .verrou-touche.utilitaire { font-size: 18px; color: rgba(252,250,244,0.8); }
+    .verrou-touche.valider { background: var(--warm-gold); border-color: var(--warm-gold); color: var(--deep-navy); }
+    .verrou-erreur { min-height: 18px; font-size: 13px; color: #F0B7A6; }
+    .verrou-indice { margin: var(--s2) 0 0; font-size: 12.5px; color: rgba(252,250,244,0.55); }
+    .verrou-aide { margin-top: var(--s2); font-size: 12px; color: rgba(252,250,244,0.5); }
+    .verrou-aide button { background: none; border: none; color: rgba(252,250,244,0.7); text-decoration: underline; cursor: pointer; font: inherit; }
+    @keyframes verrou-secousse {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-9px); }
+      40%, 80% { transform: translateX(9px); }
+    }
+    .verrou-carte.secousse { animation: verrou-secousse .4s; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Démo : verrou au clavier</div>
+    <label class="mode-eteint">
+      <input type="checkbox" id="simuler-eteint">
+      Simuler NumLock éteint (si tu ne veux pas toucher à ton clavier)
+    </label>
+  </div>
+
+  <main>
+    <h2>Le pavé numérique doit fonctionner, NumLock allumé ou éteint</h2>
+    <p class="intro">
+      C'est la démo du correctif. Avant, l'écran de verrouillage ne regardait que
+      le <em>caractère</em> produit par la touche. Or, quand NumLock est éteint,
+      le pavé numérique n'envoie pas de chiffres : le « 5 » envoie « Clear », le
+      « 2 » envoie « Flèche bas », le « 1 » envoie « Fin ». L'écran restait donc
+      muet, sans le moindre message. Maintenant, on regarde aussi
+      <em>l'emplacement physique</em> de la touche, qui ne change pas.
+    </p>
+
+    <div class="encart">
+      <h3>Comment tester</h3>
+      <ol>
+        <li><strong>Éteins NumLock</strong> sur ton clavier (la petite lumière s'éteint).</li>
+        <li>Clique sur <strong>« Verrouiller l'écran »</strong> ci-dessous.</li>
+        <li>Tape <strong>2 5 8 0</strong> sur le <strong>pavé numérique</strong>, sans toucher à la souris.</li>
+        <li>Ça doit se déverrouiller. Le mouchard en bas montre ce que chaque touche a réellement envoyé.</li>
+        <li>Rallume NumLock et refais le test : ça doit marcher aussi. Puis essaie la rangée de chiffres du haut.</li>
+      </ol>
+      <p style="margin:10px 0 0">
+        Si tu préfères ne pas toucher à ton clavier, coche la case en haut à
+        droite : les touches du pavé seront traduites comme si NumLock était
+        éteint.
+      </p>
+    </div>
+
+    <p><button class="btn-ouvrir" id="btn-verrouiller">Verrouiller l'écran (code : 2580)</button></p>
+
+    <div class="mouchard">
+      <h3>Ce que le clavier envoie réellement</h3>
+      <div id="journal"><div class="ligne" style="opacity:.6">En attente d'une frappe…</div></div>
+    </div>
+  </main>
+
+  <div id="verrou-overlay" hidden>
+    <div class="verrou-carte" id="verrou-carte" tabindex="-1">
+      <div class="verrou-marque">Galeria</div>
+      <div class="verrou-cadenas" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="11" width="16" height="9" rx="2"/>
+          <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+        </svg>
+      </div>
+      <h2 class="verrou-titre">Application verrouillée</h2>
+      <p class="verrou-sous">Entrez le code pour accéder à la galerie</p>
+      <div class="verrou-points" id="verrou-points"></div>
+      <div class="verrou-erreur" id="verrou-erreur" role="alert"></div>
+      <div class="verrou-pave" id="verrou-pave"></div>
+      <p class="verrou-indice">Cliquez les chiffres, ou tapez le code au clavier.</p>
+      <p class="verrou-aide"><button type="button" id="verrou-oubli">Code oublié ?</button></p>
+    </div>
+  </div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// Cette démo reprend TELLE QUELLE la logique de src/app/verrou.js.
+// Si tu modifies l'une, pense à l'autre.
+// ═══════════════════════════════════════════════════════════════════════
+const LONG_MIN = 4, LONG_MAX = 6, CODE_DEMO = '2580';
+let saisie = '', verrouille = false;
+
+const overlay = document.getElementById('verrou-overlay');
+const journal = document.getElementById('journal');
+
+// --- La fonction corrigée, copiée de verrou.js ---
+function toucheVersAction(e) {
+  const code = e.code || '';
+  const numpad = /^Numpad([0-9])$/.exec(code);
+  if (numpad) return numpad[1];
+  if (code === 'NumpadEnter') return 'valider';
+  if (code === 'NumpadDecimal' || e.key === 'Delete') return 'effacer';
+  if (/^[0-9]$/.test(e.key)) return e.key;
+  if (e.key === 'Backspace') return 'effacer';
+  if (e.key === 'Enter') return 'valider';
+  return null;
+}
+
+// --- L'ANCIENNE fonction, pour montrer la différence ---
+function ancienneVersion(e) {
+  if (/^[0-9]$/.test(e.key)) return e.key;
+  if (e.key === 'Backspace') return 'effacer';
+  if (e.key === 'Enter') return 'valider';
+  return null;
+}
+
+const NUMLOCK_ETEINT = {
+  Numpad0: 'Insert', Numpad1: 'End', Numpad2: 'ArrowDown', Numpad3: 'PageDown',
+  Numpad4: 'ArrowLeft', Numpad5: 'Clear', Numpad6: 'ArrowRight', Numpad7: 'Home',
+  Numpad8: 'ArrowUp', Numpad9: 'PageUp',
+};
+
+function noter(e, action, actionAvant) {
+  if (journal.firstElementChild && journal.firstElementChild.style.opacity) journal.innerHTML = '';
+  const d = document.createElement('div');
+  d.className = 'ligne';
+  const avant = actionAvant === null
+    ? '<span class="non">ignorée (écran muet)</span>'
+    : '<span class="oui">' + actionAvant + '</span>';
+  const apres = action === null
+    ? '<span class="non">ignorée</span>'
+    : '<span class="oui">' + action + '</span>';
+  d.innerHTML = `touche <b>${e.code || '?'}</b> → envoie « ${e.key} »<br>`
+    + `&nbsp;&nbsp;avant le correctif : ${avant} &nbsp;·&nbsp; maintenant : ${apres}`;
+  journal.prepend(d);
+}
+
+const pave = document.getElementById('verrou-pave');
+const TOUCHES = ['1','2','3','4','5','6','7','8','9','effacer','0','valider'];
+pave.innerHTML = TOUCHES.map((t) => {
+  if (t === 'effacer') return '<button type="button" class="verrou-touche utilitaire" data-t="effacer">⌫</button>';
+  if (t === 'valider') return '<button type="button" class="verrou-touche valider" data-t="valider">✓</button>';
+  return `<button type="button" class="verrou-touche" data-t="${t}">${t}</button>`;
+}).join('');
+pave.addEventListener('click', (e) => {
+  if (!verrouille) return;
+  const b = e.target.closest('[data-t]');
+  if (b) appui(b.dataset.t);
+});
+
+function dessinerPoints() {
+  const box = document.getElementById('verrou-points');
+  const n = Math.max(saisie.length, LONG_MIN);
+  box.innerHTML = Array.from({ length: Math.min(n, LONG_MAX) },
+    (_, i) => `<span class="verrou-point ${i < saisie.length ? 'plein' : ''}"></span>`).join('');
+}
+function montrerErreur(m) { document.getElementById('verrou-erreur').textContent = m || ''; }
+function secouer() {
+  const c = document.getElementById('verrou-carte');
+  c.classList.remove('secousse'); void c.offsetWidth; c.classList.add('secousse');
+}
+function tenter(definitif) {
+  if (saisie.length < LONG_MIN) {
+    if (definitif) { secouer(); montrerErreur('Le code comporte au moins 4 chiffres.'); }
+    return;
+  }
+  if (saisie === CODE_DEMO) { deverrouiller(); return; }
+  if (definitif) { secouer(); montrerErreur('Code incorrect. Réessayez.'); saisie = ''; dessinerPoints(); }
+}
+function appui(t) {
+  if (t === 'effacer') { saisie = saisie.slice(0, -1); montrerErreur(''); dessinerPoints(); return; }
+  if (t === 'valider') { tenter(true); return; }
+  if (saisie.length >= LONG_MAX) return;
+  saisie += t; montrerErreur(''); dessinerPoints();
+  if (saisie.length >= LONG_MIN) tenter(saisie.length >= LONG_MAX);
+}
+function verrouiller() {
+  verrouille = true; saisie = ''; montrerErreur(''); dessinerPoints();
+  overlay.hidden = false;
+  document.getElementById('verrou-carte').focus({ preventScroll: true });
+}
+function deverrouiller() {
+  verrouille = false; saisie = ''; overlay.hidden = true;
+}
+
+document.addEventListener('keydown', (e) => {
+  if (!verrouille) return;
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+  // Si la case est cochée, on fait comme si NumLock était éteint.
+  let ev = e;
+  if (document.getElementById('simuler-eteint').checked && NUMLOCK_ETEINT[e.code]) {
+    ev = { code: e.code, key: NUMLOCK_ETEINT[e.code] };
+  }
+
+  const action = toucheVersAction(ev);
+  noter(ev, action, ancienneVersion(ev));
+  if (action !== null) { appui(action); e.preventDefault(); return; }
+  if (e.key === 'Tab') e.preventDefault();
+}, true);
+
+document.getElementById('btn-verrouiller').addEventListener('click', verrouiller);
+document.getElementById('verrou-oubli').addEventListener('click',
+  () => montrerErreur('La question de secours viendra au prochain lot.'));
+window.addEventListener('focus', () => { if (verrouille) document.getElementById('verrou-carte').focus(); });
+</script>
+</body>
+</html>

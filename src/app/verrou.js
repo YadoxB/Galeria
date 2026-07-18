@@ -21,7 +21,7 @@ function construireOverlay() {
   overlay.id = 'verrou-overlay';
   overlay.hidden = true;
   overlay.innerHTML = `
-    <div class="verrou-carte" id="verrou-carte">
+    <div class="verrou-carte" id="verrou-carte" tabindex="-1">
       <div class="verrou-marque">Galeria</div>
       <div class="verrou-cadenas" aria-hidden="true">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -34,6 +34,7 @@ function construireOverlay() {
       <div class="verrou-points" id="verrou-points" aria-hidden="true"></div>
       <div class="verrou-erreur" id="verrou-erreur" role="alert"></div>
       <div class="verrou-pave" id="verrou-pave"></div>
+      <p class="verrou-indice">Cliquez les chiffres, ou tapez le code au clavier.</p>
       <p class="verrou-aide"><button type="button" id="verrou-oubli">Code oublié ?</button></p>
     </div>
   `;
@@ -47,6 +48,10 @@ function construireOverlay() {
     return `<button type="button" class="verrou-touche" data-t="${t}">${t}</button>`;
   }).join('');
   pave.addEventListener('click', (e) => {
+    // Même garde que le clavier : on n'agit que si l'écran est réellement
+    // verrouillé. Sans cette symétrie, un chemin pourrait répondre pendant que
+    // l'autre reste muet — précisément le symptôme cherché en juillet 2026.
+    if (!verrouille) return;
     const b = e.target.closest('[data-t]');
     if (b) appui(b.dataset.t);
   });
@@ -118,12 +123,35 @@ function appui(t) {
   if (saisie.length >= LONG_MIN) tenter({ definitif: saisie.length >= LONG_MAX });
 }
 
+// Traduit une frappe en action du pavé, ou null si la touche ne nous concerne
+// pas. On regarde `e.code` (l'emplacement physique de la touche) AVANT `e.key`
+// (le caractère produit), parce que le pavé numérique ne produit des chiffres
+// que si le verrou NumLock est allumé : éteint, le « 5 » envoie « Clear », le
+// « 2 » envoie « ArrowDown », le « 1 » envoie « End »… Les parents utilisent ce
+// pavé-là, et une lampe NumLock éteinte rendait l'écran muet sans message.
+function toucheVersAction(e) {
+  const code = e.code || '';
+  // Pavé numérique, indépendant de NumLock.
+  const numpad = /^Numpad([0-9])$/.exec(code);
+  if (numpad) return numpad[1];
+  if (code === 'NumpadEnter') return 'valider';
+  // « . » du pavé (= Suppr quand NumLock est éteint) : effacer, c'est ce que
+  // la personne veut faire en tâtonnant.
+  if (code === 'NumpadDecimal' || e.key === 'Delete') return 'effacer';
+  // Rangée de chiffres du haut et clavier ordinaire.
+  if (/^[0-9]$/.test(e.key)) return e.key;
+  if (e.key === 'Backspace') return 'effacer';
+  if (e.key === 'Enter') return 'valider';
+  return null;
+}
+
 function clavier(e) {
   if (!verrouille) return;
-  if (/^[0-9]$/.test(e.key)) { appui(e.key); e.preventDefault(); }
-  else if (e.key === 'Backspace') { appui('effacer'); e.preventDefault(); }
-  else if (e.key === 'Enter') { appui('valider'); e.preventDefault(); }
-  else if (e.key === 'Tab') { e.preventDefault(); } // ne pas laisser le focus filer derrière
+  // Ne pas détourner les raccourcis système (Alt+F4, Ctrl+…, F5…).
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  const action = toucheVersAction(e);
+  if (action !== null) { appui(action); e.preventDefault(); return; }
+  if (e.key === 'Tab') { e.preventDefault(); } // ne pas laisser le focus filer derrière
 }
 
 function verrouiller() {
@@ -137,7 +165,17 @@ function verrouiller() {
   // Empêche l'interaction et la navigation au clavier dans l'app derrière.
   const appli = document.getElementById('appli');
   if (appli) appli.setAttribute('inert', '');
+  // Donner le focus à l'écran : sans ça, les frappes peuvent partir vers ce qui
+  // avait le focus avant le verrouillage (ou nulle part après un changement de
+  // fenêtre), et l'écran paraît ne pas répondre au clavier.
+  prendreFocus();
   arreterMinuterie();
+}
+
+function prendreFocus() {
+  if (!overlay || overlay.hidden) return;
+  const carte = overlay.querySelector('#verrou-carte');
+  try { carte.focus({ preventScroll: true }); } catch { try { carte.focus(); } catch {} }
 }
 
 function deverrouiller() {
@@ -179,6 +217,10 @@ export async function initialiserVerrou() {
   ['mousemove', 'mousedown', 'keydown', 'wheel', 'touchstart'].forEach((ev) =>
     document.addEventListener(ev, surActivite, { passive: true }));
   document.addEventListener('keydown', clavier, true);
+
+  // Retour dans la fenêtre alors que le verrou est affiché : reprendre le focus,
+  // sinon le premier « chiffre » tapé se perd et l'écran semble muet.
+  window.addEventListener('focus', () => { if (verrouille) prendreFocus(); });
 
   // Verrouillage au blur (notifié par le processus principal).
   if (window.api.onSecuriteVerrouiller) {
