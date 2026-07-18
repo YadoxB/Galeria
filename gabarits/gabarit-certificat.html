@@ -329,7 +329,24 @@ function setOptionAnnee(annee){
   var sel=document.getElementById("i_annee");
   if(!sel) return;
   var n=parseInt(annee,10);
-  if(!Number.isFinite(n)) return;
+  if(!Number.isFinite(n)){
+    /* Année inconnue (champ vide sur la fiche de l'œuvre) : on sélectionne une
+       option vide, créée au besoin. Sans cela, le certificat imprimait l'année
+       présélectionnée par défaut dans le panneau de saisie — une donnée fausse
+       sur un document officiel. Le certificat affiche alors une année vide,
+       comme le font déjà médium / support / dimension quand ils manquent. */
+    var vide=null;
+    for(var j=0;j<sel.options.length;j++){
+      if(sel.options[j].value===""){ vide=sel.options[j]; break; }
+    }
+    if(!vide){
+      vide=document.createElement("option");
+      vide.value=""; vide.textContent="—";
+      sel.insertBefore(vide, sel.firstChild);
+    }
+    sel.value="";
+    return;
+  }
   // Si l'option n'existe pas (année très ancienne), on l'ajoute.
   var trouvee=false;
   for(var i=0;i<sel.options.length;i++){

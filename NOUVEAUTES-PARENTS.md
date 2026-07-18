@@ -119,6 +119,18 @@ commettre :
   réservée : l'application vous dit laquelle et vous invite à libérer la
   réservation d'abord.
 
+## Documents : trois corrections importantes
+
+- **Certificat d'authenticité** : quand l'année de l'œuvre n'est pas connue,
+  le certificat laissait paraître **« 2024 »** — une année inventée sur un
+  document officiel. La case reste maintenant **vide**, comme les autres
+  informations manquantes. *(Si vous avez produit des certificats pour des
+  œuvres sans année, il peut valoir la peine de les vérifier.)*
+- **Lettre de remerciement** : si un client n'a pas de prénom enregistré, la
+  lettre commençait par « Bonjour , ». Elle utilise maintenant son nom.
+- **Annexe A** : si le document ne se produit pas (erreur, ou vous annulez),
+  son numéro n'est plus « perdu » — il est réutilisé la fois suivante.
+
 ## Installation et catalogue plus simples
 
 L'installation a été allégée et accélérée. À l'ouverture, si un nouveau

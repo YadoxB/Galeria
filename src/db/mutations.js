@@ -1049,6 +1049,20 @@ function majAnnexePdfPath(id, pdfPath) {
   return { ok: true };
 }
 
+// Annule une annexe réservée dont le PDF n'a finalement pas été produit
+// (échec de génération ou annulation de l'éditeur) : sans cela, le numéro
+// séquentiel de l'artiste était consommé et une ligne fantôme restait en base.
+// Ne supprime que si aucun PDF n'y est rattaché — jamais une annexe produite.
+function annulerAnnexe(id) {
+  const aid = entier(id);
+  if (aid == null) return { annulee: false };
+  const db = openDatabase();
+  const info = db.prepare(
+    "DELETE FROM annexes WHERE id = ? AND (pdf_path IS NULL OR pdf_path = '')"
+  ).run(aid);
+  return { annulee: info.changes > 0 };
+}
+
 // Mémorise le PDF de présentation d'un artiste et la signature de son profil
 // (pour réutiliser le document tant que le profil ne change pas).
 function majPresentationArtiste(id, pdfPath, sig) {
@@ -1058,7 +1072,7 @@ function majPresentationArtiste(id, pdfPath, sig) {
 }
 
 module.exports = {
-  enregistrerAnnexe, majAnnexePdfPath, majPresentationArtiste,
+  enregistrerAnnexe, majAnnexePdfPath, annulerAnnexe, majPresentationArtiste,
   modifierArtiste, creerArtiste, supprimerArtiste,
   modifierOeuvre, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre,
   modifierClient, creerClient, supprimerClient,

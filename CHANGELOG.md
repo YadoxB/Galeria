@@ -10,6 +10,47 @@ identifiants.
 
 ## [Non publié]
 
+> **Audit de robustesse — Lot 5 « Documents »** (à confirmer par Dave dans
+> l'app). Corrige des données fausses ou maladroites sur les documents remis
+> aux clients et aux artistes.
+
+### Corrigé
+
+- **Certificat : une année absente n'imprime plus « 2024 ».** Le sélecteur
+  d'année du gabarit présélectionne 2024 pour l'usage autonome ; quand
+  Galeria fournissait une année vide (cas fréquent, beaucoup d'œuvres n'en
+  ont pas), `setOptionAnnee("")` abandonnait sans rien vider et le certificat
+  imprimait **2024** — une donnée fausse sur un document officiel. Le
+  certificat affiche désormais une année vide, comme le font déjà médium /
+  support / dimension quand ils manquent.
+  **Exception au périmètre approuvée par Dave (2026-07-18)** : la correction
+  touche `gabarits/gabarit-certificat.html`, mais **uniquement la fonction
+  `setOptionAnnee` du bloc « Intégration Galeria »** (couche ajoutée pour
+  l'app) — aucun style, aucun élément du design d'origine, et le comportement
+  du gabarit en usage autonome est inchangé. Vérifié dans un navigateur :
+  année vide → vide, 2019 → 2019, retour à vide → vide, 1930 → 1930.
+- **Lettre de remerciement : plus de « Bonjour , ».** Si le client n'a pas de
+  prénom, la lettre se replie sur son nom de famille (`src/pdf.js`).
+- **Numéro d'annexe A libéré si le document n'est pas produit.** Le numéro
+  était réservé avant le rendu : un échec de génération ou une annulation de
+  l'éditeur le brûlait et laissait une ligne fantôme en base (invisible dans
+  la section Documents). Le numéro est maintenant rendu (`annulerAnnexe`,
+  `src/db/mutations.js`), et une annexe dont le PDF existe n'est jamais
+  supprimée.
+- **Noms de fichiers trop longs.** Un titre d'œuvre à rallonge, ajouté au
+  dossier de pochette (année / client / facture), pouvait dépasser la limite
+  Windows de 260 caractères et faire échouer l'écriture du PDF. La partie
+  variable du nom est tronquée proprement (sur un espace, avec « … »).
+
+### Note
+
+- **Fichier verrouillé (PDF ouvert dans Acrobat)** : signalé par l'audit sur
+  le certificat et la facture artiste. Traité au **Lot 7** — le message est
+  désormais clair en français (« Le fichier est ouvert dans un autre
+  programme… »). Le repli automatique vers un fichier « (2) » n'a
+  volontairement **pas** été appliqué à ces deux documents numérotés : un
+  refus explicite vaut mieux qu'un doublon silencieux.
+
 > **Audit de robustesse — Lot 8 « Cohérence & ménage »** (à confirmer par Dave
 > dans l'app). Dernier lot du chantier issu de l'audit du 2026-07-06.
 

@@ -5,7 +5,7 @@ const crypto = require('node:crypto');
 const { openDatabase } = require('./db/database');
 const { getDocumentsDir, getDocumentsDirAnnee, getPhotosDir } = require('./db/paths');
 const { obtenirCertificat, obtenirVente, obtenirArtiste, oeuvresPourCatalogue, listerCertificatsParVente } = require('./db/requetes');
-const { obtenirOuReserverNumeroFactureArtisteVente, enregistrerAnnexe, majAnnexePdfPath, majPresentationArtiste, creerCertificat, reserverProchainNumeroCertificat } = require('./db/mutations');
+const { obtenirOuReserverNumeroFactureArtisteVente, enregistrerAnnexe, majAnnexePdfPath, annulerAnnexe, majPresentationArtiste, creerCertificat, reserverProchainNumeroCertificat } = require('./db/mutations');
 const { obtenirConfig } = require('./config');
 
 // ===== Helpers =====
@@ -31,11 +31,25 @@ function dateJour() {
   return `${n.getFullYear()}-${p(n.getMonth() + 1)}-${p(n.getDate())}`;
 }
 
+// Longueur maximale de la partie « queue » d'un nom de document (titre d'œuvre,
+// nom de client…). Windows refuse les chemins de plus de 260 caractères : un
+// titre à rallonge, ajouté au dossier de pochette (année / client / facture),
+// faisait échouer l'écriture du PDF avec une erreur système. On tronque la
+// queue proprement (sur un espace si possible) plutôt que d'échouer.
+const MAX_QUEUE_NOM = 90;
+
+function tronquerQueue(s) {
+  if (s.length <= MAX_QUEUE_NOM) return s;
+  const coupe = s.slice(0, MAX_QUEUE_NOM);
+  const espace = coupe.lastIndexOf(' ');
+  return (espace > MAX_QUEUE_NOM * 0.6 ? coupe.slice(0, espace) : coupe).trim() + '…';
+}
+
 // nomSur() (défini plus bas, hissé) retire les caractères interdits par Windows
 // en gardant accents/espaces/parenthèses.
 function nomDocument(tete, queue, { modifie = false } = {}) {
   let nom = nomSur(tete);
-  const q = nomSur(queue || '');
+  const q = tronquerQueue(nomSur(queue || ''));
   if (q) nom += SEP_DOC + q;
   if (modifie) nom += ` (version modifiée ${dateJour()})`;
   return nom + '.pdf';
@@ -585,12 +599,31 @@ async function genererAnnexePdf({ type, artiste_id, artisteId, oeuvres = [], oeu
   const nomFichier = nomDocument(`Annexe ${t === 'retrait' ? 'retrait' : 'dépôt'} ${enr.numero}`, nom);
   const sortie = path.join(dossier, nomFichier);
 
+  // Le numéro d'annexe est réservé avant le rendu (il figure dans le document).
+  // Si le PDF n'est finalement pas produit — échec, ou éditeur annulé — on
+  // libère la réservation, sinon le numéro serait brûlé et une ligne fantôme
+  // resterait en base (invisible dans la section Documents).
   if (editer) {
-    const pdf = await ouvrirEditeurDocument({ gabaritNom: gabarit, donnees, sortie, paysage: true, titre: 'Annexe A — version modifiée' });
-    if (pdf) majAnnexePdfPath(enr.id, pdf);
+    let pdf;
+    try {
+      pdf = await ouvrirEditeurDocument({ gabaritNom: gabarit, donnees, sortie, paysage: true, titre: 'Annexe A — version modifiée' });
+    } catch (err) {
+      annulerAnnexe(enr.id);
+      throw err;
+    }
+    if (!pdf) {
+      annulerAnnexe(enr.id);
+      return { pdf_path: null, numero: null, type: t, annule: true };
+    }
+    majAnnexePdfPath(enr.id, pdf);
     return { pdf_path: pdf, numero: enr.numero, type: t };
   }
-  await genererPdf({ gabaritNom: gabarit, donnees, sortie, paysage: true });
+  try {
+    await genererPdf({ gabaritNom: gabarit, donnees, sortie, paysage: true });
+  } catch (err) {
+    annulerAnnexe(enr.id);
+    throw err;
+  }
   majAnnexePdfPath(enr.id, sortie);
   return { pdf_path: sortie, numero: enr.numero, type: t };
 }
@@ -704,7 +737,13 @@ function preparerDonneesLettre(vente, cert, cfg) {
     langue: vente.langue || 'FR',
     type_achat: vente.type_achat || 'personne',
     est_cadeau: !!vente.est_cadeau,
-    client: { prenom: vente.client_prenom || '', nom: vente.client_nom || '' },
+    // La lettre s'ouvre par « Bonjour {prenom}, ». Si le client n'a pas de
+    // prénom, on replie sur son nom de famille : sans cela, la lettre remise
+    // au client commençait par « Bonjour , ».
+    client: {
+      prenom: (vente.client_prenom || '').trim() || (vente.client_nom || '').trim(),
+      nom: vente.client_nom || '',
+    },
     artiste: { nom: vente.artiste_nom || '' },
     signataire: (cfg.documents && cfg.documents.signataire_certificat) || 'Joanne Boucher',
     oeuvre: {
