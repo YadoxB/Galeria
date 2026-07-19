@@ -114,6 +114,10 @@ contextBridge.exposeInMainWorld('api', {
   securiteRetirerCode: () => ipcRenderer.invoke('securite:retirer-code'),
   securiteVerifierCode: (code) => ipcRenderer.invoke('securite:verifier-code', code),
   securiteDefinirOptions: (opts) => ipcRenderer.invoke('securite:definir-options', opts),
+  securiteDefinirQuestion: (q, r) => ipcRenderer.invoke('securite:definir-question', q, r),
+  securiteRetirerQuestion: () => ipcRenderer.invoke('securite:retirer-question'),
+  securiteVerifierReponse: (r) => ipcRenderer.invoke('securite:verifier-reponse', r),
+  securiteReinitialiserCode: (r, code) => ipcRenderer.invoke('securite:reinitialiser-code', r, code),
   onSecuriteVerrouiller: (callback) => {
     const handler = () => callback();
     ipcRenderer.on('securite:verrouiller', handler);

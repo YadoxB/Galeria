@@ -162,6 +162,21 @@ l'écran est laissé sans surveillance.
   fonctionne, que la petite lumière « NumLock » soit allumée ou éteinte) ou
   **cliquer** les chiffres à l'écran, comme vous préférez.
 
+### Si vous oubliez le code
+
+Vous pouvez choisir une **question de secours** (par exemple « Dans quelle ville
+êtes-vous né ? ») au moment de définir votre code. Si le code vous échappe, il
+suffit de cliquer **« Code oublié ? »** sur l'écran de verrouillage, de répondre
+à la question, et de choisir un nouveau code. L'application s'ouvre aussitôt.
+
+- Pas besoin d'écrire la réponse exactement comme la première fois : les
+  **accents, les majuscules et les espaces n'ont pas d'importance**.
+  « Sainte-Foy » et « sainte foy » sont acceptés tous les deux.
+- Choisissez une réponse qu'un visiteur ne pourrait pas deviner — évitez ce qui
+  se trouve sur le site ou la page Facebook de la galerie.
+- La question est **facultative**. Sans elle, un code oublié demande l'aide de
+  Dave.
+
 **À savoir :** votre code n'est **jamais conservé en clair** dans l'ordinateur.
 Ce verrou empêche d'**ouvrir** l'application sans le code ; la protection
 complète du fichier de données (chiffrement) viendra dans une prochaine étape.

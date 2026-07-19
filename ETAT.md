@@ -52,11 +52,19 @@ Ordre convenu : **① reproductions ✓** · **② robustesse ✓** · **③ Sé
 
 | Volet | État |
 |---|---|
-| **1 — Verrou léger** (code 4–6 chiffres, inactivité, blur) | **✓ repris sur la 0.10.0**, 33 contrôles automatisés au vert — *à confirmer par Dave dans l'app* |
+| **1 — Verrou léger** (code 4–6 chiffres, inactivité, blur) | **✓ repris sur la 0.10.0** — **confirmé par Dave dans l'app** |
+| **1-bis — Correctif du pavé numérique** | **✓ livré** — **confirmé par Dave** |
+| **1-ter — Question de secours** | **✓ livré**, 30 contrôles Electron + 40 contrôles du module au vert — *à confirmer par Dave* |
 | **2 — Chiffrement de la base au repos** (safeStorage/DPAPI) | à reprendre depuis `9f212f3`, en réglant le point 3 ci-dessus |
 | **3 — Refonte page Réglages** (`121c01a`) | parqué, hors périmètre sécurité |
 
-**Limite connue du volet 1 — code oublié** : il n'y a pas de réinitialisation dans l'interface (l'article d'aide dit « la personne qui gère l'application peut le réinitialiser »). Le seul recours est de **retirer le bloc `securite` de `Documents\Galeria\config.json`** à la main. À décider avec Dave : suffisant, ou faut-il une porte de sortie dans l'app ?
+**Bug trouvé et corrigé en cours de route (lot A-bis)** : l'écran de verrouillage ne répondait **pas au pavé numérique quand NumLock était éteint** — `clavier()` ne lisait que `e.key`, or le pavé envoie alors des touches de navigation (`Numpad5` → `Clear`). Écran muet, sans message, et **intermittent** (disparaît dès que NumLock est rallumé) : le pire cas pour des utilisateurs non techniciens. `toucheVersAction()` lit désormais `e.code` d'abord. Trouvé parce que Dave testait au pavé — non reproductible à la souris, ce qui explique que la branche parquée ne l'ait jamais vu. Au passage : la carte prend le focus au verrouillage, et le clic du pavé porte la même garde `verrouille` que le clavier (l'asymétrie exacte qui produit ce symptôme).
+
+**Portée assumée du verrou** : il vit dans l'interface. Quelqu'un de compétent avec accès à l'ordinateur peut le contourner — c'est acceptable pour la menace visée (visiteur de passage), et c'est BitLocker + le volet 2 qui couvrent le vol de l'ordinateur. Le menu applicatif est désactivé en production (`Menu.setApplicationMenu(null)`), donc pas d'outils de développement par raccourci.
+
+**Dernier recours documenté** (article d'aide, section Soutien) : effacer le bloc `securite` de `Documents\Galeria\config.json`. Ne touche à aucune donnée.
+
+**Démos générées, pas recopiées** : `demos/verrou-secours.html` est produite par `scripts/construire-demo-verrou.js`, qui inline le vrai `src/app/verrou.js` et les vrais styles. **Régénérer après toute modification de `verrou.js`.** `demos/verrou-clavier.html` (correctif NumLock) porte, elle, une copie de `toucheVersAction()` vérifiée identique au code livré.
 
 **Limite connue du volet 2, à dire à Dave avant de l'activer** : pendant que l'app est ouverte, la base est **en clair** sur le disque (contrainte de `node:sqlite`, pas de SQLCipher — cf. décision #1). Le chiffrement protège contre la copie du fichier et l'ordinateur volé/revendu, pas contre quelqu'un assis devant l'app ouverte. À compléter par BitLocker. Noter aussi une **contradiction à trancher** : l'ancien `ETAT.md` de la branche disait « chiffrer aussi les sauvegardes », alors que `src/db/chiffrement.js` documente le choix inverse (sauvegardes **en clair**, pour qu'une récupération ne dépende pas du compte Windows).
 

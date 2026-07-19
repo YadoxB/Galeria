@@ -255,7 +255,9 @@ const ARTICLES = [
     `<p><b>Réglages → Sécurité</b> permet de protéger l'application par un <b>code de 4 à 6 chiffres</b>, pour qu'une personne de passage ne puisse pas consulter les fiches de clients.</p>
      <h4>Activer le verrou</h4><p>Saisis un code et confirme-le, puis « Enregistrer le code ». L'application demandera ce code <b>à l'ouverture</b>.</p>
      <h4>Verrouillage automatique</h4><p>Tu peux la faire se verrouiller seule après une période sans activité (5 à 30 minutes), et même quand on passe à un autre logiciel. Le compte à rebours se réarme dès qu'on bouge la souris ou tape au clavier.</p>
-     <h4>Code oublié ?</h4><p>Le code n'est <b>jamais conservé en clair</b>. En cas d'oubli, la personne qui gère l'application peut le réinitialiser. Ce verrou empêche d'<b>ouvrir</b> l'application ; il ne chiffre pas encore le fichier de données (étape à venir).</p>`),
+     <h4>Question de secours</h4><p>Dans la même page, tu peux définir une <b>question de secours</b> (facultative, mais fortement recommandée). Si le code est oublié, clique <b>« Code oublié ? »</b> sur l'écran de verrouillage : réponds à la question, choisis un nouveau code, et l'application s'ouvre. Les <b>accents, majuscules et espaces n'ont pas d'importance</b> dans la réponse.</p>
+     <div class="attention">Choisis une réponse qu'un visiteur ne pourrait pas deviner — évite ce qui se trouve sur le site ou la page Facebook de la galerie. Après 3 mauvaises réponses, il faut patienter 30 secondes.</div>
+     <h4>Code oublié sans question de secours ?</h4><p>Le code n'est <b>jamais conservé en clair</b>, donc personne ne peut le retrouver. Sans question de secours, il faut passer par la personne qui gère l'application (voir <b>Contacter le soutien</b>). Ce verrou empêche d'<b>ouvrir</b> l'application ; il ne chiffre pas encore le fichier de données (étape à venir).</p>`),
 
   // ═══════ PROBLÈMES COURANTS ═══════
   A('depannage', 'Pourquoi le prix ne se calcule pas automatiquement ?', 'prix auto ne se remplit pas cote manquante médium typo faute frappe format hors normes manuel style',
@@ -331,6 +333,14 @@ const ARTICLES = [
      <li><b>Version de l'application :</b> Galeria <span data-version>—</span> (voir Réglages → À propos)</li>
      <li><b>Dossier des données :</b> <a data-dossier>Ouvrir dans l'Explorateur</a></li></ul>
      <div class="astuce">En cas de souci de données, fais d'abord une <b>sauvegarde</b> et n'efface rien dans le dossier de données.</div>`),
+  A('soutien', 'Débloquer un code de verrouillage oublié', 'code oublié verrou bloqué débloquer réinitialiser config.json dernier recours administrateur',
+    `<p>Si le code du verrou est oublié <b>et</b> qu'aucune question de secours n'a été définie, il n'y a pas de moyen de le retrouver : le code n'est jamais conservé en clair. Voici le dernier recours, à faire par la personne qui gère l'application.</p>
+     <ol><li><b>Ferme Galeria.</b></li>
+     <li>Ouvre le fichier <code>config.json</code> dans <code>Documents\\Galeria</code> (avec le Bloc-notes).</li>
+     <li>Repère le bloc <code>"securite": { … }</code> et efface-le en entier, virgule comprise.</li>
+     <li>Enregistre le fichier et rouvre Galeria : elle s'ouvrira sans code.</li></ol>
+     <div class="attention">Cette manœuvre <b>ne touche pas aux données</b> (ni œuvres, ni clients, ni ventes) — seulement aux réglages de sécurité. Dans le doute, copie <code>config.json</code> ailleurs avant de le modifier.</div>
+     <div class="astuce">Pour ne plus jamais avoir à faire ça : définis une <b>question de secours</b> dans Réglages → Sécurité.</div>`),
 ];
 
 // ── Outils ──

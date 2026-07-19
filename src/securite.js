@@ -30,6 +30,45 @@ function hacher(code, selHex) {
   return crypto.scryptSync(String(code), sel, SCRYPT_KEYLEN).toString('hex');
 }
 
+// Compare deux empreintes hex à temps constant, sans jamais lever.
+function empreintesEgales(hexAttendu, hexFourni) {
+  try {
+    const a = Buffer.from(hexAttendu, 'hex');
+    const b = Buffer.from(hexFourni, 'hex');
+    if (a.length !== b.length || a.length === 0) return false;
+    return crypto.timingSafeEqual(a, b);
+  } catch { return false; }
+}
+
+// ===== Question de secours =====
+// Normalise une réponse avant comparaison. Sans ça, le secours ne sert à rien :
+// les propriétaires écriraient « Sainte-Foy » un jour et « sainte foy »
+// l'autre, et se feraient refuser leur propre réponse. On retire les accents,
+// la casse, les espaces et toute la ponctuation — « Sainte-Foy », « sainte foy »
+// et « SainteFoy » deviennent la même chose.
+function normaliserReponse(txt) {
+  return String(txt == null ? '' : txt)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // signes diacritiques detaches par NFD
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+// Freinage des tentatives de secours. En mémoire du processus principal :
+// remis à zéro au redémarrage de l'app, ce qui est acceptable — le but est de
+// décourager quelqu'un qui essaie des réponses en rafale devant l'écran, pas
+// de résister à une attaque outillée (voir la note de portée en tête de
+// fichier). Fermer et rouvrir l'app est bien plus lent que d'attendre.
+const MAX_TENTATIVES = 3;
+const PAUSE_MS = 30 * 1000;
+let tentativesSecours = 0;
+let bloqueJusqua = 0;
+
+function secondesRestantes() {
+  const reste = bloqueJusqua - Date.now();
+  return reste > 0 ? Math.ceil(reste / 1000) : 0;
+}
+
 // État non sensible, sûr à exposer au renderer.
 function etatSecurite() {
   const s = obtenirConfig().securite || {};
@@ -41,6 +80,10 @@ function etatSecurite() {
     inactivite_minutes: Number.isFinite(s.inactivite_minutes) ? s.inactivite_minutes : 10,
     verrouiller_au_demarrage: s.verrouiller_au_demarrage !== false,
     verrouiller_au_blur: !!s.verrouiller_au_blur,
+    // Question de secours. Le texte de la question n'est PAS un secret : il
+    // s'affiche sur l'écran de verrouillage. La réponse, elle, ne sort jamais.
+    question_definie: !!(s.question && s.reponse_hash && s.reponse_sel),
+    question: String(s.question || ''),
   };
 }
 
@@ -55,9 +98,89 @@ function definirCode(code) {
   return { ok: true };
 }
 
-// Retire le code et désactive le verrou.
+// Retire le code et désactive le verrou. Retire aussi la question de secours :
+// elle ne protège plus rien sans code, et la laisser traîner ferait croire à
+// une sécurité qui n'existe plus.
 function retirerCode() {
-  mettreAJourConfig({ securite: { code_hash: '', code_sel: '', verrou_actif: false } });
+  mettreAJourConfig({
+    securite: {
+      code_hash: '', code_sel: '', verrou_actif: false,
+      question: '', reponse_hash: '', reponse_sel: '',
+    },
+  });
+  tentativesSecours = 0;
+  bloqueJusqua = 0;
+  return { ok: true };
+}
+
+// --- Question de secours ---
+
+// Enregistre la question et sa réponse. La réponse est protégée comme le code.
+function definirQuestion(question, reponse) {
+  const q = String(question == null ? '' : question).trim();
+  if (q.length < 5) {
+    throw new Error('La question doit être un peu plus longue.');
+  }
+  const norm = normaliserReponse(reponse);
+  if (norm.length < 2) {
+    throw new Error('La réponse doit comporter au moins 2 lettres ou chiffres.');
+  }
+  const selHex = crypto.randomBytes(16).toString('hex');
+  mettreAJourConfig({
+    securite: { question: q, reponse_hash: hacher(norm, selHex), reponse_sel: selHex },
+  });
+  tentativesSecours = 0;
+  bloqueJusqua = 0;
+  return { ok: true };
+}
+
+function retirerQuestion() {
+  mettreAJourConfig({ securite: { question: '', reponse_hash: '', reponse_sel: '' } });
+  tentativesSecours = 0;
+  bloqueJusqua = 0;
+  return { ok: true };
+}
+
+// Vérifie la réponse de secours, avec freinage après plusieurs échecs.
+// Renvoie { ok } ou { ok:false, pause_secondes } quand il faut patienter.
+function verifierReponse(reponse) {
+  const attente = secondesRestantes();
+  if (attente > 0) return { ok: false, pause_secondes: attente };
+
+  const s = obtenirConfig().securite || {};
+  if (!s.question || !s.reponse_hash || !s.reponse_sel) return { ok: false };
+
+  const norm = normaliserReponse(reponse);
+  // Une réponse vide ne doit jamais compter comme une tentative valable, mais
+  // elle ne doit pas non plus servir à réarmer le compteur en boucle.
+  if (norm.length < 2) return { ok: false };
+
+  if (empreintesEgales(s.reponse_hash, hacher(norm, s.reponse_sel))) {
+    tentativesSecours = 0;
+    bloqueJusqua = 0;
+    return { ok: true };
+  }
+
+  tentativesSecours += 1;
+  if (tentativesSecours >= MAX_TENTATIVES) {
+    tentativesSecours = 0;
+    bloqueJusqua = Date.now() + PAUSE_MS;
+    return { ok: false, pause_secondes: Math.ceil(PAUSE_MS / 1000) };
+  }
+  return { ok: false, tentatives_restantes: MAX_TENTATIVES - tentativesSecours };
+}
+
+// Réinitialise le code à partir de la question de secours. La réponse est
+// re-vérifiée ici : c'est le processus principal qui décide, pas l'interface.
+// Un seul appel fait les deux, pour qu'il n'existe aucun état intermédiaire
+// « réponse acceptée » exploitable.
+function reinitialiserCodeParSecours(reponse, nouveauCode) {
+  const r = verifierReponse(reponse);
+  if (!r.ok) return r;
+  if (!codeValide(nouveauCode)) {
+    throw new Error('Le code doit comporter de 4 à 6 chiffres.');
+  }
+  definirCode(nouveauCode);
   return { ok: true };
 }
 
@@ -66,15 +189,7 @@ function verifierCode(code) {
   const s = obtenirConfig().securite || {};
   if (!s.code_hash || !s.code_sel) return { ok: false };
   if (typeof code !== 'string' || !code) return { ok: false };
-  let attendu, fourni;
-  try {
-    attendu = Buffer.from(s.code_hash, 'hex');
-    fourni = Buffer.from(hacher(code, s.code_sel), 'hex');
-  } catch {
-    return { ok: false };
-  }
-  if (attendu.length !== fourni.length) return { ok: false };
-  return { ok: crypto.timingSafeEqual(attendu, fourni) };
+  return { ok: empreintesEgales(s.code_hash, hacher(code, s.code_sel)) };
 }
 
 // Met à jour les options non sensibles. Refuse d'activer le verrou sans code.
@@ -107,4 +222,9 @@ module.exports = {
   verifierCode,
   definirOptions,
   codeValide,
+  definirQuestion,
+  retirerQuestion,
+  verifierReponse,
+  reinitialiserCodeParSecours,
+  normaliserReponse,
 };

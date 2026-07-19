@@ -291,6 +291,38 @@ export async function rendreReglages(contenu) {
             </div>
 
             <div class="sous-section">
+              <h4>Question de secours</h4>
+              <p class="aide-champ">Facultative, mais recommandée : elle permet de reprendre la main si le code est oublié, sans avoir à appeler à l'aide.</p>
+              <div class="form-champ">
+                <label for="sec-question">Question</label>
+                <select id="sec-question">
+                  <option value="">— Choisir une question —</option>
+                  <option>Dans quelle ville êtes-vous né ?</option>
+                  <option>Quel était le nom de votre premier animal ?</option>
+                  <option>Quel est le nom de jeune fille de votre mère ?</option>
+                  <option>Quelle est votre ville de vacances préférée ?</option>
+                  <option>Quel était le nom de votre école primaire ?</option>
+                  <option value="__autre__">Écrire ma propre question…</option>
+                </select>
+              </div>
+              <div class="form-champ" id="sec-question-libre-bloc" hidden>
+                <label for="sec-question-libre">Votre question</label>
+                <input type="text" id="sec-question-libre" maxlength="120" placeholder="Ex. : Comment s'appelait le chalet de mes parents ?">
+              </div>
+              <div class="form-champ">
+                <label for="sec-reponse">Réponse</label>
+                <input type="text" id="sec-reponse" autocomplete="off" spellcheck="false" placeholder="Votre réponse">
+                <p class="aide-champ">Les accents, les majuscules et les espaces n'ont pas d'importance : « Sainte-Foy » et « sainte foy » sont acceptés tous les deux.</p>
+              </div>
+              <div class="ia-cle-actions">
+                <button type="button" class="btn-action btn-principal" id="sec-question-def">Enregistrer la question</button>
+                <button type="button" class="btn-action btn-secondaire-action" id="sec-question-suppr">Retirer la question</button>
+              </div>
+              <p class="securite-statut absent" id="sec-question-statut">Aucune question définie.</p>
+              <p class="aide-champ attention-secours">Choisissez une réponse qu'un visiteur ne pourrait pas deviner — évitez ce qui se trouve sur le site ou la page Facebook de la galerie.</p>
+            </div>
+
+            <div class="sous-section">
               <h4>Verrouillage automatique</h4>
               <div class="form-champ">
                 <label for="sec-inactivite">Après une période d'inactivité</label>
@@ -669,11 +701,34 @@ export async function rendreReglages(contenu) {
       });
     });
 
+    // ---- Question de secours ----
+    const secQuestion = contenu.querySelector('#sec-question');
+    const secQuestionLibre = contenu.querySelector('#sec-question-libre');
+    const secQuestionLibreBloc = contenu.querySelector('#sec-question-libre-bloc');
+    const secReponse = contenu.querySelector('#sec-reponse');
+    const secQStatut = contenu.querySelector('#sec-question-statut');
+    [secQuestion, secQuestionLibre, secReponse].forEach((el) => {
+      el.addEventListener('input', (e) => e.stopPropagation());
+      el.addEventListener('change', (e) => e.stopPropagation());
+    });
+    secQuestion.addEventListener('change', () => {
+      secQuestionLibreBloc.hidden = secQuestion.value !== '__autre__';
+      if (secQuestion.value === '__autre__') secQuestionLibre.focus();
+    });
+    const questionChoisie = () => (secQuestion.value === '__autre__'
+      ? secQuestionLibre.value.trim()
+      : secQuestion.value.trim());
+
     let codeDefini = false;
     const rafraichirSecurite = async () => {
       try {
         const s = await window.api.securiteEtat();
         codeDefini = !!s.code_defini;
+        // Question de secours : on n'affiche jamais la réponse (on ne l'a pas).
+        secQStatut.className = s.question_definie ? 'securite-statut ok' : 'securite-statut absent';
+        secQStatut.textContent = s.question_definie
+          ? `✓ Question définie : « ${s.question} »`
+          : 'Aucune question définie.';
         secVerrou.checked = !!s.verrou_actif;
         secVerrou.disabled = !codeDefini;
         secInact.value = String(s.inactivite_minutes ?? 10);
@@ -725,6 +780,54 @@ export async function rendreReglages(contenu) {
         secCode.value = ''; secCode2.value = '';
         await rafraichirSecurite();
         await reappliquerVerrou();
+      } catch (err) {
+        await alerter({ type: 'error', title: 'Échec', message: err.message });
+      }
+    });
+
+    contenu.querySelector('#sec-question-def').addEventListener('click', async () => {
+      const q = questionChoisie();
+      const rep = secReponse.value;
+      if (!q) {
+        secQStatut.className = 'securite-statut erreur';
+        secQStatut.textContent = 'Choisissez une question.';
+        return;
+      }
+      if (!rep || !rep.trim()) {
+        secQStatut.className = 'securite-statut erreur';
+        secQStatut.textContent = 'Entrez la réponse.';
+        return;
+      }
+      try {
+        await window.api.securiteDefinirQuestion(q, rep);
+        secReponse.value = '';
+        await rafraichirSecurite();
+        await alerter({
+          type: 'succes',
+          title: 'Question enregistrée',
+          message: 'Vous pourrez reprendre la main si le code est oublié.',
+          detail: 'Sur l\'écran de verrouillage, cliquez « Code oublié ? » pour répondre à la question et choisir un nouveau code.',
+        });
+      } catch (err) {
+        secQStatut.className = 'securite-statut erreur';
+        secQStatut.textContent = err.message;
+      }
+    });
+
+    contenu.querySelector('#sec-question-suppr').addEventListener('click', async () => {
+      const r = await confirmer({
+        type: 'warning', title: 'Retirer la question de secours ?',
+        message: 'Sans elle, un code oublié ne pourra plus être réinitialisé depuis l\'écran de verrouillage.',
+        buttons: ['Retirer', 'Annuler'], defaultId: 1, cancelId: 1,
+      });
+      if (r !== 0) return;
+      try {
+        await window.api.securiteRetirerQuestion();
+        secQuestion.value = '';
+        secQuestionLibre.value = '';
+        secQuestionLibreBloc.hidden = true;
+        secReponse.value = '';
+        await rafraichirSecurite();
       } catch (err) {
         await alerter({ type: 'error', title: 'Échec', message: err.message });
       }

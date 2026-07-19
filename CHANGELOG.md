@@ -40,6 +40,27 @@ identifiants.
 
 ### Sécurité
 
+- **Question de secours pour un code oublié.** Sans elle, un code perdu voulait
+  dire éditer `config.json` à la main — hors de portée des propriétaires.
+  Facultative mais recommandée, définie dans **Réglages → Sécurité** (5 questions
+  proposées ou question libre). La réponse est protégée **comme le code**
+  (empreinte scrypt salée, jamais en clair) et **normalisée avant comparaison** :
+  accents, casse, espaces et ponctuation ignorés, si bien que « Sainte-Foy »,
+  « sainte foy » et « SAINTEFOY » sont équivalents — sans cette tolérance, le
+  secours refuserait la réponse de son propre propriétaire. Sur l'écran de
+  verrouillage, **« Code oublié ? »** affiche la question, puis fait choisir un
+  nouveau code : l'accès n'est jamais donné sans changer le code, donc une
+  intrusion laisse une trace visible. **Freinage** après 3 mauvaises réponses
+  (pause de 30 s, appliquée même à la bonne réponse). La réinitialisation est un
+  **appel unique** côté processus principal qui revérifie la réponse — l'interface
+  ne peut pas sauter l'étape de vérification. Retirer le code retire aussi la
+  question. Nouveaux IPC `securite:definir-question`, `securite:retirer-question`,
+  `securite:verifier-reponse`, `securite:reinitialiser-code` ; l'empreinte de la
+  réponse est retirée de `config:get` comme celle du code. Article d'aide + article
+  **Soutien** documentant le dernier recours (effacer le bloc `securite` de
+  `config.json`). Démo `demos/verrou-secours.html`, **générée** depuis
+  `src/app/verrou.js` et `src/styles.css` par `scripts/construire-demo-verrou.js`
+  pour qu'elle ne puisse pas dériver du code livré.
 - **Verrou léger de l'application (volet 1 de la phase Sécurité).** Code court
   (NIP de 4 à 6 chiffres) demandé à l'ouverture et/ou après une période
   d'inactivité, pour empêcher une personne de passage de consulter les fiches

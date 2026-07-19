@@ -960,8 +960,12 @@ async function demarrerApplication() {
   ipcMain.handle('photo:enregistrer-recadree', (_e, opts) => enregistrerImageRecadree(opts));
   ipcMain.handle('config:get', () => {
     // Ne jamais exposer l'empreinte du code de verrouillage au renderer.
+    // Ni l'empreinte du code, ni celle de la réponse de secours.
     const cfg = JSON.parse(JSON.stringify(obtenirConfig()));
-    if (cfg.securite) { delete cfg.securite.code_hash; delete cfg.securite.code_sel; }
+    if (cfg.securite) {
+      delete cfg.securite.code_hash; delete cfg.securite.code_sel;
+      delete cfg.securite.reponse_hash; delete cfg.securite.reponse_sel;
+    }
     return cfg;
   });
   ipcMain.handle('config:sauver', (_e, partiel) => mettreAJourConfig(partiel));
@@ -973,6 +977,10 @@ async function demarrerApplication() {
   ipcMain.handle('securite:retirer-code', () => securite.retirerCode());
   ipcMain.handle('securite:verifier-code', (_e, code) => securite.verifierCode(code));
   ipcMain.handle('securite:definir-options', (_e, opts) => securite.definirOptions(opts));
+  ipcMain.handle('securite:definir-question', (_e, q, r) => securite.definirQuestion(q, r));
+  ipcMain.handle('securite:retirer-question', () => securite.retirerQuestion());
+  ipcMain.handle('securite:verifier-reponse', (_e, r) => securite.verifierReponse(r));
+  ipcMain.handle('securite:reinitialiser-code', (_e, r, code) => securite.reinitialiserCodeParSecours(r, code));
 
   // --- Catalogue livré : proposer de charger un nouveau catalogue embarqué ---
   // Ne propose que si un catalogue est embarqué (seed non vide) ET différent de

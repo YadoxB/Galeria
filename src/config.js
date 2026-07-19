@@ -72,6 +72,14 @@ const DEFAULTS = {
     verrouiller_au_demarrage: true,
     // Verrouiller aussi quand la fenêtre perd le focus.
     verrouiller_au_blur: false,
+    // Question de secours (facultative) pour reprendre la main sur un code
+    // oublié. La question s'affiche sur l'écran de verrouillage — ce n'est pas
+    // un secret. La réponse est protégée comme le code : empreinte scrypt +
+    // sel, jamais en clair, et normalisée avant comparaison (accents, casse,
+    // espaces et ponctuation ignorés).
+    question: '',
+    reponse_hash: '',
+    reponse_sel: '',
   },
   ia: {
     // Consignes générales de la galerie pour la génération IA (modifiable dans

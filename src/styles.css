@@ -5414,6 +5414,13 @@ select.lot-in.st-pretee { color: var(--info); }
   box-shadow: 0 0 0 4px rgba(201, 154, 61, 0.18);
 }
 /* ===== Sécurité (Réglages) — gestion du code de verrouillage ===== */
+/* Avertissement sur le choix de la réponse de secours. */
+.aide-champ.attention-secours {
+  margin-top: 10px; padding: 8px 10px;
+  background: rgba(201,154,61,0.10); border-left: 3px solid var(--warm-gold);
+  border-radius: 0 6px 6px 0; color: var(--slate);
+}
+
 .securite-statut { font-size: 12.5px; margin: 10px 0 6px; font-weight: 600; }
 .securite-statut.ok { color: var(--succes); }
 .securite-statut.absent { color: var(--stone); font-weight: 400; }
@@ -5461,6 +5468,36 @@ select.lot-in.st-pretee { color: var(--info); }
 .verrou-touche.valider:hover { background: var(--warm-gold-hover); }
 .verrou-erreur { min-height: 18px; font-size: 13px; color: #F0B7A6; }
 .verrou-indice { margin: var(--s2) 0 0; font-size: 12.5px; color: rgba(252,250,244,0.55); }
+
+/* ----- Volet « Code oublié » (question de secours) ----- */
+.verrou-secours { width: 420px; }
+.verrou-secours[hidden] { display: none; }
+.verrou-secours .verrou-sous { max-width: 340px; }
+.secours-etape { display: flex; flex-direction: column; gap: 10px; width: 100%; align-items: center; }
+.secours-etape[hidden] { display: none; }
+.secours-champ {
+  width: 100%; height: 46px; padding: 0 14px; border-radius: 12px;
+  background: rgba(252,250,244,0.07); border: 1px solid rgba(252,250,244,0.22);
+  color: var(--soft-ivory); font-family: var(--font-ui); font-size: 16px; text-align: center;
+}
+.secours-champ::placeholder { color: rgba(252,250,244,0.4); }
+.secours-champ:focus {
+  outline: none; border-color: var(--warm-gold);
+  box-shadow: 0 0 0 4px rgba(201,154,61,0.18);
+}
+.secours-actions { display: flex; gap: 12px; margin-top: var(--s2); }
+.secours-btn {
+  height: 44px; padding: 0 20px; border-radius: 12px; cursor: pointer;
+  font-family: var(--font-ui); font-size: 14.5px; font-weight: 500;
+  background: rgba(252,250,244,0.07); border: 1px solid rgba(252,250,244,0.18);
+  color: var(--soft-ivory); transition: background .12s;
+}
+.secours-btn:hover { background: rgba(252,250,244,0.14); }
+.secours-btn.principal {
+  background: var(--warm-gold); border-color: var(--warm-gold);
+  color: var(--deep-navy); font-weight: 600;
+}
+.secours-btn.principal:hover { background: var(--warm-gold-hover); }
 /* La carte reçoit le focus au verrouillage (pour que le clavier y arrive) :
    pas d'anneau visible, ce n'est pas un contrôle. */
 .verrou-carte:focus, .verrou-carte:focus-visible { outline: none; }
