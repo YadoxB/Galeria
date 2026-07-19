@@ -40,9 +40,11 @@ Audit complet en 7 axes, rapport priorisé, puis correction **par lots approuvé
 
 ### ▶ Prochaine étape (feuille de route)
 
-Ordre convenu : **① reproductions ✓** · **② robustesse ✓** · **③ Sécurité** ← *en cours* · **④ Phase 5 — Web (WooCommerce)** · **⑤ Phase 4 — Sage 50**. *(Phases 4 et 5 inversées sur demande de Dave.)*
+Ordre convenu : **① reproductions ✓** · **② robustesse ✓** · **③ Sécurité — volet verrou ✓, volet chiffrement PARQUÉ** · **④ Phase 5 — Web (WooCommerce)** ← *prochaine* · **⑤ Phase 4 — Sage 50**. *(Phases 4 et 5 inversées sur demande de Dave.)*
 
-### ③ Sécurité — en cours (branche `claude/galeria-security-phase-f35c87`)
+### ③ Sécurité — verrou livré, chiffrement parqué (branche `claude/galeria-security-phase-f35c87`)
+
+> **Décision de Dave, 2026-07-18 : le chiffrement de la base est mis de côté** — moins urgent que d'autres chantiers. Le verrou (volet 1) est livré et confirmé. **Ne pas relancer le volet 2 sans son accord**, et lire l'analyse « Pourquoi le chiffrement a été parqué » plus bas avant de le faire : le plan de la branche parquée avait un défaut de fond.
 
 **Décision du 2026-07-18 : reprise dirigée de la branche parquée**, pas un rebase et pas un redémarrage à zéro. Examen fait avec Dave ; le travail parqué (`claude/nice-carson-51b234`, worktree `nice-carson-51b234`) est de bonne qualité mais n'était pas reprenable tel quel, pour trois raisons :
 
@@ -54,9 +56,25 @@ Ordre convenu : **① reproductions ✓** · **② robustesse ✓** · **③ Sé
 |---|---|
 | **1 — Verrou léger** (code 4–6 chiffres, inactivité, blur) | **✓ repris sur la 0.10.0** — **confirmé par Dave dans l'app** |
 | **1-bis — Correctif du pavé numérique** | **✓ livré** — **confirmé par Dave** |
-| **1-ter — Question de secours** | **✓ livré**, 30 contrôles Electron + 40 contrôles du module au vert — *à confirmer par Dave* |
-| **2 — Chiffrement de la base au repos** (safeStorage/DPAPI) | à reprendre depuis `9f212f3`, en réglant le point 3 ci-dessus |
+| **1-ter — Question de secours** | **✓ livré** — **confirmé par Dave** |
+| **2 — Chiffrement de la base au repos** (safeStorage/DPAPI) | **PARQUÉ** sur décision de Dave (2026-07-18) — voir l'analyse ci-dessous |
 | **3 — Refonte page Réglages** (`121c01a`) | parqué, hors périmètre sécurité |
+
+### Pourquoi le chiffrement a été parqué (analyse du 2026-07-18)
+
+**Le plan de la branche parquée avait un défaut de fond** : `src/db/chiffrement.js` chiffre le fichier de la base mais laisse les **sauvegardes en clair** — or elles vivent dans `Documents\Galeria\Sauvegardes\`, **juste à côté**, et ce sont des copies complètes. Quelqu'un qui copie le dossier `Documents\Galeria` repart donc avec tout le contenu lisible, chiffrement activé ou non. L'interrupteur « Chiffrement activé ✓ » aurait rassuré à tort — pire qu'une absence de chiffrement.
+
+Trois issues présentées à Dave :
+
+- **A — base seule** (le plan de la branche) : gain réel faible, aucun risque de perte.
+- **B — base + sauvegardes** : protection réelle, mais la clé DPAPI est liée au compte Windows. Ordinateur remplacé, Windows réinstallé ou profil corrompu ⇒ **sauvegardes définitivement illisibles**, précisément dans le scénario pour lequel elles existent.
+- **C — B + bouton « exporter une copie non chiffrée vers une clé USB »** : protection réelle *et* chemin de récupération contrôlé. Plus de travail.
+
+**Recommandation faite à Dave (toujours valable si on reprend le chantier) : BitLocker d'abord, puis l'option C, désactivée par défaut.** BitLocker n'est pas du code — c'est un réglage Windows de ~15 min qui protège **tout** (base, sauvegardes, photos, PDF), avec une clé de récupération dans le compte Microsoft, donc sans risque de perte définitive. Contre la menace réelle (ordinateur volé dans un lieu de passage), c'est la vraie réponse ; le chiffrement applicatif n'ajoute ensuite que la protection contre un accès à une session Windows déjà ouverte — cas que le verrou couvre en bonne partie.
+
+**Reste à faire si le chantier repart** (en plus du choix A/B/C) : reprendre `chiffrement.js` de `9f212f3` en **jetant son bouton de restauration** (doublon, voir point 1), régler le **piège d'ordre au démarrage** (point 3), et greffer `supprimerCoffreSiPresent()` dans la restauration et le chargement de catalogue de `master` (le coffre `.enc` devient périmé quand la base claire est remplacée). **Limite qui ne disparaîtra pas** : pendant que l'app tourne, la base est en clair sur le disque (contrainte `node:sqlite`, cf. décision #1).
+
+**Non fait, à proposer aux parents un jour** : la marche à suivre BitLocker. Rien n'a été écrit dans `NOUVEAUTES-PARENTS.md` ni dans l'aide à ce sujet — Dave n'a pas tranché.
 
 **Bug trouvé et corrigé en cours de route (lot A-bis)** : l'écran de verrouillage ne répondait **pas au pavé numérique quand NumLock était éteint** — `clavier()` ne lisait que `e.key`, or le pavé envoie alors des touches de navigation (`Numpad5` → `Clear`). Écran muet, sans message, et **intermittent** (disparaît dès que NumLock est rallumé) : le pire cas pour des utilisateurs non techniciens. `toucheVersAction()` lit désormais `e.code` d'abord. Trouvé parce que Dave testait au pavé — non reproductible à la souris, ce qui explique que la branche parquée ne l'ait jamais vu. Au passage : la carte prend le focus au verrouillage, et le clic du pavé porte la même garde `verrouille` que le clavier (l'asymétrie exacte qui produit ce symptôme).
 
@@ -65,6 +83,12 @@ Ordre convenu : **① reproductions ✓** · **② robustesse ✓** · **③ Sé
 **Dernier recours documenté** (article d'aide, section Soutien) : effacer le bloc `securite` de `Documents\Galeria\config.json`. Ne touche à aucune donnée.
 
 **Démos générées, pas recopiées** : `demos/verrou-secours.html` est produite par `scripts/construire-demo-verrou.js`, qui inline le vrai `src/app/verrou.js` et les vrais styles. **Régénérer après toute modification de `verrou.js`.** `demos/verrou-clavier.html` (correctif NumLock) porte, elle, une copie de `toucheVersAction()` vérifiée identique au code livré.
+
+**⚠️ Ne pas supprimer le worktree `nice-carson-51b234`** : il porte encore le commit `9f212f3` (chiffrement), seule copie de ce travail.
+
+**État de livraison** : la branche `claude/galeria-security-phase-f35c87` (3 commits : `141f41f`, `6009cab`, `0c75244`) **n'est pas fusionnée dans `master`**. À fusionner quand Dave le décidera — puis `git push` + `npm run release` restent, comme pour la 0.10.0, **des gestes à faire par Dave**.
+
+**Pas de cadre de tests dans le projet** : tout a été vérifié par des bancs d'essai jetables (module Node + vraie fenêtre Electron pilotée par `sendInputEvent`/`executeJavaScript`). Le bug du pavé numérique montre la valeur d'un vrai cadre de tests — **chantier à proposer à Dave** (il a été évoqué, pas planifié).
 
 **Limite connue du volet 2, à dire à Dave avant de l'activer** : pendant que l'app est ouverte, la base est **en clair** sur le disque (contrainte de `node:sqlite`, pas de SQLCipher — cf. décision #1). Le chiffrement protège contre la copie du fichier et l'ordinateur volé/revendu, pas contre quelqu'un assis devant l'app ouverte. À compléter par BitLocker. Noter aussi une **contradiction à trancher** : l'ancien `ETAT.md` de la branche disait « chiffrer aussi les sauvegardes », alors que `src/db/chiffrement.js` documente le choix inverse (sauvegardes **en clair**, pour qu'une récupération ne dépende pas du compte Windows).
 
