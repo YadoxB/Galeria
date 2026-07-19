@@ -194,16 +194,27 @@ export async function rendreArtisteFiche(contenu, params) {
           </div>
         </div>
         <div class="hero-artiste-actions">
+          <!-- Les documents sont rarement produits ici (constat de Dave,
+               2026-07-18) : ils tiennent dans un menu plutôt que d'occuper
+               trois boutons qui rivalisaient visuellement avec les actions de
+               la fiche. Le menu permet aussi de distinguer enfin l'annexe de
+               dépôt de celle de retrait. -->
           <div class="grp-actions">
+            <div class="menu-docs" id="menu-docs">
+              <button class="btn-action" id="btn-menu-docs" aria-haspopup="menu" aria-expanded="false">
+                Documents <span class="menu-docs-chev" aria-hidden="true">▾</span>
+              </button>
+              <div class="menu-docs-pop" id="menu-docs-pop" role="menu" hidden>
+                <button type="button" role="menuitem" id="btn-presentation-pdf">Présentation PDF</button>
+                <button type="button" role="menuitem" id="btn-catalogue-pdf">Catalogue PDF</button>
+                <div class="menu-docs-sep"></div>
+                <button type="button" role="menuitem" id="btn-annexe-depot">Annexe A — dépôt…</button>
+                <button type="button" role="menuitem" id="btn-annexe-retrait">Annexe A — retrait…</button>
+              </div>
+            </div>
             <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
             ${boutonArchive({ archive: a.archive })}
             <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
-          </div>
-          <div class="grp-docs">
-            <span class="grp-docs-label">Documents</span>
-            <button class="btn-action btn-secondaire" id="btn-presentation-pdf">Présentation PDF</button>
-            <button class="btn-action btn-secondaire" id="btn-catalogue-pdf">Catalogue PDF</button>
-            <button class="btn-action btn-secondaire" id="btn-annexe">Annexe A…</button>
           </div>
         </div>
       </div>
@@ -496,21 +507,54 @@ export async function rendreArtisteFiche(contenu, params) {
       });
     }
 
-    const btnAnnexe = contenu.querySelector('#btn-annexe');
-    if (btnAnnexe) {
-      btnAnnexe.addEventListener('click', async () => {
-        let oeuvres = [];
-        try {
-          oeuvres = await window.api.oeuvresDetailArtiste(a.id);
-        } catch (err) {
-          await confirmer({ type: 'error', title: 'Erreur', message: nettoyerErreur(err), buttons: ['OK'] });
-          return;
+    // Annexe A : deux entrées de menu, une par type, pour ne plus obliger à
+    // deviner qu'un basculeur dépôt/retrait attend dans la modale.
+    const ouvrirAnnexe = async (type) => {
+      let oeuvres = [];
+      try {
+        oeuvres = await window.api.oeuvresDetailArtiste(a.id);
+      } catch (err) {
+        await confirmer({ type: 'error', title: 'Erreur', message: nettoyerErreur(err), buttons: ['OK'] });
+        return;
+      }
+      if (!oeuvres.length) {
+        await confirmer({ type: 'info', title: 'Aucune œuvre', message: "Cet artiste n'a aucune œuvre.", buttons: ['OK'] });
+        return;
+      }
+      await ouvrirAnnexeModale({ artiste: a, oeuvres, type });
+    };
+    const btnAnnexeDepot = contenu.querySelector('#btn-annexe-depot');
+    if (btnAnnexeDepot) btnAnnexeDepot.addEventListener('click', () => ouvrirAnnexe('depot'));
+    const btnAnnexeRetrait = contenu.querySelector('#btn-annexe-retrait');
+    if (btnAnnexeRetrait) btnAnnexeRetrait.addEventListener('click', () => ouvrirAnnexe('retrait'));
+
+    // --- Menu « Documents » : ouverture, fermeture, accessibilité ---
+    const menuBtn = contenu.querySelector('#btn-menu-docs');
+    const menuPop = contenu.querySelector('#menu-docs-pop');
+    if (menuBtn && menuPop) {
+      const fermerMenu = () => {
+        menuPop.hidden = true;
+        menuBtn.setAttribute('aria-expanded', 'false');
+      };
+      menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const ouvert = !menuPop.hidden;
+        menuPop.hidden = ouvert;
+        menuBtn.setAttribute('aria-expanded', ouvert ? 'false' : 'true');
+        if (!ouvert) {
+          const premier = menuPop.querySelector('button');
+          if (premier) premier.focus();
         }
-        if (!oeuvres.length) {
-          await confirmer({ type: 'info', title: 'Aucune œuvre', message: "Cet artiste n'a aucune œuvre.", buttons: ['OK'] });
-          return;
-        }
-        await ouvrirAnnexeModale({ artiste: a, oeuvres, type: 'depot' });
+      });
+      // Un clic sur une entrée déclenche son propre handler, puis referme.
+      menuPop.addEventListener('click', (e) => {
+        if (e.target.closest('button')) fermerMenu();
+      });
+      // Clic ailleurs, ou Échap : on referme. Écouteurs posés sur le contenu de
+      // la vue, donc retirés avec elle au changement de page.
+      contenu.addEventListener('click', () => { if (!menuPop.hidden) fermerMenu(); });
+      contenu.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !menuPop.hidden) { fermerMenu(); menuBtn.focus(); }
       });
     }
 

@@ -2501,6 +2501,28 @@ details.bloc.pliable > .bloc-corps {
 .hero-artiste-actions .grp-docs { display: flex; gap: var(--s2); flex-wrap: wrap; justify-content: flex-end; }
 .hero-artiste-actions .grp-docs-label { width: 100%; text-align: right; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--stone); margin-bottom: -2px; }
 
+/* ----- Menu « Documents » de la fiche artiste -----
+   Les documents s'y replient au lieu d'occuper trois boutons qui rivalisaient
+   avec Supprimer / Archiver / Modifier. */
+.menu-docs { position: relative; }
+.menu-docs-chev { font-size: 10px; opacity: 0.6; margin-left: 4px; }
+.menu-docs-pop {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 40;
+  min-width: 220px; padding: 6px;
+  background: var(--porcelain); border: 1px solid var(--mist);
+  border-radius: 12px; box-shadow: var(--ombre-modal);
+}
+.menu-docs-pop[hidden] { display: none; }
+.menu-docs-pop button {
+  display: block; width: 100%; text-align: left;
+  background: none; border: none; cursor: pointer;
+  padding: 9px 11px; border-radius: 8px;
+  font-family: var(--font-ui); font-size: 13.5px; color: var(--ink);
+}
+.menu-docs-pop button:hover { background: var(--soft-ivory); }
+.menu-docs-pop button:focus-visible { outline: 2px solid var(--warm-gold); outline-offset: -2px; }
+.menu-docs-sep { height: 1px; background: var(--mist); margin: 5px 4px; }
+
 /* Niveau 2 : contenu (présentation + aperçu du catalogue) */
 .contenu-artiste { display: grid; grid-template-columns: 1.25fr 1fr; gap: var(--s3); margin-bottom: var(--s4); align-items: start; }
 .contenu-artiste > .carte { margin: 0; grid-column: auto; }
