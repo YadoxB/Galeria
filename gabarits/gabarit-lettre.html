@@ -33,19 +33,15 @@ body{font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#1c1a
 .lettre{font-family:'G';font-size:var(--lettre-fs,12.5pt);line-height:1.7;color:#1c1a17;}
 .lettre p{margin-bottom:0.85em;text-align:justify;}
 .lettre em{font-style:italic;}
-/* Clôture + signature : ensemble poussé vers la DROITE de la lettre.
-   width:max-content garde le bloc juste assez large pour son contenu ;
-   margin-left:auto le colle au bord droit. Le texte reste aligné à gauche
-   À L'INTÉRIEUR du bloc (une liste de coordonnées ferrée à droite se lit
-   mal), si bien que le nom, le rôle et le contact restent alignés entre eux. */
-.bloc-cloture{margin-left:auto;width:max-content;max-width:100%;}
+/* « Cordialement, » reste à gauche ; seul le bloc de signature part à DROITE
+   et son texte y est ferré à droite (choix de Dave, 2026-07-18). Les
+   coordonnées n'y sont plus répétées — elles figurent dans l'en-tête. */
 .cloture{margin-top:6mm;}
-.signature{margin-top:5mm;font-family:'G';}
+.signature{margin-top:5mm;font-family:'G';text-align:right;}
 /* Espace réservé à la signature manuscrite, au-dessus du nom imprimé. */
 .signature .sig-espace{height:18mm;}
 .signature .sig-nom{font-size:12.5pt;font-weight:600;}
 .signature .sig-role{font-size:11pt;color:#6b6253;}
-.signature .sig-contact{font-size:9.5pt;color:#4a443a;line-height:1.5;margin-top:2mm;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;}
 .pied{margin-top:9mm;padding-top:2.5mm;border-top:.5px solid #e0d8cc;
       text-align:center;font-size:8pt;color:#9a8f78;}
 
@@ -236,14 +232,6 @@ function remplir(data){
     { client_prenom: data.client && data.client.prenom || '', titre: o.titre || '', artiste_nom: (data.artiste && data.artiste.nom) || '' }
   );
 
-  // Bloc de coordonnées : construit hors de corpsLettre, donc à traiter à part.
-  // L'étiquette était « Téléphone : » même dans les lettres ANGLAISES (défaut
-  // préexistant, révélé en corrigeant la typographie). En anglais, pas d'espace
-  // avant le deux-points ; en français, une insécable.
-  const etiquetteTel = (langue === 'EN')
-    ? 'Phone: ' + escHtml(g.telephone)
-    : espacesInsecables('Téléphone : ' + escHtml(g.telephone));
-  const contact = [g.telephone ? etiquetteTel : '', escHtml(g.courriel), escHtml(g.site_web)].filter(Boolean).join('<br>');
   const adresse = [g.adresse_ligne1, g.adresse_ligne2].filter(Boolean).map(escHtml).join(', ');
   const piedParts = [escHtml(g.nom), adresse].filter(Boolean).join(' · ');
 
@@ -272,12 +260,8 @@ function remplir(data){
       '</div>' +
     '</div>' +
     '<div class="lettre">' + corps +
-      // Bloc de clôture aligné À DROITE (demande de Dave, 2026-07-18) :
-      // « Cordialement, », l'espace de signature et les informations de la
-      // galeriste forment un seul ensemble et se déplacent ensemble — laisser
-      // la formule de politesse à gauche et la signature à droite désolidarise
-      // visuellement les deux.
-      '<div class="bloc-cloture">' +
+      // « Cordialement, » reste À GAUCHE ; seul le bloc de signature passe à
+      // droite (choix de Dave, 2026-07-18).
       '<div class="cloture">'+cloture+'</div>' +
       '<div class="signature">' +
         // Espace laissé libre pour la signature manuscrite de la galeriste
@@ -287,8 +271,8 @@ function remplir(data){
         '<div class="sig-espace" aria-hidden="true"></div>' +
         '<div class="sig-nom">'+escHtml(data.signataire || 'Joanne Boucher')+'</div>' +
         '<div class="sig-role">'+(langue==='EN'?'Gallery owner':'Galeriste')+'</div>' +
-        (contact ? '<div class="sig-contact">'+contact+'</div>' : '') +
-      '</div>' +
+        // Les coordonnées ne sont PAS répétées ici : elles figurent déjà dans
+        // l'en-tête de la page (choix de Dave, 2026-07-18).
       '</div>' +
     '</div>' +
     (piedParts ? '<div class="pied">'+piedParts+'</div>' : '') +

@@ -101,18 +101,40 @@ function formaterValeurCa(n) {
   return Math.round(v).toLocaleString('fr-CA').replace(/ /g, ' ').replace(/ /g, ' ') + ' $';
 }
 
+// Lit un fichier image (chemin ABSOLU) et le rend en data URL. Renvoie ''
+// si le fichier n'existe pas ou n'est pas lisible : un document sans image
+// vaut mieux qu'une génération qui échoue.
+function fichierImageEnDataUrl(cheminAbsolu) {
+  try {
+    if (!cheminAbsolu || !fs.existsSync(cheminAbsolu)) return '';
+    const buf = fs.readFileSync(cheminAbsolu);
+    const ext = path.extname(cheminAbsolu).slice(1).toLowerCase();
+    const mime = (ext === 'png') ? 'image/png'
+                : (ext === 'jpg' || ext === 'jpeg') ? 'image/jpeg'
+                : (ext === 'gif') ? 'image/gif'
+                : (ext === 'webp') ? 'image/webp'
+                : 'application/octet-stream';
+    return `data:${mime};base64,${buf.toString('base64')}`;
+  } catch {
+    return '';
+  }
+}
+
 function photoEnDataUrl(cheminRelatif) {
   if (!cheminRelatif) return '';
-  const photoPath = path.join(getPhotosDir(), cheminRelatif);
-  if (!fs.existsSync(photoPath)) return '';
-  const buf = fs.readFileSync(photoPath);
-  const ext = path.extname(photoPath).slice(1).toLowerCase();
-  const mime = (ext === 'png') ? 'image/png'
-              : (ext === 'jpg' || ext === 'jpeg') ? 'image/jpeg'
-              : (ext === 'gif') ? 'image/gif'
-              : (ext === 'webp') ? 'image/webp'
-              : 'application/octet-stream';
-  return `data:${mime};base64,${buf.toString('base64')}`;
+  return fichierImageEnDataUrl(path.join(getPhotosDir(), cheminRelatif));
+}
+
+// Logo de la galerie pour les en-têtes de documents. Priorité au logo choisi
+// dans Profil de la galerie ; à défaut, celui livré avec l'application.
+function logoGalerieEnDataUrl(cheminConfigure) {
+  const choisi = cheminConfigure && cheminConfigure.trim();
+  if (choisi) {
+    const dataUrl = fichierImageEnDataUrl(choisi);
+    if (dataUrl) return dataUrl;
+    console.error(`Logo de la galerie introuvable, retour au logo livré : ${choisi}`);
+  }
+  return fichierImageEnDataUrl(path.join(__dirname, '..', 'gabarits', 'actifs', 'logo-gvsj.png'));
 }
 
 function typeContrat(typeOeuvre) {
@@ -156,6 +178,10 @@ function donneesGalerie(cfg) {
     adresse_ligne2: g.adresse_ligne2 || '',
     telephone: g.telephone || '',
     courriel: g.courriel || '',
+    // Seul gabarit-lettre.html consomme `logo` pour l'instant (les autres
+    // portent leur propre logo intégré) : ajouter ce champ ne change donc
+    // que la lettre. Demande de Dave, 2026-07-18.
+    logo: logoGalerieEnDataUrl(g.logo_path),
   };
 }
 
