@@ -22,12 +22,18 @@ body{font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#1c1a
 .feuille:last-child{page-break-after:auto;}
 
 /* ── En-tête ── */
-.entete{display:flex;justify-content:space-between;align-items:flex-start;gap:12mm;
+/* align-items:stretch (défaut) : les deux colonnes prennent la même hauteur,
+   ce qui permet de caler la date en bas de la colonne de gauche, au ras du
+   filet rouge. */
+.entete{display:flex;justify-content:space-between;gap:12mm;
         padding-bottom:4mm;border-bottom:2px solid #900001;margin-bottom:8mm;}
 .entete img{height:16mm;display:block;}
-/* Colonne de gauche : logo, puis la date dessous. */
-.entete-gauche{font-size:9pt;line-height:1.5;}
-.entete-gauche .date{margin-top:3mm;color:#6b6253;}
+/* Colonne de gauche : logo en haut, date collée en bas (contre le filet).
+   margin-top:auto plutôt que justify-content:space-between — avec un seul
+   enfant (cas sans logo), space-between remonterait la date en haut.
+   padding-top garantit un minimum d'air si la colonne de droite est courte. */
+.entete-gauche{display:flex;flex-direction:column;font-size:9pt;line-height:1.5;}
+.entete-gauche .date{margin-top:auto;padding-top:3mm;color:#6b6253;}
 .entete-droite{text-align:right;font-size:9pt;line-height:1.5;color:#4a443a;}
 .entete-droite .nom{font-family:'G';font-size:13pt;color:#1c1a17;margin-bottom:1mm;}
 
@@ -235,7 +241,9 @@ function remplir(data){
   );
 
   const adresse = [g.adresse_ligne1, g.adresse_ligne2].filter(Boolean).map(escHtml).join(', ');
-  const piedParts = [escHtml(g.nom), adresse].filter(Boolean).join(' · ');
+  // Pied de page : nom de la galerie seulement. L'adresse en a été retirée
+  // (demande de Dave, 2026-07-19) — elle figure déjà dans l'en-tête.
+  const piedParts = escHtml(g.nom);
 
   // Lignes de coordonnées de l'en-tête, assemblées en liste puis jointes : un
   // champ vide (site web non renseigné, par exemple) disparaît au lieu de
