@@ -150,7 +150,7 @@ function remplirStats(contenu, s) {
 
   contenu.querySelector('#dashboard-stats').innerHTML = `
     ${carteStat({
-      libelle: 'Œuvres au total',
+      libelle: 'Œuvres disponibles',
       valeur: formaterEntier(s.total),
       delta: deltaO,
       deltaPositif: s.totalDeltaMois > 0,

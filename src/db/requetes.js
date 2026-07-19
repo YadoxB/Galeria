@@ -485,9 +485,15 @@ function statsTableauDeBord() {
   const db = openDatabase();
   const debutMois = "datetime('now', 'start of month')";
 
-  const total = db.prepare('SELECT COUNT(*) AS n FROM oeuvres WHERE archive = 0').get().n;
+  // Œuvres DISPONIBLES (demande de Dave, 2026-07-18) : ce compteur montrait
+  // auparavant toutes les œuvres non archivées, vendues et réservées comprises,
+  // ce qui ne disait rien de ce qu'il reste à vendre. Le delta du mois suit la
+  // même règle, pour rester cohérent avec le chiffre affiché au-dessus.
+  const total = db
+    .prepare("SELECT COUNT(*) AS n FROM oeuvres WHERE archive = 0 AND statut = 'disponible'")
+    .get().n;
   const totalDeltaMois = db
-    .prepare(`SELECT COUNT(*) AS n FROM oeuvres WHERE archive = 0 AND cree_le >= ${debutMois}`)
+    .prepare(`SELECT COUNT(*) AS n FROM oeuvres WHERE archive = 0 AND statut = 'disponible' AND cree_le >= ${debutMois}`)
     .get().n;
 
   const artistes = db.prepare('SELECT COUNT(*) AS n FROM artistes WHERE archive = 0').get().n;

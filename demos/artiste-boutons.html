@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo Boutons de la fiche artiste</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin:0; padding:0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+    .demo-bar { position:sticky; top:0; z-index:50; padding: var(--s2) var(--s4);
+      background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size:18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style:italic; }
+    main { max-width: 1000px; margin:0 auto; padding: var(--s4); }
+    h2 { font-family: var(--font-titre); font-size:26px; color: var(--gallery-navy); margin:0 0 6px; }
+    p.intro { font-size:14.5px; line-height:1.6; color: var(--slate); margin:0 0 24px; }
+
+    .option { background:#fff; border:1px solid var(--mist); border-radius:14px; padding:20px 22px; margin-bottom:22px; }
+    .option > h3 { margin:0 0 4px; font-size:16px; color: var(--gallery-navy); font-family: var(--font-ui); }
+    .option > .verdict { font-size:13.5px; color: var(--slate); margin:0 0 16px; line-height:1.55; }
+    .option.recommande { border-color: var(--warm-gold); box-shadow: 0 0 0 3px rgba(201,154,61,0.13); }
+    .etiquette { display:inline-block; background: var(--warm-gold); color: var(--soft-ivory);
+      font-size:11px; font-weight:600; padding:2px 9px; border-radius:999px; margin-left:8px; vertical-align:2px; }
+    .etiquette.actuel { background: var(--stone); }
+
+    /* --- Reproduction de l'en-tête de fiche artiste --- */
+    .hero { display:flex; gap: var(--s4); align-items:flex-start;
+      background: var(--porcelain); border:1px solid var(--mist); border-radius:12px; padding:18px 20px; }
+    .photo { width:88px; height:88px; border-radius:10px; background: var(--gallery-navy);
+      color: var(--soft-ivory); display:flex; align-items:center; justify-content:center;
+      font-family: var(--font-titre); font-size:26px; flex:0 0 auto; }
+    .ident { flex:1 1 auto; min-width:0; }
+    .nom { font-family: var(--font-titre); font-size:28px; color: var(--ink); line-height:1.1; }
+    .role { font-size:13px; color: var(--slate); margin-top:2px; }
+    .stats { display:flex; gap:22px; margin-top:12px; }
+    .stat .v { font-size:19px; font-weight:600; color: var(--gallery-navy); }
+    .stat .l { font-size:11.5px; color: var(--stone); text-transform:uppercase; letter-spacing:.04em; }
+    .actions { display:flex; flex-direction:column; align-items:flex-end; gap:10px; flex:0 0 auto; }
+    .rangee { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+
+    .btn { height:36px; padding:0 14px; border-radius:9px; cursor:pointer; font-family: var(--font-ui);
+      font-size:13.5px; border:1px solid var(--mist); background: var(--porcelain); color: var(--ink); }
+    .btn:hover { background:#fff; }
+    .btn.principal { background: var(--warm-gold); border-color: var(--warm-gold); color: var(--soft-ivory); font-weight:600; }
+    .btn.danger { border-color:#c2554a; color:#c2554a; background:transparent; }
+    .btn.doc { background: var(--soft-ivory); }
+
+    .grp-docs-label { font-size:11px; color: var(--stone); text-transform:uppercase;
+      letter-spacing:.05em; align-self:center; margin-right:2px; }
+
+    /* --- Option A : menu déroulant --- */
+    .menu-wrap { position:relative; }
+    .menu-pop { position:absolute; right:0; top:42px; background:#fff; border:1px solid var(--mist);
+      border-radius:11px; box-shadow:0 10px 28px rgba(20,30,50,0.14); padding:6px; min-width:210px; z-index:20; }
+    .menu-pop[hidden] { display:none; }
+    .menu-pop button { display:block; width:100%; text-align:left; background:none; border:none;
+      padding:9px 11px; border-radius:7px; font-family: var(--font-ui); font-size:13.5px;
+      color: var(--ink); cursor:pointer; }
+    .menu-pop button:hover { background: var(--soft-ivory); }
+    .menu-pop .sep { height:1px; background: var(--mist); margin:5px 4px; }
+    .chev { font-size:10px; opacity:.6; margin-left:5px; }
+
+    /* --- Option B : carte séparée --- */
+    .carte-docs { margin-top:14px; background: var(--porcelain); border:1px solid var(--mist);
+      border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+    .carte-docs h4 { margin:0; font-family: var(--font-titre); font-size:18px; color: var(--gallery-navy); }
+    .carte-docs .sous { font-size:12.5px; color: var(--stone); flex:1 1 200px; }
+
+    .note { font-size:12.5px; color: var(--slate); margin-top:12px; padding:9px 12px;
+      background: rgba(201,154,61,0.09); border-left:3px solid var(--warm-gold); border-radius:0 6px 6px 0; line-height:1.55; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar"><div class="titre"><span class="marque">Galeria</span> — Démo : boutons de la fiche artiste</div></div>
+
+  <main>
+    <h2>Séparer les documents des actions sur la fiche</h2>
+    <p class="intro">
+      Aujourd'hui, six boutons se suivent dans l'en-tête et se ressemblent. Trois
+      servent à gérer la fiche, trois produisent des documents — et tu m'as dit que
+      les documents sont <strong>rarement</strong> produits à cet endroit. Voici l'état
+      actuel, puis trois façons de le régler. Dis-moi laquelle tu préfères.
+    </p>
+
+    <!-- ══════════ ACTUEL ══════════ -->
+    <div class="option">
+      <h3>Aujourd'hui <span class="etiquette actuel">actuel</span></h3>
+      <p class="verdict">Les deux groupes existent déjà, mais l'étiquette « Documents » est minuscule et tous les boutons ont le même poids visuel. À l'usage, on ne voit qu'une rangée de six.</p>
+      <div class="hero">
+        <div class="photo">GD</div>
+        <div class="ident">
+          <div class="nom">Gabrielle Dumont</div>
+          <div class="role">Peintre</div>
+          <div class="stats">
+            <div class="stat"><div class="v">24</div><div class="l">Catalogue</div></div>
+            <div class="stat"><div class="v">11</div><div class="l">Disponibles</div></div>
+            <div class="stat"><div class="v">7</div><div class="l">Ventes</div></div>
+          </div>
+        </div>
+        <div class="actions">
+          <div class="rangee">
+            <button class="btn danger">Supprimer</button>
+            <button class="btn">Archiver</button>
+            <button class="btn principal">Modifier</button>
+          </div>
+          <div class="rangee">
+            <span class="grp-docs-label">Documents</span>
+            <button class="btn doc">Présentation PDF</button>
+            <button class="btn doc">Catalogue PDF</button>
+            <button class="btn doc">Annexe A…</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ OPTION A ══════════ -->
+    <div class="option recommande">
+      <h3>Option A — un seul bouton « Documents »<span class="etiquette">recommandée</span></h3>
+      <p class="verdict">
+        Les trois boutons rentrent dans un menu. L'en-tête retombe à quatre boutons, et
+        les actions de la fiche redeviennent évidentes. Les documents restent à un clic,
+        ce qui suffit pour quelque chose de rare.
+      </p>
+      <div class="hero">
+        <div class="photo">GD</div>
+        <div class="ident">
+          <div class="nom">Gabrielle Dumont</div>
+          <div class="role">Peintre</div>
+          <div class="stats">
+            <div class="stat"><div class="v">24</div><div class="l">Catalogue</div></div>
+            <div class="stat"><div class="v">11</div><div class="l">Disponibles</div></div>
+            <div class="stat"><div class="v">7</div><div class="l">Ventes</div></div>
+          </div>
+        </div>
+        <div class="actions">
+          <div class="rangee">
+            <div class="menu-wrap">
+              <button class="btn" id="btn-menu">Documents <span class="chev">▼</span></button>
+              <div class="menu-pop" id="menu" hidden>
+                <button>Présentation PDF</button>
+                <button>Catalogue PDF</button>
+                <div class="sep"></div>
+                <button>Annexe A — dépôt…</button>
+                <button>Annexe A — retrait…</button>
+              </div>
+            </div>
+            <button class="btn danger">Supprimer</button>
+            <button class="btn">Archiver</button>
+            <button class="btn principal">Modifier</button>
+          </div>
+        </div>
+      </div>
+      <p class="note"><strong>Essaie :</strong> clique « Documents ▼ ». Le menu permettrait aussi de séparer enfin l'annexe de <em>dépôt</em> de celle de <em>retrait</em>, aujourd'hui confondues derrière un seul bouton.</p>
+    </div>
+
+    <!-- ══════════ OPTION B ══════════ -->
+    <div class="option">
+      <h3>Option B — une carte « Documents » sous l'en-tête</h3>
+      <p class="verdict">
+        L'en-tête ne garde que les actions de la fiche ; les documents descendent dans
+        leur propre bande, avec un titre lisible. Plus explicite qu'un menu, mais ça
+        occupe de la hauteur pour quelque chose de rare.
+      </p>
+      <div class="hero">
+        <div class="photo">GD</div>
+        <div class="ident">
+          <div class="nom">Gabrielle Dumont</div>
+          <div class="role">Peintre</div>
+          <div class="stats">
+            <div class="stat"><div class="v">24</div><div class="l">Catalogue</div></div>
+            <div class="stat"><div class="v">11</div><div class="l">Disponibles</div></div>
+            <div class="stat"><div class="v">7</div><div class="l">Ventes</div></div>
+          </div>
+        </div>
+        <div class="actions">
+          <div class="rangee">
+            <button class="btn danger">Supprimer</button>
+            <button class="btn">Archiver</button>
+            <button class="btn principal">Modifier</button>
+          </div>
+        </div>
+      </div>
+      <div class="carte-docs">
+        <h4>Documents</h4>
+        <span class="sous">Produits à l'occasion, pour un dépôt ou une présentation.</span>
+        <button class="btn doc">Présentation PDF</button>
+        <button class="btn doc">Catalogue PDF</button>
+        <button class="btn doc">Annexe A…</button>
+      </div>
+    </div>
+
+    <!-- ══════════ OPTION C ══════════ -->
+    <div class="option">
+      <h3>Option C — garder deux rangées, mais les distinguer vraiment</h3>
+      <p class="verdict">
+        Le changement le plus léger : on garde la structure actuelle, mais les boutons
+        de documents deviennent discrets (texte seul, plus petits) et l'étiquette est
+        lisible. Ça règle la confusion sans rien déplacer.
+      </p>
+      <div class="hero">
+        <div class="photo">GD</div>
+        <div class="ident">
+          <div class="nom">Gabrielle Dumont</div>
+          <div class="role">Peintre</div>
+          <div class="stats">
+            <div class="stat"><div class="v">24</div><div class="l">Catalogue</div></div>
+            <div class="stat"><div class="v">11</div><div class="l">Disponibles</div></div>
+            <div class="stat"><div class="v">7</div><div class="l">Ventes</div></div>
+          </div>
+        </div>
+        <div class="actions">
+          <div class="rangee">
+            <button class="btn danger">Supprimer</button>
+            <button class="btn">Archiver</button>
+            <button class="btn principal">Modifier</button>
+          </div>
+          <div class="rangee" style="border-top:1px solid var(--mist); padding-top:9px; margin-top:2px;">
+            <span class="grp-docs-label" style="font-size:12px; color:var(--slate);">Produire un document</span>
+            <button class="btn doc" style="height:30px; font-size:12.5px; background:transparent; border-color:transparent; color:var(--gallery-navy); text-decoration:underline;">Présentation</button>
+            <button class="btn doc" style="height:30px; font-size:12.5px; background:transparent; border-color:transparent; color:var(--gallery-navy); text-decoration:underline;">Catalogue</button>
+            <button class="btn doc" style="height:30px; font-size:12.5px; background:transparent; border-color:transparent; color:var(--gallery-navy); text-decoration:underline;">Annexe A</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="note">
+      <strong>Mon avis :</strong> l'option A. Elle enlève trois boutons du champ de vision
+      sans rien perdre, et c'est la seule qui permette de séparer proprement l'annexe de
+      dépôt et celle de retrait. L'option C est la moins risquée si tu préfères ne presque
+      rien changer.
+    </p>
+  </main>
+
+<script>
+  const b = document.getElementById('btn-menu');
+  const m = document.getElementById('menu');
+  b.addEventListener('click', (e) => { e.stopPropagation(); m.hidden = !m.hidden; });
+  document.addEventListener('click', () => { m.hidden = true; });
+  m.addEventListener('click', (e) => e.stopPropagation());
+</script>
+</body>
+</html>

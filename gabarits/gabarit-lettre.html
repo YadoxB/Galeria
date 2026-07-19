@@ -35,6 +35,8 @@ body{font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#1c1a
 .lettre em{font-style:italic;}
 .cloture{margin-top:6mm;}
 .signature{margin-top:5mm;font-family:'G';}
+/* Espace réservé à la signature manuscrite, au-dessus du nom imprimé. */
+.signature .sig-espace{height:18mm;}
 .signature .sig-nom{font-size:12.5pt;font-weight:600;}
 .signature .sig-role{font-size:11pt;color:#6b6253;}
 .signature .sig-contact{font-size:9.5pt;color:#4a443a;line-height:1.5;margin-top:2mm;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;}
@@ -185,8 +187,24 @@ function choisirLettre(langue, typeAchat, estCadeau){
   return LETTRES[L + '-' + v];
 }
 
+// Typographie française : la ponctuation double (! ? ; :) et les guillemets
+// prennent une espace AVANT, qui doit être INSÉCABLE. Avec une espace
+// ordinaire, le navigateur peut couper la ligne juste avant le signe et le
+// laisser seul en début de ligne suivante — c'est ce qui donnait un « ! »
+// isolé sur les lettres de remerciement (signalé par Dave, 2026-07-18).
+// On utilise &#160; (espace insécable ordinaire) plutôt que l'espace fine
+// U+202F : toutes les polices ne portent pas la fine, et une fine manquante
+// s'imprimerait en carré vide.
+// À appliquer APRÈS escHtml (l'entité serait sinon ré-échappée) ; les balises
+// <em>/<br> insérées ensuite ne contiennent pas de ponctuation double.
+function espacesInsecables(html){
+  return String(html)
+    .replace(/[ \t]+([!?;:»])/g, '&#160;$1')
+    .replace(/(«)[ \t]+/g, '$1&#160;');
+}
+
 function corpsLettre(texte, vars){
-  let html = escHtml(texte)
+  let html = espacesInsecables(escHtml(texte))
     .replace(/\{\{client_prenom\}\}/g, escHtml(vars.client_prenom))
     .replace(/\{\{artiste_nom\}\}/g, escHtml(vars.artiste_nom))
     .replace(/\{\{titre\}\}/g, '<em>'+escHtml(vars.titre)+'</em>');
@@ -212,7 +230,14 @@ function remplir(data){
     { client_prenom: data.client && data.client.prenom || '', titre: o.titre || '', artiste_nom: (data.artiste && data.artiste.nom) || '' }
   );
 
-  const contact = [g.telephone ? ('Téléphone : ' + escHtml(g.telephone)) : '', escHtml(g.courriel), escHtml(g.site_web)].filter(Boolean).join('<br>');
+  // Bloc de coordonnées : construit hors de corpsLettre, donc à traiter à part.
+  // L'étiquette était « Téléphone : » même dans les lettres ANGLAISES (défaut
+  // préexistant, révélé en corrigeant la typographie). En anglais, pas d'espace
+  // avant le deux-points ; en français, une insécable.
+  const etiquetteTel = (langue === 'EN')
+    ? 'Phone: ' + escHtml(g.telephone)
+    : espacesInsecables('Téléphone : ' + escHtml(g.telephone));
+  const contact = [g.telephone ? etiquetteTel : '', escHtml(g.courriel), escHtml(g.site_web)].filter(Boolean).join('<br>');
   const adresse = [g.adresse_ligne1, g.adresse_ligne2].filter(Boolean).map(escHtml).join(', ');
   const piedParts = [escHtml(g.nom), adresse].filter(Boolean).join(' · ');
 
@@ -243,6 +268,11 @@ function remplir(data){
     '<div class="lettre">' + corps +
       '<div class="cloture">'+cloture+'</div>' +
       '<div class="signature">' +
+        // Espace laissé libre pour la signature manuscrite de la galeriste
+        // (demande de Dave, 2026-07-18). Hauteur fixe : c'est le TEXTE qui
+        // rétrécit pour lui faire de la place (window.ajusterApresRendu réduit
+        // --lettre-fs jusqu'à ce que la page 1 tienne).
+        '<div class="sig-espace" aria-hidden="true"></div>' +
         '<div class="sig-nom">'+escHtml(data.signataire || 'Joanne Boucher')+'</div>' +
         '<div class="sig-role">'+(langue==='EN'?'Gallery owner':'Galeriste')+'</div>' +
         (contact ? '<div class="sig-contact">'+contact+'</div>' : '') +
