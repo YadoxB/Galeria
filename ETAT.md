@@ -90,6 +90,59 @@ Trois issues présentées à Dave :
 
 **Pas de cadre de tests dans le projet** : tout a été vérifié par des bancs d'essai jetables (module Node + vraie fenêtre Electron pilotée par `sendInputEvent`/`executeJavaScript`). Le bug du pavé numérique montre la valeur d'un vrai cadre de tests — **chantier à proposer à Dave** (il a été évoqué, pas planifié).
 
+---
+
+## ▶ Chantier « Retours d'usage » — 7 demandes de Dave (2026-07-18)
+
+> Issues de l'usage réel par les parents. **Consignées le 2026-07-18, plan présenté, pas encore commencées.** À faire **avant de publier la 0.10.0** (Dave voulait d'autres modifications avant la livraison). Méthode habituelle : un lot à la fois, plan → « oui » → tests à faire.
+
+### État des lieux établi par l'enquête (à ne pas refaire)
+
+| # | Demande | Ce que le code fait aujourd'hui |
+|---|---|---|
+| 1 | Choisir l'emplacement du dossier `Galeria` | **Codé en dur** : `getDataDir()` = `Documents\Galeria` (`src/db/paths.js:14-16`). Non configurable. Seul le dossier des **sauvegardes** l'est déjà (`config.sauvegardes.dossier`, `reglages.js:203-210`, `backup.js:26-38`). Il existe une migration de dossier au démarrage (`migrerAncienDossierSiPresent`, `paths.js:18-39`, `GalerieApp` → `Galeria`) qui sert de patron. Cause probable du problème des parents : **OneDrive redirige `Documents`**, donc le dossier est sous `OneDrive\Documents\Galeria`. |
+| 2 | Éditer les documents produits | **La fonction existe déjà** : c'est « Version modifiée… ». Voir la section dédiée plus bas — le vrai problème est la découvrabilité + des défauts réels. Le 2ᵉ exemple de Dave (« ! » seul sur une ligne) n'est **pas** un cas d'édition manuelle mais un **bug de gabarit** (voir #4bis). |
+| 3 | Prix pré-rempli à la vente | **Déjà pré-rempli** depuis `oeuvres.prix` (`vente-fiche.js:53`), champ modifiable (`vente-fiche.js:821`). MAIS la fiche d'œuvre affiche **deux** prix : « Courant » (= `o.prix`) et « Préférentiel » (calculé, `oeuvre-fiche.js:399-412`). La vente prend le **Courant**. **Ambiguïté à lever avec Dave** — voir « Questions ouvertes ». Cas sans pré-remplissage : vente créée depuis la liste Ventes sans œuvre ; œuvre sans prix ; changement d'œuvre alors qu'un prix non nul est déjà saisi (`vente-fiche.js:1148-1154`). |
+| 4 | Espace de signature sur la lettre de remerciement | Le bloc `.signature` (`gabarits/gabarit-lettre.html:37-40`, `245-246`) imprime nom + rôle + coordonnées, **sans espace vertical** pour signer à la main (`margin-top:5mm` seulement). |
+| 5 | Accueil : « Œuvres au total » → disponibles | La carte compte `WHERE archive = 0` (`requetes.js:488`) : **les vendues et réservées sont incluses**. `statsOeuvres()` calcule déjà `disponibles` (`requetes.js:570-572`) mais **n'est branchée nulle part** (code mort). |
+| 6 | Fiche artiste : séparer les boutons | Les 6 boutons sont **déjà en deux groupes** dans `hero-artiste-actions` (`artiste-fiche.js:196-208`) : `grp-actions` (Supprimer / Archiver / Modifier) et `grp-docs` (Présentation PDF / Catalogue PDF / Annexe A…) avec une étiquette « Documents ». La séparation existe donc, mais **visuellement trop faible** (`styles.css:2499-2502`). |
+| 7 | Réorganiser les Réglages | Bento à 8 cartes (`reglages.js:126-355`). **⚠️ Le commit parqué `121c01a` fait déjà exactement ça** — refonte en sous-navigation par catégories, avec deux démos : `demos/reglages-nav.html` et `demos/reglages-reorg.html`. **À examiner avant de concevoir quoi que ce soit.** |
+
+### #4bis — Bug de gabarit trouvé en enquêtant (non demandé, mais c'est la vraie cause)
+
+Le « ! » isolé en début de ligne vient de la **typographie française** : `gabarit-lettre.html` écrit `{{artiste_nom}} !` avec une **espace ordinaire** (lignes 69, 71, 83, 97, 99, 107, 111, 121). Le navigateur peut donc couper la ligne juste avant le « ! ». Il faut une **espace insécable fine** (`&#8239;` ou `&nbsp;`) devant `!` `?` `;` `:` `»`. **Correctif unique qui règle le problème pour toutes les lettres à venir** — bien meilleur qu'une retouche manuelle à chaque fois. Vérifier aussi les autres gabarits.
+
+### Questions ouvertes (à trancher avec Dave avant de coder)
+
+1. **#3 — quel prix doit se pré-remplir** : le « Courant » (comportement actuel) ou le « Préférentiel » ? Ou les deux au choix ? Et quel est le scénario exact où les parents ont vu le champ vide ?
+2. **#7 — accordéon ou barre latérale** : Dave a demandé une suggestion ; le commit parqué propose une sous-navigation par catégories.
+3. **#2 — que devient « Version modifiée »** : améliorer l'existant, ou changer d'approche ?
+4. **#1 — portée** : déplacer le dossier existant, ou seulement choisir l'emplacement à la première installation ?
+
+---
+
+## « Version modifiée » — ce que c'est réellement (enquête du 2026-07-18)
+
+Dave ne se rappelait plus à quoi sert ce bouton. Voici l'état exact du code, pour ne pas avoir à refaire l'enquête.
+
+**Le principe** : ouvrir le document fini dans une fenêtre où **tout le texte est modifiable directement** (`document.body` en `contenteditable`, `src/pdf.js:340`), puis l'imprimer en PDF. **Aucune donnée de la base n'est touchée.**
+
+**Le parcours** : bouton « Version modifiée… » → nouvelle fenêtre 1024×900 (1400×900 en paysage) avec une barre noire en haut portant « Mode édition… », **[Annuler]** et **[Enregistrer en PDF]** (`src/pdf.js:325-339`) → on clique dans le texte, on corrige → Enregistrer produit le PDF (`printToPDF`, format Letter) → l'app affiche « Version modifiée produite » avec **[Ouvrir le PDF]** (`src/app/editer-document.js:13-21`).
+
+**Où se trouvent les boutons** : uniquement sur la **fiche de vente** (`vente-fiche.js:228, 425, 440, 454`) pour certificat, facture artiste, lettre, présentation — et dans la **modale Annexe A** (`annexe.js:137`), ouverte depuis la fiche artiste. **Rien** dans la section Documents, la fiche d'œuvre ou la fiche artiste. Le type `catalogue` est géré dans le code (`pdf.js:953-960`) mais **aucun bouton ne l'expose** (code mort).
+
+**Défauts réels trouvés** (à traiter si on garde la fonction) :
+
+- **Certificat : l'original est écrasé sans copie** (`pdf.js:978` — `sortie = cert.pdf_path`). Pas de suffixe « version modifiée », pas de sauvegarde. Et si le certificat n'avait pas encore de PDF, le fichier est écrit mais **`certificats.pdf_path` n'est pas mis à jour** → l'app croit toujours qu'il n'y a pas de PDF.
+- **Les modifications sont perdues à la re-génération**, en silence : « Re-générer » (section Documents) ou reproduire la pochette réécrit le même nom de fichier (cas lettre/présentation en pochette, `pdf.js:995-999`) ou le même `pdf_path` (certificat).
+- **Tout est modifiable, y compris les images** : le logo ou la photo de l'œuvre peuvent être supprimés d'un coup de touche Suppr sans avertissement. Aucune zone protégée dans les gabarits.
+- **La lettre n'est pas re-ajustée** : le hook d'auto-réduction `ajusterApresRendu` tourne **avant** l'édition (`pdf.js:398`) et pas au moment d'enregistrer → une lettre rallongée à la main peut déborder de la page.
+- **Le badge « version modifiée » est incohérent** : calculé d'après le **nom de fichier** (`pdf.js:1097`), donc absent pour les documents venant de la base (certificats, factures, annexes) et forcé à `false` dans les pochettes (`documents.js:271`).
+- **Facture artiste** : ouvrir l'éditeur **réserve un numéro de facture en base** même si on annule (`pdf.js:984` → `mutations.js:630-637`), sans libération — contrairement à l'annexe qui, elle, libère son numéro (`pdf.js:614-617`).
+- **Aucune validation** : on peut écrire un montant qui contredit la base.
+
+**Verdict à discuter avec Dave** : la fonction répond bien au besoin #2, mais elle est introuvable (uniquement sur la fiche de vente), elle perd le travail à la re-génération, et elle écrase l'original du certificat. Le cas « ! » isolé ne doit **pas** être réglé par elle (voir #4bis).
+
 **Limite connue du volet 2, à dire à Dave avant de l'activer** : pendant que l'app est ouverte, la base est **en clair** sur le disque (contrainte de `node:sqlite`, pas de SQLCipher — cf. décision #1). Le chiffrement protège contre la copie du fichier et l'ordinateur volé/revendu, pas contre quelqu'un assis devant l'app ouverte. À compléter par BitLocker. Noter aussi une **contradiction à trancher** : l'ancien `ETAT.md` de la branche disait « chiffrer aussi les sauvegardes », alors que `src/db/chiffrement.js` documente le choix inverse (sauvegardes **en clair**, pour qu'une récupération ne dépende pas du compte Windows).
 
 > **Ne pas supprimer le worktree `nice-carson-51b234`** tant que le volet 2 n'est pas repris et confirmé.
