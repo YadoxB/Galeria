@@ -24,10 +24,12 @@ body{font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#1c1a
 /* ── En-tête ── */
 .entete{display:flex;justify-content:space-between;align-items:flex-start;gap:12mm;
         padding-bottom:4mm;border-bottom:2px solid #900001;margin-bottom:8mm;}
-.entete img{height:16mm;}
+.entete img{height:16mm;display:block;}
+/* Colonne de gauche : logo, puis la date dessous. */
+.entete-gauche{font-size:9pt;line-height:1.5;}
+.entete-gauche .date{margin-top:3mm;color:#6b6253;}
 .entete-droite{text-align:right;font-size:9pt;line-height:1.5;color:#4a443a;}
 .entete-droite .nom{font-family:'G';font-size:13pt;color:#1c1a17;margin-bottom:1mm;}
-.entete-droite .date{margin-top:2mm;color:#6b6253;}
 
 /* ── Corps de la lettre (Garamond) ── */
 .lettre{font-family:'G';font-size:var(--lettre-fs,12.5pt);line-height:1.7;color:#1c1a17;}
@@ -256,11 +258,15 @@ function remplir(data){
     // PAGE 1 — lettre
     '<div class="feuille" id="page1">' +
     '<div class="entete">' +
-      (g.logo ? '<img src="'+g.logo+'" alt="">' : '<span></span>') +
+      // Colonne de gauche : logo puis date (la date était à droite sous les
+      // coordonnées — déplacée à gauche à la demande de Dave, 2026-07-19).
+      '<div class="entete-gauche">' +
+        (g.logo ? '<img src="'+g.logo+'" alt="">' : '') +
+        '<div class="date">'+escHtml(data.date)+'</div>' +
+      '</div>' +
       '<div class="entete-droite">' +
         '<div class="nom">'+escHtml(g.nom)+'</div>' +
         enteteLignes +
-        '<div class="date">'+escHtml(data.date)+'</div>' +
       '</div>' +
     '</div>' +
     '<div class="lettre">' + corps +
