@@ -235,6 +235,12 @@ function remplir(data){
   const adresse = [g.adresse_ligne1, g.adresse_ligne2].filter(Boolean).map(escHtml).join(', ');
   const piedParts = [escHtml(g.nom), adresse].filter(Boolean).join(' · ');
 
+  // Lignes de coordonnées de l'en-tête, assemblées en liste puis jointes : un
+  // champ vide (site web non renseigné, par exemple) disparaît au lieu de
+  // laisser une ligne blanche.
+  const enteteLignes = [adresse, escHtml(g.telephone), escHtml(g.courriel), escHtml(g.site_web)]
+    .filter(Boolean).join('<br>');
+
   const titreOeuvreItal = o.titre ? '<em>'+escHtml(o.titre)+'</em>' : '';
   const ficheOeuvre =
     ligneOeuvre('Titre', titreOeuvreItal) +
@@ -253,9 +259,7 @@ function remplir(data){
       (g.logo ? '<img src="'+g.logo+'" alt="">' : '<span></span>') +
       '<div class="entete-droite">' +
         '<div class="nom">'+escHtml(g.nom)+'</div>' +
-        (adresse ? adresse+'<br>' : '') +
-        (g.telephone ? escHtml(g.telephone)+'<br>' : '') +
-        escHtml(g.courriel) +
+        enteteLignes +
         '<div class="date">'+escHtml(data.date)+'</div>' +
       '</div>' +
     '</div>' +

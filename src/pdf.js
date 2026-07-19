@@ -178,9 +178,10 @@ function donneesGalerie(cfg) {
     adresse_ligne2: g.adresse_ligne2 || '',
     telephone: g.telephone || '',
     courriel: g.courriel || '',
-    // Seul gabarit-lettre.html consomme `logo` pour l'instant (les autres
-    // portent leur propre logo intégré) : ajouter ce champ ne change donc
-    // que la lettre. Demande de Dave, 2026-07-18.
+    site_web: g.site_web || '',
+    // `logo` et `site_web` ne sont consommés que par gabarit-lettre.html (les
+    // autres gabarits portent leur logo intégré et n'affichent pas le site) :
+    // ajouter ces champs ne change donc que la lettre. Dave, 2026-07-18/19.
     logo: logoGalerieEnDataUrl(g.logo_path),
   };
 }
