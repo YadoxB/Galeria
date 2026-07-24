@@ -5603,9 +5603,20 @@ select.lot-in.st-pretee { color: var(--info); }
 .doc-panneau-tete .doc-compteur-barre { color: var(--stone); font-size: 12.5px; }
 .doc-panneau-tete .doc-vue-bascule { margin-left: auto; }
 
-/* Outils : deux panneaux (Prix + Cotes / Commission + Référence). */
-.cat-panneau .grille-bento > .carte { grid-column: span 12; }
+/* Outils : calculateur large (8) + carte compagnon (4). Ces spans priment sur
+   le défaut « span 12 » des cartes de panneau (même spécificité, définis après). */
 .cat-panneau[data-cat="prix"] .zone-outil-calc,
 .cat-panneau[data-cat="commission"] .zone-outil-commission { grid-column: span 8; }
 .cat-panneau[data-cat="prix"] .zone-outil-cotes,
 .cat-panneau[data-cat="commission"] .zone-outil-commission-ref { grid-column: span 4; }
+
+/* Empilement AVANT que la carte compagnon (⅓ du panneau) ne devienne trop
+   étroite. Deux barres latérales — celle de l'app (~250 px) et celle des
+   Réglages/Outils (236 px) — amputent déjà le panneau de ~486 px : à viewport
+   ≈ 1400, la carte de ⅓ tombe déjà sous ~300 px. On empile donc dès 1400 px.
+   `!important` car la même spécificité que les spans ci-dessus ne suffirait pas
+   dans une media query. */
+@media (max-width: 1400px) {
+  .cat-panneau[data-cat="prix"] .grille-bento > .carte,
+  .cat-panneau[data-cat="commission"] .grille-bento > .carte { grid-column: span 12 !important; }
+}
