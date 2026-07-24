@@ -81,7 +81,7 @@
 
   <div class="oeuvre">
     <div class="oe-label">Œuvre</div>
-    <div class="oe-desc">« <span id="p_titre"></span> »</div>
+    <div class="oe-desc">«&#160;<span id="p_titre"></span>&#160;»</div>
     <div class="oe-sub" id="p_inv_format"></div>
   </div>
 
@@ -217,8 +217,8 @@ function remplir(d){
   show('r_tvq', tvqOn); set('p_tvq_label','TVQ ('+rate(n(tvq.taux))+' %)'); set('p_tvq', money(mTvq));
 
   var nos=[];
-  if(tpsOn && tps.numero) nos.push('N° TPS : '+tps.numero);
-  if(tvqOn && tvq.numero) nos.push('N° TVQ : '+tvq.numero);
+  if(tpsOn && tps.numero) nos.push('N° TPS : '+tps.numero);
+  if(tvqOn && tvq.numero) nos.push('N° TVQ : '+tvq.numero);
   set('p_art_taxes_no', nos.join('      '));
 
   set('p_total', money(part+mTps+mTvq));

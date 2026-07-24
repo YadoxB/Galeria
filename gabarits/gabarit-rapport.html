@@ -76,7 +76,7 @@
         'Aucune œuvre ajoutée.'
       );
       var artistes = (d.artistesAjoutes || []).length
-        ? '<p class="sous-liste"><strong>Artistes ajoutés :</strong> ' + d.artistesAjoutes.map(function (a) { return ech(a.nom); }).join(', ') + '</p>'
+        ? '<p class="sous-liste"><strong>Artistes ajoutés :</strong> ' + d.artistesAjoutes.map(function (a) { return ech(a.nom); }).join(', ') + '</p>'
         : '';
       html += '<div class="section"><div class="section-titre">Intrants — Ajouts du jour</div>' + intrants + artistes + '</div>';
 

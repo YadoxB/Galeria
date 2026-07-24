@@ -77,7 +77,8 @@ function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/<
 function normaliserGuillemets(s){
   return String(s||'')
     .replace(/«[ \t\u00A0\u202F]*/g, '«\u00A0')
-    .replace(/[ \t\u00A0\u202F]*»/g, '\u00A0»');
+    .replace(/[ \t\u00A0\u202F]*»/g, '\u00A0»')
+    .replace(/[ 	]+([!?;:])/g, ' $1');
 }
 // Une ligne entièrement entre guillemets = citation à mettre en exergue
 // (ponctuation finale après le guillemet fermant tolérée).
