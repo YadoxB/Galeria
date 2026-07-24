@@ -1,7 +1,20 @@
 import { ech, sansAccents, formaterDate, nettoyerErreur } from '../commun.js';
 import { alerter } from '../dialogue.js';
+import { lancerEditionDocument } from '../editer-document.js';
 
 const CLE_VUE = 'documents-vue'; // 'liste' | 'explorateur'
+
+// Documents éditables (« Modifier ce document ») depuis la section Documents,
+// avec le ref_id de la base traduit en identifiant attendu par l'éditeur.
+// Certificat/présentation/facture proviennent de la base (ref_id fiable) ;
+// les entrées scannées sur disque (catalogues, versions modifiées) n'en ont pas.
+function specEdition(d) {
+  if (!d || d.ref_id == null) return null;
+  if (d.type === 'certificat') return { type: 'certificat', certificat_id: d.ref_id };
+  if (d.type === 'facture_artiste') return { type: 'facture-artiste', vente_id: d.ref_id };
+  if (d.type === 'presentation') return { type: 'presentation', artiste_id: d.ref_id };
+  return null;
+}
 
 const TYPE_ORDER = ['certificat', 'facture_artiste', 'facture_client', 'catalogue', 'annexe', 'presentation', 'rapport', 'lettre', 'pochette'];
 const LIBELLE_PLURIEL = {
@@ -136,6 +149,7 @@ export async function rendreDocuments(contenu) {
     }
 
     const actRegen = REGEN[d.type] && d.ref_id != null ? '<button type="button" class="btn-action btn-secondaire-action" data-act="regen">Re-générer</button>' : '';
+    const actEdit = specEdition(d) ? '<button type="button" class="btn-action btn-secondaire-action" data-act="modifier" title="Ouvrir le document dans une fenêtre éditable">Modifier ce document…</button>' : '';
     return `
       <div class="doc-ligne" data-i="${i}">
         ${icone}
@@ -146,6 +160,7 @@ export async function rendreDocuments(contenu) {
         <div class="doc-actions">
           <button type="button" class="btn-action btn-secondaire-action" data-act="voir">Voir</button>
           <button type="button" class="btn-action btn-secondaire-action" data-act="dossier">Dossier</button>
+          ${actEdit}
           ${actRegen}
         </div>
       </div>`;
@@ -231,6 +246,12 @@ export async function rendreDocuments(contenu) {
       if (bd) bd.addEventListener('click', async () => { try { await window.api.pdfRevelerDansExplorateur(d.pdf_path); } catch {} });
       const br = row.querySelector('[data-act="regen"]');
       if (br) br.addEventListener('click', (e) => regenerer(e.currentTarget, d));
+      const be = row.querySelector('[data-act="modifier"]');
+      if (be) be.addEventListener('click', async (e) => {
+        const btn = e.currentTarget; btn.disabled = true;
+        try { await lancerEditionDocument(specEdition(d)); }
+        finally { btn.disabled = false; }
+      });
     });
     elListe.querySelectorAll('[data-voir-pochette]').forEach((b) => b.addEventListener('click', async (e) => {
       e.stopPropagation(); try { await window.api.pdfOuvrir(b.dataset.voirPochette); } catch {}

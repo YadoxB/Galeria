@@ -12,6 +12,22 @@
 
 ---
 
+## Modifier un document avant de l'imprimer
+
+Le bouton pour retoucher un document s'appelle maintenant **« Modifier ce
+document… »** (au lieu de « Version modifiée »). Il ouvre le document dans une
+fenêtre où vous corrigez le texte, puis vous enregistrez en PDF — **vos données
+ne changent pas**.
+
+- Nouveau bouton **« Insérer un saut de page »** : placez le curseur au début de
+  ce qui doit aller sur une nouvelle page, cliquez, et le texte descend à la
+  page suivante. Re-cliquez pour l'enlever.
+- Le bouton est aussi accessible depuis la **section Documents**, plus seulement
+  depuis la fiche de vente.
+- Sur la **présentation d'artiste**, la « Démarche » et le « Curriculum »
+  commencent maintenant **chacun sur une nouvelle page**, pour une mise en page
+  plus nette.
+
 ## Une page Réglages plus claire
 
 La page **Réglages** était devenue chargée. Elle est maintenant organisée par

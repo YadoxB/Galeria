@@ -12,6 +12,20 @@ identifiants.
 
 ### Modifié
 
+- **Édition des documents plus claire et plus sûre (retour d'usage de Dave).**
+  Le bouton « Version modifiée… » — qui laissait croire qu'une version modifiée
+  existait déjà — devient **« Modifier ce document… »** partout (fiche de vente,
+  annexe), et il apparaît désormais aussi dans la **section Documents** pour les
+  certificats, factures artiste et présentations. Nouveau bouton **« Insérer un
+  saut de page »** dans la fenêtre d'édition : il pousse sur une nouvelle page la
+  section où se trouve le curseur (repère visuel à l'écran, neutre à
+  l'impression), re-cliquer l'annule. Sur la **présentation**, « Démarche » et
+  « Curriculum » commencent désormais **chacun sur une nouvelle page** (fini le
+  petit bout de section en bas de page suivi de vide ; pas de page blanche si la
+  biographie est absente). Enfin, « Modifier ce document » sur un **certificat**
+  n'**écrase plus le PDF officiel** : la version modifiée est un fichier séparé,
+  comme pour la lettre et la présentation (un certificat est un document
+  numéroté).
 - **Page Réglages refondue en barre latérale (retour d'usage de Dave).** La
   mosaïque de huit cartes devenait confuse : elle est remplacée par une
   disposition maître-détail — une barre latérale à gauche (**La galerie,
