@@ -352,20 +352,61 @@ const INJECT_EDIT_JS = `(function(){
   style.textContent = '.editeur-barre{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;align-items:center;gap:12px;padding:10px 16px;background:#1c1a17;color:#fff;font-family:-apple-system,Segoe UI,Arial,sans-serif;}'
     + '.editeur-barre .info{flex:1;opacity:.85;font-size:12.5px;}'
     + '.editeur-barre button{border:0;border-radius:7px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}'
-    + '#ed-annuler{background:#3a3631;color:#fff;}#ed-ok{background:#900001;color:#fff;}'
+    + '#ed-saut{background:#3a3631;color:#fff;}#ed-annuler{background:#3a3631;color:#fff;}#ed-ok{background:#900001;color:#fff;}'
     + 'body{padding-top:58px;}'
     + '[contenteditable=true]:focus-within, [contenteditable=true]:focus{outline:none;}'
-    + '@media print{.editeur-barre{display:none!important;}body{padding-top:0!important;}}';
+    // Le saut de page est porté par le BLOC qui doit commencer en haut de page
+    // (pas par un div vide inséré : Chromium ignore break-before sur un élément
+    // sans hauteur à l'impression). Repère visuel à l'écran, neutre à l'impression.
+    + '.ed-saut-avant{break-before:page;page-break-before:always;}'
+    + '@media screen{.ed-saut-avant{border-top:2px dashed #900001;position:relative;padding-top:8mm;margin-top:8mm;}'
+    + '.ed-saut-avant::before{content:"\\2191 Nouvelle page";position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#900001;color:#fff;font-size:10px;font-family:-apple-system,Segoe UI,Arial,sans-serif;padding:1px 8px;border-radius:8px;}}'
+    + '@media print{.editeur-barre{display:none!important;}body{padding-top:0!important;}.ed-saut-avant{border-top:0!important;padding-top:0!important;margin-top:0!important;}.ed-saut-avant::before{display:none!important;}}';
   document.head.appendChild(style);
   var bar = document.createElement('div');
   bar.className = 'editeur-barre';
   bar.setAttribute('contenteditable','false');
   bar.innerHTML = '<span class="info">Mode édition — clique dans le document pour modifier le texte, puis enregistre.</span>'
+    + '<button type="button" id="ed-saut" title="Pousse le texte qui suit le curseur sur une nouvelle page">Insérer un saut de page</button>'
     + '<button type="button" id="ed-annuler">Annuler</button>'
     + '<button type="button" id="ed-ok">Enregistrer en PDF</button>';
   document.body.appendChild(bar);
   document.body.setAttribute('contenteditable','true');
   bar.setAttribute('contenteditable','false');
+  // Conteneur réel du contenu : la plupart des gabarits enveloppent tout dans
+  // un unique bloc (#doc, .feuille…). Si body n'a qu'un enfant (hors la barre
+  // d'édition), c'est lui le conteneur ; sinon c'est body. On pose le saut sur
+  // un enfant direct de ce conteneur, pas sur le wrapper entier.
+  function conteneurContenu(){
+    var enfants = Array.prototype.filter.call(document.body.children, function(el){
+      var t = el.tagName;
+      // Ignorer le non-contenu : script/style du gabarit + la barre d'édition.
+      return t !== 'SCRIPT' && t !== 'STYLE' && t !== 'LINK' && !el.classList.contains('editeur-barre');
+    });
+    return enfants.length === 1 ? enfants[0] : document.body;
+  }
+  // Fait commencer sur une nouvelle page le bloc où se trouve le curseur.
+  // Le saut est posé sur ce bloc (qui a du contenu) et non sur un div vide,
+  // sinon Chromium l'ignore à l'impression. Re-cliquer l'enlève.
+  function insererSaut(){
+    var sel = window.getSelection();
+    var cont = conteneurContenu();
+    if (sel && sel.rangeCount) {
+      var node = sel.getRangeAt(0).startContainer;
+      while (node && node.parentNode !== cont) node = node.parentNode;
+      if (node && node.parentNode === cont && !node.classList.contains('editeur-barre')) {
+        node.classList.toggle('ed-saut-avant');
+        node.scrollIntoView({ block: 'center' });
+        return;
+      }
+    }
+    alert('Placez le curseur dans le texte, à l\\'endroit qui doit commencer sur une nouvelle page.');
+  }
+  var btnSaut = document.getElementById('ed-saut');
+  // Empêcher le bouton de voler le curseur du document : sans ça, cliquer le
+  // bouton effondre la sélection et on perd l'endroit où poser le saut.
+  btnSaut.addEventListener('mousedown', function(e){ e.preventDefault(); });
+  btnSaut.addEventListener('click', insererSaut);
   document.getElementById('ed-ok').addEventListener('click', function(){ window.editeur && window.editeur.enregistrer(); });
   document.getElementById('ed-annuler').addEventListener('click', function(){ window.editeur && window.editeur.annuler(); });
 })();`;

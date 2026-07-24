@@ -225,7 +225,7 @@ export async function rendreVenteFiche(contenu, params) {
                <button type="button" class="btn-action btn-secondaire-action btn-ouvrir-dossier-vente" title="Ouvrir le dossier">Dossier</button>
                <button type="button" class="btn-action btn-secondaire-action btn-regen-pdf-vente">Re-générer</button>`
             : `<button type="button" class="btn-action btn-principal btn-gen-pdf-vente">Générer le PDF</button>`}
-          <button type="button" class="btn-action btn-secondaire-action btn-certif-modifie" title="Certificat — version modifiée">Version modifiée…</button>
+          <button type="button" class="btn-action btn-secondaire-action btn-certif-modifie" title="Modifier le certificat avant de l'imprimer">Modifier ce document…</button>
           <button type="button" class="btn-action btn-danger btn-suppr-certif-vente">Supprimer</button>
         </div>
       </div>
@@ -422,7 +422,7 @@ export async function rendreVenteFiche(contenu, params) {
           <button type="button" class="btn-action btn-secondaire-action" id="btn-voir-facture-artiste">Voir le PDF</button>
           <button type="button" class="btn-action btn-secondaire-action" id="btn-ouvrir-dossier-facture-artiste" title="Ouvrir le dossier">Dossier</button>
           <button type="button" class="btn-action btn-secondaire-action" id="btn-regen-facture-artiste">Re-générer</button>
-          <button type="button" class="btn-action btn-secondaire-action" id="btn-facture-modifiee" title="Facture artiste — version modifiée">Version modifiée…</button>
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-facture-modifiee" title="Modifier la facture avant de l'imprimer">Modifier ce document…</button>
         </div>
       </div>
     ` : '';
@@ -437,7 +437,7 @@ export async function rendreVenteFiche(contenu, params) {
         <div class="doc-actions">
           <button type="button" class="btn-action btn-secondaire-action" id="btn-voir-lettre">Voir la lettre</button>
           <button type="button" class="btn-action btn-secondaire-action" id="btn-ouvrir-dossier-pochette" title="Ouvrir le dossier de la pochette">Dossier</button>
-          <button type="button" class="btn-action btn-secondaire-action" id="btn-lettre-modifiee" title="Lettre — version modifiée">Version modifiée…</button>
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-lettre-modifiee" title="Modifier la lettre avant de l'imprimer">Modifier ce document…</button>
         </div>
       </div>
     ` : '';
@@ -451,7 +451,7 @@ export async function rendreVenteFiche(contenu, params) {
         </div>
         <div class="doc-actions">
           <button type="button" class="btn-action btn-secondaire-action" id="btn-voir-presentation">Voir</button>
-          <button type="button" class="btn-action btn-secondaire-action" id="btn-presentation-modifiee-vente">Version modifiée…</button>
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-presentation-modifiee-vente" title="Modifier la présentation avant de l'imprimer">Modifier ce document…</button>
         </div>
       </div>
     `;

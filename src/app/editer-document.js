@@ -1,4 +1,4 @@
-// Lance l'édition WYSIWYG d'un document (« version modifiée ») : ouvre le
+// Lance l'édition WYSIWYG d'un document (« Modifier ce document ») : ouvre le
 // document dans une fenêtre éditable, puis propose d'ouvrir le PDF produit.
 // spec : { type, ...identifiants } — ex. { type:'presentation', artiste_id },
 //        { type:'lettre', vente_id }, { type:'certificat', certificat_id },
@@ -12,8 +12,8 @@ export async function lancerEditionDocument(spec) {
     if (!res || !res.pdf_path) return null; // annulé par l'utilisateur
     const rep = await confirmer({
       type: 'succes',
-      title: 'Version modifiée produite',
-      message: 'Le document modifié a été enregistré en PDF (les données ne sont pas changées).',
+      title: 'Document modifié enregistré',
+      message: 'Votre version modifiée a été enregistrée en PDF (les données de l\'application ne changent pas).',
       buttons: ['Ouvrir le PDF', 'Fermer'],
       defaultId: 0,
       cancelId: 1,

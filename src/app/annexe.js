@@ -134,7 +134,7 @@ export function ouvrirAnnexeModale({ artiste, oeuvres, type = 'depot' }) {
         <div class="annexe-liste">${lignesHtml || '<p class="aide-champ" style="margin:0;">Aucune œuvre pour cet artiste.</p>'}</div>
         <div class="dialogue-actions">
           <button type="button" class="btn-action btn-secondaire-action" id="annexe-annuler">Annuler</button>
-          <button type="button" class="btn-action btn-secondaire-action" id="annexe-produire-mod">Version modifiée…</button>
+          <button type="button" class="btn-action btn-secondaire-action" id="annexe-produire-mod" title="Modifier l'annexe avant de l'imprimer">Modifier ce document…</button>
           <button type="button" class="btn-action btn-principal" id="annexe-produire">Produire l'annexe</button>
         </div>
       </div>`;

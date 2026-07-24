@@ -206,8 +206,9 @@ const ARTICLES = [
     `<p>Fiche de vente → <b>Produire la facture artiste</b> : le relevé du versement à l'artiste après commission et taxes. La <b>cote</b> dépend du type de l'œuvre (sculpture 33 %, sinon 50 %), et les taxes dépendent du régime fiscal de l'artiste.</p>`),
   A('documents', 'Catalogue, annexe A, présentation, rapport', 'catalogue annexe dépôt retrait présentation rapport pdf artiste imprimer',
     `<p>Depuis la fiche <b>artiste</b> : <b>Catalogue PDF</b> (6 œuvres/page), <b>Annexe A</b> (dépôt en rouge / retrait en bleu), <b>Présentation PDF</b>. Le <b>Rapport</b> journalier s'exporte depuis la section Rapport. Tous sont rangés par type dans le dossier de l'année.</p>`),
-  A('documents', 'Modifier un document avant de l\'imprimer', 'version modifiée éditer corriger texte pdf wysiwyg retoucher',
-    `<p>La plupart des documents proposent <b>« version modifiée »</b> : une fenêtre éditable où tu corriges le texte (ex. enlever une ligne du CV), puis tu enregistres en PDF. <b>Les données de l'app ne changent pas</b> ; seul ce PDF est ajusté. Pour un document de pochette, la version modifiée remplace le fichier dans le dossier.</p>`),
+  A('documents', 'Modifier un document avant de l\'imprimer', 'modifier ce document version modifiée éditer corriger texte pdf wysiwyg retoucher saut de page',
+    `<p>La plupart des documents proposent <b>« Modifier ce document… »</b> : une fenêtre éditable où tu corriges le texte (ex. enlever une ligne du CV, réorganiser un paragraphe), puis tu enregistres en PDF. <b>Les données de l'app ne changent pas</b> ; seul ce PDF est ajusté (il est enregistré comme « version modifiée »). Pour un document de pochette, il remplace le fichier dans le dossier.</p>
+     <p>Dans la fenêtre d'édition, le bouton <b>« Insérer un saut de page »</b> pousse le texte qui suit le curseur sur une nouvelle page — pratique quand une section commence en bas d'une page.</p>`),
   A('documents', 'Re-générer un document', 'regénérer mettre à jour pdf actualiser document',
     `<p>Dans la section Documents (ou sur la fiche), <b>Re-générer</b> recrée le PDF avec les données actuelles (utile après une correction). L'ancien fichier est remplacé.</p>`),
   A('documents', 'Où sont rangés les documents', 'dossier fichiers pdf emplacement année type explorateur trouver',
