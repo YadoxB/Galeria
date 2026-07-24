@@ -1027,6 +1027,19 @@ async function demarrerApplication() {
     if (canceled || !filePaths.length) return { cancelled: true };
     return { path: filePaths[0] };
   });
+  // Sélecteur de fichier pour le logo de la galerie (Réglages → La galerie).
+  // Renvoie le chemin choisi ; le fichier n'est pas copié — c'est ce chemin
+  // qui est lu à la génération des documents (logoGalerieEnDataUrl).
+  ipcMain.handle('config:choisir-logo', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+      title: 'Choisir le logo de la galerie',
+      properties: ['openFile'],
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp'] }],
+    });
+    if (canceled || !filePaths.length) return { cancelled: true };
+    return { path: filePaths[0] };
+  });
   ipcMain.handle('backup:redemarrer', () => {
     arreterSauvegardePeriodique();
     demarrerSauvegardePeriodique(surEvenementSauvegarde);

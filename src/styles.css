@@ -5531,3 +5531,57 @@ select.lot-in.st-pretee { color: var(--info); }
   40%, 80% { transform: translateX(9px); }
 }
 .verrou-carte.secousse { animation: verrou-secousse .4s; }
+
+/* ═══════════ Réglages : disposition maître-détail (barre latérale) ═══════════ */
+.reglages-vue { max-width: 1180px; }
+.reglages-layout { display: grid; grid-template-columns: 236px 1fr; gap: var(--s4); align-items: start; margin-top: var(--s3); }
+
+/* Barre latérale des catégories */
+.reglages-layout .cat-nav { position: sticky; top: var(--s3); display: flex; flex-direction: column; gap: 4px; }
+.cat-item { position: relative; display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-radius: var(--r-btn); cursor: pointer; color: var(--slate); font-family: var(--font-ui); font-size: 14px; font-weight: 500; border: 1px solid transparent; background: none; text-align: left; width: 100%; }
+.cat-item:hover { background: var(--cloud); color: var(--ink); }
+.cat-item.actif { background: var(--porcelain); border-color: var(--mist); color: var(--ink); font-weight: 600; box-shadow: var(--ombre-carte); }
+.cat-item.actif::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--warm-gold); }
+.cat-ic { width: 18px; height: 18px; flex: none; color: var(--stone); }
+.cat-ic svg { width: 100%; height: 100%; }
+.cat-item.actif .cat-ic { color: var(--warm-gold); }
+
+/* Zone des panneaux (un seul visible à la fois) */
+.cat-zone { min-width: 0; }
+.cat-panneau { display: none; }
+.cat-panneau.actif { display: block; }
+.panneau-tete { margin-bottom: var(--s3); }
+.panneau-tete h2 { font-family: var(--font-titre); font-weight: 600; font-size: 26px; color: var(--ink); margin: 0; }
+.panneau-tete .desc { color: var(--slate); font-size: 13px; margin: 4px 0 0; }
+
+/* Largeurs des cartes par panneau. Surchargent les spans globaux des zones,
+   pensés pour l'ancien layout bento à 8 cartes ; ici chaque panneau n'a que
+   1 à 2 cartes. Plus spécifiques que « .zone-X », donc prioritaires. */
+.cat-panneau .grille-bento > .carte { grid-column: span 12; }
+.cat-panneau[data-cat="galerie"] .zone-profil-identite,
+.cat-panneau[data-cat="galerie"] .zone-profil-coord,
+.cat-panneau[data-cat="finances"] .zone-fisc-numeros,
+.cat-panneau[data-cat="finances"] .zone-taxes-cote,
+.cat-panneau[data-cat="donnees"] .zone-sauvegardes,
+.cat-panneau[data-cat="donnees"] .zone-import,
+.cat-panneau[data-cat="securite"] .zone-securite,
+.cat-panneau[data-cat="securite"] .zone-securite-secours,
+.cat-panneau[data-cat="application"] .zone-affichage,
+.cat-panneau[data-cat="application"] .zone-apropos { grid-column: span 6; }
+.cat-panneau[data-cat="documents"] .zone-numerotation { grid-column: span 8; }
+.cat-panneau[data-cat="documents"] .zone-doc-rappel { grid-column: span 4; }
+
+/* Barre Enregistrer : reprend .form-actions (sticky bas) mais répartit
+   l'indicateur à gauche et les boutons à droite. */
+.reglages-barre-save { justify-content: space-between; align-items: center; }
+.reglages-indic { font-size: 13px; color: var(--stone); }
+.reglages-indic.modif { color: var(--terracotta); font-weight: 600; }
+.reglages-barre-boutons { display: flex; gap: var(--s2); }
+
+/* Écran étroit : la barre latérale passe en rangée, les cartes en pleine largeur. */
+@media (max-width: 1100px) {
+  .reglages-layout { grid-template-columns: 1fr; }
+  .reglages-layout .cat-nav { position: static; flex-direction: row; flex-wrap: wrap; }
+  .cat-item { width: auto; }
+  .cat-panneau .grille-bento > .carte { grid-column: span 12; }
+}

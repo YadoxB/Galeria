@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo Réglages (barre latérale, 7 catégories)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+
+    .demo-bar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: var(--s3); padding: var(--s2) var(--s4); background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .note { font-size: 12px; color: rgba(252,250,244,0.7); }
+
+    main { max-width: 1280px; margin: 0 auto; padding: var(--s5) var(--s4) calc(var(--s6) * 2); }
+    .page-entete h1 { margin: 0; font-family: var(--font-titre); font-weight: 500; font-size: 38px; line-height: 1.1; color: var(--ink); }
+    .page-entete .meta { margin: var(--s2) 0 0; color: var(--slate); font-size: 14px; max-width: 760px; line-height: 1.5; }
+
+    .reglages-layout { display: grid; grid-template-columns: 236px 1fr; gap: var(--s4); align-items: start; margin-top: var(--s4); }
+
+    .cat-nav { position: sticky; top: var(--s4); display: flex; flex-direction: column; gap: 4px; }
+    .cat-item { position: relative; display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-radius: var(--r-btn); cursor: pointer; color: var(--slate); font-family: var(--font-ui); font-size: 14px; font-weight: 500; border: 1px solid transparent; background: none; text-align: left; width: 100%; }
+    .cat-item:hover { background: var(--cloud); color: var(--ink); }
+    .cat-item.actif { background: var(--porcelain); border-color: var(--mist); color: var(--ink); font-weight: 600; box-shadow: var(--ombre-carte); }
+    .cat-item.actif::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--warm-gold); }
+    .cat-ic { width: 18px; height: 18px; flex: none; color: var(--stone); }
+    .cat-item.actif .cat-ic { color: var(--warm-gold); }
+
+    .cat-zone { min-width: 0; }
+    .cat-panneau { display: none; }
+    .cat-panneau.actif { display: block; animation: fade .18s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .panneau-tete { margin-bottom: var(--s3); }
+    .panneau-tete h2 { font-family: var(--font-titre); font-weight: 600; font-size: 26px; color: var(--ink); margin: 0; }
+    .panneau-tete .desc { color: var(--slate); font-size: 13px; margin: 4px 0 0; }
+
+    .grille-bento { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s3); align-items: start; }
+    .carte { background: var(--porcelain); border: 1px solid var(--mist); border-radius: var(--r-carte); box-shadow: var(--ombre-carte); padding: var(--s3) var(--s4); }
+    .span-12 { grid-column: span 12; } .span-8 { grid-column: span 8; } .span-7 { grid-column: span 7; } .span-6 { grid-column: span 6; } .span-5 { grid-column: span 5; } .span-4 { grid-column: span 4; }
+    .carte > h3 { font-family: var(--font-titre); font-size: 21px; color: var(--gallery-navy); margin: 0 0 var(--s3); font-weight: 600; }
+
+    .sous-section { background: var(--soft-ivory); border: 1px solid var(--mist); border-radius: var(--r-btn); padding: var(--s3); margin-bottom: var(--s2); }
+    .sous-section:last-of-type { margin-bottom: 0; }
+    .sous-section h4 { margin: 0 0 var(--s2); font-family: var(--font-ui); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slate); }
+
+    .form-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--s2) var(--s3); }
+    .form-champ { display: flex; flex-direction: column; gap: 6px; }
+    .form-champ.pleine { grid-column: 1 / -1; }
+    .form-champ label { font-size: 12px; font-weight: 500; color: var(--slate); }
+    .form-champ input[type=text], .form-champ input[type=number], .form-champ input[type=password], .form-champ input[type=email], .form-champ input[type=tel], .form-champ input[type=url], .form-champ select, .form-champ textarea {
+      font-family: var(--font-ui); font-size: 14px; padding: 0 12px; height: 36px; border: 1px solid var(--mist); border-radius: var(--r-btn); background: var(--porcelain); color: var(--ink); width: 100%; }
+    .form-champ textarea { padding: 8px 12px; height: auto; min-height: 130px; resize: vertical; line-height: 1.5; }
+    .form-champ.checkbox { flex-direction: row; align-items: center; gap: var(--s2); }
+    .form-champ.checkbox input { width: 18px; height: 18px; margin: 0; accent-color: var(--warm-gold); }
+    .form-champ.checkbox label { font-size: 13px; color: var(--ink); }
+    .aide { margin: 6px 0 0; font-size: 12px; color: var(--slate); line-height: 1.5; }
+    .aide strong { color: var(--ink); font-weight: 600; }
+    .ligne-action { display: flex; gap: var(--s2); align-items: flex-end; margin-top: var(--s2); }
+    .ligne-action .form-champ { flex: 1; }
+    .btn { font-family: var(--font-ui); font-size: 13px; font-weight: 600; padding: 9px 16px; border-radius: var(--r-btn); cursor: pointer; border: 1px solid transparent; }
+    .btn-principal { background: var(--warm-gold); color: var(--soft-ivory); }
+    .btn-secondaire { background: var(--porcelain); color: var(--ink); border-color: var(--mist); }
+    .btn-gros { width: 100%; margin-top: var(--s2); }
+    .boutons-ligne { display: flex; gap: var(--s2); margin-top: var(--s2); flex-wrap: wrap; }
+    .statut { font-size: 12.5px; margin: 10px 0 0; font-weight: 600; }
+    .statut.ok { color: var(--succes); } .statut.absent { color: var(--stone); font-weight: 400; }
+    dl.infos { display: grid; grid-template-columns: auto 1fr; gap: 6px var(--s3); margin: 0 0 var(--s2); font-size: 13px; align-items: center; }
+    dl.infos dt { color: var(--slate); } dl.infos dd { margin: 0; color: var(--ink); }
+    .encadre-doux { margin-top: 10px; padding: 8px 10px; background: rgba(201,154,61,0.10); border-left: 3px solid var(--warm-gold); border-radius: 0 6px 6px 0; font-size: 12px; color: var(--slate); line-height: 1.5; }
+
+    .barre-save { position: sticky; bottom: 0; margin-top: var(--s4); display: flex; justify-content: space-between; align-items: center; gap: var(--s2); padding: 14px 0; background: linear-gradient(transparent, var(--soft-ivory) 35%); }
+    .barre-save .indic { font-size: 13px; color: var(--stone); }
+    .barre-save .indic.modif { color: var(--terracotta); font-weight: 600; }
+    .barre-save .actions { display: flex; gap: var(--s2); }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Réglages : barre latérale à 7 catégories</div>
+    <div class="note">Démo — clique une catégorie à gauche. Valeurs fictives.</div>
+  </div>
+
+  <main>
+    <div class="page-entete">
+      <h1>Réglages</h1>
+      <p class="meta">Tout ce qui se règle dans Galeria, regroupé par catégorie. Le <strong>Profil de la galerie</strong> vit maintenant ici, dans « La galerie ».</p>
+    </div>
+
+    <div class="reglages-layout">
+      <nav class="cat-nav" id="cat-nav">
+        <button class="cat-item actif" data-cat="galerie">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/></svg></span>
+          La galerie
+        </button>
+        <button class="cat-item" data-cat="finances">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2.5 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1.1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.5 2.5 0 0 1 9.5 15"/><path d="M12 6v1.5M12 16.5V18"/></svg></span>
+          Finances
+        </button>
+        <button class="cat-item" data-cat="documents">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+          Documents
+        </button>
+        <button class="cat-item" data-cat="donnees">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span>
+          Données
+        </button>
+        <button class="cat-item" data-cat="securite">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+          Sécurité
+        </button>
+        <button class="cat-item" data-cat="ia">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z"/></svg></span>
+          Intelligence artificielle
+        </button>
+        <button class="cat-item" data-cat="application">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="8" x2="20" y2="8"/><circle cx="9" cy="8" r="2"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="15" cy="16" r="2"/></svg></span>
+          Application
+        </button>
+      </nav>
+
+      <div class="cat-zone">
+
+        <!-- ═══ LA GALERIE ═══ -->
+        <section class="cat-panneau actif" data-cat="galerie">
+          <div class="panneau-tete"><h2>La galerie</h2><p class="desc">L'identité de la galerie. Ces informations alimentent l'en-tête et le pied des documents.</p></div>
+          <div class="grille-bento">
+            <div class="carte span-6">
+              <h3>Identité</h3>
+              <div class="form-grille">
+                <div class="form-champ pleine"><label>Nom de la galerie</label><input type="text" value="Galerie du Vieux Saint-Jean"></div>
+                <div class="form-champ pleine"><label>Site web</label><input type="url" value="galerieduvieuxsaintjean.com"></div>
+              </div>
+            </div>
+            <div class="carte span-6">
+              <h3>Coordonnées</h3>
+              <div class="form-grille">
+                <div class="form-champ"><label>Téléphone</label><input type="tel" value="450 555-1234"></div>
+                <div class="form-champ"><label>Courriel</label><input type="email" value="info@galerie.com"></div>
+                <div class="form-champ pleine"><label>Adresse (ligne 1)</label><input type="text" value="123 rue Richelieu"></div>
+                <div class="form-champ pleine"><label>Adresse (ligne 2)</label><input type="text" value="Saint-Jean-sur-Richelieu (Québec) J3B 6X3"></div>
+              </div>
+            </div>
+            <div class="carte span-12">
+              <h3>Logo</h3>
+              <div class="ligne-action">
+                <div class="form-champ"><label>Fichier du logo (laisser vide pour le logo par défaut)</label><input type="text" value="" placeholder="Aucun — logo Galeria par défaut"></div>
+                <button class="btn btn-secondaire">Choisir un fichier…</button>
+              </div>
+              <p class="aide">Le logo apparaît en haut des lettres. <strong>Suggestion :</strong> un vrai bouton « Choisir un fichier… » plutôt qu'un chemin à taper à la main (comportement actuel).</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══ FINANCES ═══ -->
+        <section class="cat-panneau" data-cat="finances">
+          <div class="panneau-tete"><h2>Finances</h2><p class="desc">Toute la fiscalité au même endroit : numéros d'enregistrement, taux de taxes et commission.</p></div>
+          <div class="grille-bento">
+            <div class="carte span-6">
+              <h3>Numéros d'enregistrement</h3>
+              <div class="form-grille">
+                <div class="form-champ pleine"><label>Numéro de TPS de la galerie</label><input type="text" value="123456789 RT0001"></div>
+                <div class="form-champ pleine"><label>Numéro de TVQ de la galerie</label><input type="text" value="1234567890 TQ0001"></div>
+              </div>
+              <p class="aide">Ces numéros apparaissent sur les factures. <strong>Ils étaient auparavant dans le Profil</strong> — réunis ici avec les taux.</p>
+            </div>
+            <div class="carte span-6">
+              <h3>Taxes &amp; commission</h3>
+              <div class="sous-section"><h4>TPS</h4><div class="form-grille"><div class="form-champ checkbox"><input type="checkbox" checked id="f1"><label for="f1">Appliquer</label></div><div class="form-champ"><label>Taux (%)</label><input type="number" value="5"></div></div></div>
+              <div class="sous-section"><h4>TVQ</h4><div class="form-grille"><div class="form-champ checkbox"><input type="checkbox" checked id="f2"><label for="f2">Appliquer</label></div><div class="form-champ"><label>Taux (%)</label><input type="number" value="9.975"></div></div></div>
+              <div class="sous-section"><h4>Cote de la galerie</h4><div class="form-grille"><div class="form-champ"><label>Pourcentage par défaut (%)</label><input type="number" value="50"></div></div><p class="aide">Prérempli à la création d'une facture artiste. Modifiable par vente.</p></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══ DOCUMENTS ═══ -->
+        <section class="cat-panneau" data-cat="documents">
+          <div class="panneau-tete"><h2>Documents</h2><p class="desc">Numérotation des factures, certificats et de l'inventaire, et texte du signataire.</p></div>
+          <div class="grille-bento">
+            <div class="carte span-8">
+              <h3>Numérotation</h3>
+              <div class="sous-section"><h4>Factures client</h4><div class="form-grille"><div class="form-champ"><label>Préfixe</label><input type="text" value="FC-2026"></div><div class="form-champ"><label>Prochain numéro</label><input type="number" value="1"></div></div></div>
+              <div class="sous-section"><h4>Factures artiste</h4><div class="form-grille"><div class="form-champ"><label>Préfixe</label><input type="text" value="FA-2026"></div><div class="form-champ"><label>Prochain numéro</label><input type="number" value="5"></div></div></div>
+              <div class="sous-section"><h4>Certificats d'authenticité</h4><div class="form-grille"><div class="form-champ"><label>Préfixe</label><input type="text" value="C-2026"></div><div class="form-champ"><label>Prochain numéro</label><input type="number" value="12"></div><div class="form-champ pleine"><label>Texte du signataire sur le certificat</label><input type="text" value="Joanne Boucher, Galeriste"></div></div></div>
+              <div class="sous-section"><h4>Inventaire</h4><div class="form-grille"><div class="form-champ"><label>Prochain numéro</label><input type="number" value="1043"></div></div><p class="aide">Combiné au préfixe de l'artiste (ex. <strong>JOU1043</strong>).</p></div>
+            </div>
+            <div class="carte span-4">
+              <h3>Rappel</h3>
+              <p class="aide">Les <strong>taux</strong> de TPS/TVQ et la <strong>cote</strong> sont maintenant dans <strong>Finances</strong>. Ici, seulement les numéros de documents.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══ DONNÉES ═══ -->
+        <section class="cat-panneau" data-cat="donnees">
+          <div class="panneau-tete"><h2>Données</h2><p class="desc">Sauvegardes automatiques, restauration et import.</p></div>
+          <div class="grille-bento">
+            <div class="carte span-6">
+              <h3>Sauvegardes</h3>
+              <div class="form-grille">
+                <div class="form-champ"><label>Fréquence (minutes)</label><input type="number" value="60"></div>
+                <div class="form-champ"><label>Copies à conserver</label><input type="number" value="50"></div>
+              </div>
+              <div class="ligne-action"><div class="form-champ"><label>Dossier des sauvegardes</label><input type="text" value="" placeholder="Par défaut : Documents\Galeria\Sauvegardes" readonly></div><button class="btn btn-secondaire">Choisir…</button></div>
+              <button class="btn btn-principal btn-gros">Sauvegarder maintenant</button>
+            </div>
+            <div class="carte span-6">
+              <h3>Restaurer une sauvegarde</h3>
+              <p class="aide">Remplace les données actuelles par une copie antérieure. Une <strong>copie de sécurité</strong> est faite automatiquement avant de remplacer.</p>
+              <button class="btn btn-secondaire btn-gros">Restaurer une sauvegarde…</button>
+              <h3 style="margin-top:var(--s4)">Import de données</h3>
+              <p class="aide">Importer des artistes ou des œuvres depuis un fichier CSV (Airtable).</p>
+              <button class="btn btn-secondaire btn-gros">Importer un fichier CSV…</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══ SÉCURITÉ ═══ -->
+        <section class="cat-panneau" data-cat="securite">
+          <div class="panneau-tete"><h2>Sécurité</h2><p class="desc">Verrou par code et question de secours. (Le chiffrement de la base est reporté.)</p></div>
+          <div class="grille-bento">
+            <div class="carte span-6">
+              <h3>Verrou de l'application</h3>
+              <div class="sous-section"><h4>Activation</h4><div class="form-champ checkbox"><input type="checkbox" id="s1"><label for="s1">Demander un code pour ouvrir l'application</label></div><p class="aide">Définissez d'abord un code ci-dessous.</p></div>
+              <div class="sous-section"><h4>Code de déverrouillage</h4><div class="form-grille"><div class="form-champ"><label>Code (4 à 6 chiffres)</label><input type="password" value="" placeholder="••••"></div><div class="form-champ"><label>Confirmer</label><input type="password" value="" placeholder="••••"></div></div><div class="boutons-ligne"><button class="btn btn-principal">Enregistrer le code</button><button class="btn btn-secondaire">Retirer</button></div><p class="statut absent">Aucun code défini.</p></div>
+              <div class="sous-section"><h4>Verrouillage automatique</h4><div class="form-grille"><div class="form-champ"><label>Après une inactivité de</label><select><option>Jamais (à l'ouverture seulement)</option><option selected>10 minutes</option><option>5 minutes</option><option>15 minutes</option><option>30 minutes</option></select></div></div><div class="form-champ checkbox" style="margin-top:var(--s2)"><input type="checkbox" id="s2"><label for="s2">Verrouiller aussi quand on quitte la fenêtre</label></div></div>
+            </div>
+            <div class="carte span-6">
+              <h3>Question de secours</h3>
+              <p class="aide">Facultative mais recommandée : elle permet de reprendre la main si le code est oublié.</p>
+              <div class="form-champ"><label>Question</label><select><option>Dans quelle ville êtes-vous né ?</option><option>Quel était le nom de votre premier animal ?</option><option>Quel est le nom de jeune fille de votre mère ?</option><option>Écrire ma propre question…</option></select></div>
+              <div class="form-champ" style="margin-top:var(--s2)"><label>Réponse</label><input type="text" value="" placeholder="Votre réponse"></div>
+              <div class="boutons-ligne"><button class="btn btn-principal">Enregistrer la question</button><button class="btn btn-secondaire">Retirer</button></div>
+              <p class="statut absent">Aucune question définie.</p>
+              <div class="encadre-doux">Choisissez une réponse qu'un visiteur ne pourrait pas deviner — évitez ce qui se trouve sur le site ou la page Facebook de la galerie.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══ IA ═══ -->
+        <section class="cat-panneau" data-cat="ia">
+          <div class="panneau-tete"><h2>Intelligence artificielle</h2><p class="desc">Consignes de rédaction et clé d'accès pour la génération des descriptions.</p></div>
+          <div class="grille-bento">
+            <div class="carte span-7">
+              <h3>Consignes de la galerie</h3>
+              <div class="form-champ"><label>Instructions générales pour la génération des descriptions</label><textarea>Rôle. Tu rédiges des descriptions d'œuvres pour la Galerie du Vieux Saint-Jean : aider un visiteur à apprécier l'œuvre et à se projeter…</textarea></div>
+              <div class="form-champ" style="margin-top:var(--s2)"><label>Lien ChatGPT par défaut</label><input type="url" value="https://chat.openai.com/"></div>
+            </div>
+            <div class="carte span-5">
+              <h3>Clé API</h3>
+              <p class="aide">Rangée dans le coffre sécurisé de Windows, jamais en clair.</p>
+              <div class="form-champ"><label>Clé Anthropic</label><input type="password" value="" placeholder="sk-ant-…"></div>
+              <button class="btn btn-principal btn-gros">Enregistrer la clé</button>
+              <p class="statut ok">✓ Une clé est enregistrée</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══ APPLICATION ═══ -->
+        <section class="cat-panneau" data-cat="application">
+          <div class="panneau-tete"><h2>Application</h2><p class="desc">Affichage, version et mises à jour.</p></div>
+          <div class="grille-bento">
+            <div class="carte span-6">
+              <h3>Affichage</h3>
+              <div class="form-champ"><label>Taille de l'interface</label><select><option>Très petit</option><option>Petit</option><option selected>Normal</option><option>Grand</option><option>Très grand</option></select></div>
+            </div>
+            <div class="carte span-6">
+              <h3>À propos &amp; mises à jour</h3>
+              <dl class="infos">
+                <dt>Version</dt><dd>Galeria 0.10.0</dd>
+                <dt>Dossier des données</dt><dd><button class="btn btn-secondaire" style="padding:2px 8px;font-size:12px">Ouvrir dans l'Explorateur</button></dd>
+              </dl>
+              <button class="btn btn-secondaire btn-gros">Vérifier les mises à jour</button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <div class="barre-save">
+      <span class="indic" id="indic">Aucune modification.</span>
+      <div class="actions">
+        <button class="btn btn-secondaire">Annuler</button>
+        <button class="btn btn-principal">Enregistrer</button>
+      </div>
+    </div>
+  </main>
+
+<script>
+  const nav = document.getElementById('cat-nav');
+  const items = [...nav.querySelectorAll('.cat-item')];
+  const panneaux = [...document.querySelectorAll('.cat-panneau')];
+  nav.addEventListener('click', (e) => {
+    const b = e.target.closest('.cat-item'); if (!b) return;
+    const cat = b.dataset.cat;
+    items.forEach((i) => i.classList.toggle('actif', i === b));
+    panneaux.forEach((p) => p.classList.toggle('actif', p.dataset.cat === cat));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  const indic = document.getElementById('indic');
+  document.querySelectorAll('input, select, textarea').forEach((el) => {
+    el.addEventListener('input', () => { indic.textContent = '● Modifications non enregistrées'; indic.classList.add('modif'); });
+  });
+</script>
+</body>
+</html>

@@ -12,6 +12,38 @@
 
 ---
 
+## Une page Réglages plus claire
+
+La page **Réglages** était devenue chargée. Elle est maintenant organisée par
+**catégories, dans une liste à gauche** : vous cliquez une catégorie et vous ne
+voyez que ses réglages, un écran à la fois.
+
+- **La galerie** — votre nom, vos coordonnées, votre adresse et votre logo.
+  (C'est l'ancien « Profil de la galerie », qui vit maintenant ici.)
+- **Finances** — vos numéros de TPS et de TVQ, les taux de taxes et votre
+  commission, enfin **réunis au même endroit**.
+- **Documents**, **Données** (sauvegardes, import), **Sécurité**,
+  **Intelligence artificielle** et **Application**.
+
+Pour le **logo**, un bouton **« Choisir un fichier… »** ouvre maintenant une
+fenêtre pour sélectionner l'image — plus besoin de taper le chemin à la main.
+
+## Lettre de remerciement embellie
+
+- Le **logo de la galerie** apparaît en haut, avec la **date** juste en dessous.
+- La **signature** est à droite, avec **un espace pour signer à la main**.
+- Vos coordonnées (adresse, téléphone, courriel, **site web**) sont regroupées
+  proprement dans l'en-tête.
+
+## Petites corrections
+
+- Sur l'**accueil**, la case du haut compte maintenant les **œuvres disponibles**
+  (ce qu'il reste à vendre), et non plus toutes les œuvres.
+- Sur la fiche d'un **artiste**, les boutons qui produisent des documents sont
+  regroupés dans un menu **« Documents »**, plus faciles à distinguer des autres.
+
+---
+
 ## Modifier plusieurs œuvres à la fois
 
 Un nouveau bouton **« Édition en lot »** sur la page **Œuvres** ouvre un grand

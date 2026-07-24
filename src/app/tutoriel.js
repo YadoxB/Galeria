@@ -19,7 +19,7 @@ const ETAPES = [
   { vue: 'documents', cible: '.doc-vue-bascule', placement: 'bottom', titre: 'Vos documents', texte: "Tous les PDF produits (certificats, factures, pochettes…), en vue <b>liste</b> ou <b>explorateur</b> de dossiers." },
   { vue: 'rapport', cible: '.entree-sidebar[data-vue="rapport"]', placement: 'right', titre: 'Le rapport du jour', texte: "Le <b>Rapport</b> est le journal d'une journée : ventes, œuvres ajoutées ou retirées, et le suivi des commandes en cours. <b>Exportable en PDF</b> — pratique pour faire le point chaque jour ou pour la comptabilité." },
   { vue: 'outils', cible: '.zone-outil-calc', placement: 'top', titre: 'Les outils', texte: "Des <b>calculateurs</b> de prix et de commission (le net versé à l'artiste après les taxes)." },
-  { cible: '#btn-profil-galerie', placement: 'right', titre: 'Réglages & profil', texte: "En bas, le <b>profil de la galerie</b> (coordonnées, logo, taxes) qui alimente tous vos documents. Les <b>Réglages</b> sont juste au-dessus." },
+  { cible: '.entree-sidebar[data-vue="reglages"]', placement: 'right', titre: 'Les réglages', texte: "Les <b>Réglages</b> réunissent tout, par catégories : le <b>profil de la galerie</b> (coordonnées, logo), les <b>finances</b> (taxes, cotes), la sécurité, les sauvegardes et plus." },
   { cible: '#aide-fab', placement: 'top-left', titre: "L'aide, toujours là", texte: "Le bouton <b>?</b> ouvre l'aide cherchable depuis n'importe quelle page — et permet de <b>revoir ce tutoriel</b>." },
   { centre: true, titre: 'Vous êtes prêt !', texte: "Vous pouvez commencer. En cas de doute, le bouton <b>?</b> en bas à droite répond à presque tout.", btn: 'Terminer' },
 ];

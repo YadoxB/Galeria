@@ -12,7 +12,6 @@ import { rendreSuivi } from './vues/suivi.js';
 import { rendreDocuments } from './vues/documents.js';
 import { rendreRapport } from './vues/rapport.js';
 import { rendreReglages } from './vues/reglages.js';
-import { rendreProfilGalerie } from './vues/profil-galerie.js';
 import { rendreOutils } from './vues/outils.js';
 import { rafraichirEntete } from './marque.js';
 import { formaterTelephone, nettoyerErreur } from './commun.js';
@@ -36,7 +35,9 @@ enregistrer('suivi', rendreSuivi);
 enregistrer('documents', rendreDocuments);
 enregistrer('rapport', rendreRapport);
 enregistrer('reglages', rendreReglages);
-enregistrer('profil-galerie', rendreProfilGalerie);
+// Le Profil de la galerie a été fondu dans les Réglages (catégorie « La galerie »).
+// On redirige l'ancienne route pour ne casser aucun lien existant.
+enregistrer('profil-galerie', (contenu) => rendreReglages(contenu, { categorie: 'galerie' }));
 enregistrer('outils', rendreOutils);
 
 document.getElementById('btn-retour').addEventListener('click', retour);
@@ -46,9 +47,6 @@ document.getElementById('logo-galeria').addEventListener('click', () => remplace
 document.querySelectorAll('#barre-laterale .entree-sidebar[data-vue]').forEach((btn) => {
   btn.addEventListener('click', () => naviguer(btn.dataset.vue));
 });
-
-// Profil galerie (clic sur le bloc en bas de la sidebar)
-document.getElementById('btn-profil-galerie').addEventListener('click', () => naviguer('profil-galerie'));
 
 // Formatage automatique du téléphone (xxx) xxx-xxxx au fil de la frappe.
 // Délégation globale : couvre tous les input[type=tel], existants et futurs.

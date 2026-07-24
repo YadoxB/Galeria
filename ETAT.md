@@ -94,30 +94,26 @@ Trois issues présentées à Dave :
 
 ## ▶ Chantier « Retours d'usage » — 7 demandes de Dave (2026-07-18)
 
-> Issues de l'usage réel par les parents. **Consignées le 2026-07-18, plan présenté, pas encore commencées.** À faire **avant de publier la 0.10.0** (Dave voulait d'autres modifications avant la livraison). Méthode habituelle : un lot à la fois, plan → « oui » → tests à faire.
+> Issues de l'usage réel par les parents. À faire **avant de publier la 0.10.0**. Méthode habituelle : un lot à la fois, plan → « oui » → tests à faire.
 
-### État des lieux établi par l'enquête (à ne pas refaire)
+### Avancement (2026-07-19/23)
 
-| # | Demande | Ce que le code fait aujourd'hui |
-|---|---|---|
-| 1 | Choisir l'emplacement du dossier `Galeria` | **Codé en dur** : `getDataDir()` = `Documents\Galeria` (`src/db/paths.js:14-16`). Non configurable. Seul le dossier des **sauvegardes** l'est déjà (`config.sauvegardes.dossier`, `reglages.js:203-210`, `backup.js:26-38`). Il existe une migration de dossier au démarrage (`migrerAncienDossierSiPresent`, `paths.js:18-39`, `GalerieApp` → `Galeria`) qui sert de patron. Cause probable du problème des parents : **OneDrive redirige `Documents`**, donc le dossier est sous `OneDrive\Documents\Galeria`. |
-| 2 | Éditer les documents produits | **La fonction existe déjà** : c'est « Version modifiée… ». Voir la section dédiée plus bas — le vrai problème est la découvrabilité + des défauts réels. Le 2ᵉ exemple de Dave (« ! » seul sur une ligne) n'est **pas** un cas d'édition manuelle mais un **bug de gabarit** (voir #4bis). |
-| 3 | Prix pré-rempli à la vente | **Déjà pré-rempli** depuis `oeuvres.prix` (`vente-fiche.js:53`), champ modifiable (`vente-fiche.js:821`). MAIS la fiche d'œuvre affiche **deux** prix : « Courant » (= `o.prix`) et « Préférentiel » (calculé, `oeuvre-fiche.js:399-412`). La vente prend le **Courant**. **Ambiguïté à lever avec Dave** — voir « Questions ouvertes ». Cas sans pré-remplissage : vente créée depuis la liste Ventes sans œuvre ; œuvre sans prix ; changement d'œuvre alors qu'un prix non nul est déjà saisi (`vente-fiche.js:1148-1154`). |
-| 4 | Espace de signature sur la lettre de remerciement | Le bloc `.signature` (`gabarits/gabarit-lettre.html:37-40`, `245-246`) imprime nom + rôle + coordonnées, **sans espace vertical** pour signer à la main (`margin-top:5mm` seulement). |
-| 5 | Accueil : « Œuvres au total » → disponibles | La carte compte `WHERE archive = 0` (`requetes.js:488`) : **les vendues et réservées sont incluses**. `statsOeuvres()` calcule déjà `disponibles` (`requetes.js:570-572`) mais **n'est branchée nulle part** (code mort). |
-| 6 | Fiche artiste : séparer les boutons | Les 6 boutons sont **déjà en deux groupes** dans `hero-artiste-actions` (`artiste-fiche.js:196-208`) : `grp-actions` (Supprimer / Archiver / Modifier) et `grp-docs` (Présentation PDF / Catalogue PDF / Annexe A…) avec une étiquette « Documents ». La séparation existe donc, mais **visuellement trop faible** (`styles.css:2499-2502`). |
-| 7 | Réorganiser les Réglages | Bento à 8 cartes (`reglages.js:126-355`). **⚠️ Le commit parqué `121c01a` fait déjà exactement ça** — refonte en sous-navigation par catégories, avec deux démos : `demos/reglages-nav.html` et `demos/reglages-reorg.html`. **À examiner avant de concevoir quoi que ce soit.** |
+- **Lot 1 — corrections rapides : ✓ livré** (#4 espace signature, #4bis typographie, #5 compteur d'accueil, #6 menu Documents de la fiche artiste). Puis ajustements de la lettre : logo en en-tête, site web, signature ferrée à droite, date en bas à gauche, adresse retirée du pied. Commits `d683c21` → `1cfcdec`.
+- **Lot 2 — Réglages en barre latérale : ✓ livré.** Refonte maître-détail à 7 catégories (La galerie · Finances · Documents · Données · Sécurité · IA · Application). Profil galerie fondu dans « La galerie » (page + bloc sidebar retirés, route `profil-galerie` redirigée). Catégorie **Finances** réunissant numéros TPS/TVQ + taux + cote. **Sélecteur de fichier logo** ajouté. Concept repris de `121c01a` mais réappliqué à la main (le commit d'origine aurait réintroduit doublon de restauration + onglet chiffrement parqué). Aucune logique changée, tous les IDs préservés, un seul formulaire (pas de perte à la bascule). Démo `demos/reglages-nav.html` (validée par Dave). 24 contrôles Electron au vert.
+- **#3 (prix pré-rempli) : ANNULÉ** — Dave testait une œuvre sans prix ; comportement correct.
+- **#1 (dossier de données) : à faire — dernier lot, le plus risqué.** Décision de Dave : **migrer le dossier existant** (pas seulement choisir à l'installation), car la base tourne déjà chez les parents. Détails d'état des lieux ci-dessous.
 
-### #4bis — Bug de gabarit trouvé en enquêtant (non demandé, mais c'est la vraie cause)
+### #1 — Emplacement du dossier `Galeria` (reste à faire, avec migration)
 
-Le « ! » isolé en début de ligne vient de la **typographie française** : `gabarit-lettre.html` écrit `{{artiste_nom}} !` avec une **espace ordinaire** (lignes 69, 71, 83, 97, 99, 107, 111, 121). Le navigateur peut donc couper la ligne juste avant le « ! ». Il faut une **espace insécable fine** (`&#8239;` ou `&nbsp;`) devant `!` `?` `;` `:` `»`. **Correctif unique qui règle le problème pour toutes les lettres à venir** — bien meilleur qu'une retouche manuelle à chaque fois. Vérifier aussi les autres gabarits.
+**Codé en dur** : `getDataDir()` = `Documents\Galeria` (`src/db/paths.js:14-16`). Non configurable. Seul le dossier des **sauvegardes** l'est déjà (`config.sauvegardes.dossier`, `backup.js:26-38`). Il existe une migration de dossier au démarrage (`migrerAncienDossierSiPresent`, `paths.js:18-39`, `GalerieApp` → `Galeria`) qui sert de **patron pour le déplacement**. Cause probable du problème des parents : **OneDrive redirige `Documents`**. Dave veut pouvoir **déplacer un dossier existant** (base, photos, documents, sauvegardes, config) — sauvegarde préalable obligatoire, fermeture/redémarrage propres, gestion des chemins verrouillés (OneDrive).
 
-### Questions ouvertes (à trancher avec Dave avant de coder)
+### « Version modifiée » (#2) — à traiter dans un lot ultérieur
 
-1. **#3 — quel prix doit se pré-remplir** : le « Courant » (comportement actuel) ou le « Préférentiel » ? Ou les deux au choix ? Et quel est le scénario exact où les parents ont vu le champ vide ?
-2. **#7 — accordéon ou barre latérale** : Dave a demandé une suggestion ; le commit parqué propose une sous-navigation par catégories.
-3. **#2 — que devient « Version modifiée »** : améliorer l'existant, ou changer d'approche ?
-4. **#1 — portée** : déplacer le dossier existant, ou seulement choisir l'emplacement à la première installation ?
+La fonction existe déjà (voir section dédiée plus bas). Décisions prises avec Dave : **renommer le bouton en « Modifier ce document… »** (le libellé actuel évoque un objet déjà modifié) ; **ajouter un bouton « Saut de page »** dans l'éditeur (le besoin de la mère — commencer « Démarche » sur une page neuve — ne peut pas se taper, c'est une opération de structure) ; **faire commencer « Démarche » sur une page neuve par défaut** (le gabarit sait déjà le faire : `sautAvant` dans `gabarit-presentation.html`, appliqué à « Curriculum » seulement, `pdf.js:670`) ; rendre la fonction **trouvable** (l'ajouter à la section Documents) ; **corriger l'écrasement du certificat** sans copie. Word écarté (romprait l'identité visuelle + deux sources de vérité).
+
+### #4bis — Bug de gabarit (corrigé au lot 1)
+
+Le « ! » isolé venait de la **typographie française** : espace ordinaire devant la ponctuation double. Corrigé par `espacesInsecables()` dans `gabarit-lettre.html`. **Reste à vérifier les AUTRES gabarits** (certificat, facture, annexe, catalogue, présentation) qui peuvent avoir le même défaut — non fait.
 
 ---
 

@@ -108,6 +108,7 @@ contextBridge.exposeInMainWorld('api', {
   catalogueRefuser: (id) => ipcRenderer.invoke('catalogue:refuser', id),
   catalogueCharger: () => ipcRenderer.invoke('catalogue:charger'),
   configChoisirDossier: () => ipcRenderer.invoke('config:choisir-dossier'),
+  configChoisirLogo: () => ipcRenderer.invoke('config:choisir-logo'),
   backupRedemarrer: () => ipcRenderer.invoke('backup:redemarrer'),
   securiteEtat: () => ipcRenderer.invoke('securite:etat'),
   securiteDefinirCode: (code) => ipcRenderer.invoke('securite:definir-code', code),

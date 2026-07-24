@@ -26,6 +26,33 @@ function formaterTaille(octets) {
   return `${Math.max(1, Math.round(octets / 1024))} Ko`;
 }
 
+// Icônes de la barre latérale (une par catégorie).
+const ICONES_CAT = {
+  galerie: '<path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/>',
+  finances: '<circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2.5 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1.1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.5 2.5 0 0 1 9.5 15"/><path d="M12 6v1.5M12 16.5V18"/>',
+  documents: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+  donnees: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+  securite: '<rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  ia: '<path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z"/>',
+  application: '<line x1="4" y1="8" x2="20" y2="8"/><circle cx="9" cy="8" r="2"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="15" cy="16" r="2"/>',
+};
+const CATEGORIES = [
+  { cle: 'galerie', libelle: 'La galerie' },
+  { cle: 'finances', libelle: 'Finances' },
+  { cle: 'documents', libelle: 'Documents' },
+  { cle: 'donnees', libelle: 'Données' },
+  { cle: 'securite', libelle: 'Sécurité' },
+  { cle: 'ia', libelle: 'Intelligence artificielle' },
+  { cle: 'application', libelle: 'Application' },
+];
+
+function boutonCat({ cle, libelle }, actif) {
+  return `<button type="button" class="cat-item${actif ? ' actif' : ''}" data-cat="${cle}">
+    <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONES_CAT[cle]}</svg></span>
+    ${ech(libelle)}
+  </button>`;
+}
+
 // Modale de choix d'une sauvegarde à restaurer. Résout avec l'entrée choisie,
 // ou null si l'utilisateur annule (bouton, Échap, clic hors de la fenêtre).
 function ouvrirModaleRestauration(liste, formaterDateHeure) {
@@ -80,7 +107,7 @@ function ouvrirModaleRestauration(liste, formaterDateHeure) {
   });
 }
 
-export async function rendreReglages(contenu) {
+export async function rendreReglages(contenu, params) {
   const config = JSON.parse(JSON.stringify(await chargerConfig()));
   const infosApp = await window.api.appInfos();
   let modifie = false;
@@ -108,274 +135,374 @@ export async function rendreReglages(contenu) {
 
   const d = config.documents;
   const s = config.sauvegardes;
+  const g = config.galerie;
+
+  // Catégorie ouverte au chargement (permet d'ouvrir directement « La galerie »
+  // depuis un lien externe, ex. remplacement du bloc profil de la barre latérale).
+  const categorieValide = CATEGORIES.some((c) => c.cle === params?.categorie);
+  const catInitiale = categorieValide ? params.categorie : 'galerie';
 
   contenu.innerHTML = `
-    <div class="vue-fiche vue-fiche-bento">
+    <div class="vue-fiche reglages-vue">
       <div class="reglages-entete">
         <h1>Réglages</h1>
         <p class="reglages-entete-meta">
-          Les informations sur la galerie elle-même (nom, adresse, numéros de taxes) sont
-          dans le <strong>Profil de la galerie</strong>, accessible en cliquant sur le profil
-          en bas de la barre latérale.
+          Tout ce qui se règle dans Galeria, regroupé par catégorie. Choisis une section à gauche.
         </p>
       </div>
 
       <form id="formulaire" class="formulaire" novalidate>
-        <div class="grille-bento">
+        <div class="reglages-layout">
+          <nav class="cat-nav" id="cat-nav" aria-label="Catégories de réglages">
+            ${CATEGORIES.map((c) => boutonCat(c, c.cle === catInitiale)).join('')}
+          </nav>
 
-          <!-- Numérotation (8 col) -->
-          <div class="carte zone-numerotation">
-            <h3>Numérotation des documents</h3>
+          <div class="cat-zone">
 
-            <div class="sous-section">
-              <h4>Factures client</h4>
-              <div class="grille-form">
-                ${champTexte({ nom: 'd_prefixe_facture', libelle: 'Préfixe', valeur: d.prefixe_facture, attributs: 'placeholder="F-2026"' })}
-                ${champTexte({ nom: 'd_prochain_numero_facture', libelle: 'Prochain numéro', valeur: d.prochain_numero_facture, type: 'number', attributs: 'min="1" step="1"' })}
-              </div>
-              <p class="aide-champ">Émise par la galerie pour l'acheteur lors d'une vente.</p>
-            </div>
-
-            <div class="sous-section">
-              <h4>Factures artiste</h4>
-              <div class="grille-form">
-                ${champTexte({ nom: 'd_prefixe_facture_artiste', libelle: 'Préfixe', valeur: d.prefixe_facture_artiste, attributs: 'placeholder="A-2026"' })}
-                ${champTexte({ nom: 'd_prochain_numero_facture_artiste', libelle: 'Prochain numéro', valeur: d.prochain_numero_facture_artiste, type: 'number', attributs: 'min="1" step="1"' })}
-              </div>
-              <p class="aide-champ">Document que l'artiste devrait émettre vers la galerie pour sa part de la vente. La galerie le génère à sa place.</p>
-            </div>
-
-            <div class="sous-section">
-              <h4>Certificats d'authenticité</h4>
-              <div class="grille-form">
-                ${champTexte({ nom: 'd_prefixe_certificat', libelle: 'Préfixe', valeur: d.prefixe_certificat, attributs: 'placeholder="C-2026"' })}
-                ${champTexte({ nom: 'd_prochain_numero_certificat', libelle: 'Prochain numéro', valeur: d.prochain_numero_certificat, type: 'number', attributs: 'min="1" step="1"' })}
-              </div>
-              ${champTexte({ nom: 'd_signataire', libelle: 'Texte du signataire sur le certificat', valeur: d.signataire_certificat })}
-              <p class="aide-champ">Format actuel : <strong>${ech(d.prefixe_certificat || 'C-2026')}-001</strong>, <strong>${ech(d.prefixe_certificat || 'C-2026')}-002</strong>, etc.</p>
-            </div>
-
-            <div class="sous-section">
-              <h4>Numérotation d'inventaire</h4>
-              <div class="grille-form">
-                ${champTexte({ nom: 'd_prochain_numero_inventaire', libelle: "Prochain numéro", valeur: d.prochain_numero_inventaire, type: 'number', attributs: 'min="1" step="1"' })}
-              </div>
-              <p class="aide-champ">Compteur global. Combiné avec le préfixe d'inventaire de l'artiste (ex. <strong>JOU1992</strong>).</p>
-            </div>
-          </div>
-
-          <!-- Taxes & commission (4 col) -->
-          <div class="carte zone-taxes-cote">
-            <h3>Taxes &amp; commission</h3>
-
-            <div class="sous-section">
-              <h4>TPS</h4>
-              <div class="grille-form">
-                ${champCheckbox({ nom: 'd_tps_actif', libelle: 'Appliquer', valeur: !!d.tps_actif })}
-                ${champTexte({ nom: 'd_tps_taux', libelle: 'Taux (%)', valeur: d.tps_taux, type: 'number', attributs: 'min="0" max="100" step="0.001"' })}
-              </div>
-            </div>
-
-            <div class="sous-section">
-              <h4>TVQ</h4>
-              <div class="grille-form">
-                ${champCheckbox({ nom: 'd_tvq_actif', libelle: 'Appliquer', valeur: !!d.tvq_actif })}
-                ${champTexte({ nom: 'd_tvq_taux', libelle: 'Taux (%)', valeur: d.tvq_taux, type: 'number', attributs: 'min="0" max="100" step="0.001"' })}
-              </div>
-            </div>
-
-            <div class="sous-section">
-              <h4>Cote galerie</h4>
-              <div class="grille-form">
-                ${champTexte({ nom: 'd_cote', libelle: 'Pourcentage par défaut (%)', valeur: d.cote_galerie_pourcent, type: 'number', attributs: 'min="0" max="100" step="0.1"' })}
-              </div>
-              <p class="aide-champ">Valeur préremplie à la création d'une facture artiste. Modifiable par vente.</p>
-            </div>
-          </div>
-
-          <!-- Sauvegardes (6 col) -->
-          <div class="carte zone-sauvegardes">
-            <h3>Sauvegardes</h3>
-            <div class="grille-form">
-              ${champTexte({ nom: 's_frequence', libelle: 'Fréquence (minutes)', valeur: s.frequence_minutes, type: 'number', attributs: 'min="5" step="5"' })}
-              ${champTexte({ nom: 's_retention', libelle: 'Nombre de copies conservées', valeur: s.retention, type: 'number', attributs: 'min="5" step="1"' })}
-            </div>
-            <div class="form-champ" style="margin-top: var(--s3);">
-              <label for="f-s_dossier">Dossier de destination</label>
-              <div class="ligne-dossier">
-                <input type="text" id="f-s_dossier" name="s_dossier" value="${ech(s.dossier)}" placeholder="Par défaut : Documents\\Galeria\\Sauvegardes" readonly>
-                <button type="button" class="btn-action btn-secondaire-action" id="btn-choisir-dossier">Choisir…</button>
-                <button type="button" class="btn-action btn-secondaire-action" id="btn-defaut-dossier">Défaut</button>
-              </div>
-            </div>
-            <p class="aide-champ">Anciennes sauvegardes supprimées automatiquement. Minimum 5 minutes.</p>
-            <p class="aide-champ" id="backup-etat">Vérification des sauvegardes…</p>
-            <div class="ligne-boutons-sauvegardes">
-              <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-sauvegarder-maintenant">Sauvegarder maintenant</button>
-              <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-restaurer-sauvegarde">Restaurer une sauvegarde…</button>
-            </div>
-          </div>
-
-          <!-- Affichage (3 col) -->
-          <div class="carte zone-affichage">
-            <h3>Affichage</h3>
-            <div class="form-champ">
-              <label for="f-a_zoom">Taille d'affichage</label>
-              <select id="f-a_zoom" name="a_zoom">
-                ${NIVEAUX_ZOOM.map((n) => `<option value="${n.val}" ${Math.abs(n.val - zoomInitial) < 0.001 ? 'selected' : ''}>${ech(n.libelle)} — ${Math.round(n.val * 100)} %</option>`).join('')}
-              </select>
-              <p class="aide-champ">Aperçu appliqué immédiatement. Annule pour revenir à l'original.</p>
-            </div>
-          </div>
-
-          <!-- Import (3 col) -->
-          <div class="carte zone-import">
-            <h3>Import de données</h3>
-            <p class="aide-champ" style="margin-top:0;">
-              Importe un fichier CSV exporté d'Airtable (Artistes ou Œuvres). Tu choisiras entre <em>mettre à jour</em> ou <em>n'ajouter que les nouvelles</em>.
-            </p>
-            <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-importer">Importer un fichier CSV…</button>
-          </div>
-
-          <!-- IA (6 col) -->
-          <div class="carte zone-ia">
-            <h3>Intelligence artificielle</h3>
-            <div class="ia-cle-bloc">
-              <div class="form-champ">
-                <label for="ia-cle">Clé API Anthropic (génération directe des descriptions)</label>
-                <input type="password" id="ia-cle" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
-              </div>
-              <div class="ia-cle-actions">
-                <button type="button" class="btn-action btn-principal" id="btn-ia-cle-save">Enregistrer la clé</button>
-                <button type="button" class="btn-action btn-secondaire-action" id="btn-ia-cle-suppr">Retirer</button>
-              </div>
-              <p class="ia-cle-statut" id="ia-cle-statut"></p>
-              <p class="aide-champ">Active le bouton « Générer la description » sur la fiche d'œuvre. La clé est <strong>chiffrée dans le coffre de Windows</strong> (jamais affichée ni stockée en clair). À créer sur console.anthropic.com — facturé à l'usage (~0,4 ¢ par description). Sans clé, l'app fonctionne normalement (« Copier pour ChatGPT » reste disponible).</p>
-            </div>
-            ${champTextarea({ nom: 'ia_instructions_galerie', libelle: 'Consignes générales de la galerie', valeur: config.ia?.instructions_galerie || '', lignes: 14 })}
-            <p class="aide-champ">Consignes de base appliquées à <strong>toutes</strong> les générations (voix, langue et format, ancrage factuel, règles d'écriture). Modifiables ici. Les consignes propres à chaque artiste se règlent sur sa fiche (« Aide à la description IA »).</p>
-            ${champTexte({ nom: 'ia_lien_chatgpt_defaut', libelle: 'Lien ChatGPT par défaut', valeur: config.ia?.lien_chatgpt_defaut || 'https://chat.openai.com/', attributs: 'placeholder="https://chat.openai.com/"' })}
-            <p class="aide-champ">Pour « Copier pour ChatGPT » : utilisé quand l'artiste n'a pas de lien vers son propre GPT.</p>
-          </div>
-
-          <!-- Sécurité (6 col) — géré hors du formulaire principal -->
-          <div class="carte zone-securite">
-            <h3>Sécurité</h3>
-
-            <div class="sous-section">
-              <h4>Verrou de l'application</h4>
-              <div class="form-champ form-champ-checkbox">
-                <input type="checkbox" id="sec-verrou-actif">
-                <label for="sec-verrou-actif">Demander un code pour ouvrir l'application</label>
-              </div>
-              <p class="aide-champ" id="sec-aide-verrou">Définissez d'abord un code ci-dessous pour pouvoir activer le verrou.</p>
-            </div>
-
-            <div class="sous-section">
-              <h4>Code de déverrouillage</h4>
-              <div class="grille-form">
-                <div class="form-champ">
-                  <label for="sec-code">Code (4 à 6 chiffres)</label>
-                  <input type="password" id="sec-code" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••" spellcheck="false">
+            <!-- ═══ LA GALERIE ═══ -->
+            <section class="cat-panneau${catInitiale === 'galerie' ? ' actif' : ''}" data-cat="galerie">
+              <div class="panneau-tete"><h2>La galerie</h2><p class="desc">L'identité de la galerie. Ces informations alimentent l'en-tête et le pied des documents générés.</p></div>
+              <div class="grille-bento">
+                <div class="carte zone-profil-identite">
+                  <h3>Identité</h3>
+                  <div class="grille-form">
+                    ${champTexte({ nom: 'g_nom', libelle: 'Nom de la galerie', valeur: g.nom, requis: true })}
+                    ${champTexte({ nom: 'g_site_web', libelle: 'Site web', valeur: g.site_web, type: 'url' })}
+                  </div>
                 </div>
-                <div class="form-champ">
-                  <label for="sec-code2">Confirmer le code</label>
-                  <input type="password" id="sec-code2" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••" spellcheck="false">
+                <div class="carte zone-profil-coord">
+                  <h3>Coordonnées</h3>
+                  <div class="grille-form">
+                    ${champTexte({ nom: 'g_telephone', libelle: 'Téléphone', valeur: g.telephone, type: 'tel' })}
+                    ${champTexte({ nom: 'g_courriel', libelle: 'Courriel', valeur: g.courriel, type: 'email' })}
+                  </div>
+                  <div class="grille-form">
+                    ${champTexte({ nom: 'g_adresse_ligne1', libelle: 'Adresse (ligne 1)', valeur: g.adresse_ligne1 })}
+                    ${champTexte({ nom: 'g_adresse_ligne2', libelle: 'Adresse (ligne 2)', valeur: g.adresse_ligne2 })}
+                  </div>
+                </div>
+                <div class="carte zone-profil-visuel">
+                  <h3>Logo</h3>
+                  <div class="form-champ">
+                    <label for="f-g_logo_path">Fichier du logo (laisse vide pour le logo par défaut)</label>
+                    <div class="ligne-dossier">
+                      <input type="text" id="f-g_logo_path" name="g_logo_path" value="${ech(g.logo_path)}" placeholder="Aucun — logo Galeria par défaut" readonly>
+                      <button type="button" class="btn-action btn-secondaire-action" id="btn-choisir-logo">Choisir un fichier…</button>
+                      <button type="button" class="btn-action btn-secondaire-action" id="btn-effacer-logo">Retirer</button>
+                    </div>
+                    <p class="aide-champ">Le logo apparaît en haut des lettres de remerciement. Format PNG, JPG, GIF ou WebP.</p>
+                  </div>
                 </div>
               </div>
-              <div class="ia-cle-actions">
-                <button type="button" class="btn-action btn-principal" id="sec-code-def">Enregistrer le code</button>
-                <button type="button" class="btn-action btn-secondaire-action" id="sec-code-suppr">Retirer le code</button>
-              </div>
-              <p class="securite-statut absent" id="sec-statut">Aucun code défini.</p>
-            </div>
+            </section>
 
-            <div class="sous-section">
-              <h4>Question de secours</h4>
-              <p class="aide-champ">Facultative, mais recommandée : elle permet de reprendre la main si le code est oublié, sans avoir à appeler à l'aide.</p>
-              <div class="form-champ">
-                <label for="sec-question">Question</label>
-                <select id="sec-question">
-                  <option value="">— Choisir une question —</option>
-                  <option>Dans quelle ville êtes-vous né ?</option>
-                  <option>Quel était le nom de votre premier animal ?</option>
-                  <option>Quel est le nom de jeune fille de votre mère ?</option>
-                  <option>Quelle est votre ville de vacances préférée ?</option>
-                  <option>Quel était le nom de votre école primaire ?</option>
-                  <option value="__autre__">Écrire ma propre question…</option>
-                </select>
+            <!-- ═══ FINANCES ═══ -->
+            <section class="cat-panneau${catInitiale === 'finances' ? ' actif' : ''}" data-cat="finances">
+              <div class="panneau-tete"><h2>Finances</h2><p class="desc">Numéros d'enregistrement, taux de taxes et commission de la galerie.</p></div>
+              <div class="grille-bento">
+                <div class="carte zone-fisc-numeros">
+                  <h3>Numéros d'enregistrement</h3>
+                  <div class="grille-form">
+                    ${champTexte({ nom: 'g_numero_tps', libelle: 'Numéro TPS de la galerie', valeur: g.numero_tps })}
+                    ${champTexte({ nom: 'g_numero_tvq', libelle: 'Numéro TVQ de la galerie', valeur: g.numero_tvq })}
+                  </div>
+                  <p class="aide-champ">Ces numéros apparaissent sur les factures.</p>
+                </div>
+                <div class="carte zone-taxes-cote">
+                  <h3>Taxes &amp; commission</h3>
+                  <div class="sous-section">
+                    <h4>TPS</h4>
+                    <div class="grille-form">
+                      ${champCheckbox({ nom: 'd_tps_actif', libelle: 'Appliquer', valeur: !!d.tps_actif })}
+                      ${champTexte({ nom: 'd_tps_taux', libelle: 'Taux (%)', valeur: d.tps_taux, type: 'number', attributs: 'min="0" max="100" step="0.001"' })}
+                    </div>
+                  </div>
+                  <div class="sous-section">
+                    <h4>TVQ</h4>
+                    <div class="grille-form">
+                      ${champCheckbox({ nom: 'd_tvq_actif', libelle: 'Appliquer', valeur: !!d.tvq_actif })}
+                      ${champTexte({ nom: 'd_tvq_taux', libelle: 'Taux (%)', valeur: d.tvq_taux, type: 'number', attributs: 'min="0" max="100" step="0.001"' })}
+                    </div>
+                  </div>
+                  <div class="sous-section">
+                    <h4>Cote galerie</h4>
+                    <div class="grille-form">
+                      ${champTexte({ nom: 'd_cote', libelle: 'Pourcentage par défaut (%)', valeur: d.cote_galerie_pourcent, type: 'number', attributs: 'min="0" max="100" step="0.1"' })}
+                    </div>
+                    <p class="aide-champ">Valeur préremplie à la création d'une facture artiste. Modifiable par vente.</p>
+                  </div>
+                </div>
               </div>
-              <div class="form-champ" id="sec-question-libre-bloc" hidden>
-                <label for="sec-question-libre">Votre question</label>
-                <input type="text" id="sec-question-libre" maxlength="120" placeholder="Ex. : Comment s'appelait le chalet de mes parents ?">
-              </div>
-              <div class="form-champ">
-                <label for="sec-reponse">Réponse</label>
-                <input type="text" id="sec-reponse" autocomplete="off" spellcheck="false" placeholder="Votre réponse">
-                <p class="aide-champ">Les accents, les majuscules et les espaces n'ont pas d'importance : « Sainte-Foy » et « sainte foy » sont acceptés tous les deux.</p>
-              </div>
-              <div class="ia-cle-actions">
-                <button type="button" class="btn-action btn-principal" id="sec-question-def">Enregistrer la question</button>
-                <button type="button" class="btn-action btn-secondaire-action" id="sec-question-suppr">Retirer la question</button>
-              </div>
-              <p class="securite-statut absent" id="sec-question-statut">Aucune question définie.</p>
-              <p class="aide-champ attention-secours">Choisissez une réponse qu'un visiteur ne pourrait pas deviner — évitez ce qui se trouve sur le site ou la page Facebook de la galerie.</p>
-            </div>
+            </section>
 
-            <div class="sous-section">
-              <h4>Verrouillage automatique</h4>
-              <div class="form-champ">
-                <label for="sec-inactivite">Après une période d'inactivité</label>
-                <select id="sec-inactivite">
-                  <option value="0">Jamais (seulement à l'ouverture)</option>
-                  <option value="5">5 minutes</option>
-                  <option value="10">10 minutes</option>
-                  <option value="15">15 minutes</option>
-                  <option value="30">30 minutes</option>
-                </select>
+            <!-- ═══ DOCUMENTS ═══ -->
+            <section class="cat-panneau${catInitiale === 'documents' ? ' actif' : ''}" data-cat="documents">
+              <div class="panneau-tete"><h2>Documents</h2><p class="desc">Numérotation des factures, certificats et de l'inventaire, et texte du signataire.</p></div>
+              <div class="grille-bento">
+                <div class="carte zone-numerotation">
+                  <h3>Numérotation des documents</h3>
+                  <div class="sous-section">
+                    <h4>Factures client</h4>
+                    <div class="grille-form">
+                      ${champTexte({ nom: 'd_prefixe_facture', libelle: 'Préfixe', valeur: d.prefixe_facture, attributs: 'placeholder="F-2026"' })}
+                      ${champTexte({ nom: 'd_prochain_numero_facture', libelle: 'Prochain numéro', valeur: d.prochain_numero_facture, type: 'number', attributs: 'min="1" step="1"' })}
+                    </div>
+                    <p class="aide-champ">Émise par la galerie pour l'acheteur lors d'une vente.</p>
+                  </div>
+                  <div class="sous-section">
+                    <h4>Factures artiste</h4>
+                    <div class="grille-form">
+                      ${champTexte({ nom: 'd_prefixe_facture_artiste', libelle: 'Préfixe', valeur: d.prefixe_facture_artiste, attributs: 'placeholder="A-2026"' })}
+                      ${champTexte({ nom: 'd_prochain_numero_facture_artiste', libelle: 'Prochain numéro', valeur: d.prochain_numero_facture_artiste, type: 'number', attributs: 'min="1" step="1"' })}
+                    </div>
+                    <p class="aide-champ">Document que l'artiste devrait émettre vers la galerie pour sa part de la vente. La galerie le génère à sa place.</p>
+                  </div>
+                  <div class="sous-section">
+                    <h4>Certificats d'authenticité</h4>
+                    <div class="grille-form">
+                      ${champTexte({ nom: 'd_prefixe_certificat', libelle: 'Préfixe', valeur: d.prefixe_certificat, attributs: 'placeholder="C-2026"' })}
+                      ${champTexte({ nom: 'd_prochain_numero_certificat', libelle: 'Prochain numéro', valeur: d.prochain_numero_certificat, type: 'number', attributs: 'min="1" step="1"' })}
+                    </div>
+                    ${champTexte({ nom: 'd_signataire', libelle: 'Texte du signataire sur le certificat', valeur: d.signataire_certificat })}
+                    <p class="aide-champ">Format actuel : <strong>${ech(d.prefixe_certificat || 'C-2026')}-001</strong>, <strong>${ech(d.prefixe_certificat || 'C-2026')}-002</strong>, etc.</p>
+                  </div>
+                  <div class="sous-section">
+                    <h4>Numérotation d'inventaire</h4>
+                    <div class="grille-form">
+                      ${champTexte({ nom: 'd_prochain_numero_inventaire', libelle: "Prochain numéro", valeur: d.prochain_numero_inventaire, type: 'number', attributs: 'min="1" step="1"' })}
+                    </div>
+                    <p class="aide-champ">Compteur global. Combiné avec le préfixe d'inventaire de l'artiste (ex. <strong>JOU1992</strong>).</p>
+                  </div>
+                </div>
+                <div class="carte zone-doc-rappel">
+                  <h3>Rappel</h3>
+                  <p class="aide-champ">Les <strong>taux</strong> de TPS/TVQ et la <strong>cote</strong> de la galerie sont dans la catégorie <strong>Finances</strong>.</p>
+                </div>
               </div>
-              <div class="form-champ form-champ-checkbox">
-                <input type="checkbox" id="sec-blur">
-                <label for="sec-blur">Verrouiller aussi quand on quitte la fenêtre</label>
+            </section>
+
+            <!-- ═══ DONNÉES ═══ -->
+            <section class="cat-panneau${catInitiale === 'donnees' ? ' actif' : ''}" data-cat="donnees">
+              <div class="panneau-tete"><h2>Données</h2><p class="desc">Sauvegardes automatiques, restauration et import.</p></div>
+              <div class="grille-bento">
+                <div class="carte zone-sauvegardes">
+                  <h3>Sauvegardes</h3>
+                  <div class="grille-form">
+                    ${champTexte({ nom: 's_frequence', libelle: 'Fréquence (minutes)', valeur: s.frequence_minutes, type: 'number', attributs: 'min="5" step="5"' })}
+                    ${champTexte({ nom: 's_retention', libelle: 'Nombre de copies conservées', valeur: s.retention, type: 'number', attributs: 'min="5" step="1"' })}
+                  </div>
+                  <div class="form-champ" style="margin-top: var(--s3);">
+                    <label for="f-s_dossier">Dossier de destination</label>
+                    <div class="ligne-dossier">
+                      <input type="text" id="f-s_dossier" name="s_dossier" value="${ech(s.dossier)}" placeholder="Par défaut : Documents\\Galeria\\Sauvegardes" readonly>
+                      <button type="button" class="btn-action btn-secondaire-action" id="btn-choisir-dossier">Choisir…</button>
+                      <button type="button" class="btn-action btn-secondaire-action" id="btn-defaut-dossier">Défaut</button>
+                    </div>
+                  </div>
+                  <p class="aide-champ">Anciennes sauvegardes supprimées automatiquement. Minimum 5 minutes.</p>
+                  <p class="aide-champ" id="backup-etat">Vérification des sauvegardes…</p>
+                  <div class="ligne-boutons-sauvegardes">
+                    <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-sauvegarder-maintenant">Sauvegarder maintenant</button>
+                    <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-restaurer-sauvegarde">Restaurer une sauvegarde…</button>
+                  </div>
+                </div>
+                <div class="carte zone-import">
+                  <h3>Import de données</h3>
+                  <p class="aide-champ" style="margin-top:0;">
+                    Importe un fichier CSV exporté d'Airtable (Artistes ou Œuvres). Tu choisiras entre <em>mettre à jour</em> ou <em>n'ajouter que les nouvelles</em>.
+                  </p>
+                  <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-importer">Importer un fichier CSV…</button>
+                </div>
               </div>
-              <p class="aide-champ">Le compte à rebours se réarme à chaque mouvement de souris ou frappe au clavier. Le verrou empêche de consulter les fiches ; il ne chiffre pas encore la base.</p>
-            </div>
+            </section>
+
+            <!-- ═══ SÉCURITÉ ═══ -->
+            <section class="cat-panneau${catInitiale === 'securite' ? ' actif' : ''}" data-cat="securite">
+              <div class="panneau-tete"><h2>Sécurité</h2><p class="desc">Verrou par code et question de secours.</p></div>
+              <div class="grille-bento">
+                <div class="carte zone-securite">
+                  <h3>Verrou de l'application</h3>
+
+                  <div class="sous-section">
+                    <h4>Activation</h4>
+                    <div class="form-champ form-champ-checkbox">
+                      <input type="checkbox" id="sec-verrou-actif">
+                      <label for="sec-verrou-actif">Demander un code pour ouvrir l'application</label>
+                    </div>
+                    <p class="aide-champ" id="sec-aide-verrou">Définissez d'abord un code ci-dessous pour pouvoir activer le verrou.</p>
+                  </div>
+
+                  <div class="sous-section">
+                    <h4>Code de déverrouillage</h4>
+                    <div class="grille-form">
+                      <div class="form-champ">
+                        <label for="sec-code">Code (4 à 6 chiffres)</label>
+                        <input type="password" id="sec-code" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••" spellcheck="false">
+                      </div>
+                      <div class="form-champ">
+                        <label for="sec-code2">Confirmer le code</label>
+                        <input type="password" id="sec-code2" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••" spellcheck="false">
+                      </div>
+                    </div>
+                    <div class="ia-cle-actions">
+                      <button type="button" class="btn-action btn-principal" id="sec-code-def">Enregistrer le code</button>
+                      <button type="button" class="btn-action btn-secondaire-action" id="sec-code-suppr">Retirer le code</button>
+                    </div>
+                    <p class="securite-statut absent" id="sec-statut">Aucun code défini.</p>
+                  </div>
+
+                  <div class="sous-section">
+                    <h4>Verrouillage automatique</h4>
+                    <div class="form-champ">
+                      <label for="sec-inactivite">Après une période d'inactivité</label>
+                      <select id="sec-inactivite">
+                        <option value="0">Jamais (seulement à l'ouverture)</option>
+                        <option value="5">5 minutes</option>
+                        <option value="10">10 minutes</option>
+                        <option value="15">15 minutes</option>
+                        <option value="30">30 minutes</option>
+                      </select>
+                    </div>
+                    <div class="form-champ form-champ-checkbox">
+                      <input type="checkbox" id="sec-blur">
+                      <label for="sec-blur">Verrouiller aussi quand on quitte la fenêtre</label>
+                    </div>
+                    <p class="aide-champ">Le compte à rebours se réarme à chaque mouvement de souris ou frappe au clavier.</p>
+                  </div>
+                </div>
+
+                <div class="carte zone-securite-secours">
+                  <h3>Question de secours</h3>
+                  <p class="aide-champ" style="margin-top:0;">Facultative, mais recommandée : elle permet de reprendre la main si le code est oublié, sans avoir à appeler à l'aide.</p>
+                  <div class="form-champ">
+                    <label for="sec-question">Question</label>
+                    <select id="sec-question">
+                      <option value="">— Choisir une question —</option>
+                      <option>Dans quelle ville êtes-vous né ?</option>
+                      <option>Quel était le nom de votre premier animal ?</option>
+                      <option>Quel est le nom de jeune fille de votre mère ?</option>
+                      <option>Quelle est votre ville de vacances préférée ?</option>
+                      <option>Quel était le nom de votre école primaire ?</option>
+                      <option value="__autre__">Écrire ma propre question…</option>
+                    </select>
+                  </div>
+                  <div class="form-champ" id="sec-question-libre-bloc" hidden>
+                    <label for="sec-question-libre">Votre question</label>
+                    <input type="text" id="sec-question-libre" maxlength="120" placeholder="Ex. : Comment s'appelait le chalet de mes parents ?">
+                  </div>
+                  <div class="form-champ">
+                    <label for="sec-reponse">Réponse</label>
+                    <input type="text" id="sec-reponse" autocomplete="off" spellcheck="false" placeholder="Votre réponse">
+                    <p class="aide-champ">Les accents, les majuscules et les espaces n'ont pas d'importance : « Sainte-Foy » et « sainte foy » sont acceptés tous les deux.</p>
+                  </div>
+                  <div class="ia-cle-actions">
+                    <button type="button" class="btn-action btn-principal" id="sec-question-def">Enregistrer la question</button>
+                    <button type="button" class="btn-action btn-secondaire-action" id="sec-question-suppr">Retirer la question</button>
+                  </div>
+                  <p class="securite-statut absent" id="sec-question-statut">Aucune question définie.</p>
+                  <p class="aide-champ attention-secours">Choisissez une réponse qu'un visiteur ne pourrait pas deviner — évitez ce qui se trouve sur le site ou la page Facebook de la galerie.</p>
+                </div>
+              </div>
+            </section>
+
+            <!-- ═══ INTELLIGENCE ARTIFICIELLE ═══ -->
+            <section class="cat-panneau${catInitiale === 'ia' ? ' actif' : ''}" data-cat="ia">
+              <div class="panneau-tete"><h2>Intelligence artificielle</h2><p class="desc">Consignes de rédaction et clé d'accès pour la génération des descriptions.</p></div>
+              <div class="grille-bento">
+                <div class="carte zone-ia">
+                  <h3>Intelligence artificielle</h3>
+                  <div class="ia-cle-bloc">
+                    <div class="form-champ">
+                      <label for="ia-cle">Clé API Anthropic (génération directe des descriptions)</label>
+                      <input type="password" id="ia-cle" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+                    </div>
+                    <div class="ia-cle-actions">
+                      <button type="button" class="btn-action btn-principal" id="btn-ia-cle-save">Enregistrer la clé</button>
+                      <button type="button" class="btn-action btn-secondaire-action" id="btn-ia-cle-suppr">Retirer</button>
+                    </div>
+                    <p class="ia-cle-statut" id="ia-cle-statut"></p>
+                    <p class="aide-champ">Active le bouton « Générer la description » sur la fiche d'œuvre. La clé est <strong>chiffrée dans le coffre de Windows</strong> (jamais affichée ni stockée en clair). À créer sur console.anthropic.com — facturé à l'usage (~0,4 ¢ par description). Sans clé, l'app fonctionne normalement (« Copier pour ChatGPT » reste disponible).</p>
+                  </div>
+                  ${champTextarea({ nom: 'ia_instructions_galerie', libelle: 'Consignes générales de la galerie', valeur: config.ia?.instructions_galerie || '', lignes: 14 })}
+                  <p class="aide-champ">Consignes de base appliquées à <strong>toutes</strong> les générations (voix, langue et format, ancrage factuel, règles d'écriture). Modifiables ici. Les consignes propres à chaque artiste se règlent sur sa fiche (« Aide à la description IA »).</p>
+                  ${champTexte({ nom: 'ia_lien_chatgpt_defaut', libelle: 'Lien ChatGPT par défaut', valeur: config.ia?.lien_chatgpt_defaut || 'https://chat.openai.com/', attributs: 'placeholder="https://chat.openai.com/"' })}
+                  <p class="aide-champ">Pour « Copier pour ChatGPT » : utilisé quand l'artiste n'a pas de lien vers son propre GPT.</p>
+                </div>
+              </div>
+            </section>
+
+            <!-- ═══ APPLICATION ═══ -->
+            <section class="cat-panneau${catInitiale === 'application' ? ' actif' : ''}" data-cat="application">
+              <div class="panneau-tete"><h2>Application</h2><p class="desc">Affichage, version et mises à jour.</p></div>
+              <div class="grille-bento">
+                <div class="carte zone-affichage">
+                  <h3>Affichage</h3>
+                  <div class="form-champ">
+                    <label for="f-a_zoom">Taille d'affichage</label>
+                    <select id="f-a_zoom" name="a_zoom">
+                      ${NIVEAUX_ZOOM.map((n) => `<option value="${n.val}" ${Math.abs(n.val - zoomInitial) < 0.001 ? 'selected' : ''}>${ech(n.libelle)} — ${Math.round(n.val * 100)} %</option>`).join('')}
+                    </select>
+                    <p class="aide-champ">Aperçu appliqué immédiatement. Annule pour revenir à l'original.</p>
+                  </div>
+                </div>
+                <div class="carte zone-apropos">
+                  <h3>À propos</h3>
+                  <dl class="infos-app-bento">
+                    <dt>Application</dt><dd>${ech(infosApp.nom)}</dd>
+                    <dt>Version</dt><dd>${ech(infosApp.version)}</dd>
+                    <dt>Marque affichée</dt><dd>${ech(config.galerie?.nom || '—')}</dd>
+                    <dt>Dossier des données</dt>
+                    <dd><button type="button" class="lien-dossier" id="btn-ouvrir-dossier-donnees" title="Ouvrir le dossier dans l'Explorateur">${ech(infosApp.dataDir)}</button></dd>
+                    <dt>Moteur</dt><dd>Electron ${ech(infosApp.electron)} sur ${ech(infosApp.plateforme)}</dd>
+                  </dl>
+                  <div class="updater-bloc">
+                    <p class="updater-statut" id="updater-statut">${ech(libelleEtat())}</p>
+                    <div style="display: flex; gap: var(--s2);">
+                      <button type="button" class="btn-action btn-secondaire-action" id="btn-updater-verifier">Vérifier les mises à jour</button>
+                      <button type="button" class="btn-action btn-secondaire-action" id="btn-updater-voir" hidden>Voir les détails</button>
+                    </div>
+                  </div>
+                  <p class="aide-champ" style="margin-top: var(--s3);">Données conservées localement (Loi 25).</p>
+                </div>
+              </div>
+            </section>
+
           </div>
-
-          <!-- À propos (6 col) -->
-          <div class="carte zone-apropos">
-            <h3>À propos</h3>
-            <dl class="infos-app-bento">
-              <dt>Application</dt><dd>${ech(infosApp.nom)}</dd>
-              <dt>Version</dt><dd>${ech(infosApp.version)}</dd>
-              <dt>Marque affichée</dt><dd>${ech(config.galerie?.nom || '—')}</dd>
-              <dt>Dossier des données</dt>
-              <dd><button type="button" class="lien-dossier" id="btn-ouvrir-dossier-donnees" title="Ouvrir le dossier dans l'Explorateur">${ech(infosApp.dataDir)}</button></dd>
-              <dt>Moteur</dt><dd>Electron ${ech(infosApp.electron)} sur ${ech(infosApp.plateforme)}</dd>
-            </dl>
-            <div class="updater-bloc">
-              <p class="updater-statut" id="updater-statut">${ech(libelleEtat())}</p>
-              <div style="display: flex; gap: var(--s2);">
-                <button type="button" class="btn-action btn-secondaire-action" id="btn-updater-verifier">Vérifier les mises à jour</button>
-                <button type="button" class="btn-action btn-secondaire-action" id="btn-updater-voir" hidden>Voir les détails</button>
-              </div>
-            </div>
-            <p class="aide-champ" style="margin-top: var(--s3);">Données conservées localement (Loi 25).</p>
-          </div>
-
         </div>
 
-        <div class="form-actions">
-          <button type="button" class="btn-action btn-secondaire-action" id="btn-annuler">Annuler</button>
-          <button type="submit" class="btn-action btn-principal">Enregistrer</button>
+        <div class="form-actions reglages-barre-save">
+          <span class="reglages-indic" id="reglages-indic">Aucune modification.</span>
+          <div class="reglages-barre-boutons">
+            <button type="button" class="btn-action btn-secondaire-action" id="btn-annuler">Annuler</button>
+            <button type="submit" class="btn-action btn-principal">Enregistrer</button>
+          </div>
         </div>
       </form>
     </div>
   `;
 
   const form = contenu.querySelector('#formulaire');
-  form.addEventListener('input', () => { modifie = true; });
-  form.addEventListener('change', () => { modifie = true; });
+  const indic = contenu.querySelector('#reglages-indic');
+  function marquerModifie() {
+    modifie = true;
+    if (indic) { indic.textContent = '● Modifications non enregistrées'; indic.classList.add('modif'); }
+  }
+  form.addEventListener('input', marquerModifie);
+  form.addEventListener('change', marquerModifie);
+
+  // ---- Navigation entre catégories (un seul panneau visible à la fois) ----
+  // Tout vit dans le même formulaire : changer de catégorie ne perd aucune
+  // saisie, donc pas d'avertissement à la bascule.
+  const nav = contenu.querySelector('#cat-nav');
+  const catItems = [...nav.querySelectorAll('.cat-item')];
+  const panneaux = [...contenu.querySelectorAll('.cat-panneau')];
+  nav.addEventListener('click', (e) => {
+    const b = e.target.closest('.cat-item');
+    if (!b) return;
+    const cat = b.dataset.cat;
+    catItems.forEach((i) => i.classList.toggle('actif', i === b));
+    panneaux.forEach((p) => p.classList.toggle('actif', p.dataset.cat === cat));
+  });
 
   const btnUpdaterVerifier = contenu.querySelector('#btn-updater-verifier');
   const btnUpdaterVoir = contenu.querySelector('#btn-updater-voir');
@@ -427,17 +554,34 @@ export async function rendreReglages(contenu) {
     });
   }
 
+  // ---- Logo de la galerie : sélecteur de fichier ----
+  contenu.querySelector('#btn-choisir-logo').addEventListener('click', async () => {
+    try {
+      const r = await window.api.configChoisirLogo();
+      if (r && !r.cancelled && r.path) {
+        contenu.querySelector('#f-g_logo_path').value = r.path;
+        marquerModifie();
+      }
+    } catch (err) {
+      await alerter({ type: 'error', title: 'Impossible de choisir le fichier', message: nettoyerErreur(err) });
+    }
+  });
+  contenu.querySelector('#btn-effacer-logo').addEventListener('click', () => {
+    contenu.querySelector('#f-g_logo_path').value = '';
+    marquerModifie();
+  });
+
   contenu.querySelector('#btn-choisir-dossier').addEventListener('click', async () => {
     const r = await window.api.configChoisirDossier();
     if (r && !r.cancelled && r.path) {
       contenu.querySelector('#f-s_dossier').value = r.path;
-      modifie = true;
+      marquerModifie();
     }
   });
 
   contenu.querySelector('#btn-defaut-dossier').addEventListener('click', () => {
     contenu.querySelector('#f-s_dossier').value = '';
-    modifie = true;
+    marquerModifie();
   });
 
   contenu.querySelector('#btn-importer').addEventListener('click', async (e) => {
@@ -568,6 +712,17 @@ export async function rendreReglages(contenu) {
     };
 
     const partiel = {
+      galerie: {
+        nom: v('g_nom').trim() || 'Galerie',
+        telephone: v('g_telephone').trim(),
+        courriel: v('g_courriel').trim(),
+        site_web: v('g_site_web').trim(),
+        adresse_ligne1: v('g_adresse_ligne1').trim(),
+        adresse_ligne2: v('g_adresse_ligne2').trim(),
+        numero_tps: v('g_numero_tps').trim(),
+        numero_tvq: v('g_numero_tvq').trim(),
+        logo_path: v('g_logo_path').trim(),
+      },
       documents: {
         prefixe_facture: v('d_prefixe_facture').trim() || 'F',
         prochain_numero_facture: Math.max(1, Math.floor(num('d_prochain_numero_facture') || 1)),

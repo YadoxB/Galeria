@@ -28,7 +28,9 @@ function sectionDe(nomVue) {
   if (nomVue.startsWith('vente'))   return 'ventes';
   if (nomVue === 'outils')           return 'outils';
   if (nomVue === 'reglages')         return 'reglages';
-  if (nomVue === 'profil-galerie')   return 'profil-galerie';
+  // Le Profil est maintenant une catégorie des Réglages : l'ancienne route
+  // profil-galerie surligne donc l'entrée « Réglages ».
+  if (nomVue === 'profil-galerie')   return 'reglages';
   return '';
 }
 

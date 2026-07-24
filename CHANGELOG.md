@@ -10,6 +10,34 @@ identifiants.
 
 ## [Non publié]
 
+### Modifié
+
+- **Page Réglages refondue en barre latérale (retour d'usage de Dave).** La
+  mosaïque de huit cartes devenait confuse : elle est remplacée par une
+  disposition maître-détail — une barre latérale à gauche (**La galerie,
+  Finances, Documents, Données, Sécurité, Intelligence artificielle,
+  Application**) et un panneau à la fois à droite. Concept repris de la branche
+  parquée (`121c01a`) mais **réappliqué à la main** sur le code actuel (le commit
+  d'origine, antérieur au verrou et à la question de secours, aurait réintroduit
+  un doublon de restauration et un onglet chiffrement parqué).
+- **Le Profil de la galerie est fondu dans les Réglages** (catégorie « La
+  galerie ») : sa page séparée et le bloc en bas de la barre latérale sont
+  retirés. L'ancienne route `profil-galerie` redirige vers Réglages → La galerie
+  pour ne casser aucun lien.
+- **Nouvelle catégorie « Finances » réunissant toute la fiscalité** : les numéros
+  d'enregistrement TPS/TVQ (qui étaient dans le Profil) rejoignent les taux de
+  TPS/TVQ et la cote (qui étaient dans les Réglages), auparavant sur deux écrans
+  différents.
+- **Sélecteur de fichier pour le logo de la galerie.** Il fallait taper le chemin
+  complet à la main ; un bouton « Choisir un fichier… » ouvre désormais un
+  sélecteur (IPC `config:choisir-logo`, filtré images), avec un bouton « Retirer »
+  pour revenir au logo par défaut.
+- Comme tout vit dans un **seul formulaire**, changer de catégorie ne perd aucune
+  saisie ; l'avertissement inter-catégorie prévu par la branche parquée est
+  devenu inutile. Un indicateur « Modifications non enregistrées » s'affiche dans
+  la barre du bas. Aucune logique de réglage n'a changé : mêmes champs, mêmes
+  effets, tous les identifiants préservés.
+
 ### Corrigé
 
 - **Écran de verrouillage : le pavé numérique ne répondait pas quand NumLock
