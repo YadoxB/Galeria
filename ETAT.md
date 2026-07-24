@@ -1,22 +1,42 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-07-18.
+> Date de cette sauvegarde : 2026-07-19.
 >
 > **Voir aussi** : `CHANGELOG.md` (historique versionné détaillé) et `A-VALIDER.md` (questions ouvertes avec les parents).
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-07-18)
+## ▶ Reprise — par où commencer (préparé le 2026-07-19)
 
-**État** : **v0.10.0 fusionnée dans `master`, NON poussée et NON publiée.** `package.json` = `0.10.0`. Version entièrement consacrée à la **robustesse** (aucune fonctionnalité métier nouvelle) : les 7 lots du chantier d'audit sont livrés et **tous confirmés par Dave dans l'app**. *Historique :* v0.9.0 — frais de production des reproductions ; v0.8.0 — consignes IA par artiste ; v0.7.0 — génération des descriptions par IA ; v0.6.0 — édition en lot.
+**Branche de travail : `claude/galeria-security-phase-f35c87`, 20 commits d'avance sur `master`, NON fusionnée et NON publiée.** `package.json` = `0.10.0` (inchangé ; on numérotera à la publication). `master` porte la v0.10.0 (robustesse) mais **les parents sont sur une version antérieure** — rien ne leur est encore parvenu.
 
-**⚠️ Deux gestes restent à faire par Dave pour livrer** (volontairement non faits par Claude — ils sortent vers l'extérieur) :
+Cette branche a d'abord repris la **phase Sécurité** parquée, puis enchaîné un **chantier « Retours d'usage »** (retours réels des parents). Tout est vérifié par bancs d'essai Electron ; **Dave a confirmé chaque lot dans l'app**.
+
+### Ce qui est fait sur cette branche
+
+- **Sécurité — verrou léger** (`141f41f`, `6009cab`, `0c75244`) : code 4–6 chiffres (empreinte scrypt, jamais en clair), écran de déverrouillage à pavé numérique, inactivité/blur, **question de secours** pour un code oublié. Correctif du pavé numérique (NumLock). **Confirmé.** *Le volet chiffrement reste PARQUÉ* (voir la section ③ Sécurité plus bas — décision de Dave, défaut de fond du plan d'origine).
+- **Retours d'usage** (voir la section dédiée plus bas pour le détail) : lettre de remerciement remaniée (logo, date à gauche/bas, signature à droite avec espace manuscrit, site web, pied allégé), compteur d'accueil = **œuvres disponibles**, menu **Documents** sur la fiche artiste, **Réglages** en barre latérale (7 catégories, profil galerie fondu dedans, catégorie **Finances**, sélecteur de logo), **édition des documents** (bouton « Modifier ce document… », **saut de page** dans l'éditeur, Démarche/Curriculum sur pages neuves, certificat non écrasé, édition depuis la section Documents), **barre latérale** aussi pour **Documents** (par type) et **Outils** (2 calculateurs), et **typographie française** (espaces insécables) sur **tous** les gabarits.
+
+### Ce qui reste
+
+- **Chantier « Retours d'usage » — dernier lot : #1 dossier de données** (choisir + **migrer** l'emplacement, cause OneDrive). **Pas commencé.** Le plus délicat : déplace base + photos + documents + sauvegardes. À faire seul, plan détaillé validé avant de coder, **sauvegarde obligatoire d'abord**. État des lieux dans la section « Retours d'usage » (patron : `migrerAncienDossierSiPresent` dans `paths.js`).
+- **Volet chiffrement** de la Sécurité : parqué (analyse consignée plus bas).
+
+### ⚠️ Gestes de livraison (à faire par Dave, pas par Claude — ils sortent vers l'extérieur)
+
 ```
+# quand Dave décide de livrer :
+git checkout master && git merge claude/galeria-security-phase-f35c87
 git push origin master     # publie le code sur GitHub
-npm run release            # bâtit et publie la release → auto-update chez les parents
+npm run release            # bâtit et publie → auto-update chez les parents
 ```
-Dave a indiqué le 2026-07-18 avoir **d'autres modifications à apporter avant** — d'où la numérotation **0.10.0** plutôt que 1.0.0, la 1.0 étant réservée pour plus tard.
+La branche n'est **pas** fusionnée : Dave voulait finir les retours avant. Ne pas fusionner/pousser/publier sans son accord explicite.
+
+### Points de méthode / dette technique (à proposer, non planifiés)
+
+- **Pas de cadre de tests** dans le projet : tout est vérifié par bancs d'essai jetables (module Node + vraie fenêtre Electron pilotée par `sendInputEvent`/`executeJavaScript`). Les nombreux allers-retours sur la mise en page d'Outils montrent la valeur d'un vrai cadre. **Chantier à proposer.**
+- **Piège UI récurrent** : les pages à barre latérale ont DEUX barres imbriquées (app ~250 px + page 236 px). Défaut sûr pour les cartes d'un panneau = **6/6 égal** (prouvé sur Réglages) ; éviter les ratios déséquilibrés. Et penser au `max-width` : `.vue-fiche` vaut 820 px par défaut, les vues à barre latérale doivent l'annuler (`.reglages-vue, .outils-vue { max-width: 1180px }`).
 
 ### Le chantier de robustesse (audit du 2026-07-06) — TERMINÉ
 
@@ -99,7 +119,9 @@ Trois issues présentées à Dave :
 ### Avancement (2026-07-19/23)
 
 - **Lot 1 — corrections rapides : ✓ livré** (#4 espace signature, #4bis typographie, #5 compteur d'accueil, #6 menu Documents de la fiche artiste). Puis ajustements de la lettre : logo en en-tête, site web, signature ferrée à droite, date en bas à gauche, adresse retirée du pied. Commits `d683c21` → `1cfcdec`.
-- **Lot 3 — édition des documents (#2) : ✓ livré.** Bouton « Version modifiée… » → **« Modifier ce document… »** partout + ajouté à la **section Documents** (certificat, facture artiste, présentation, via `specEdition()` qui traduit `ref_id`). **Bouton « Insérer un saut de page »** dans l'éditeur (INJECT_EDIT_JS) : pose `break-before:page` sur le bloc du curseur — deux pièges réglés (Chromium ignore le saut sur un élément vide ; wrapper `#doc` + `<script>` dans le body → `conteneurContenu()` filtre script/style). **Présentation** : « Démarche » et « Curriculum » sur une nouvelle page chacun (`sautAvant`, robuste si bio vide). **Certificat** : « Modifier » ne l'écrase plus, fichier séparé suffixé (choix de Dave). Word écarté. Commits `ce7f716` (3A), `9efc204` (3B/3C), + 3D. **Reste à vérifier (non fait)** : les AUTRES gabarits (certificat, facture, annexe, catalogue) peuvent avoir le même défaut de typographie française que la lettre (#4bis) — espace ordinaire devant la ponctuation double.
+- **Lot 3 — édition des documents (#2) : ✓ livré.** Bouton « Version modifiée… » → **« Modifier ce document… »** partout + ajouté à la **section Documents** (certificat, facture artiste, présentation, via `specEdition()` qui traduit `ref_id`). **Bouton « Insérer un saut de page »** dans l'éditeur (INJECT_EDIT_JS) : pose `break-before:page` sur le bloc du curseur — deux pièges réglés (Chromium ignore le saut sur un élément vide ; wrapper `#doc` + `<script>` dans le body → `conteneurContenu()` filtre script/style). **Présentation** : « Démarche » et « Curriculum » sur une nouvelle page chacun (`sautAvant`, robuste si bio vide). **Certificat** : « Modifier » ne l'écrase plus, fichier séparé suffixé (choix de Dave). Word écarté. Commits `ce7f716` (3A), `9efc204` (3B/3C), + 3D.
+- **Barre latérale Documents & Outils : ✓ livré** (`686abc7` + correctifs Outils `85e2590`/`6b806f9`/`f347996`). Documents : barre latérale par type qui pilote Liste ET Explorateur (saute le niveau type). Outils : 2 calculateurs (Prix+Cotes, Commission+Référence), cartes 6/6.
+- **Typographie française sur tous les gabarits : ✓ livré** (`b62eb98`). Espaces insécables devant `! ? ; :` et autour des guillemets — étend le correctif de la lettre au certificat, à la facture artiste, au rapport et à la présentation (annexe/catalogue n'en avaient pas besoin).
 - **Lot 2 — Réglages en barre latérale : ✓ livré.** Refonte maître-détail à 7 catégories (La galerie · Finances · Documents · Données · Sécurité · IA · Application). Profil galerie fondu dans « La galerie » (page + bloc sidebar retirés, route `profil-galerie` redirigée). Catégorie **Finances** réunissant numéros TPS/TVQ + taux + cote. **Sélecteur de fichier logo** ajouté. Concept repris de `121c01a` mais réappliqué à la main (le commit d'origine aurait réintroduit doublon de restauration + onglet chiffrement parqué). Aucune logique changée, tous les IDs préservés, un seul formulaire (pas de perte à la bascule). Démo `demos/reglages-nav.html` (validée par Dave). 24 contrôles Electron au vert.
 - **#3 (prix pré-rempli) : ANNULÉ** — Dave testait une œuvre sans prix ; comportement correct.
 - **#1 (dossier de données) : à faire — dernier lot, le plus risqué.** Décision de Dave : **migrer le dossier existant** (pas seulement choisir à l'installation), car la base tourne déjà chez les parents. Détails d'état des lieux ci-dessous.
@@ -114,7 +136,7 @@ La fonction existe déjà (voir section dédiée plus bas). Décisions prises av
 
 ### #4bis — Bug de gabarit (corrigé au lot 1)
 
-Le « ! » isolé venait de la **typographie française** : espace ordinaire devant la ponctuation double. Corrigé par `espacesInsecables()` dans `gabarit-lettre.html`. **Reste à vérifier les AUTRES gabarits** (certificat, facture, annexe, catalogue, présentation) qui peuvent avoir le même défaut — non fait.
+Le « ! » isolé venait de la **typographie française** : espace ordinaire devant la ponctuation double. Corrigé par `espacesInsecables()` dans `gabarit-lettre.html`, **puis étendu à tous les gabarits** (commit `b62eb98`) : certificat, facture artiste, rapport (guillemets + « N° TPS/TVQ : » + « Artistes ajoutés : »), présentation (`normaliserGuillemets` gère désormais aussi `! ? ; :`). Annexe et catalogue n'avaient pas de texte concerné. ✓ Fait.
 
 ---
 
