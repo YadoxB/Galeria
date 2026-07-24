@@ -5,19 +5,83 @@ const fs = require('node:fs');
 const NOM_DOSSIER = 'Galeria';
 const ANCIEN_NOM_DOSSIER = 'GalerieApp';
 
-// Si le renommage GalerieApp → Galeria échoue (dossier verrouillé par
-// l'Explorateur, OneDrive en cours de synchronisation…), on continue avec
-// l'ancien dossier plutôt que de bloquer le démarrage ou de repartir sur un
-// dossier vide. La migration sera retentée au prochain démarrage.
+// Nom du « papier d'adresse » qui indique OÙ se trouve le dossier de données.
+// Rangé HORS du dossier de données (voir cheminFichierEmplacement) — sinon on
+// perdrait l'adresse en déplaçant le dossier.
+const NOM_FICHIER_EMPLACEMENT = 'emplacement.json';
+
+// Emplacement résolu pour la session (mémorisé au premier appel de getDataDir).
+// Sources, dans l'ordre : (1) valeur posée par une migration de dossier ci-
+// dessous, (2) emplacement personnalisé configuré (papier d'adresse), (3) défaut
+// Documents\Galeria. Si le renommage GalerieApp → Galeria échoue (dossier
+// verrouillé par l'Explorateur, OneDrive en cours de synchronisation…), on
+// continue avec l'ancien dossier plutôt que de bloquer le démarrage ou de
+// repartir sur un dossier vide.
 let dossierDonneesResolu = null;
 
+// Le papier d'adresse vit dans userData (AppData\Roaming\Galeria), un dossier
+// technique de l'app que OneDrive NE redirige jamais — donc une ancre stable,
+// contrairement à Documents. Il ne peut pas vivre dans le dossier de données
+// lui-même : ce serait l'adresse rangée à l'intérieur de ce qu'elle localise.
+function cheminFichierEmplacement() {
+  return path.join(app.getPath('userData'), NOM_FICHIER_EMPLACEMENT);
+}
+
+// Lit l'emplacement personnalisé configuré, ou null s'il n'y en a pas.
+// NE LANCE JAMAIS d'exception (appelé au tout début du démarrage) : un papier
+// illisible ⇒ on repart sur le défaut. NE VÉRIFIE PAS l'existence du dossier
+// pointé : si le papier existe mais le dossier est absent (lecteur USB
+// débranché, par exemple), on renvoie quand même le chemin configuré — le
+// démarrage protégé affichera alors une erreur claire, plutôt que de repartir
+// silencieusement sur Documents et d'y recréer une base vide.
+function lireEmplacementConfigure() {
+  try {
+    const p = cheminFichierEmplacement();
+    if (!fs.existsSync(p)) return null;
+    const obj = JSON.parse(fs.readFileSync(p, 'utf-8'));
+    const dir = obj && typeof obj.dossierDonnees === 'string' ? obj.dossierDonnees.trim() : '';
+    if (dir && path.isAbsolute(dir)) return dir;
+    return null;
+  } catch (e) {
+    console.error("Fichier d'emplacement illisible, dossier par défaut utilisé :", e);
+    return null;
+  }
+}
+
+// Écrit (ou efface) le papier d'adresse de façon atomique (fichier temporaire
+// puis rename), comme le fait config.js. Un chemin vide efface le pointeur (=
+// retour au dossier par défaut). Utilisé par le déplacement de dossier (à venir
+// au Pas C) ; aucun code de l'app ne l'appelle encore. Met à jour la valeur
+// mémorisée pour la session.
+function ecrireEmplacementConfigure(dir) {
+  const p = cheminFichierEmplacement();
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  const propre = dir && String(dir).trim();
+  if (!propre) {
+    try { fs.unlinkSync(p); } catch {}
+    dossierDonneesResolu = null;
+    return;
+  }
+  const tmp = `${p}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify({ dossierDonnees: propre }, null, 2), 'utf-8');
+  fs.renameSync(tmp, p);
+  dossierDonneesResolu = propre;
+}
+
 function getDataDir() {
-  return dossierDonneesResolu || path.join(app.getPath('documents'), NOM_DOSSIER);
+  if (!dossierDonneesResolu) {
+    dossierDonneesResolu =
+      lireEmplacementConfigure() || path.join(app.getPath('documents'), NOM_DOSSIER);
+  }
+  return dossierDonneesResolu;
 }
 
 // Migration unique : si l'ancien dossier existe et le nouveau pas,
 // renomme. Préserve DB, photos, sauvegardes, config et PDFs.
 function migrerAncienDossierSiPresent() {
+  // Ce renommage hérité ne concerne que l'emplacement PAR DÉFAUT (Documents).
+  // Si l'utilisateur a configuré un emplacement personnalisé, on n'y touche pas.
+  if (lireEmplacementConfigure()) return false;
   const ancien = path.join(app.getPath('documents'), ANCIEN_NOM_DOSSIER);
   const nouveau = path.join(app.getPath('documents'), NOM_DOSSIER);
   if (fs.existsSync(ancien) && !fs.existsSync(nouveau)) {
@@ -99,4 +163,7 @@ module.exports = {
   getSeedPhotosPath,
   getSeedPackPath,
   ensureDirectories,
+  cheminFichierEmplacement,
+  lireEmplacementConfigure,
+  ecrireEmplacementConfigure,
 };
