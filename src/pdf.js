@@ -734,7 +734,11 @@ function preparerDonneesPresentation(artiste, cfg) {
     artiste: { nom, titre: titreDArtiste(artiste.type), photo: photoEnDataUrl(artiste.photo_path) },
     sections: [
       { titre: 'Biographie', contenu: artiste.biographie || '' },
-      { titre: 'Démarche', contenu: artiste.demarche || '' },
+      // Démarche et Curriculum commencent chacun sur une nouvelle page
+      // (demande de Dave, 2026-07-19). Le gabarit n'applique le saut qu'aux
+      // sections d'indice > 0 : si la Biographie est vide et retirée, la
+      // Démarche devient la 1re section et ne crée pas de page blanche.
+      { titre: 'Démarche', contenu: artiste.demarche || '', sautAvant: true },
       { titre: 'Curriculum', contenu: artiste.curriculum || '', cv: true, sautAvant: true },
     ],
   };
@@ -1002,12 +1006,11 @@ async function editerDocument(spec) {
 
   // Contexte de vente : si le document appartient à une pochette, la version
   // modifiée ira dans le dossier de cette pochette (en remplaçant le standard).
+  // Le certificat en est exclu : sa version modifiée est un fichier séparé qui
+  // n'écrase jamais l'officiel (voir plus bas).
   let venteCtx = null;
   if ((spec.type === 'lettre' || spec.type === 'facture-artiste' || spec.type === 'presentation') && spec.vente_id) {
     venteCtx = obtenirVente(spec.vente_id);
-  } else if (spec.type === 'certificat') {
-    const c0 = obtenirCertificat(spec.certificat_id);
-    if (c0 && c0.vente_id) venteCtx = obtenirVente(c0.vente_id);
   }
 
   if (spec.type === 'presentation') {
@@ -1041,9 +1044,12 @@ async function editerDocument(spec) {
     gabaritNom = 'gabarit-certificat.html';
     donnees = preparerDonneesCertificat(cert, cfg);
     paysage = true;
-    // On édite le PDF officiel du certificat lui-même (qui vit dans la pochette
-    // s'il est lié à une vente).
-    sortie = cert.pdf_path || cheminCertificatOfficiel(cert);
+    // Version modifiée SÉPARÉE : on n'écrase jamais le certificat officiel
+    // (document numéroté). Fichier à côté, suffixé « (version modifiée) »,
+    // comme la présentation et la facture. Décision de Dave (2026-07-19).
+    const queueC = (cert.oeuvre_titre || '') + (cert.artiste_nom ? ` (${cert.artiste_nom})` : '');
+    const idCourtC = (cert.numero_inventaire || cert.numero_delivrance || '').toString().trim();
+    sortie = cheminUnique(path.join(dossierAnnee, 'Certificats'), nomDocument(`Certificat ${idCourtC}`.trim(), queueC, { modifie: true }));
     titre = 'Certificat — version modifiée';
   } else if (spec.type === 'facture-artiste') {
     const vente = obtenirVente(spec.vente_id);
