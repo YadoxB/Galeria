@@ -5533,7 +5533,11 @@ select.lot-in.st-pretee { color: var(--info); }
 .verrou-carte.secousse { animation: verrou-secousse .4s; }
 
 /* ═══════════ Réglages : disposition maître-détail (barre latérale) ═══════════ */
-.reglages-vue { max-width: 1180px; }
+/* Ces vues à barre latérale annulent la largeur étroite par défaut de
+   .vue-fiche (820 px) : sans ça, Outils restait bloqué à 820 px et centré,
+   d'où un grand espace vide à gauche et à droite. */
+.reglages-vue,
+.outils-vue { max-width: 1180px; }
 .reglages-layout { display: grid; grid-template-columns: 236px 1fr; gap: var(--s4); align-items: start; margin-top: var(--s3); }
 
 /* Barre latérale des catégories */
