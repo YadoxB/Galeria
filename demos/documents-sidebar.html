@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo Documents (barre latérale par type)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <link rel="stylesheet" href="../src/styles.css">
+  <style>
+    body { margin: 0; background: var(--soft-ivory); }
+    .demo-bar { position: sticky; top: 0; z-index: 30; display: flex; justify-content: space-between; align-items: center; gap: var(--s3); padding: var(--s2) var(--s4); background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .note { font-size: 12px; color: rgba(252,250,244,0.7); }
+    main { padding: var(--s5) var(--s6) var(--s6); }
+    /* En-tête interne au panneau : recherche + filtres secondaires + bascule. */
+    .doc-panneau-tete { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-bottom: var(--s3); }
+    .doc-panneau-tete .recherche-pillule { flex: 1 1 240px; }
+    .doc-panneau-tete select { height: 34px; }
+    .compte-type { color: var(--stone); font-size: 12px; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Documents : barre latérale par type</div>
+    <div class="note">Démo — clique un type à gauche. Valeurs fictives.</div>
+  </div>
+
+  <main>
+    <div class="reglages-entete" style="margin-bottom:var(--s3)">
+      <h1>Documents</h1>
+      <p class="reglages-entete-meta">Tous les PDF produits, rangés par type. Choisis un type à gauche.</p>
+    </div>
+
+    <div class="reglages-layout">
+      <!-- Barre latérale : les types de documents -->
+      <nav class="cat-nav" id="cat-nav" aria-label="Types de documents">
+        <button class="cat-item actif" data-cat="tous">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg></span>
+          Tous les documents
+        </button>
+        <button class="cat-item" data-cat="certificat">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M9 13l-2 8 5-3 5 3-2-8"/></svg></span>
+          Certificats <span class="compte-type">· 12</span>
+        </button>
+        <button class="cat-item" data-cat="facture_artiste">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h6"/></svg></span>
+          Factures artiste <span class="compte-type">· 5</span>
+        </button>
+        <button class="cat-item" data-cat="presentation">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+          Présentations <span class="compte-type">· 8</span>
+        </button>
+        <button class="cat-item" data-cat="annexe">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h5"/></svg></span>
+          Annexes <span class="compte-type">· 6</span>
+        </button>
+        <button class="cat-item" data-cat="catalogue">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h7v16H4zM13 4h7v16h-7z"/></svg></span>
+          Catalogues <span class="compte-type">· 3</span>
+        </button>
+        <button class="cat-item" data-cat="rapport">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20H6z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></span>
+          Rapports <span class="compte-type">· 4</span>
+        </button>
+        <button class="cat-item" data-cat="pochette">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v13H3z"/><path d="M8 7V4h8v3"/></svg></span>
+          Pochettes de vente <span class="compte-type">· 9</span>
+        </button>
+      </nav>
+
+      <!-- Panneau : documents du type choisi -->
+      <div class="cat-zone">
+        <div class="doc-panneau-tete">
+          <div class="recherche-pillule">
+            <svg class="recherche-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+            <input type="search" placeholder="Rechercher (numéro, œuvre, artiste, client)…">
+          </div>
+          <select><option>Toutes les années</option><option>2026</option><option>2025</option></select>
+          <select><option>Tous les artistes</option><option>Gabrielle Dumont</option></select>
+          <span class="compte-type" id="compte">— documents</span>
+          <div class="doc-vue-bascule" style="margin-left:auto">
+            <button class="actif" type="button">Liste</button>
+            <button type="button">Explorateur</button>
+          </div>
+        </div>
+
+        <div id="doc-liste"></div>
+      </div>
+    </div>
+  </main>
+
+<script>
+  // Documents fictifs par type.
+  const DOCS = {
+    certificat: [
+      ['C-2026-012', 'Chrysalide (Gabrielle Dumont)', '18 juillet 2026'],
+      ['C-2026-011', 'Aurore (Gabrielle Dumont)', '12 juillet 2026'],
+      ['C-2026-010', 'Reflet (Marc Auclair)', '3 juillet 2026'],
+    ],
+    facture_artiste: [
+      ['FA-2026-005', 'Gabrielle Dumont — Chrysalide', '18 juillet 2026'],
+      ['FA-2026-004', 'Marc Auclair — Reflet', '3 juillet 2026'],
+    ],
+    presentation: [
+      ['Présentation — Gabrielle Dumont', 'Gabrielle Dumont', '10 juillet 2026'],
+      ['Présentation — Marc Auclair', 'Marc Auclair', '1 juillet 2026'],
+    ],
+    annexe: [['AD-2026-006', 'Gabrielle Dumont — dépôt', '5 juillet 2026']],
+    catalogue: [['Catalogue 2026-07 — Gabrielle Dumont', 'Gabrielle Dumont', '9 juillet 2026']],
+    rapport: [['Rapport du 18 juillet 2026', '', '18 juillet 2026']],
+    pochette: [['Pochette F-2026-014 — Marie Tremblay', 'Marie Tremblay', '18 juillet 2026']],
+  };
+  const LIB = { certificat:"Certificat d'authenticité", facture_artiste:'Facture artiste', presentation:'Présentation', annexe:'Annexe A', catalogue:'Catalogue', rapport:'Rapport', pochette:'Pochette de vente' };
+  const editable = new Set(['certificat','facture_artiste','presentation']);
+
+  function ligne(type, [num, meta, date]) {
+    const modif = editable.has(type) ? '<button type="button" class="btn-action btn-secondaire-action">Modifier ce document…</button>' : '';
+    const regen = (type==='certificat'||type==='facture_artiste') ? '<button type="button" class="btn-action btn-secondaire-action">Re-générer</button>' : '';
+    return `<div class="doc-ligne">
+      <div class="doc-icone doc-icone-${type}">${(LIB[type]||'?')[0]}</div>
+      <div class="doc-info"><p class="doc-titre">${num} · ${LIB[type]||type}</p><p class="doc-meta">${meta ? meta+' · ' : ''}${date}</p></div>
+      <div class="doc-actions"><button type="button" class="btn-action btn-secondaire-action">Voir</button><button type="button" class="btn-action btn-secondaire-action">Dossier</button>${modif}${regen}</div>
+    </div>`;
+  }
+  function blocType(type) {
+    const items = DOCS[type] || [];
+    return `<section class="doc-type-bloc">
+      <div class="doc-type-titre"><span class="doc-type-nom">${({certificat:'Certificats',facture_artiste:'Factures artiste',presentation:'Présentations',annexe:'Annexes',catalogue:'Catalogues',rapport:'Rapports',pochette:'Pochettes de vente'})[type]}</span><span class="doc-type-compte">${items.length}</span></div>
+      <div class="doc-carte">${items.map(d => ligne(type, d)).join('')}</div>
+    </section>`;
+  }
+  function peindre(cat) {
+    const zone = document.getElementById('doc-liste');
+    let types = cat === 'tous' ? Object.keys(DOCS) : [cat];
+    zone.innerHTML = types.map(blocType).join('');
+    const n = types.reduce((s,t)=>s+(DOCS[t]||[]).length,0);
+    document.getElementById('compte').textContent = n + ' document' + (n>1?'s':'');
+  }
+  const nav = document.getElementById('cat-nav');
+  nav.addEventListener('click', (e) => {
+    const b = e.target.closest('.cat-item'); if (!b) return;
+    [...nav.querySelectorAll('.cat-item')].forEach(i => i.classList.toggle('actif', i === b));
+    peindre(b.dataset.cat);
+  });
+  peindre('tous');
+</script>
+</body>
+</html>

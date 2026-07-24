@@ -5585,3 +5585,27 @@ select.lot-in.st-pretee { color: var(--info); }
   .cat-item { width: auto; }
   .cat-panneau .grille-bento > .carte { grid-column: span 12; }
 }
+
+/* ═══════════ Documents & Outils : réutilisation de la barre latérale ═══════════ */
+/* Compteur à droite d'une entrée de barre latérale (types de documents). */
+.cat-item-libelle { flex: 1; }
+.cat-compte { font-size: 12px; color: var(--stone); font-weight: 500; }
+.cat-item.actif .cat-compte { color: var(--warm-gold); }
+
+/* En-tête du panneau Documents : recherche + filtres secondaires + bascule. */
+.doc-panneau-tete { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-bottom: var(--s3); }
+.doc-panneau-tete .recherche-pillule { flex: 1 1 240px; margin: 0; }
+.doc-filtre-select {
+  height: 36px; border: 1px solid var(--mist); border-radius: var(--r-btn);
+  background: var(--porcelain); color: var(--ink);
+  font-family: var(--font-ui); font-size: 13px; padding: 0 10px;
+}
+.doc-panneau-tete .doc-compteur-barre { color: var(--stone); font-size: 12.5px; }
+.doc-panneau-tete .doc-vue-bascule { margin-left: auto; }
+
+/* Outils : deux panneaux (Prix + Cotes / Commission + Référence). */
+.cat-panneau .grille-bento > .carte { grid-column: span 12; }
+.cat-panneau[data-cat="prix"] .zone-outil-calc,
+.cat-panneau[data-cat="commission"] .zone-outil-commission { grid-column: span 8; }
+.cat-panneau[data-cat="prix"] .zone-outil-cotes,
+.cat-panneau[data-cat="commission"] .zone-outil-commission-ref { grid-column: span 4; }

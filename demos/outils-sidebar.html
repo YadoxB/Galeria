@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo Outils (barre latérale)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <link rel="stylesheet" href="../src/styles.css">
+  <style>
+    body { margin: 0; background: var(--soft-ivory); }
+    .demo-bar { position: sticky; top: 0; z-index: 30; display: flex; justify-content: space-between; align-items: center; gap: var(--s3); padding: var(--s2) var(--s4); background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .note { font-size: 12px; color: rgba(252,250,244,0.7); }
+    main { padding: var(--s5) var(--s6) var(--s6); }
+    /* Panneau : mêmes cartes bento qu'aujourd'hui. */
+    .cat-panneau .grille-bento > .carte { grid-column: span 12; }
+    .cat-panneau[data-cat="prix"] .zone-outil-calc { grid-column: span 8; }
+    .cat-panneau[data-cat="prix"] .zone-outil-cotes { grid-column: span 4; }
+    .cat-panneau[data-cat="commission"] .zone-outil-commission { grid-column: span 8; }
+    .cat-panneau[data-cat="commission"] .zone-outil-commission-ref { grid-column: span 4; }
+    .faux-champ { height: 34px; border: 1px solid var(--mist); border-radius: var(--r-btn); background: var(--porcelain); display: flex; align-items: center; padding: 0 10px; color: var(--slate); font-size: 13px; margin-bottom: var(--s2); }
+    .faux-resultat { background: var(--deep-navy); color: var(--soft-ivory); border-radius: 12px; padding: 14px 16px; margin-top: var(--s2); }
+    .faux-resultat .montant { font-size: 22px; font-weight: 600; color: var(--warm-gold); }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre"><span class="marque">Galeria</span> — Outils : barre latérale</div>
+    <div class="note">Démo — clique un outil à gauche. Valeurs fictives.</div>
+  </div>
+
+  <main>
+    <div class="reglages-entete" style="margin-bottom:var(--s3)">
+      <h1>Outils</h1>
+      <p class="reglages-entete-meta">Calculateurs liés au catalogue. Choisis un outil à gauche.</p>
+    </div>
+
+    <div class="reglages-layout">
+      <nav class="cat-nav" id="cat-nav" aria-label="Outils">
+        <button class="cat-item actif" data-cat="prix">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V7a1 1 0 0 0-1-1h-5L3 12l6 6 11-6z"/><circle cx="16" cy="9.5" r="1"/></svg></span>
+          Calculateur de prix
+        </button>
+        <button class="cat-item" data-cat="commission">
+          <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg></span>
+          Calculateur de commission
+        </button>
+      </nav>
+
+      <div class="cat-zone">
+        <!-- Prix + cotes (couplés par l'artiste sélectionné) -->
+        <section class="cat-panneau actif" data-cat="prix">
+          <div class="panneau-tete"><h2>Calculateur de prix</h2><p class="desc">Prix suggéré à partir des cotes de l'artiste et des dimensions de l'œuvre.</p></div>
+          <div class="grille-bento">
+            <div class="carte zone-outil-calc">
+              <h3>Calculateur de prix</h3>
+              <div class="faux-champ">Artiste : Gabrielle Dumont ▾</div>
+              <div class="faux-champ">Médium : Huile sur toile</div>
+              <div class="faux-champ">Dimensions : 24 × 36 po</div>
+              <div class="faux-resultat">Prix courant (encadré) <div class="montant">1 240 $</div> Préférentiel : 1 152 $</div>
+            </div>
+            <div class="carte zone-outil-cotes">
+              <h3>Cotes de l'artiste</h3>
+              <p class="aide-champ" style="margin-top:0">Se met à jour avec l'artiste choisi à gauche (les deux partagent la même sélection).</p>
+              <table class="cotes-table"><tr><th>Médium</th><th>Préf.</th></tr><tr><td>Huile</td><td>16 $/po</td></tr><tr><td>Acrylique</td><td>14 $/po</td></tr></table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Commission + référence -->
+        <section class="cat-panneau" data-cat="commission">
+          <div class="panneau-tete"><h2>Calculateur de commission</h2><p class="desc">Le net versé à l'artiste après commission et taxes.</p></div>
+          <div class="grille-bento">
+            <div class="carte zone-outil-commission">
+              <h3>Calculateur de commission</h3>
+              <div class="faux-champ">Type d'œuvre : Peinture (50 %)</div>
+              <div class="faux-champ">Prix de vente : 1 240 $</div>
+              <div class="faux-champ">Taxes : TPS + TVQ</div>
+              <div class="faux-resultat">Montant versé à l'artiste <div class="montant">620 $</div> après commission galerie (50 %)</div>
+            </div>
+            <div class="carte zone-outil-commission-ref">
+              <h3>Commissions par type</h3>
+              <table class="cotes-table"><tr><th>Type</th><th>Cote</th></tr><tr><td>Peinture</td><td>50 %</td></tr><tr><td>Sculpture</td><td>33 %</td></tr><tr><td>Reproduction</td><td>50 %*</td></tr></table>
+              <p class="aide-champ">* après déduction des frais de production.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+<script>
+  const nav = document.getElementById('cat-nav');
+  const panneaux = [...document.querySelectorAll('.cat-panneau')];
+  nav.addEventListener('click', (e) => {
+    const b = e.target.closest('.cat-item'); if (!b) return;
+    [...nav.querySelectorAll('.cat-item')].forEach(i => i.classList.toggle('actif', i === b));
+    panneaux.forEach(p => p.classList.toggle('actif', p.dataset.cat === b.dataset.cat));
+  });
+</script>
+</body>
+</html>

@@ -23,13 +23,28 @@ export async function rendreOutils(contenu) {
   const coteRepro = coteGaleriePourType('reproduction', config);
 
   contenu.innerHTML = `
-    <div class="vue-fiche vue-fiche-bento">
+    <div class="vue-fiche outils-vue">
       <div class="reglages-entete">
         <h1>Outils</h1>
-        <p class="reglages-entete-meta">Calculateurs et utilitaires liés au catalogue.</p>
+        <p class="reglages-entete-meta">Calculateurs liés au catalogue. Choisis un outil à gauche.</p>
       </div>
 
-      <div class="grille-bento">
+      <div class="reglages-layout">
+        <nav class="cat-nav" id="outils-cat-nav" aria-label="Outils">
+          <button type="button" class="cat-item actif" data-cat="prix">
+            <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V7a1 1 0 0 0-1-1h-5L3 12l6 6 11-6z"/><circle cx="16" cy="9.5" r="1"/></svg></span>
+            Calculateur de prix
+          </button>
+          <button type="button" class="cat-item" data-cat="commission">
+            <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg></span>
+            Calculateur de commission
+          </button>
+        </nav>
+
+        <div class="cat-zone">
+        <section class="cat-panneau actif" data-cat="prix">
+          <div class="panneau-tete"><h2>Calculateur de prix</h2><p class="desc">Le prix suggéré à partir des cotes de l'artiste et des dimensions de l'œuvre.</p></div>
+          <div class="grille-bento">
 
         <div class="carte zone-outil-calc">
           <h3>Calculateur de prix</h3>
@@ -79,8 +94,16 @@ export async function rendreOutils(contenu) {
 
         <div class="carte zone-outil-cotes">
           <h3>Cotes de l'artiste</h3>
+          <p class="aide-champ" style="margin-top:0">Se mettent à jour avec l'artiste choisi dans le calculateur.</p>
           <div id="calc-cotes-artiste" class="calc-cotes-artiste"></div>
         </div>
+
+          </div>
+        </section>
+
+        <section class="cat-panneau" data-cat="commission">
+          <div class="panneau-tete"><h2>Calculateur de commission</h2><p class="desc">Le net versé à l'artiste après commission et taxes.</p></div>
+          <div class="grille-bento">
 
         <div class="carte zone-outil-commission">
           <h3>Calculateur de commission</h3>
@@ -150,9 +173,23 @@ export async function rendreOutils(contenu) {
           <p class="aide-champ" style="margin-top:var(--s2);">* Pour une reproduction, la galerie récupère d'abord ses frais de production, puis applique la cote (${pct(coteRepro)} %) sur le reste. Les cotes suivent les Réglages ; la sculpture est fixée à ${pct(coteSculpture)} %.</p>
         </div>
 
+          </div>
+        </section>
+        </div>
       </div>
     </div>
   `;
+
+  // Navigation entre outils (un panneau à la fois) — même patron que les Réglages.
+  const outilsNav = contenu.querySelector('#outils-cat-nav');
+  const outilsItems = [...outilsNav.querySelectorAll('.cat-item')];
+  const outilsPanneaux = [...contenu.querySelectorAll('.cat-panneau')];
+  outilsNav.addEventListener('click', (e) => {
+    const b = e.target.closest('.cat-item');
+    if (!b) return;
+    outilsItems.forEach((i) => i.classList.toggle('actif', i === b));
+    outilsPanneaux.forEach((p) => p.classList.toggle('actif', p.dataset.cat === b.dataset.cat));
+  });
 
   const selArtiste = contenu.querySelector('#calc-artiste');
   const inMedium = contenu.querySelector('#calc-medium');

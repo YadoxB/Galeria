@@ -12,6 +12,18 @@ identifiants.
 
 ### Modifié
 
+- **Pages Documents et Outils en barre latérale (cohérence avec les Réglages).**
+  Les deux pages adoptent la disposition maître-détail introduite pour les
+  Réglages. **Documents** : une barre latérale liste les types (Certificats,
+  Factures artiste, Présentations, Annexes, Catalogues, Rapports, Pochettes) avec
+  un compteur ; elle remplace l'ancien filtre Type et pilote **les deux vues** —
+  en Liste elle filtre, en Explorateur elle restreint l'arbre au type et saute le
+  niveau redondant (Année → fichiers directement). La recherche et les filtres
+  Année/Artiste/Client restent en haut du panneau, et la bascule Liste/Explorateur
+  aussi. **Outils** : deux entrées de barre latérale — « Calculateur de prix »
+  (avec les Cotes de l'artiste, couplées) et « Calculateur de commission » (avec
+  le tableau de référence). Aucune logique de calcul changée, tous les
+  identifiants préservés.
 - **Édition des documents plus claire et plus sûre (retour d'usage de Dave).**
   Le bouton « Version modifiée… » — qui laissait croire qu'une version modifiée
   existait déjà — devient **« Modifier ce document… »** partout (fiche de vente,

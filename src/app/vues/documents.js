@@ -79,6 +79,12 @@ function classeIconeType(type) { return type === 'annexe' ? 'doc-icone-annexe' :
 const annee = (d) => String(d.date || '').slice(0, 4) || '—';
 const distinct = (arr) => [...new Set(arr.filter(Boolean))];
 
+// Icône de la barre latérale par type (réutilise SVG existant).
+function svgSidebarType(type) {
+  const kind = type === 'facture_artiste' || type === 'facture_client' ? 'facture' : type;
+  return svgWrap(SVG[kind] || SVG.lettre);
+}
+
 export async function rendreDocuments(contenu) {
   let docs = await window.api.documentsListe();
   let vue = (localStorage.getItem(CLE_VUE) === 'explorateur') ? 'explorateur' : 'liste';
@@ -87,38 +93,101 @@ export async function rendreDocuments(contenu) {
 
   contenu.innerHTML = `
     <div class="vue-documents">
-      <div class="entete-page entete-page--simple">
-        <h2 class="entete-page-titre">Documents</h2>
-        <div class="entete-page-recherche-wrap">
-          <div class="recherche-pillule">
-            <svg class="recherche-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>
-            </svg>
-            <input type="search" id="doc-recherche" placeholder="Rechercher (numéro, œuvre, artiste, client)…" autocomplete="off">
+      <div class="reglages-entete">
+        <h1>Documents</h1>
+        <p class="reglages-entete-meta">Tous les PDF produits, rangés par type. Choisis un type à gauche.</p>
+      </div>
+
+      <div class="reglages-layout">
+        <nav class="cat-nav" id="doc-cat-nav" aria-label="Types de documents"></nav>
+
+        <div class="cat-zone">
+          <div class="doc-panneau-tete">
+            <div class="recherche-pillule">
+              <svg class="recherche-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>
+              </svg>
+              <input type="search" id="doc-recherche" placeholder="Rechercher (numéro, œuvre, artiste, client)…" autocomplete="off">
+            </div>
+            <select id="f-annee" class="doc-filtre-select"></select>
+            <select id="f-artiste" class="doc-filtre-select"></select>
+            <select id="f-client" class="doc-filtre-select"></select>
+            <button type="button" class="doc-reset" id="f-reset" hidden>Réinitialiser</button>
+            <span class="doc-compteur-barre" id="doc-compteur"></span>
+            <div class="doc-vue-bascule" role="group" aria-label="Mode d'affichage">
+              <button type="button" data-vue="liste">Liste</button>
+              <button type="button" data-vue="explorateur">Explorateur</button>
+            </div>
           </div>
+          <div id="doc-zone"></div>
         </div>
       </div>
-
-      <div class="doc-vue-bascule" role="group" aria-label="Mode d'affichage">
-        <button type="button" data-vue="liste">Liste</button>
-        <button type="button" data-vue="explorateur">Explorateur</button>
-      </div>
-
-      <div id="doc-zone"></div>
     </div>
   `;
 
   const zone = contenu.querySelector('#doc-zone');
   const inputRecherche = contenu.querySelector('#doc-recherche');
+  const navTypes = contenu.querySelector('#doc-cat-nav');
 
   function majBascule() {
     contenu.querySelectorAll('.doc-vue-bascule button').forEach((b) => b.classList.toggle('actif', b.dataset.vue === vue));
   }
 
-  async function recharger() { docs = await window.api.documentsListe(); peindre(); }
+  // Barre latérale des types (Tous + types présents avec compteurs). Dépend de
+  // `docs` : reconstruite au chargement et après une recharge, pas à chaque
+  // peinture. L'état actif suit fType via majSidebarActif().
+  function construireSidebar() {
+    const typesPresents = TYPE_ORDER.filter((t) => docs.some((d) => d.type === t));
+    const compte = (t) => docs.filter((d) => d.type === t).length;
+    const item = (cat, libelle, svg, n) =>
+      `<button type="button" class="cat-item" data-cat="${cat}">
+         <span class="cat-ic">${svg}</span>
+         <span class="cat-item-libelle">${ech(libelle)}</span>
+         ${n != null ? `<span class="cat-compte">${n}</span>` : ''}
+       </button>`;
+    const svgTous = svgWrap('<rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/>');
+    navTypes.innerHTML = item('tous', 'Tous les documents', svgTous, docs.length)
+      + typesPresents.map((t) => item(t, LIBELLE_PLURIEL[t], svgSidebarType(t), compte(t))).join('');
+    majSidebarActif();
+  }
+  function majSidebarActif() {
+    navTypes.querySelectorAll('.cat-item').forEach((b) => b.classList.toggle('actif', b.dataset.cat === fType));
+  }
+
+  // Options des filtres secondaires (Année, Artiste, Client). Dépendent de
+  // `docs` ; les valeurs choisies (fAnnee…) sont préservées.
+  function construireFiltres() {
+    const opt = (v, l, sel) => `<option value="${ech(v)}"${sel ? ' selected' : ''}>${ech(l)}</option>`;
+    contenu.querySelector('#f-annee').innerHTML = opt('tous', 'Toutes les années', fAnnee === 'tous')
+      + distinct(docs.map(annee)).sort((a, b) => b.localeCompare(a)).map((y) => opt(y, y, fAnnee === y)).join('');
+    contenu.querySelector('#f-artiste').innerHTML = opt('tous', 'Tous les artistes', fArtiste === 'tous')
+      + distinct(docs.map((d) => d.artiste_nom)).sort((a, b) => sansAccents(a).localeCompare(sansAccents(b))).map((a) => opt(a, a, fArtiste === a)).join('');
+    contenu.querySelector('#f-client').innerHTML = opt('tous', 'Tous les clients', fClient === 'tous')
+      + distinct(docs.map((d) => d.client_nom)).sort((a, b) => sansAccents(a).localeCompare(sansAccents(b))).map((c) => opt(c, c, fClient === c)).join('');
+    majReset();
+  }
+  function majReset() {
+    const actif = !(fType === 'tous' && fAnnee === 'tous' && fArtiste === 'tous' && fClient === 'tous' && !recherche);
+    contenu.querySelector('#f-reset').hidden = !actif;
+  }
+
+  // Filtre commun aux deux vues : type (barre latérale), année, artiste, client.
+  // La recherche est appliquée à part (liste : ici ; explorateur : à plat).
+  function passeFiltres(d, avecRecherche) {
+    if (fType !== 'tous' && d.type !== fType) return false;
+    if (fAnnee !== 'tous' && annee(d) !== fAnnee) return false;
+    if (fArtiste !== 'tous' && d.artiste_nom !== fArtiste) return false;
+    if (fClient !== 'tous' && d.client_nom !== fClient) return false;
+    if (avecRecherche && recherche && !sansAccents([d.numero, d.oeuvre_titre, d.artiste_nom, d.client_nom, LIBELLE[d.type]].filter(Boolean).join(' ')).includes(recherche)) return false;
+    return true;
+  }
+
+  async function recharger() { docs = await window.api.documentsListe(); construireSidebar(); construireFiltres(); peindre(); }
 
   function peindre() {
     majBascule();
+    majSidebarActif();
+    majReset();
     if (vue === 'explorateur') peindreExplorateur();
     else peindreListe();
   }
@@ -167,62 +236,40 @@ export async function rendreDocuments(contenu) {
   }
 
   function peindreListe() {
-    const opt = (v, l, sel) => `<option value="${ech(v)}"${sel ? ' selected' : ''}>${ech(l)}</option>`;
-    const typesPresents = TYPE_ORDER.filter((t) => docs.some((d) => d.type === t));
-    zone.innerHTML = `
-      <div class="doc-filtres-barre">
-        <div class="groupe-filtre"><label for="f-type">Type</label><select id="f-type">${opt('tous', 'Tous les types', fType === 'tous')}${typesPresents.map((t) => opt(t, LIBELLE_PLURIEL[t], fType === t)).join('')}</select></div>
-        <div class="groupe-filtre"><label for="f-annee">Année</label><select id="f-annee">${opt('tous', 'Toutes les années', fAnnee === 'tous')}${distinct(docs.map(annee)).sort((a, b) => b.localeCompare(a)).map((y) => opt(y, y, fAnnee === y)).join('')}</select></div>
-        <div class="groupe-filtre"><label for="f-artiste">Artiste</label><select id="f-artiste">${opt('tous', 'Tous les artistes', fArtiste === 'tous')}${distinct(docs.map((d) => d.artiste_nom)).sort((a, b) => sansAccents(a).localeCompare(sansAccents(b))).map((a) => opt(a, a, fArtiste === a)).join('')}</select></div>
-        <div class="groupe-filtre"><label for="f-client">Client</label><select id="f-client">${opt('tous', 'Tous les clients', fClient === 'tous')}${distinct(docs.map((d) => d.client_nom)).sort((a, b) => sansAccents(a).localeCompare(sansAccents(b))).map((c) => opt(c, c, fClient === c)).join('')}</select></div>
-        <button type="button" class="doc-reset" id="f-reset" ${(fType === 'tous' && fAnnee === 'tous' && fArtiste === 'tous' && fClient === 'tous' && !recherche) ? 'hidden' : ''}>Réinitialiser</button>
-        <span class="doc-compteur-barre" id="doc-compteur"></span>
-      </div>
-      <div id="doc-liste"></div>`;
+    zone.innerHTML = `<div id="doc-liste"></div>`;
 
-    const liste = docs.map((d, i) => ({ d, i })).filter(({ d }) => {
-      if (fType !== 'tous' && d.type !== fType) return false;
-      if (fAnnee !== 'tous' && annee(d) !== fAnnee) return false;
-      if (fArtiste !== 'tous' && d.artiste_nom !== fArtiste) return false;
-      if (fClient !== 'tous' && d.client_nom !== fClient) return false;
-      if (recherche && !sansAccents([d.numero, d.oeuvre_titre, d.artiste_nom, d.client_nom, LIBELLE[d.type]].filter(Boolean).join(' ')).includes(recherche)) return false;
-      return true;
-    });
+    const liste = docs.map((d, i) => ({ d, i })).filter(({ d }) => passeFiltres(d, true));
 
-    zone.querySelector('#doc-compteur').textContent = `${liste.length} document${liste.length > 1 ? 's' : ''}`;
+    contenu.querySelector('#doc-compteur').textContent = `${liste.length} document${liste.length > 1 ? 's' : ''}`;
     const elListe = zone.querySelector('#doc-liste');
 
     if (!liste.length) {
       elListe.innerHTML = `<div class="doc-vide-global">${docs.length === 0
         ? 'Aucun document produit pour l\'instant. Les documents apparaîtront ici dès leur génération.'
         : 'Aucun document ne correspond à ces filtres.'}</div>`;
-    } else {
-      let html = '';
-      for (const type of TYPE_ORDER) {
-        const items = liste.filter(({ d }) => d.type === type).sort((a, b) => String(b.d.date).localeCompare(String(a.d.date)));
-        if (!items.length) continue;
-        const annees = distinct(items.map(({ d }) => annee(d)));
-        let corps = '';
-        if (annees.length > 1) {
-          for (const an of annees.sort((a, b) => b.localeCompare(a))) {
-            corps += `<div class="doc-annee-sep">${ech(an)}</div>` + items.filter(({ d }) => annee(d) === an).map(({ d, i }) => ligneListe(d, i)).join('');
-          }
-        } else { corps = items.map(({ d, i }) => ligneListe(d, i)).join(''); }
-        html += `<section class="doc-type-bloc">
-            <div class="doc-type-titre"><span class="doc-type-ic ${classeIconeType(type)}">${svgWrap(svgPourKind(kindDeDoc({ type })))}</span><span class="doc-type-nom">${ech(LIBELLE_PLURIEL[type])}</span><span class="doc-type-compte">${items.length}</span></div>
-            <div class="doc-carte">${corps}</div>
-          </section>`;
-      }
-      elListe.innerHTML = html;
-      bindListe(elListe);
+      return;
     }
 
-    zone.querySelector('#f-type').addEventListener('change', (e) => { fType = e.target.value; peindreListe(); });
-    zone.querySelector('#f-annee').addEventListener('change', (e) => { fAnnee = e.target.value; peindreListe(); });
-    zone.querySelector('#f-artiste').addEventListener('change', (e) => { fArtiste = e.target.value; peindreListe(); });
-    zone.querySelector('#f-client').addEventListener('change', (e) => { fClient = e.target.value; peindreListe(); });
-    const reset = zone.querySelector('#f-reset');
-    if (reset) reset.addEventListener('click', () => { fType = fAnnee = fArtiste = fClient = 'tous'; recherche = ''; inputRecherche.value = ''; peindreListe(); });
+    // Quand un type précis est choisi dans la barre latérale, on n'affiche pas
+    // le titre de type au-dessus de la carte (redondant avec la sélection).
+    const typeUnique = fType !== 'tous';
+    let html = '';
+    for (const type of TYPE_ORDER) {
+      const items = liste.filter(({ d }) => d.type === type).sort((a, b) => String(b.d.date).localeCompare(String(a.d.date)));
+      if (!items.length) continue;
+      const annees = distinct(items.map(({ d }) => annee(d)));
+      let corps = '';
+      if (annees.length > 1) {
+        for (const an of annees.sort((a, b) => b.localeCompare(a))) {
+          corps += `<div class="doc-annee-sep">${ech(an)}</div>` + items.filter(({ d }) => annee(d) === an).map(({ d, i }) => ligneListe(d, i)).join('');
+        }
+      } else { corps = items.map(({ d, i }) => ligneListe(d, i)).join(''); }
+      const entete = typeUnique ? '' :
+        `<div class="doc-type-titre"><span class="doc-type-ic ${classeIconeType(type)}">${svgWrap(svgPourKind(kindDeDoc({ type })))}</span><span class="doc-type-nom">${ech(LIBELLE_PLURIEL[type])}</span><span class="doc-type-compte">${items.length}</span></div>`;
+      html += `<section class="doc-type-bloc">${entete}<div class="doc-carte">${corps}</div></section>`;
+    }
+    elListe.innerHTML = html;
+    bindListe(elListe);
   }
 
   function bindListe(elListe) {
@@ -260,8 +307,13 @@ export async function rendreDocuments(contenu) {
 
   // ──────────────────────── Vue EXPLORATEUR ────────────────────────
   function construireArbre() {
+    // L'arbre respecte la barre latérale et les filtres (sauf la recherche,
+    // gérée à plat). Quand un type précis est choisi, on saute le niveau
+    // « Type » (Année → fichiers directement), la barre latérale le portant déjà.
+    const sauterType = fType !== 'tous' && fType !== 'pochette';
     const tree = {};
     for (const d of docs) {
+      if (!passeFiltres(d, false)) continue;
       const an = annee(d);
       const A = tree[an] || (tree[an] = {});
       if (d.type === 'pochette') {
@@ -271,9 +323,21 @@ export async function rendreDocuments(contenu) {
         const arr = (d.contenu || []).map((c) => entreeContenu(c, d.date));
         arr._dossier = d.pdf_path; // pour « Ouvrir le dossier »
         C[d.numero] = arr;
+      } else if (sauterType) {
+        // Année → fichiers (le tableau est directement sous l'année).
+        if (!Array.isArray(A._fichiers)) A._fichiers = [];
+        A._fichiers.push(entreeDoc(d));
       } else {
         const lbl = TYPE_DOSSIER[d.type] || 'Autres';
         (A[lbl] || (A[lbl] = [])).push(entreeDoc(d));
+      }
+    }
+    // Quand on saute le niveau type, remplacer chaque nœud année {_fichiers:[...]}
+    // par le tableau lui-même : Année → [fichiers].
+    if (sauterType) {
+      for (const an of Object.keys(tree)) {
+        const node = tree[an];
+        if (Array.isArray(node._fichiers)) tree[an] = node._fichiers;
       }
     }
     return tree;
@@ -314,8 +378,16 @@ export async function rendreDocuments(contenu) {
     </div>`;
   }
 
+  // Compte récursif des fichiers d'un arbre (feuilles = tableaux).
+  function compterFichiers(node) {
+    if (Array.isArray(node)) return node.length;
+    return Object.keys(node).reduce((s, k) => s + compterFichiers(node[k]), 0);
+  }
+
   function peindreExplorateur() {
     const tree = construireArbre();
+    const nTotal = compterFichiers(tree);
+    contenu.querySelector('#doc-compteur').textContent = `${nTotal} document${nTotal > 1 ? 's' : ''}`;
 
     // Recherche globale → résultats à plat
     if (recherche) {
@@ -393,6 +465,24 @@ export async function rendreDocuments(contenu) {
     }
   }
 
+  // Barre latérale des types : pilote fType pour les DEUX vues.
+  navTypes.addEventListener('click', (e) => {
+    const b = e.target.closest('.cat-item');
+    if (!b || b.dataset.cat === fType) return;
+    fType = b.dataset.cat;
+    chemin = []; // repartir de la racine de l'explorateur pour le nouveau type
+    peindre();
+  });
+
+  // Filtres secondaires permanents (Année, Artiste, Client).
+  contenu.querySelector('#f-annee').addEventListener('change', (e) => { fAnnee = e.target.value; peindre(); });
+  contenu.querySelector('#f-artiste').addEventListener('change', (e) => { fArtiste = e.target.value; peindre(); });
+  contenu.querySelector('#f-client').addEventListener('change', (e) => { fClient = e.target.value; peindre(); });
+  contenu.querySelector('#f-reset').addEventListener('click', () => {
+    fType = fAnnee = fArtiste = fClient = 'tous'; recherche = ''; inputRecherche.value = ''; chemin = [];
+    peindre();
+  });
+
   inputRecherche.addEventListener('input', (e) => { recherche = sansAccents(e.target.value || ''); peindre(); });
   contenu.querySelectorAll('.doc-vue-bascule button').forEach((b) => b.addEventListener('click', () => {
     if (vue === b.dataset.vue) return;
@@ -401,5 +491,7 @@ export async function rendreDocuments(contenu) {
     peindre();
   }));
 
+  construireSidebar();
+  construireFiltres();
   peindre();
 }
