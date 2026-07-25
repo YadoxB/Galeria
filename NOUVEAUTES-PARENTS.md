@@ -12,6 +12,30 @@
 
 ---
 
+## Choisir où sont rangées vos données (et les sortir du nuage)
+
+Vos données (catalogue, photos, documents, sauvegardes) sont dans un dossier
+nommé **Galeria**. Il pouvait être difficile à retrouver, parce que **OneDrive**
+déplace parfois le dossier « Documents » dans le nuage — et, du même coup, vos
+renseignements de clients s'y trouvaient copiés.
+
+Dans **Réglages → Données**, une nouvelle section **« Dossier de données
+Galeria »** vous montre où sont vos données et vous permet de les ranger là où
+vous voulez :
+
+- Si vos données sont dans un dossier synchronisé par OneDrive, Galeria vous
+  **prévient** et vous propose de les déplacer vers un dossier **sur votre
+  ordinateur seulement** (par exemple dans votre dossier personnel).
+- Le bouton **« Déplacer le dossier… »** s'occupe de tout : il fait **une
+  sauvegarde d'abord**, déplace vos fichiers, puis redémarre Galeria. Rien n'est
+  perdu, même si quelque chose se passe mal.
+- Si votre dossier Galeria se trouve déjà ailleurs, le petit lien **« Indiquer à
+  Galeria où les retrouver »** permet de pointer l'application dessus, sans rien
+  déplacer.
+
+Vous pouvez aussi voir et **ouvrir** l'emplacement actuel d'un clic pour le
+retrouver dans l'Explorateur Windows.
+
 ## Modifier un document avant de l'imprimer
 
 Le bouton pour retoucher un document s'appelle maintenant **« Modifier ce

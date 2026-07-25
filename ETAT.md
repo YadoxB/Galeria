@@ -1,37 +1,41 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-07-19.
+> Date de cette sauvegarde : 2026-07-24.
 >
 > **Voir aussi** : `CHANGELOG.md` (historique versionné détaillé) et `A-VALIDER.md` (questions ouvertes avec les parents).
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-07-19)
+## ▶ Reprise — par où commencer (préparé le 2026-07-24)
 
-**Branche de travail : `claude/galeria-security-phase-f35c87`, 20 commits d'avance sur `master`, NON fusionnée et NON publiée.** `package.json` = `0.10.0` (inchangé ; on numérotera à la publication). `master` porte la v0.10.0 (robustesse) mais **les parents sont sur une version antérieure** — rien ne leur est encore parvenu.
+**Branche de travail : `claude/galeria-data-folder-migration-18aa86`** = la branche `claude/galeria-security-phase-f35c87` (verrou + retours d'usage) **+ le dernier lot #1 (dossier de données)**. **NON fusionnée et NON publiée.** `package.json` = `0.10.0` (inchangé ; on numérotera à la publication). `master` porte la v0.10.0 (robustesse) mais **les parents sont sur une version antérieure** — rien ne leur est encore parvenu.
 
-Cette branche a d'abord repris la **phase Sécurité** parquée, puis enchaîné un **chantier « Retours d'usage »** (retours réels des parents). Tout est vérifié par bancs d'essai Electron ; **Dave a confirmé chaque lot dans l'app**.
+> **Note branches** : `security-phase-f35c87` (dans son propre worktree) reste à `d398e58` ; tout le travail fini vit désormais sur `galeria-data-folder-migration-18aa86` (security-phase + 6 commits). C'est cette dernière qui porte le chantier « Retours d'usage » **complet**. Au moment de livrer, c'est elle qu'on fusionne dans `master` (elle contient tout).
+
+Cette branche a d'abord repris la **phase Sécurité** parquée, enchaîné un **chantier « Retours d'usage »** (retours réels des parents), puis livré son **dernier lot #1**. Tout est vérifié par bancs d'essai ; **Dave a confirmé chaque lot dans l'app** — y compris le déplacement réel du dossier de données (2026-07-24).
 
 ### Ce qui est fait sur cette branche
 
 - **Sécurité — verrou léger** (`141f41f`, `6009cab`, `0c75244`) : code 4–6 chiffres (empreinte scrypt, jamais en clair), écran de déverrouillage à pavé numérique, inactivité/blur, **question de secours** pour un code oublié. Correctif du pavé numérique (NumLock). **Confirmé.** *Le volet chiffrement reste PARQUÉ* (voir la section ③ Sécurité plus bas — décision de Dave, défaut de fond du plan d'origine).
 - **Retours d'usage** (voir la section dédiée plus bas pour le détail) : lettre de remerciement remaniée (logo, date à gauche/bas, signature à droite avec espace manuscrit, site web, pied allégé), compteur d'accueil = **œuvres disponibles**, menu **Documents** sur la fiche artiste, **Réglages** en barre latérale (7 catégories, profil galerie fondu dedans, catégorie **Finances**, sélecteur de logo), **édition des documents** (bouton « Modifier ce document… », **saut de page** dans l'éditeur, Démarche/Curriculum sur pages neuves, certificat non écrasé, édition depuis la section Documents), **barre latérale** aussi pour **Documents** (par type) et **Outils** (2 calculateurs), et **typographie française** (espaces insécables) sur **tous** les gabarits.
+- **#1 Dossier de données — choisir et déplacer l'emplacement (dernier lot, LIVRÉ 2026-07-24, confirmé par Dave)** : commits `42988fd` (Pas A, papier d'adresse dans `userData`), `db3c509` (Pas B, moteur `src/db/deplacer-donnees.js`), `6db2c69` (Pas C-1, branchement démarrage + IPC), `e3aa8f8` (Pas C-2, écran Réglages → Données), `7581a99` (défaut = dossier personnel). Carte « Dossier de données Galeria », avertissement OneDrive + suggestion locale, « Déplacer le dossier… » (sauvegarde d'abord → déplacement au redémarrage base fermée, renommage même disque / copie vérifiée autre disque) et lien « Indiquer à Galeria où les retrouver ». Détails dans la section « Retours d'usage » plus bas.
 
 ### Ce qui reste
 
-- **Chantier « Retours d'usage » — dernier lot : #1 dossier de données** (choisir + **migrer** l'emplacement, cause OneDrive). **Pas commencé.** Le plus délicat : déplace base + photos + documents + sauvegardes. À faire seul, plan détaillé validé avant de coder, **sauvegarde obligatoire d'abord**. État des lieux dans la section « Retours d'usage » (patron : `migrerAncienDossierSiPresent` dans `paths.js`).
+- **Chantier « Retours d'usage » : TERMINÉ.** Reste, hors chantier : livraison (gestes de Dave ci-dessous) et documentation à jour (faite).
 - **Volet chiffrement** de la Sécurité : parqué (analyse consignée plus bas).
+- **Outils complémentaires (page Outils)** : brief fourni (`Brief_ClaudeCode_OutilsComplementaires.md`) pour 4 calculatrices (taxes, conversion unités/devises, plan de versements, poids d'expédition). **Prochain chantier proposé par Dave**, à faire après ce lot. Ne pas suivre la disposition suggérée du brief (consigne de Dave). Questions à reporter dans `A-VALIDER.md` (taux de change, euro, facteurs de poids, intérêts sur versements).
 
 ### ⚠️ Gestes de livraison (à faire par Dave, pas par Claude — ils sortent vers l'extérieur)
 
 ```
-# quand Dave décide de livrer :
-git checkout master && git merge claude/galeria-security-phase-f35c87
+# quand Dave décide de livrer (la branche data-folder-migration contient TOUT) :
+git checkout master && git merge claude/galeria-data-folder-migration-18aa86
 git push origin master     # publie le code sur GitHub
 npm run release            # bâtit et publie → auto-update chez les parents
 ```
-La branche n'est **pas** fusionnée : Dave voulait finir les retours avant. Ne pas fusionner/pousser/publier sans son accord explicite.
+La branche n'est **pas** fusionnée : Dave enchaîne d'abord les outils complémentaires. Ne pas fusionner/pousser/publier sans son accord explicite. (Rappel : `security-phase-f35c87` est incluse dans `data-folder-migration` — inutile de la fusionner séparément.)
 
 ### Points de méthode / dette technique (à proposer, non planifiés)
 
@@ -124,11 +128,19 @@ Trois issues présentées à Dave :
 - **Typographie française sur tous les gabarits : ✓ livré** (`b62eb98`). Espaces insécables devant `! ? ; :` et autour des guillemets — étend le correctif de la lettre au certificat, à la facture artiste, au rapport et à la présentation (annexe/catalogue n'en avaient pas besoin).
 - **Lot 2 — Réglages en barre latérale : ✓ livré.** Refonte maître-détail à 7 catégories (La galerie · Finances · Documents · Données · Sécurité · IA · Application). Profil galerie fondu dans « La galerie » (page + bloc sidebar retirés, route `profil-galerie` redirigée). Catégorie **Finances** réunissant numéros TPS/TVQ + taux + cote. **Sélecteur de fichier logo** ajouté. Concept repris de `121c01a` mais réappliqué à la main (le commit d'origine aurait réintroduit doublon de restauration + onglet chiffrement parqué). Aucune logique changée, tous les IDs préservés, un seul formulaire (pas de perte à la bascule). Démo `demos/reglages-nav.html` (validée par Dave). 24 contrôles Electron au vert.
 - **#3 (prix pré-rempli) : ANNULÉ** — Dave testait une œuvre sans prix ; comportement correct.
-- **#1 (dossier de données) : à faire — dernier lot, le plus risqué.** Décision de Dave : **migrer le dossier existant** (pas seulement choisir à l'installation), car la base tourne déjà chez les parents. Détails d'état des lieux ci-dessous.
+- **#1 (dossier de données) : ✓ LIVRÉ (2026-07-24), confirmé par Dave.** Détails ci-dessous.
 
-### #1 — Emplacement du dossier `Galeria` (reste à faire, avec migration)
+### #1 — Emplacement du dossier `Galeria` (LIVRÉ, avec déplacement)
 
-**Codé en dur** : `getDataDir()` = `Documents\Galeria` (`src/db/paths.js:14-16`). Non configurable. Seul le dossier des **sauvegardes** l'est déjà (`config.sauvegardes.dossier`, `backup.js:26-38`). Il existe une migration de dossier au démarrage (`migrerAncienDossierSiPresent`, `paths.js:18-39`, `GalerieApp` → `Galeria`) qui sert de **patron pour le déplacement**. Cause probable du problème des parents : **OneDrive redirige `Documents`**. Dave veut pouvoir **déplacer un dossier existant** (base, photos, documents, sauvegardes, config) — sauvegarde préalable obligatoire, fermeture/redémarrage propres, gestion des chemins verrouillés (OneDrive).
+**Livré en 4 pas approuvés un à un** (méthode de Dave), chacun prouvé par banc d'essai autonome (Claude ne capte pas la fenêtre Electron) puis confirmé par Dave dans l'app :
+
+- **Pas A — papier d'adresse** (`42988fd`) : `getDataDir()` lit un pointeur `userData\emplacement.json` (userData = `AppData\Roaming\Galeria`, **jamais redirigé par OneDrive** ; ne peut pas vivre dans le dossier de données lui-même). Défaut inchangé (`Documents\Galeria`) tant qu'aucun déplacement. `ecrireEmplacementConfigure` (atomique), `lireEmplacementConfigure` (ne plante jamais, ne vérifie pas l'existence — un lecteur débranché doit donner une erreur claire, pas un repli silencieux). Migration héritée `GalerieApp→Galeria` ignorée si un emplacement perso est configuré.
+- **Pas B — moteur** (`db3c509`, `src/db/deplacer-donnees.js`) : contrôles préalables (source existe, destination absolue **vérifiée avant `path.resolve`**, ≠ source, pas dans la source, absente ou vide, espace disque suffisant si autre volume) ; **sauvegarde brute vérifiée d'abord** (incluse dans le déplacement) ; **même disque = `renameSync`**, **autre disque = `EXDEV` → copie récursive avec progression + vérification (fichiers, tailles, SHA-256 de la base) puis suppression de l'ancien** ; retrait du dossier vide autorisé avant renommage (Windows refuse de renommer sur un dossier existant) ; verrou/`ENOSPC` = messages clairs, données intactes, pointeur non modifié. Le pointeur n'est écrit qu'après réussite vérifiée.
+- **Pas C-1 — branchement** (`6db2c69`) : demande de déplacement déposée dans `userData\deplacement-en-attente.json`, exécutée **au démarrage, base fermée, avant `ensureDirectories`** (`executerDeplacementEnAttente` dans `main.js`), consommée d'abord (jamais de boucle sur échec). Helpers `verifierDestination` (validation instantanée), `estDossierGaleriaValide` (présence `galerie.db`), `estSousOneDrive` (env `OneDrive*` puis segment de chemin). IPC `donnees:*`.
+- **Pas C-2 — écran** (`e3aa8f8`) : carte « Dossier de données Galeria » en tête de Réglages → Données (emplacement + Ouvrir, pastille local/nuage, bandeau OneDrive doux, gros bouton « Déplacer le dossier… », lien discret « Indiquer à Galeria où les retrouver »). Confirmations via les dialogues internes. CSS dans `styles.css` (theme.css intouché). Démo `demos/reglages-donnees.html`.
+- **Défaut de destination** (`7581a99`) : `app.getPath('home')\Galeria` (dossier personnel de l'utilisateur, écriture garantie, hors OneDrive) — choix de Dave après discussion (préféré à `C:\Galeria`).
+
+**Deux modes** offerts : *Déplacer* (déplace tout) et *Adopter* (« Indiquer où se trouvent vos données » — pointe sur un dossier Galeria existant sans rien déplacer, cas OneDrive/réinstallation). Bancs d'essai jetables dans le scratchpad (non commités, convention du projet).
 
 ### « Version modifiée » (#2) — à traiter dans un lot ultérieur
 

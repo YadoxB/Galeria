@@ -10,6 +10,34 @@ identifiants.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Choisir et déplacer l'emplacement du dossier de données (retour d'usage :
+  dossier introuvable à cause de OneDrive).** Nouvelle carte **« Dossier de
+  données Galeria »** en tête de Réglages → Données : elle affiche l'emplacement
+  actuel, avertit en douceur si le dossier est **synchronisé par OneDrive**
+  (données copiées dans le nuage) et propose de le déplacer vers un dossier
+  **local** (par défaut `C:\Users\<nom>\Galeria`, hors OneDrive). Deux gestes :
+  **« Déplacer le dossier… »** (déplace base, photos, documents et sauvegardes)
+  et un lien discret **« Indiquer à Galeria où les retrouver »** (pointer vers un
+  dossier Galeria déjà présent, sans rien déplacer). Le déplacement fait une
+  **sauvegarde de sûreté d'abord**, s'exécute **au redémarrage, base fermée**
+  (renommage instantané sur le même disque, copie vérifiée entre deux disques
+  avant d'effacer l'ancien), gère les chemins verrouillés (OneDrive/Explorateur)
+  avec un message clair, et ne touche à rien en cas d'échec. L'adresse du dossier
+  est mémorisée hors du dossier lui-même (`userData`, jamais redirigé par
+  OneDrive). *Fondations :* `src/db/paths.js` (papier d'adresse + demande de
+  déplacement), `src/db/deplacer-donnees.js` (moteur vérifié par banc d'essai),
+  branchement au démarrage et IPC dans `src/main.js`, écran dans
+  `src/app/vues/reglages.js`. Démo `demos/reglages-donnees.html`.
+
+### Sécurité
+
+- **Sortie possible du nuage OneDrive.** Le déplacement du dossier de données
+  vers un emplacement local permet de retirer les renseignements des clients et
+  des artistes d'un dossier synchronisé dans le nuage Microsoft — conforme au
+  principe « tout reste local » et à la Loi 25.
+
 ### Modifié
 
 - **Pages Documents et Outils en barre latérale (cohérence avec les Réglages).**
