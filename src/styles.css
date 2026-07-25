@@ -4078,12 +4078,16 @@ details.bloc.pliable > .bloc-corps {
 .zone-outil-cotes       { grid-column: span 4; padding: var(--s3) var(--s4); }
 .zone-outil-commission     { grid-column: span 8; padding: var(--s3) var(--s4); }
 .zone-outil-commission-ref { grid-column: span 4; padding: var(--s3) var(--s4); }
+.zone-outil-taxes          { grid-column: span 7; padding: var(--s3) var(--s4); }
+.zone-outil-taxes-res      { grid-column: span 5; padding: var(--s3) var(--s4); }
 
 @media (max-width: 1200px) {
   .zone-outil-calc,
   .zone-outil-cotes,
   .zone-outil-commission,
-  .zone-outil-commission-ref { grid-column: span 12; }
+  .zone-outil-commission-ref,
+  .zone-outil-taxes,
+  .zone-outil-taxes-res { grid-column: span 12; }
 }
 
 /* Calculateur de commission — cases taxes, tuile de versement, détail */
@@ -5542,6 +5546,8 @@ select.lot-in.st-pretee { color: var(--info); }
 
 /* Barre latérale des catégories */
 .reglages-layout .cat-nav { position: sticky; top: var(--s3); display: flex; flex-direction: column; gap: 4px; }
+.cat-groupe { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--stone); font-weight: 600; padding: 12px 13px 5px; }
+.cat-groupe:first-child { padding-top: 4px; }
 .cat-item { position: relative; display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-radius: var(--r-btn); cursor: pointer; color: var(--slate); font-family: var(--font-ui); font-size: 14px; font-weight: 500; border: 1px solid transparent; background: none; text-align: left; width: 100%; }
 .cat-item:hover { background: var(--cloud); color: var(--ink); }
 .cat-item.actif { background: var(--porcelain); border-color: var(--mist); color: var(--ink); font-weight: 600; box-shadow: var(--ombre-carte); }

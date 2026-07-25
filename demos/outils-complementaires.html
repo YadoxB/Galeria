@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo Outils complémentaires (4 calculatrices)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+    .demo-bar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: var(--s3); padding: var(--s2) var(--s4); background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .note { font-size: 12px; color: rgba(252,250,244,0.7); }
+
+    main { max-width: 1180px; margin: 0 auto; padding: var(--s5) var(--s4) calc(var(--s6) * 2); }
+    .reglages-entete h1 { margin: 0; font-family: var(--font-titre); font-weight: 500; font-size: 34px; color: var(--ink); }
+    .reglages-entete-meta { margin: 6px 0 0; color: var(--slate); font-size: 14px; }
+
+    .reglages-layout { display: grid; grid-template-columns: 236px 1fr; gap: var(--s4); align-items: start; margin-top: var(--s4); }
+    .cat-nav { position: sticky; top: var(--s4); display: flex; flex-direction: column; gap: 3px; }
+    .cat-groupe { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--stone); font-weight: 600; padding: 12px 13px 5px; }
+    .cat-item { position: relative; display: flex; align-items: center; gap: 11px; padding: 10px 13px; border-radius: var(--r-btn); cursor: pointer; color: var(--slate); font-family: var(--font-ui); font-size: 14px; font-weight: 500; border: 1px solid transparent; background: none; text-align: left; width: 100%; }
+    .cat-item:hover { background: var(--cloud); color: var(--ink); }
+    .cat-item.actif { background: var(--porcelain); border-color: var(--mist); color: var(--ink); font-weight: 600; box-shadow: var(--ombre-carte); }
+    .cat-item.actif::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--warm-gold); }
+    .cat-ic { width: 18px; height: 18px; flex: none; color: var(--stone); }
+    .cat-item.actif .cat-ic { color: var(--warm-gold); }
+
+    .cat-zone { min-width: 0; }
+    .cat-panneau { display: none; }
+    .cat-panneau.actif { display: block; animation: fade .18s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .panneau-tete { margin-bottom: var(--s3); }
+    .panneau-tete h2 { font-family: var(--font-titre); font-weight: 600; font-size: 26px; color: var(--ink); margin: 0; }
+    .panneau-tete .desc { color: var(--slate); font-size: 13px; margin: 4px 0 0; }
+
+    .grille-bento { display: grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap: var(--s3); align-items: start; }
+    .carte { background: var(--porcelain); border: 1px solid var(--mist); border-radius: var(--r-carte); box-shadow: var(--ombre-carte); padding: var(--s3) var(--s4); }
+    .span-12 { grid-column: span 12; } .span-7 { grid-column: span 7; } .span-6 { grid-column: span 6; } .span-5 { grid-column: span 5; }
+    .carte h3 { font-family: var(--font-titre); font-weight: 600; font-size: 20px; color: var(--ink); margin: 0 0 4px; }
+    .aide-champ { color: var(--slate); font-size: 12.5px; line-height: 1.5; margin: 6px 0 0; }
+
+    .grille-form { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+    .form-champ { display: flex; flex-direction: column; gap: 5px; margin-top: var(--s3); }
+    .form-champ:first-child { margin-top: 0; }
+    label { font-size: 13px; color: var(--slate); font-weight: 500; }
+    input, select { height: 40px; border: 1px solid var(--mist); border-radius: 10px; padding: 0 12px; background: var(--porcelain); color: var(--ink); font: inherit; font-size: 14px; }
+    input:focus, select:focus { outline: none; border-color: var(--warm-gold); box-shadow: 0 0 0 4px rgba(201,154,61,0.18); }
+
+    .segmente { display: inline-flex; background: var(--soft-ivory); border: 1px solid var(--mist); border-radius: 10px; padding: 3px; gap: 3px; }
+    .segmente button { border: none; background: none; font: inherit; font-size: 13px; font-weight: 500; color: var(--slate); padding: 6px 14px; border-radius: 7px; cursor: pointer; }
+    .segmente button.actif { background: var(--porcelain); color: var(--ink); font-weight: 600; box-shadow: var(--ombre-carte); }
+
+    .taxes-cases { display: flex; gap: 18px; align-items: center; }
+    .taxes-cases label { display: inline-flex; align-items: center; gap: 7px; color: var(--ink); font-weight: 500; }
+    input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--warm-gold); }
+
+    .conv-ligne { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: end; margin-top: var(--s3); }
+    .conv-eq { font-size: 22px; color: var(--stone); padding-bottom: 8px; }
+    .conv-champ { display: flex; gap: 6px; }
+    .conv-champ input { flex: 1; min-width: 0; }
+    .conv-champ select { width: 92px; flex: none; }
+
+    .res { margin-top: var(--s3); background: var(--soft-ivory); border: 1px solid var(--mist); border-radius: 12px; padding: 14px 16px; }
+    .res .ligne { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; }
+    .res .ligne.sous { border-top: 1px solid var(--mist); margin-top: 4px; padding-top: 8px; }
+    .res .ligne.total { border-top: 2px solid var(--stone); margin-top: 6px; padding-top: 9px; font-weight: 700; font-size: 16px; color: var(--ink); }
+    .res .ligne .lib { color: var(--slate); }
+    .res .ligne .montant { font-variant-numeric: tabular-nums; }
+    .res .ligne.total .lib { color: var(--ink); }
+
+    .tuile { display: flex; flex-direction: column; gap: 3px; background: var(--deep-navy); color: var(--soft-ivory); border-radius: 12px; padding: 14px 16px; margin-top: var(--s3); }
+    .tuile .lib { font-size: 12px; color: rgba(252,250,244,0.75); }
+    .tuile .val { font-size: 26px; font-weight: 700; font-family: var(--font-titre); color: var(--warm-gold); }
+
+    table.vers { width: 100%; border-collapse: collapse; margin-top: var(--s3); font-size: 13.5px; }
+    table.vers th, table.vers td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--mist); }
+    table.vers th { color: var(--stone); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+    table.vers td.montant { text-align: right; font-variant-numeric: tabular-nums; }
+    table.vers tr:last-child td { border-bottom: none; font-weight: 600; }
+
+    .btn { font: inherit; font-size: 13px; font-weight: 500; height: 38px; padding: 0 14px; border-radius: 10px; cursor: pointer; border: 1px solid var(--mist); background: var(--porcelain); color: var(--ink); }
+    .btn:hover { background: var(--cloud); }
+    .btn-principal { background: var(--warm-gold); border-color: var(--warm-gold); color: var(--soft-ivory); font-weight: 600; }
+
+    .avert { display: flex; gap: 10px; align-items: flex-start; margin-top: var(--s3); padding: 10px 13px; border-radius: 10px; background: rgba(201,154,61,0.10); border-left: 3px solid var(--warm-gold); font-size: 12.5px; line-height: 1.5; color: var(--slate); }
+    .avert strong { color: var(--ink); }
+    .placeholder { color: var(--stone); font-style: italic; padding: var(--s4); text-align: center; }
+    .sous-note { font-size: 12px; color: var(--stone); margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre">Démo — <span class="marque">Galeria</span> · Outils complémentaires</div>
+    <div class="note">Démo autonome — taux d'exemple, aucun enregistrement</div>
+  </div>
+
+  <main>
+    <div class="reglages-entete">
+      <h1>Outils</h1>
+      <p class="reglages-entete-meta">Calculateurs. Choisis un outil à gauche.</p>
+    </div>
+
+    <div class="reglages-layout">
+      <nav class="cat-nav" id="nav">
+        <div class="cat-groupe">Liés au catalogue</div>
+        <button class="cat-item" data-cat="prix"><span class="cat-ic">◈</span>Calculateur de prix</button>
+        <button class="cat-item" data-cat="commission"><span class="cat-ic">◉</span>Calculateur de commission</button>
+        <div class="cat-groupe">Calculatrices rapides</div>
+        <button class="cat-item actif" data-cat="taxes"><span class="cat-ic">%</span>Taxes</button>
+        <button class="cat-item" data-cat="conversion"><span class="cat-ic">⇄</span>Conversion</button>
+        <button class="cat-item" data-cat="versements"><span class="cat-ic">▤</span>Plan de versements</button>
+        <button class="cat-item" data-cat="expedition"><span class="cat-ic">▣</span>Expédition (poids)</button>
+      </nav>
+
+      <div class="cat-zone">
+        <!-- Panneaux existants (rappel) -->
+        <section class="cat-panneau" data-cat="prix"><div class="panneau-tete"><h2>Calculateur de prix</h2></div><div class="carte span-12"><p class="placeholder">Outil existant — inchangé.</p></div></section>
+        <section class="cat-panneau" data-cat="commission"><div class="panneau-tete"><h2>Calculateur de commission</h2></div><div class="carte span-12"><p class="placeholder">Outil existant — inchangé.</p></div></section>
+
+        <!-- ═══ TAXES ═══ -->
+        <section class="cat-panneau actif" data-cat="taxes">
+          <div class="panneau-tete"><h2>Calculateur de taxes</h2><p class="desc">Ajouter ou retirer les taxes d'un montant, sans créer de vente.</p></div>
+          <div class="grille-bento">
+            <div class="carte span-7">
+              <h3>Taxes</h3>
+              <div class="form-champ"><label>Mode</label>
+                <div class="segmente" id="tx-mode"><button class="actif" data-m="ajouter">Ajouter les taxes</button><button data-m="retirer">Retirer les taxes</button></div>
+              </div>
+              <div class="form-champ"><label for="tx-prov">Province / territoire</label>
+                <select id="tx-prov"></select>
+              </div>
+              <div class="form-champ"><label id="tx-lib" for="tx-montant">Montant avant taxes ($)</label><input type="number" id="tx-montant" min="0" step="0.01" placeholder="0"></div>
+              <div class="form-champ"><label>Taxes appliquées</label>
+                <div class="taxes-cases" id="tx-cases"></div>
+                <p class="sous-note" id="tx-note"></p>
+              </div>
+            </div>
+            <div class="carte span-5"><h3>Résultat</h3><div id="tx-res" class="res"></div></div>
+          </div>
+        </section>
+
+        <!-- ═══ CONVERSION ═══ -->
+        <section class="cat-panneau" data-cat="conversion">
+          <div class="panneau-tete"><h2>Conversion</h2><p class="desc">Longueurs, poids et devises. Modifie un champ, l'autre suit.</p></div>
+          <div class="grille-bento">
+            <div class="carte span-12">
+              <div class="form-champ"><div class="segmente" id="cv-onglets"><button class="actif" data-t="longueur">Longueur</button><button data-t="poids">Poids</button><button data-t="devise">Devise</button></div></div>
+
+              <div class="conv-ligne" id="cv-ligne">
+                <div class="conv-champ"><input type="number" id="cv-a" step="any" placeholder="0"><select id="cv-ua"></select></div>
+                <div class="conv-eq">=</div>
+                <div class="conv-champ"><input type="number" id="cv-b" step="any" placeholder="0"><select id="cv-ub"></select></div>
+              </div>
+
+              <div id="cv-taux-bloc" style="display:none;">
+                <div class="res" style="margin-top:var(--s3);">
+                  <div class="ligne"><span class="lib">1 USD =</span><span class="montant"><input type="number" id="cv-taux-usd" step="any" style="width:120px; height:32px; text-align:right;"> CAD</span></div>
+                  <div class="ligne"><span class="lib">1 EUR =</span><span class="montant"><input type="number" id="cv-taux-eur" step="any" style="width:120px; height:32px; text-align:right;"> CAD</span></div>
+                  <div class="ligne sous" style="align-items:center;">
+                    <span class="lib" id="cv-taux-source">Banque du Canada · mis à jour le 24 juillet 2026</span>
+                    <button class="btn" id="cv-maj">Mettre à jour</button>
+                  </div>
+                </div>
+                <p class="sous-note">Récupérés automatiquement à l'ouverture si Internet est disponible. Hors-ligne, le dernier taux connu est utilisé. Tu peux aussi corriger un taux à la main (pour ce calcul).</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══ VERSEMENTS ═══ -->
+        <section class="cat-panneau" data-cat="versements">
+          <div class="panneau-tete"><h2>Plan de versements</h2><p class="desc">Un échéancier à proposer au client. Sans intérêt. Aucune sauvegarde.</p></div>
+          <div class="grille-bento">
+            <div class="carte span-5">
+              <h3>Paramètres</h3>
+              <div class="form-champ"><label for="vs-total">Montant total ($)</label><input type="number" id="vs-total" min="0" step="0.01" value="2400"></div>
+              <div class="form-champ"><label for="vs-acompte">Acompte initial</label>
+                <div style="display:flex; gap:8px; align-items:stretch;">
+                  <input type="number" id="vs-acompte" min="0" step="0.01" value="400" style="flex:1; min-width:0;">
+                  <div class="segmente" id="vs-acompte-mode" style="flex:none;"><button class="actif" data-u="montant">$</button><button data-u="pct">%</button></div>
+                </div>
+              </div>
+              <div class="form-champ"><label for="vs-nb">Nombre de versements</label><input type="number" id="vs-nb" min="1" step="1" value="4"></div>
+              <div class="form-champ"><label for="vs-freq">Fréquence</label><select id="vs-freq"><option value="hebdo">Hebdomadaire</option><option value="2sem">Aux deux semaines</option><option value="mois" selected>Mensuelle</option></select></div>
+              <div class="form-champ"><label for="vs-date">Date de départ</label><input type="date" id="vs-date"></div>
+            </div>
+            <div class="carte span-7">
+              <div style="display:flex; justify-content:space-between; align-items:center;"><h3 style="margin:0;">Échéancier</h3><button class="btn" id="vs-copier">Copier le tableau</button></div>
+              <div id="vs-res"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══ EXPÉDITION ═══ -->
+        <section class="cat-panneau" data-cat="expedition">
+          <div class="panneau-tete"><h2>Estimateur de poids d'expédition</h2><p class="desc">Un poids approximatif pour préparer un envoi.</p></div>
+          <div class="grille-bento">
+            <div class="carte span-7">
+              <h3>L'œuvre</h3>
+              <div class="form-champ"><label for="ex-support">Support</label>
+                <select id="ex-support">
+                  <option value="toile">Toile tendue sur châssis</option>
+                  <option value="panneau">Panneau bois</option>
+                  <option value="papier">Papier ou carton</option>
+                  <option value="sc_bois">Sculpture bois</option>
+                  <option value="sc_pierre">Sculpture pierre ou béton</option>
+                  <option value="sc_metal">Sculpture métal</option>
+                  <option value="verre">Verre ou vitrail</option>
+                  <option value="autre">Autre</option>
+                </select>
+              </div>
+              <div class="form-champ"><label>Dimensions
+                <span class="segmente" style="margin-left:8px;" id="ex-unite"><button class="actif" data-u="po">pouces</button><button data-u="cm">cm</button></span>
+              </label>
+                <div class="grille-form" style="grid-template-columns:1fr 1fr 1fr;">
+                  <input type="number" id="ex-h" min="0" step="0.1" placeholder="Hauteur">
+                  <input type="number" id="ex-l" min="0" step="0.1" placeholder="Largeur">
+                  <input type="number" id="ex-p" min="0" step="0.1" placeholder="Profondeur" title="Profondeur (sculptures)">
+                </div>
+              </div>
+              <div class="form-champ"><label>Options</label>
+                <div class="taxes-cases">
+                  <label><input type="checkbox" id="ex-cadre"> Encadré</label>
+                  <label><input type="checkbox" id="ex-verre"> Sous verre</label>
+                </div>
+              </div>
+            </div>
+            <div class="carte span-5">
+              <h3>Estimation</h3>
+              <div id="ex-res"></div>
+              <div class="avert"><div><strong>Estimation à calibrer.</strong> Ces facteurs sont des points de départ, pas des pesées. Avant de fixer des frais d'envoi, pèse 2-3 œuvres et ajuste les facteurs (dans les Réglages, plus tard).</div></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ---- Navigation ----
+    const nav = document.getElementById('nav');
+    nav.addEventListener('click', (e) => {
+      const b = e.target.closest('.cat-item'); if (!b) return;
+      nav.querySelectorAll('.cat-item').forEach((i) => i.classList.toggle('actif', i === b));
+      document.querySelectorAll('.cat-panneau').forEach((p) => p.classList.toggle('actif', p.dataset.cat === b.dataset.cat));
+    });
+
+    // ---- Format monétaire (comme l'app) ----
+    const money = (v) => { const s = (Math.round(v*100)/100).toFixed(2).split('.'); return s[0].replace(/\B(?=(\d{3})+(?!\d))/g,' ')+','+s[1]+' $'; };
+    const num = (x) => { const v = parseFloat(x); return Number.isFinite(v) ? v : 0; };
+    const TPS = 5, TVQ = 9.975;
+
+    // ---- TAXES ----
+    // Québec = taux des Réglages (config). Autres provinces = taux indicatifs
+    // (dans l'app, rangés en config, modifiables, à valider avec le comptable).
+    const rate = (v) => ('' + v).replace('.', ',');
+    const PROVINCES = {
+      QC: { nom:'Québec', config:true, taxes:[{c:'TPS',t:TPS},{c:'TVQ',t:TVQ}] },
+      ON: { nom:'Ontario', taxes:[{c:'TVH',t:13}] },
+      BC: { nom:'Colombie-Britannique', taxes:[{c:'TPS',t:5},{c:'PST',t:7}] },
+      AB: { nom:'Alberta', taxes:[{c:'TPS',t:5}] },
+      MB: { nom:'Manitoba', taxes:[{c:'TPS',t:5},{c:'PST',t:7}] },
+      NB: { nom:'Nouveau-Brunswick', taxes:[{c:'TVH',t:15}] },
+      NL: { nom:'Terre-Neuve-et-Labrador', taxes:[{c:'TVH',t:15}] },
+      NS: { nom:'Nouvelle-Écosse', taxes:[{c:'TVH',t:14}] },
+      PE: { nom:'Île-du-Prince-Édouard', taxes:[{c:'TVH',t:15}] },
+      SK: { nom:'Saskatchewan', taxes:[{c:'TPS',t:5},{c:'PST',t:6}] },
+      YT: { nom:'Yukon', taxes:[{c:'TPS',t:5}] },
+      NT: { nom:'Territoires du Nord-Ouest', taxes:[{c:'TPS',t:5}] },
+      NU: { nom:'Nunavut', taxes:[{c:'TPS',t:5}] },
+    };
+    let txMode = 'ajouter';
+    const txMontant = document.getElementById('tx-montant'), txRes = document.getElementById('tx-res'), txLib = document.getElementById('tx-lib'), txProv = document.getElementById('tx-prov'), txCases = document.getElementById('tx-cases'), txNote = document.getElementById('tx-note');
+    txProv.innerHTML = Object.entries(PROVINCES).map(([k,p])=>`<option value="${k}">${p.nom}</option>`).join('');
+    function txRendreCases() {
+      const p = PROVINCES[txProv.value];
+      txCases.innerHTML = p.taxes.map((tx,i)=>`<label><input type="checkbox" data-i="${i}" checked> ${tx.c} (${rate(tx.t)} %)</label>`).join('');
+      txCases.querySelectorAll('input').forEach(el=>el.addEventListener('change',txCalc));
+      txNote.textContent = p.config ? 'Taux TPS/TVQ des Réglages.' : 'Taux indicatifs — à valider avec le comptable.';
+    }
+    document.getElementById('tx-mode').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; txMode = b.dataset.m; document.querySelectorAll('#tx-mode button').forEach(x=>x.classList.toggle('actif',x===b)); txLib.textContent = txMode==='ajouter'?'Montant avant taxes ($)':'Montant total, taxes incluses ($)'; txCalc(); });
+    function txCalc() {
+      const p = PROVINCES[txProv.value], m = num(txMontant.value);
+      const actives = p.taxes.filter((tx,i)=>{ const c=txCases.querySelector(`input[data-i="${i}"]`); return c && c.checked; });
+      const rt = actives.reduce((s,tx)=>s+tx.t,0);
+      const base = txMode==='ajouter' ? m : m/(1+rt/100);
+      const lignes = [`<div class="ligne"><span class="lib">Sous-total</span><span class="montant">${money(base)}</span></div>`];
+      let total = base;
+      for (const tx of actives) { const mt = base*tx.t/100; total += mt; lignes.push(`<div class="ligne"><span class="lib">${tx.c} (${rate(tx.t)} %)</span><span class="montant">${money(mt)}</span></div>`); }
+      lignes.push(`<div class="ligne total"><span class="lib">Total</span><span class="montant">${money(total)}</span></div>`);
+      txRes.innerHTML = lignes.join('');
+    }
+    txProv.addEventListener('change', ()=>{ txRendreCases(); txCalc(); });
+    txMontant.addEventListener('input', txCalc);
+    txRendreCases(); txCalc();
+
+    // ---- CONVERSION ----
+    const UNITES = {
+      longueur: { u:{ po:0.0254, cm:0.01, pi:0.3048, m:1 }, lib:{ po:'po', cm:'cm', pi:'pi', m:'m' }, defA:'po', defB:'cm' },
+      poids:    { u:{ lb:453.592, kg:1000, oz:28.3495, g:1 }, lib:{ lb:'lb', kg:'kg', oz:'oz', g:'g' }, defA:'lb', defB:'kg' },
+      devise:   { u:{ CAD:1, USD:1.38, EUR:1.48 }, lib:{ CAD:'CAD', USD:'USD', EUR:'EUR' }, defA:'CAD', defB:'USD', taux:true },
+    };
+    let cvT='longueur';
+    const cvA=document.getElementById('cv-a'), cvB=document.getElementById('cv-b'), cvSA=document.getElementById('cv-ua'), cvSB=document.getElementById('cv-ub'), cvTauxBloc=document.getElementById('cv-taux-bloc'), cvTauxUsd=document.getElementById('cv-taux-usd'), cvTauxEur=document.getElementById('cv-taux-eur'), cvSource=document.getElementById('cv-taux-source');
+    function cvRemplirSelect(sel, t, val) { const o=UNITES[t]; sel.innerHTML=Object.keys(o.u).map(k=>`<option value="${k}">${o.lib[k]}</option>`).join(''); sel.value=val; }
+    function cvSetOnglet(t) {
+      cvT=t; const o=UNITES[t]; cvRemplirSelect(cvSA,t,o.defA); cvRemplirSelect(cvSB,t,o.defB);
+      cvTauxBloc.style.display = o.taux ? 'block' : 'none';
+      if (o.taux) { cvTauxUsd.value = 1.3801; cvTauxEur.value = 1.4820; }
+      cvA.value=''; cvB.value=''; cvDe('a');
+    }
+    function facteur(t,u){ if(t==='devise'){ const map={CAD:1, USD:num(cvTauxUsd.value)||1.38, EUR:num(cvTauxEur.value)||1.48}; return map[u]; } return UNITES[t].u[u]; }
+    function cvDe(src) {
+      const t=cvT, fa=facteur(t,cvSA.value), fb=facteur(t,cvSB.value);
+      if (src==='a'){ const v=parseFloat(cvA.value); cvB.value = Number.isFinite(v) ? +(v*fa/fb).toFixed(4) : ''; }
+      else { const v=parseFloat(cvB.value); cvA.value = Number.isFinite(v) ? +(v*fb/fa).toFixed(4) : ''; }
+    }
+    document.getElementById('cv-onglets').addEventListener('click',(e)=>{const b=e.target.closest('button'); if(!b)return; document.querySelectorAll('#cv-onglets button').forEach(x=>x.classList.toggle('actif',x===b)); cvSetOnglet(b.dataset.t);});
+    cvA.addEventListener('input',()=>cvDe('a')); cvB.addEventListener('input',()=>cvDe('b'));
+    cvSA.addEventListener('change',()=>cvDe('a')); cvSB.addEventListener('change',()=>cvDe('a'));
+    [cvTauxUsd,cvTauxEur].forEach(el=>el.addEventListener('input',()=>cvDe('a')));
+    // Démo : le bouton simule la récupération à la Banque du Canada.
+    document.getElementById('cv-maj').addEventListener('click',()=>{
+      cvSource.textContent='Récupération à la Banque du Canada…';
+      setTimeout(()=>{ cvTauxUsd.value=1.3789; cvTauxEur.value=1.4806; cvSource.textContent='Banque du Canada · mis à jour à l\'instant'; cvDe('a'); }, 700);
+    });
+    cvSetOnglet('longueur');
+
+    // ---- VERSEMENTS ----
+    const vsTotal=document.getElementById('vs-total'), vsAcompte=document.getElementById('vs-acompte'), vsNb=document.getElementById('vs-nb'), vsFreq=document.getElementById('vs-freq'), vsDate=document.getElementById('vs-date'), vsRes=document.getElementById('vs-res');
+    let vsAcompteMode='montant';
+    document.getElementById('vs-acompte-mode').addEventListener('click',(e)=>{const b=e.target.closest('button'); if(!b)return; vsAcompteMode=b.dataset.u; document.querySelectorAll('#vs-acompte-mode button').forEach(x=>x.classList.toggle('actif',x===b)); vsCalc();});
+    vsDate.value = '2026-08-01';
+    function ajouterPeriode(d, freq, i){ const r=new Date(d.getTime()); if(freq==='hebdo') r.setDate(r.getDate()+7*i); else if(freq==='2sem') r.setDate(r.getDate()+14*i); else r.setMonth(r.getMonth()+i); return r; }
+    function fmtDate(d){ return d.toLocaleDateString('fr-CA',{year:'numeric',month:'long',day:'numeric'}); }
+    function vsCalc(){
+      const total=num(vsTotal.value); let acompte=num(vsAcompte.value); if(vsAcompteMode==='pct') acompte=total*acompte/100;
+      acompte=Math.min(acompte,total); const nb=Math.max(1,Math.round(num(vsNb.value))); const solde=total-acompte;
+      const base=Math.floor(solde/nb*100)/100; const d0=vsDate.value?new Date(vsDate.value+'T00:00:00'):new Date('2026-08-01T00:00:00');
+      let lignes=''; let cumul=0; let n=1;
+      if(acompte>0){ lignes+=`<tr><td>Acompte</td><td>${fmtDate(d0)}</td><td class="montant">${money(acompte)}</td></tr>`; }
+      for(let i=0;i<nb;i++){ let m = i===nb-1 ? +(solde-base*(nb-1)).toFixed(2) : base; cumul+=m; lignes+=`<tr><td>Versement ${n++}</td><td>${fmtDate(ajouterPeriode(d0,vsFreq.value,i+1))}</td><td class="montant">${money(m)}</td></tr>`; }
+      lignes+=`<tr><td>Total</td><td></td><td class="montant">${money(acompte+cumul)}</td></tr>`;
+      vsRes.innerHTML=`<table class="vers"><thead><tr><th>Versement</th><th>Date</th><th style="text-align:right;">Montant</th></tr></thead><tbody>${lignes}</tbody></table>`;
+    }
+    [vsTotal,vsAcompte,vsNb,vsDate].forEach(el=>el.addEventListener('input',vsCalc)); vsFreq.addEventListener('change',vsCalc);
+    document.getElementById('vs-copier').addEventListener('click',()=>{ alert('Démo : le tableau serait copié dans le presse-papier en texte.'); });
+    vsCalc();
+
+    // ---- EXPÉDITION ----
+    const FACTEURS = { toile:{t:'surface',f:1.2}, panneau:{t:'surface',f:2}, papier:{t:'surface',f:0.1}, verre:{t:'surface',f:3.5}, autre:{t:'surface',f:1.5}, sc_bois:{t:'volume',f:25}, sc_pierre:{t:'volume',f:150}, sc_metal:{t:'volume',f:300} };
+    const F_CADRE=0.3, F_VERRE=3.5, EMBALLAGE_PCT=0.20, EMBALLAGE_MIN=2;
+    let exUnite='po';
+    const exSupport=document.getElementById('ex-support'), exH=document.getElementById('ex-h'), exL=document.getElementById('ex-l'), exP=document.getElementById('ex-p'), exCadre=document.getElementById('ex-cadre'), exVerre=document.getElementById('ex-verre'), exRes=document.getElementById('ex-res');
+    document.getElementById('ex-unite').addEventListener('click',(e)=>{const b=e.target.closest('button'); if(!b)return; exUnite=b.dataset.u; document.querySelectorAll('#ex-unite button').forEach(x=>x.classList.toggle('actif',x===b)); exCalc();});
+    function exCalc(){
+      const k=exUnite==='cm'?1/2.54:1; const h=num(exH.value)*k, l=num(exL.value)*k, p=num(exP.value)*k;
+      const spec=FACTEURS[exSupport.value]; if(!spec||h<=0||l<=0){ exRes.innerHTML=`<p class="aide-champ" style="font-style:italic;">Entre au moins la hauteur et la largeur.</p>`; return; }
+      const surface=(h*l)/144, volume=(h*l*p)/1728, perim=2*(h+l)/12;
+      let poids = spec.t==='volume' ? volume*spec.f : surface*spec.f;
+      if(spec.t==='volume' && p<=0){ exRes.innerHTML=`<p class="aide-champ" style="font-style:italic;">Pour une sculpture, entre aussi la profondeur.</p>`; return; }
+      let extra=0; if(exCadre.checked) extra+=perim*F_CADRE; if(exVerre.checked) extra+=surface*F_VERRE;
+      const oeuvre=poids+extra; const emballage=Math.max(EMBALLAGE_MIN, oeuvre*EMBALLAGE_PCT); const envoi=oeuvre+emballage;
+      const lb=(v)=>v.toFixed(1)+' lb'; const kg=(v)=>(v*0.453592).toFixed(1)+' kg';
+      exRes.innerHTML=`<div class="res"><div class="ligne"><span class="lib">Poids de l'œuvre</span><span class="montant">${lb(oeuvre)} · ${kg(oeuvre)}</span></div><div class="ligne"><span class="lib">Emballage estimé</span><span class="montant">${lb(emballage)}</span></div><div class="ligne total"><span class="lib">Poids d'expédition</span><span class="montant">${lb(envoi)} · ${kg(envoi)}</span></div></div>`;
+    }
+    [exH,exL,exP].forEach(el=>el.addEventListener('input',exCalc)); exSupport.addEventListener('change',exCalc); [exCadre,exVerre].forEach(el=>el.addEventListener('change',exCalc)); exCalc();
+  </script>
+</body>
+</html>

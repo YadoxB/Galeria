@@ -31,6 +31,7 @@ export async function rendreOutils(contenu) {
 
       <div class="reglages-layout">
         <nav class="cat-nav" id="outils-cat-nav" aria-label="Outils">
+          <div class="cat-groupe">Liés au catalogue</div>
           <button type="button" class="cat-item actif" data-cat="prix">
             <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V7a1 1 0 0 0-1-1h-5L3 12l6 6 11-6z"/><circle cx="16" cy="9.5" r="1"/></svg></span>
             Calculateur de prix
@@ -38,6 +39,11 @@ export async function rendreOutils(contenu) {
           <button type="button" class="cat-item" data-cat="commission">
             <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg></span>
             Calculateur de commission
+          </button>
+          <div class="cat-groupe">Calculatrices rapides</div>
+          <button type="button" class="cat-item" data-cat="taxes">
+            <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="7.5" cy="7.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></svg></span>
+            Taxes
           </button>
         </nav>
 
@@ -171,6 +177,42 @@ export async function rendreOutils(contenu) {
             </tbody>
           </table>
           <p class="aide-champ" style="margin-top:var(--s2);">* Pour une reproduction, la galerie récupère d'abord ses frais de production, puis applique la cote (${pct(coteRepro)} %) sur le reste. Les cotes suivent les Réglages ; la sculpture est fixée à ${pct(coteSculpture)} %.</p>
+        </div>
+
+          </div>
+        </section>
+
+        <section class="cat-panneau" data-cat="taxes">
+          <div class="panneau-tete"><h2>Calculateur de taxes</h2><p class="desc">Ajouter ou retirer les taxes d'un montant, sans créer de vente.</p></div>
+          <div class="grille-bento">
+
+        <div class="carte zone-outil-taxes">
+          <h3>Taxes</h3>
+          <div class="form-champ">
+            <label>Mode</label>
+            <div class="taille-vue" id="tx-mode" role="group" aria-label="Mode de calcul">
+              <button type="button" data-m="ajouter" class="actif">Ajouter les taxes</button>
+              <button type="button" data-m="retirer">Retirer les taxes</button>
+            </div>
+          </div>
+          <div class="form-champ">
+            <label for="tx-prov">Province / territoire</label>
+            <select id="tx-prov"></select>
+          </div>
+          <div class="form-champ">
+            <label id="tx-lib" for="tx-montant">Montant avant taxes ($)</label>
+            <input type="number" id="tx-montant" min="0" step="0.01" placeholder="0">
+          </div>
+          <div class="form-champ">
+            <label>Taxes appliquées</label>
+            <div class="comm-taxes" id="tx-cases"></div>
+            <p class="aide-champ" id="tx-note" style="margin-top:6px;"></p>
+          </div>
+        </div>
+
+        <div class="carte zone-outil-taxes-res">
+          <h3>Résultat</h3>
+          <div id="tx-resultat" class="calc-resultat"></div>
         </div>
 
           </div>
@@ -415,4 +457,76 @@ export async function rendreOutils(contenu) {
   [commCote, commPrix, commFrais, commRabArt, commRabGal].forEach((el) => el.addEventListener('input', commCalculer));
   [commTps, commTvq].forEach((el) => el.addEventListener('change', commCalculer));
   commCalculer();
+
+  // ====== Calculateur de taxes (ajouter / retirer) ======
+  // Québec = taux TPS/TVQ des Réglages ; autres provinces = table de la config
+  // (taux indicatifs, à valider avec le comptable). Même arrondi que la facture
+  // artiste (commMoney), pour ne pas créer d'écart entre les outils.
+  const txProvincesConfig = config?.outils?.taxes_provinces || {};
+  const TAXES_PROVINCES = {
+    QC: { nom: 'Québec', config: true, taxes: [{ c: 'TPS', t: tauxTps }, { c: 'TVQ', t: tauxTvq }] },
+  };
+  for (const [code, p] of Object.entries(txProvincesConfig)) {
+    if (!p || !p.taxes) continue;
+    TAXES_PROVINCES[code] = { nom: p.nom || code, taxes: Object.entries(p.taxes).map(([c, t]) => ({ c, t: Number(t) || 0 })) };
+  }
+
+  let txMode = 'ajouter';
+  const txMontant = contenu.querySelector('#tx-montant');
+  const txProv = contenu.querySelector('#tx-prov');
+  const txCases = contenu.querySelector('#tx-cases');
+  const txNote = contenu.querySelector('#tx-note');
+  const txLib = contenu.querySelector('#tx-lib');
+  const txRes = contenu.querySelector('#tx-resultat');
+
+  txProv.innerHTML = Object.entries(TAXES_PROVINCES)
+    .map(([k, p]) => `<option value="${k}">${ech(p.nom)}</option>`).join('');
+
+  function txRendreCases() {
+    const p = TAXES_PROVINCES[txProv.value];
+    txCases.innerHTML = p.taxes
+      .map((tx, i) => `<label><input type="checkbox" data-i="${i}" checked> ${ech(tx.c)} (${commRate(tx.t)} %)</label>`)
+      .join('');
+    txCases.querySelectorAll('input').forEach((el) => el.addEventListener('change', txCalculer));
+    txNote.textContent = p.config
+      ? 'Taux TPS/TVQ des Réglages.'
+      : 'Taux indicatifs — à valider avec le comptable.';
+  }
+
+  function txCalculer() {
+    const p = TAXES_PROVINCES[txProv.value];
+    const m = commNum(txMontant.value);
+    if (m <= 0) {
+      txRes.innerHTML = `<p class="aide-champ" style="font-style:italic;">Entre un montant pour calculer.</p>`;
+      return;
+    }
+    const actives = p.taxes.filter((tx, i) => {
+      const c = txCases.querySelector(`input[data-i="${i}"]`);
+      return c && c.checked;
+    });
+    const tauxTotal = actives.reduce((s, tx) => s + tx.t, 0);
+    const base = txMode === 'ajouter' ? m : m / (1 + tauxTotal / 100);
+    let total = base;
+    const lignes = [`<div class="ligne"><span class="lib">Sous-total</span><span class="montant">${commMoney(base)}</span></div>`];
+    for (const tx of actives) {
+      const mt = base * tx.t / 100;
+      total += mt;
+      lignes.push(`<div class="ligne"><span class="lib">${ech(tx.c)} (${commRate(tx.t)} %)</span><span class="montant">${commMoney(mt)}</span></div>`);
+    }
+    lignes.push(`<div class="ligne total"><span class="lib">Total</span><span class="montant">${commMoney(total)}</span></div>`);
+    txRes.innerHTML = `<div class="comm-detail">${lignes.join('')}</div>`;
+  }
+
+  contenu.querySelector('#tx-mode').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    txMode = b.dataset.m;
+    contenu.querySelectorAll('#tx-mode button').forEach((x) => x.classList.toggle('actif', x === b));
+    txLib.textContent = txMode === 'ajouter' ? 'Montant avant taxes ($)' : 'Montant total, taxes incluses ($)';
+    txCalculer();
+  });
+  txProv.addEventListener('change', () => { txRendreCases(); txCalculer(); });
+  txMontant.addEventListener('input', txCalculer);
+  txRendreCases();
+  txCalculer();
 }

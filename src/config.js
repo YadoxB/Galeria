@@ -93,6 +93,27 @@ const DEFAULTS = {
     // base64. Jamais en clair. Vide = génération directe inactive.
     cle_anthropic: '',
   },
+  // Outils de la page Outils (calculatrices autonomes). Aucune donnée métier.
+  outils: {
+    // Taxes des autres provinces pour le calculateur de taxes. Le Québec vient
+    // toujours des Réglages → Finances (tps_taux / tvq_taux) et n'est PAS ici.
+    // Taux INDICATIFS, à valider avec le comptable ; modifiables sans recompiler.
+    // L'ordre des clés = l'ordre d'affichage dans la liste.
+    taxes_provinces: {
+      ON: { nom: 'Ontario', taxes: { TVH: 13 } },
+      BC: { nom: 'Colombie-Britannique', taxes: { TPS: 5, PST: 7 } },
+      AB: { nom: 'Alberta', taxes: { TPS: 5 } },
+      MB: { nom: 'Manitoba', taxes: { TPS: 5, PST: 7 } },
+      NB: { nom: 'Nouveau-Brunswick', taxes: { TVH: 15 } },
+      NL: { nom: 'Terre-Neuve-et-Labrador', taxes: { TVH: 15 } },
+      NS: { nom: 'Nouvelle-Écosse', taxes: { TVH: 14 } },
+      PE: { nom: 'Île-du-Prince-Édouard', taxes: { TVH: 15 } },
+      SK: { nom: 'Saskatchewan', taxes: { TPS: 5, PST: 6 } },
+      YT: { nom: 'Yukon', taxes: { TPS: 5 } },
+      NT: { nom: 'Territoires du Nord-Ouest', taxes: { TPS: 5 } },
+      NU: { nom: 'Nunavut', taxes: { TPS: 5 } },
+    },
+  },
   // Tutoriel de bienvenue (#13) : passe à true une fois la visite vue au
   // premier lancement ; rejouable ensuite depuis l'aide.
   tutoriel_vu: false,
