@@ -45,6 +45,10 @@ export async function rendreOutils(contenu) {
             <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="7.5" cy="7.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></svg></span>
             Taxes
           </button>
+          <button type="button" class="cat-item" data-cat="conversion">
+            <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4 3 8l4 4"/><path d="M3 8h14"/><path d="M17 20l4-4-4-4"/><path d="M21 16H7"/></svg></span>
+            Conversion
+          </button>
         </nav>
 
         <div class="cat-zone">
@@ -213,6 +217,38 @@ export async function rendreOutils(contenu) {
         <div class="carte zone-outil-taxes-res">
           <h3>Résultat</h3>
           <div id="tx-resultat" class="calc-resultat"></div>
+        </div>
+
+          </div>
+        </section>
+
+        <section class="cat-panneau" data-cat="conversion">
+          <div class="panneau-tete"><h2>Conversion</h2><p class="desc">Longueurs, poids et devises. Modifie un champ, l'autre suit.</p></div>
+          <div class="grille-bento">
+
+        <div class="carte zone-outil-conversion">
+          <div class="form-champ">
+            <div class="taille-vue" id="cv-onglets" role="group" aria-label="Type de conversion">
+              <button type="button" data-t="longueur" class="actif">Longueur</button>
+              <button type="button" data-t="poids">Poids</button>
+              <button type="button" data-t="devise">Devise</button>
+            </div>
+          </div>
+
+          <div class="conv-ligne">
+            <div class="conv-champ"><input type="number" id="cv-a" step="any" placeholder="0"><select id="cv-ua"></select></div>
+            <div class="conv-eq">=</div>
+            <div class="conv-champ"><input type="number" id="cv-b" step="any" placeholder="0"><select id="cv-ub"></select></div>
+          </div>
+
+          <div id="cv-taux-bloc" class="conv-taux" hidden>
+            <div class="comm-detail">
+              <div class="ligne"><span class="lib">1 USD =</span><span class="montant"><input type="number" id="cv-taux-usd" step="any" class="conv-taux-input"> CAD</span></div>
+              <div class="ligne"><span class="lib">1 EUR =</span><span class="montant"><input type="number" id="cv-taux-eur" step="any" class="conv-taux-input"> CAD</span></div>
+              <div class="ligne sous"><span class="lib" id="cv-taux-source">—</span><span class="montant"><button type="button" class="btn-action btn-secondaire-action" id="cv-maj">Mettre à jour</button></span></div>
+            </div>
+            <p class="aide-champ">Récupérés à la Banque du Canada à l'ouverture si Internet est disponible. Hors-ligne, le dernier taux connu est utilisé. Tu peux corriger un taux à la main (pour ce calcul).</p>
+          </div>
         </div>
 
           </div>
@@ -529,4 +565,87 @@ export async function rendreOutils(contenu) {
   txMontant.addEventListener('input', txCalculer);
   txRendreCases();
   txCalculer();
+
+  // ====== Convertisseur (longueur, poids, devise) ======
+  // Devise : taux Banque du Canada récupérés à l'ouverture de l'onglet (meilleur
+  // effort), mémorisés pour le repli hors-ligne. Correction à la main possible.
+  const CONV = {
+    longueur: { u: { po: 0.0254, cm: 0.01, pi: 0.3048, m: 1 }, lib: { po: 'po', cm: 'cm', pi: 'pi', m: 'm' }, defA: 'po', defB: 'cm' },
+    poids:    { u: { lb: 453.592, kg: 1000, oz: 28.3495, g: 1 }, lib: { lb: 'lb', kg: 'kg', oz: 'oz', g: 'g' }, defA: 'lb', defB: 'kg' },
+    devise:   { lib: { CAD: 'CAD', USD: 'USD', EUR: 'EUR' }, defA: 'CAD', defB: 'USD', devise: true },
+  };
+  let cvT = 'longueur';
+  let cvDeviseCharge = false;
+  const cvA = contenu.querySelector('#cv-a');
+  const cvB = contenu.querySelector('#cv-b');
+  const cvSA = contenu.querySelector('#cv-ua');
+  const cvSB = contenu.querySelector('#cv-ub');
+  const cvBloc = contenu.querySelector('#cv-taux-bloc');
+  const cvTauxUsd = contenu.querySelector('#cv-taux-usd');
+  const cvTauxEur = contenu.querySelector('#cv-taux-eur');
+  const cvSource = contenu.querySelector('#cv-taux-source');
+
+  const cfgOutils = config?.outils || {};
+  cvTauxUsd.value = Number(cfgOutils.taux_change_usd_cad) || 1.38;
+  cvTauxEur.value = Number(cfgOutils.taux_change_eur_cad) || 1.48;
+
+  function cvFormaterSource(maj, horsLigne) {
+    if (!maj) return horsLigne ? 'Valeur enregistrée (hors ligne)' : 'Valeur par défaut';
+    let d = maj;
+    try { d = new Date(maj + 'T00:00:00').toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' }); } catch { /* garde la date brute */ }
+    return `Banque du Canada · ${d}${horsLigne ? ' (hors ligne)' : ''}`;
+  }
+  cvSource.textContent = cvFormaterSource(cfgOutils.taux_change_maj, false);
+
+  function cvFacteur(t, u) {
+    if (t === 'devise') {
+      const map = { CAD: 1, USD: commNum(cvTauxUsd.value) || 1.38, EUR: commNum(cvTauxEur.value) || 1.48 };
+      return map[u];
+    }
+    return CONV[t].u[u];
+  }
+  function cvRemplirSelect(sel, t, val) {
+    const o = CONV[t];
+    sel.innerHTML = Object.keys(o.lib).map((k) => `<option value="${k}">${o.lib[k]}</option>`).join('');
+    sel.value = val;
+  }
+  function cvConvertir(src) {
+    const t = cvT, fa = cvFacteur(t, cvSA.value), fb = cvFacteur(t, cvSB.value);
+    if (!fa || !fb) return;
+    if (src === 'a') { const v = parseFloat(cvA.value); cvB.value = Number.isFinite(v) ? +(v * fa / fb).toFixed(4) : ''; }
+    else { const v = parseFloat(cvB.value); cvA.value = Number.isFinite(v) ? +(v * fb / fa).toFixed(4) : ''; }
+  }
+  async function cvRafraichirTaux() {
+    cvSource.textContent = 'Récupération à la Banque du Canada…';
+    try {
+      const r = await window.api.outilsTauxChangeRecuperer();
+      if (r && Number.isFinite(Number(r.usd))) cvTauxUsd.value = Number(r.usd);
+      if (r && Number.isFinite(Number(r.eur))) cvTauxEur.value = Number(r.eur);
+      cvSource.textContent = cvFormaterSource(r && r.maj, !(r && r.ok));
+    } catch {
+      cvSource.textContent = cvFormaterSource(cfgOutils.taux_change_maj, true);
+    }
+    cvConvertir('a');
+  }
+  function cvSetOnglet(t) {
+    cvT = t;
+    const o = CONV[t];
+    cvRemplirSelect(cvSA, t, o.defA);
+    cvRemplirSelect(cvSB, t, o.defB);
+    cvBloc.hidden = !o.devise;
+    cvA.value = ''; cvB.value = '';
+    if (o.devise && !cvDeviseCharge) { cvDeviseCharge = true; cvRafraichirTaux(); }
+  }
+  contenu.querySelector('#cv-onglets').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    contenu.querySelectorAll('#cv-onglets button').forEach((x) => x.classList.toggle('actif', x === b));
+    cvSetOnglet(b.dataset.t);
+  });
+  cvA.addEventListener('input', () => cvConvertir('a'));
+  cvB.addEventListener('input', () => cvConvertir('b'));
+  cvSA.addEventListener('change', () => cvConvertir('a'));
+  cvSB.addEventListener('change', () => cvConvertir('a'));
+  [cvTauxUsd, cvTauxEur].forEach((el) => el.addEventListener('input', () => cvConvertir('a')));
+  contenu.querySelector('#cv-maj').addEventListener('click', () => cvRafraichirTaux());
+  cvSetOnglet('longueur');
 }

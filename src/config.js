@@ -95,6 +95,12 @@ const DEFAULTS = {
   },
   // Outils de la page Outils (calculatrices autonomes). Aucune donnée métier.
   outils: {
+    // Taux de change mémorisés (dernier connu). Le convertisseur les récupère à
+    // la Banque du Canada quand il y a Internet, et retombe sur ces valeurs
+    // hors-ligne. taux_change_maj = date « en vigueur » de la Banque (AAAA-MM-JJ).
+    taux_change_usd_cad: 1.38,
+    taux_change_eur_cad: 1.48,
+    taux_change_maj: '',
     // Taxes des autres provinces pour le calculateur de taxes. Le Québec vient
     // toujours des Réglages → Finances (tps_taux / tvq_taux) et n'est PAS ici.
     // Taux INDICATIFS, à valider avec le comptable ; modifiables sans recompiler.

@@ -108,6 +108,8 @@ contextBridge.exposeInMainWorld('api', {
   catalogueRefuser: (id) => ipcRenderer.invoke('catalogue:refuser', id),
   catalogueCharger: () => ipcRenderer.invoke('catalogue:charger'),
   configChoisirDossier: () => ipcRenderer.invoke('config:choisir-dossier'),
+  outilsTauxChange: () => ipcRenderer.invoke('outils:taux-change'),
+  outilsTauxChangeRecuperer: () => ipcRenderer.invoke('outils:taux-change-recuperer'),
   donneesEmplacement: () => ipcRenderer.invoke('donnees:emplacement'),
   donneesChoisirDestination: () => ipcRenderer.invoke('donnees:choisir-destination'),
   donneesValiderDestination: (dest) => ipcRenderer.invoke('donnees:valider-destination', dest),

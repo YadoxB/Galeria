@@ -6,6 +6,7 @@ const { pathToFileURL } = require('node:url');
 const { openDatabase, closeDatabase, lireCatalogueId } = require('./db/database');
 const { getPhotosDir, getDataDir, getDocumentsDirAnnee, getDbPath, getSeedPath, getBackupsDir, ensureDirectories, ecrireEmplacementConfigure, lireDeplacementEnAttente, ecrireDeplacementEnAttente, effacerDeplacementEnAttente } = require('./db/paths');
 const { deplacerDossierDonnees, verifierDestination, estDossierGaleriaValide, estSousOneDrive } = require('./db/deplacer-donnees');
+const { recupererTauxChange, tauxMemorises } = require('./taux-change');
 const { seedPhotosIfNeeded } = require('./db/seedPhotos');
 const { choisirPhoto, effacerPhoto, lireFichierImage, lirePourRecadrage, enregistrerImageRecadree } = require('./photos');
 const { obtenirConfig, mettreAJourConfig, infoConfigCorrompue } = require('./config');
@@ -1160,6 +1161,10 @@ async function demarrerApplication() {
     setTimeout(() => { app.relaunch(); app.exit(0); }, 250);
     return { ok: true };
   });
+  // Taux de change du convertisseur (page Outils) : lecture du cache et
+  // récupération meilleur effort à la Banque du Canada. Aucune donnée ne sort.
+  ipcMain.handle('outils:taux-change', () => tauxMemorises());
+  ipcMain.handle('outils:taux-change-recuperer', () => recupererTauxChange());
   ipcMain.handle('oeuvres:types', () => listerTypesOeuvre());
   ipcMain.handle('oeuvres:mediums', () => listerMediumsOeuvre());
   ipcMain.handle('oeuvres:mediums-artiste', (_e, artisteId) => listerMediumsArtiste(artisteId));
