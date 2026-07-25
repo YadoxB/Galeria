@@ -4,7 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { openDatabase, closeDatabase, lireCatalogueId } = require('./db/database');
-const { getPhotosDir, getDataDir, getDocumentsDirAnnee, getDbPath, getSeedPath, getBackupsDir, ensureDirectories } = require('./db/paths');
+const { getPhotosDir, getDataDir, getDocumentsDirAnnee, getDbPath, getSeedPath, getBackupsDir, ensureDirectories, ecrireEmplacementConfigure, lireDeplacementEnAttente, ecrireDeplacementEnAttente, effacerDeplacementEnAttente } = require('./db/paths');
+const { deplacerDossierDonnees, verifierDestination, estDossierGaleriaValide, estSousOneDrive } = require('./db/deplacer-donnees');
 const { seedPhotosIfNeeded } = require('./db/seedPhotos');
 const { choisirPhoto, effacerPhoto, lireFichierImage, lirePourRecadrage, enregistrerImageRecadree } = require('./photos');
 const { obtenirConfig, mettreAJourConfig, infoConfigCorrompue } = require('./config');
@@ -688,6 +689,43 @@ app.whenReady().then(async () => {
   }
 });
 
+// Exécute une demande de déplacement du dossier de données déposée par les
+// Réglages avant le redémarrage. La demande est CONSOMMÉE d'abord (le fichier est
+// effacé) pour ne jamais reboucler indéfiniment si le déplacement échoue. En cas
+// d'échec, message clair et poursuite du démarrage sur l'ancien emplacement
+// (données intactes, papier d'adresse non modifié).
+async function executerDeplacementEnAttente(progres) {
+  const destination = lireDeplacementEnAttente();
+  if (!destination) return;
+  effacerDeplacementEnAttente();
+  const source = getDataDir();
+  try {
+    await progres(6, 'Préparation du déplacement du dossier de données…');
+    // La copie est synchrone : sur un autre disque, le splash ne se rafraîchit
+    // pas pendant l'opération. On pose donc un message rassurant AVANT.
+    await progres(10, 'Déplacement de vos fichiers… un instant, ne fermez pas Galeria.');
+    const r = deplacerDossierDonnees(source, destination);
+    await progres(55, 'Déplacement terminé.');
+    if (r && r.avertissement) {
+      dialog.showMessageBoxSync({
+        type: 'info', title: 'Galeria',
+        message: 'Le dossier de données a été déplacé.',
+        detail: r.avertissement,
+        buttons: ['Continuer'], noLink: true,
+      });
+    }
+  } catch (err) {
+    journaliserErreur('Déplacement du dossier de données échoué', err);
+    dialog.showMessageBoxSync({
+      type: 'warning', title: 'Galeria',
+      message: "Le dossier de données n'a pas pu être déplacé.",
+      detail: String((err && err.message) || err)
+        + '\n\nGaleria continue avec l\'emplacement actuel. Vos données n\'ont pas été touchées.',
+      buttons: ['Continuer'], noLink: true,
+    });
+  }
+}
+
 async function demarrerApplication() {
   protocol.handle('galerie', async (request) => {
     const url = new URL(request.url);
@@ -715,6 +753,11 @@ async function demarrerApplication() {
       .executeJavaScript(`window.majProgres && window.majProgres(${pct}, ${JSON.stringify(texte)})`)
       .catch(() => {});
   };
+
+  // Déplacement du dossier de données demandé depuis les Réglages : exécuté ici,
+  // au tout début, base FERMÉE et avant que ensureDirectories ne recrée quoi que
+  // ce soit à l'ancien emplacement.
+  await executerDeplacementEnAttente(progres);
 
   await progres(12, 'Ouverture de la base de données…');
   ensureDirectories();
@@ -1043,6 +1086,78 @@ async function demarrerApplication() {
   ipcMain.handle('backup:redemarrer', () => {
     arreterSauvegardePeriodique();
     demarrerSauvegardePeriodique(surEvenementSauvegarde);
+  });
+
+  // ===== Emplacement du dossier de données (déplacement / adoption) =====
+  ipcMain.handle('donnees:emplacement', () => {
+    const chemin = getDataDir();
+    const defaut = path.join(app.getPath('documents'), 'Galeria');
+    const lecteurSysteme = (process.env.SystemDrive || 'C:') + path.sep;
+    return {
+      chemin,
+      sousOneDrive: estSousOneDrive(chemin),
+      parDefaut: path.resolve(chemin).toLowerCase() === path.resolve(defaut).toLowerCase(),
+      defautSuggere: path.join(lecteurSysteme, 'Galeria'),
+    };
+  });
+
+  // Choisir OÙ placer le dossier : l'utilisateur choisit un dossier parent, et
+  // Galeria y crée un sous-dossier « Galeria ».
+  ipcMain.handle('donnees:choisir-destination', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+      title: 'Choisir où placer le dossier Galeria',
+      properties: ['openDirectory', 'createDirectory'],
+    });
+    if (canceled || !filePaths.length) return { cancelled: true };
+    return { parent: filePaths[0], destination: path.join(filePaths[0], 'Galeria') };
+  });
+
+  // Validation instantanée d'une destination, sans rien déplacer.
+  ipcMain.handle('donnees:valider-destination', (_e, destination) => {
+    try {
+      verifierDestination(getDataDir(), destination);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, erreur: e.message };
+    }
+  });
+
+  // Enregistre la demande de déplacement puis redémarre : le déplacement a lieu
+  // au prochain démarrage, base fermée.
+  ipcMain.handle('donnees:deplacer', (_e, destination) => {
+    try {
+      verifierDestination(getDataDir(), destination);
+    } catch (e) {
+      return { ok: false, erreur: e.message };
+    }
+    ecrireDeplacementEnAttente(destination);
+    setTimeout(() => { app.relaunch(); app.exit(0); }, 250);
+    return { ok: true };
+  });
+
+  // Choisir un dossier Galeria déjà existant (cas « mes données sont ailleurs »).
+  ipcMain.handle('donnees:choisir-dossier-existant', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+      title: 'Indiquer le dossier Galeria existant',
+      properties: ['openDirectory'],
+    });
+    if (canceled || !filePaths.length) return { cancelled: true };
+    return { dossier: filePaths[0], valide: estDossierGaleriaValide(filePaths[0]) };
+  });
+
+  // Pointe Galeria vers un dossier existant (aucun déplacement) puis redémarre.
+  ipcMain.handle('donnees:adopter', (_e, dossier) => {
+    if (!estDossierGaleriaValide(dossier)) {
+      return { ok: false, erreur: 'Ce dossier ne contient pas de base Galeria (galerie.db). Choisissez le dossier « Galeria » lui-même.' };
+    }
+    if (path.resolve(dossier).toLowerCase() === path.resolve(getDataDir()).toLowerCase()) {
+      return { ok: false, erreur: "C'est déjà l'emplacement utilisé actuellement." };
+    }
+    ecrireEmplacementConfigure(dossier);
+    setTimeout(() => { app.relaunch(); app.exit(0); }, 250);
+    return { ok: true };
   });
   ipcMain.handle('oeuvres:types', () => listerTypesOeuvre());
   ipcMain.handle('oeuvres:mediums', () => listerMediumsOeuvre());

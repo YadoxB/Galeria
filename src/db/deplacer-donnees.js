@@ -192,18 +192,9 @@ function messageErreurDeplacement(e, source) {
   );
 }
 
-// Déplace le dossier de données de `source` vers `destination`.
-// Options : onProgres(fraction 0..1) pendant la copie ; ts pour un horodatage
-// déterministe (tests). Renvoie :
-//   { ok:true, mode:'rename'|'copie', source, destination, backup,
-//     sourceSupprimee, avertissement }
-// Lève une Error au message clair en cas d'échec (données laissées intactes).
-function deplacerDossierDonnees(source, destination, options = {}) {
-  const { onProgres = null, ts } = options;
-  const src = path.resolve(String(source || ''));
-  const dst = path.resolve(String(destination || ''));
-
-  // --- Contrôles préalables (aucun changement tant qu'ils ne passent pas) ---
+// Contrôles de chemins, sans rien modifier. Lève une erreur claire au premier
+// problème. Partagé par le déplacement et la validation instantanée de l'écran.
+function controlerChemins(src, dst) {
   if (!src || !fs.existsSync(src) || !fs.statSync(src).isDirectory()) {
     throw new Error(`Le dossier de données source est introuvable : ${src}`);
   }
@@ -225,10 +216,88 @@ function deplacerDossierDonnees(source, destination, options = {}) {
         `Le dossier de destination existe déjà et n'est pas vide : ${dst}\n\n`
         + 'Choisissez un autre emplacement, ou videz ce dossier d\'abord. '
         + '(Pour utiliser un dossier Galeria déjà existant sans rien déplacer, '
-        + 'utilisez plutôt « Utiliser un dossier existant ».)'
+        + 'utilisez plutôt « Indiquer où se trouvent vos données ».)'
       );
     }
   }
+}
+
+// Espace disque : contrôlé seulement si la destination est sur un autre volume
+// (une copie s'annonce), avec une marge de 5 %. Renvoie { memeRacine }.
+function verifierEspaceSiAutreVolume(src, dst) {
+  const memeRacine = path.parse(src).root.toLowerCase() === path.parse(dst).root.toLowerCase();
+  if (!memeRacine) {
+    const libre = espaceLibre(path.dirname(dst));
+    const total = inventaire(src).total;
+    if (libre !== null && libre < total * 1.05) {
+      const go = (n) => (n / (1024 * 1024 * 1024)).toFixed(2);
+      throw new Error(
+        `Espace disque insuffisant à destination : il faut environ ${go(total)} Go `
+        + `et il n'en reste que ${go(libre)} Go. Libérez de l'espace ou choisissez un autre disque.`
+      );
+    }
+  }
+  return { memeRacine };
+}
+
+// Valide une destination SANS rien déplacer (retour instantané pour l'écran).
+// Lève une erreur claire si la destination n'est pas acceptable.
+function verifierDestination(source, destination) {
+  // Vérifié AVANT resolve : path.resolve transformerait un chemin relatif en
+  // absolu (contre le dossier courant), ce qui masquerait cette erreur.
+  if (!path.isAbsolute(String(destination || ''))) {
+    throw new Error('La destination doit être un chemin de dossier complet.');
+  }
+  const src = path.resolve(String(source || ''));
+  const dst = path.resolve(String(destination || ''));
+  controlerChemins(src, dst);
+  const { memeRacine } = verifierEspaceSiAutreVolume(src, dst);
+  return { ok: true, memeRacine };
+}
+
+// Un dossier contient-il une base Galeria ? (pour « Indiquer où se trouvent vos
+// données » : on pointe sur un dossier existant qui doit renfermer galerie.db.)
+function estDossierGaleriaValide(dir) {
+  try {
+    if (!dir) return false;
+    const db = path.join(dir, NOM_DB);
+    return fs.existsSync(db) && fs.statSync(db).isFile();
+  } catch {
+    return false;
+  }
+}
+
+// Un chemin est-il à l'intérieur d'un dossier OneDrive ? On se fie d'abord aux
+// variables d'environnement posées par OneDrive, puis, à défaut, à un segment de
+// chemin nommé « OneDrive… » (couvre « OneDrive - Entreprise »).
+function estSousOneDrive(dir) {
+  if (!dir) return false;
+  const bas = path.resolve(dir).toLowerCase();
+  for (const v of ['OneDrive', 'OneDriveConsumer', 'OneDriveCommercial']) {
+    const racine = process.env[v] && path.resolve(process.env[v]).toLowerCase();
+    if (racine && (bas === racine || bas.startsWith(racine + path.sep))) return true;
+  }
+  return /[\\/]onedrive[^\\/]*[\\/]/i.test(path.resolve(dir) + path.sep);
+}
+
+// Déplace le dossier de données de `source` vers `destination`.
+// Options : onProgres(fraction 0..1) pendant la copie ; ts pour un horodatage
+// déterministe (tests). Renvoie :
+//   { ok:true, mode:'rename'|'copie', source, destination, backup,
+//     sourceSupprimee, avertissement }
+// Lève une Error au message clair en cas d'échec (données laissées intactes).
+function deplacerDossierDonnees(source, destination, options = {}) {
+  const { onProgres = null, ts } = options;
+  // Vérifié AVANT resolve (voir verifierDestination).
+  if (!path.isAbsolute(String(destination || ''))) {
+    throw new Error('La destination doit être un chemin de dossier complet.');
+  }
+  const src = path.resolve(String(source || ''));
+  const dst = path.resolve(String(destination || ''));
+
+  // --- Contrôles préalables (aucun changement tant qu'ils ne passent pas) ---
+  controlerChemins(src, dst);
+  verifierEspaceSiAutreVolume(src, dst);
 
   // --- Sauvegarde d'abord, toujours (mandat de Dave) ---
   // Créée AVANT l'inventaire, pour qu'elle soit incluse dans la copie (mode
@@ -236,20 +305,6 @@ function deplacerDossierDonnees(source, destination, options = {}) {
   const backup = sauvegardeAvantDeplacement(src, ts || horodatageCompact());
 
   const inv = inventaire(src);
-
-  // Espace disque : contrôlé seulement si la destination est sur un autre volume
-  // (une copie s'annonce). On garde une marge de 5 %.
-  const memeRacine = path.parse(src).root.toLowerCase() === path.parse(dst).root.toLowerCase();
-  if (!memeRacine) {
-    const libre = espaceLibre(path.dirname(dst));
-    if (libre !== null && libre < inv.total * 1.05) {
-      const go = (n) => (n / (1024 * 1024 * 1024)).toFixed(2);
-      throw new Error(
-        `Espace disque insuffisant à destination : il faut environ ${go(inv.total)} Go `
-        + `et il n'en reste que ${go(libre)} Go. Libérez de l'espace ou choisissez un autre disque.`
-      );
-    }
-  }
 
   // --- Déplacement : renommage rapide, repli sur copie si autre disque ---
   // Windows refuse de renommer SUR un dossier existant, même vide (contrairement
@@ -306,7 +361,10 @@ function deplacerDossierDonnees(source, destination, options = {}) {
 
 module.exports = {
   deplacerDossierDonnees,
-  // Exposés pour le banc d'essai et la validation côté écran (Pas C) :
+  verifierDestination,
+  estDossierGaleriaValide,
+  estSousOneDrive,
+  // Exposés pour le banc d'essai :
   estSousDe,
   inventaire,
   espaceLibre,

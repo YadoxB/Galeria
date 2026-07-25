@@ -9,6 +9,7 @@ const ANCIEN_NOM_DOSSIER = 'GalerieApp';
 // Rangé HORS du dossier de données (voir cheminFichierEmplacement) — sinon on
 // perdrait l'adresse en déplaçant le dossier.
 const NOM_FICHIER_EMPLACEMENT = 'emplacement.json';
+const NOM_FICHIER_DEPLACEMENT = 'deplacement-en-attente.json';
 
 // Emplacement résolu pour la session (mémorisé au premier appel de getDataDir).
 // Sources, dans l'ordre : (1) valeur posée par une migration de dossier ci-
@@ -25,6 +26,39 @@ let dossierDonneesResolu = null;
 // lui-même : ce serait l'adresse rangée à l'intérieur de ce qu'elle localise.
 function cheminFichierEmplacement() {
   return path.join(app.getPath('userData'), NOM_FICHIER_EMPLACEMENT);
+}
+
+// Demande de déplacement du dossier de données, déposée par l'écran Réglages
+// juste avant un redémarrage. Rangée dans userData (comme le papier d'adresse)
+// pour être lisible au tout début du démarrage, avant l'ouverture de la base et
+// avant que le dossier ne bouge. Le déplacement est ensuite exécuté au démarrage.
+function cheminDeplacementEnAttente() {
+  return path.join(app.getPath('userData'), NOM_FICHIER_DEPLACEMENT);
+}
+
+function lireDeplacementEnAttente() {
+  try {
+    const p = cheminDeplacementEnAttente();
+    if (!fs.existsSync(p)) return null;
+    const obj = JSON.parse(fs.readFileSync(p, 'utf-8'));
+    const dest = obj && typeof obj.destination === 'string' ? obj.destination.trim() : '';
+    return dest && path.isAbsolute(dest) ? dest : null;
+  } catch (e) {
+    console.error('Demande de déplacement illisible, ignorée :', e);
+    return null;
+  }
+}
+
+function ecrireDeplacementEnAttente(destination) {
+  const p = cheminDeplacementEnAttente();
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  const tmp = `${p}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify({ destination: String(destination).trim() }, null, 2), 'utf-8');
+  fs.renameSync(tmp, p);
+}
+
+function effacerDeplacementEnAttente() {
+  try { fs.unlinkSync(cheminDeplacementEnAttente()); } catch {}
 }
 
 // Lit l'emplacement personnalisé configuré, ou null s'il n'y en a pas.
@@ -166,4 +200,8 @@ module.exports = {
   cheminFichierEmplacement,
   lireEmplacementConfigure,
   ecrireEmplacementConfigure,
+  cheminDeplacementEnAttente,
+  lireDeplacementEnAttente,
+  ecrireDeplacementEnAttente,
+  effacerDeplacementEnAttente,
 };
