@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Galeria — Démo Réglages → Données (emplacement du dossier)</title>
+  <link rel="stylesheet" href="../src/theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--soft-ivory); color: var(--ink); font-family: var(--font-ui); }
+
+    .demo-bar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: var(--s3); padding: var(--s2) var(--s4); background: var(--deep-navy); color: var(--soft-ivory); }
+    .demo-bar .titre { font-family: var(--font-titre); font-size: 18px; }
+    .demo-bar .titre .marque { color: var(--warm-gold); font-style: italic; }
+    .demo-bar .note { font-size: 12px; color: rgba(252,250,244,0.7); }
+    .demo-bar .bascules { display: flex; gap: 8px; }
+    .demo-bar button { font: inherit; font-size: 12px; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(252,250,244,0.3); background: transparent; color: var(--soft-ivory); cursor: pointer; }
+    .demo-bar button.on { background: var(--warm-gold); border-color: var(--warm-gold); color: var(--deep-navy); font-weight: 600; }
+
+    main { max-width: 1180px; margin: 0 auto; padding: var(--s5) var(--s4) calc(var(--s6) * 2); }
+    .panneau-tete { margin-bottom: var(--s3); }
+    .panneau-tete h2 { font-family: var(--font-titre); font-weight: 600; font-size: 26px; color: var(--ink); margin: 0; }
+    .panneau-tete .desc { color: var(--slate); font-size: 13px; margin: 4px 0 0; }
+
+    .grille-bento { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s3); align-items: start; }
+    .carte { background: var(--porcelain); border: 1px solid var(--mist); border-radius: var(--r-carte); box-shadow: var(--ombre-carte); padding: var(--s3) var(--s4); }
+    .span-12 { grid-column: span 12; } .span-7 { grid-column: span 7; } .span-5 { grid-column: span 5; }
+    .carte h3 { font-family: var(--font-titre); font-weight: 600; font-size: 20px; color: var(--ink); margin: 0 0 4px; }
+    .aide-champ { color: var(--slate); font-size: 12px; line-height: 1.5; margin: 6px 0 0; }
+
+    .sous-section { margin-top: var(--s3); background: var(--soft-ivory); border: 1px solid var(--mist); border-radius: var(--r-btn); padding: var(--s3); }
+    .sous-section h4 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--stone); font-weight: 600; }
+
+    .ligne-dossier { display: flex; gap: 8px; align-items: stretch; }
+    .ligne-dossier input { flex: 1; min-width: 0; height: 40px; border: 1px solid var(--mist); border-radius: 10px; padding: 0 12px; background: var(--porcelain); color: var(--ink); font: inherit; font-size: 13px; }
+
+    .btn-action { font: inherit; font-size: 13px; font-weight: 500; height: 40px; padding: 0 16px; border-radius: 10px; cursor: pointer; border: 1px solid var(--mist); white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-secondaire-action { background: var(--porcelain); color: var(--ink); }
+    .btn-secondaire-action:hover { background: var(--cloud); }
+    .btn-principal { background: var(--warm-gold); border-color: var(--warm-gold); color: var(--soft-ivory); font-weight: 600; }
+    .btn-principal:hover { filter: brightness(1.05); }
+    .lien-dossier { background: none; border: none; color: var(--ink); font: inherit; font-size: 13px; text-decoration: underline dotted; cursor: pointer; padding: 0; text-align: left; }
+
+    .ligne-boutons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: var(--s3); }
+
+    /* Cas de récupération : discret, formulé comme une question */
+    .bloc-recuperation { margin-top: var(--s3); padding-top: var(--s3); border-top: 1px dashed var(--mist); font-size: 13px; color: var(--slate); line-height: 1.55; }
+    .bloc-recuperation .sous { color: var(--stone); }
+    .lien-recup { display: inline-block; margin-top: 4px; background: none; border: none; padding: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--deep-navy); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+    .lien-recup:hover { color: var(--warm-gold); }
+
+    /* Bandeau d'avertissement doux OneDrive */
+    .bandeau-attention { display: flex; gap: 12px; align-items: flex-start; margin-top: var(--s3); padding: 12px 14px; border-radius: 12px;
+      background: rgba(201,162,39,0.10); border: 1px solid rgba(201,162,39,0.45); }
+    .bandeau-attention svg { flex: none; width: 20px; height: 20px; color: var(--warm-gold); margin-top: 1px; }
+    .bandeau-attention .txt { font-size: 13px; line-height: 1.5; color: var(--ink); }
+    .bandeau-attention .txt strong { color: var(--ink); }
+
+    .chip-etat { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; vertical-align: middle; margin-left: 8px; }
+    .chip-local { background: rgba(46,125,90,0.15); color: #2e7d5a; }
+    .chip-nuage { background: rgba(201,162,39,0.18); color: #8a6d15; }
+
+    /* Modale */
+    .overlay { position: fixed; inset: 0; background: rgba(15,26,45,0.45); backdrop-filter: blur(2px); display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+    .overlay.ouvert { display: flex; }
+    .modale { background: var(--porcelain); border-radius: 18px; box-shadow: 0 20px 60px rgba(15,26,45,0.35); max-width: 560px; width: 100%; padding: var(--s5); }
+    .modale h3 { font-family: var(--font-titre); font-weight: 600; font-size: 24px; color: var(--ink); margin: 0 0 6px; }
+    .modale p { font-size: 14px; line-height: 1.55; color: var(--slate); margin: 10px 0; }
+    .modale ul { margin: 10px 0; padding-left: 20px; font-size: 13.5px; line-height: 1.6; color: var(--ink); }
+    .modale ul li { margin: 3px 0; }
+    .modale .dest { display: flex; gap: 8px; margin: 12px 0; }
+    .modale .dest input { flex: 1; height: 40px; border: 1px solid var(--mist); border-radius: 10px; padding: 0 12px; background: var(--soft-ivory); font: inherit; font-size: 13px; color: var(--ink); }
+    .modale-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: var(--s4); }
+    .encart-sauvegarde { background: var(--soft-ivory); border: 1px solid var(--mist); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; color: var(--slate); }
+
+    /* Progression (mockup du redémarrage/déplacement) */
+    .barre { height: 8px; background: var(--mist); border-radius: 999px; overflow: hidden; margin-top: 14px; }
+    .barre > span { display: block; height: 100%; width: 0; background: var(--warm-gold); transition: width .2s; }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <div class="titre">Démo — <span class="marque">Galeria</span> · Réglages → Données</div>
+    <div class="bascules">
+      <button id="b-nuage" class="on">État : sous OneDrive</button>
+      <button id="b-local">État : dossier local</button>
+    </div>
+    <div class="note">Démo autonome — aucun déplacement réel</div>
+  </div>
+
+  <main>
+    <div class="panneau-tete">
+      <h2>Données</h2>
+      <p class="desc">Emplacement du dossier, sauvegardes automatiques, restauration et import.</p>
+    </div>
+
+    <div class="grille-bento">
+      <!-- ═══ NOUVELLE CARTE : emplacement du dossier de données ═══ -->
+      <div class="carte span-12">
+        <h3>Dossier de données Galeria <span id="chip" class="chip-etat chip-nuage">dans le nuage</span></h3>
+        <p class="aide-champ" style="margin-top:0;">
+          C'est là que Galeria conserve tout : le catalogue, les photos, les documents produits et les sauvegardes.
+          Un seul dossier, entièrement sur cet ordinateur.
+        </p>
+
+        <div class="sous-section">
+          <h4>Emplacement actuel</h4>
+          <div class="ligne-dossier">
+            <input id="chemin-actuel" type="text" value="C:\Users\Galerie\OneDrive\Documents\Galeria" readonly>
+            <button class="btn-action btn-secondaire-action" onclick="alert('Démo : ouvrirait le dossier dans l\'Explorateur Windows.')">Ouvrir</button>
+          </div>
+
+          <div id="bandeau-onedrive" class="bandeau-attention">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div class="txt">
+              <strong>Vos données sont dans un dossier synchronisé par OneDrive</strong> — elles sont donc aussi copiées dans le nuage Microsoft.
+              Pour que tout reste seulement sur cet ordinateur (recommandé, et conforme à la Loi&nbsp;25), déplacez-les vers un dossier local comme <strong>C:\Galeria</strong>.
+            </div>
+          </div>
+        </div>
+
+        <div class="ligne-boutons">
+          <button class="btn-action btn-principal" id="btn-deplacer">Déplacer le dossier…</button>
+        </div>
+        <p class="aide-champ">Une sauvegarde est faite d'abord, puis Galeria redémarre pour terminer en toute sécurité.</p>
+
+        <div class="bloc-recuperation">
+          Vos données se trouvent déjà ailleurs ? <span class="sous">(OneDrive les a déplacées, ou vous réinstallez Galeria sur cet ordinateur.)</span><br>
+          <button type="button" class="lien-recup" id="btn-adopter">→ Indiquer à Galeria où les retrouver</button>
+        </div>
+      </div>
+
+      <!-- Cartes existantes (pour situer la nouvelle dans la page) -->
+      <div class="carte span-7">
+        <h3>Sauvegardes</h3>
+        <p class="aide-champ" style="margin-top:0;">Copies automatiques régulières. Le dossier des sauvegardes suit le dossier de données, sauf si vous en avez choisi un autre (clé USB).</p>
+        <div class="ligne-boutons">
+          <button class="btn-action btn-secondaire-action">Sauvegarder maintenant</button>
+          <button class="btn-action btn-secondaire-action">Restaurer une sauvegarde…</button>
+        </div>
+      </div>
+      <div class="carte span-5">
+        <h3>Import de données</h3>
+        <p class="aide-champ" style="margin-top:0;">Importe un fichier CSV exporté d'Airtable (Artistes ou Œuvres).</p>
+        <div class="ligne-boutons"><button class="btn-action btn-secondaire-action">Importer un fichier CSV…</button></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ═══ Modale : Déplacer ═══ -->
+  <div class="overlay" id="ov-deplacer">
+    <div class="modale">
+      <h3>Déplacer le dossier de données</h3>
+      <p>Choisissez le nouvel emplacement. Galeria y déplacera <strong>tout</strong> : catalogue, photos, documents et sauvegardes.</p>
+      <div class="dest">
+        <input id="dest-deplacer" type="text" value="C:\Galeria" readonly>
+        <button class="btn-action btn-secondaire-action" onclick="document.getElementById('dest-deplacer').value='C:\\Galeria'">Choisir…</button>
+      </div>
+      <ul>
+        <li>Une <strong>sauvegarde de sûreté</strong> est faite d'abord.</li>
+        <li>Si c'est sur le même disque, c'est <strong>instantané</strong> ; sur un autre disque, une copie vérifiée est faite avant d'effacer l'ancien.</li>
+        <li>Galeria <strong>redémarre</strong> pour terminer.</li>
+      </ul>
+      <div class="encart-sauvegarde">Pendant l'opération, ne touchez pas au dossier et laissez OneDrive tranquille. En cas de souci, rien n'est perdu : vos données restent à leur place actuelle.</div>
+      <div class="modale-actions">
+        <button class="btn-action btn-secondaire-action" onclick="fermer('ov-deplacer')">Annuler</button>
+        <button class="btn-action btn-principal" onclick="simulerProgression('ov-deplacer')">Déplacer et redémarrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Modale : Utiliser un dossier existant ═══ -->
+  <div class="overlay" id="ov-adopter">
+    <div class="modale">
+      <h3>Indiquer où se trouvent vos données</h3>
+      <p>Votre dossier <strong>Galeria</strong> se trouve déjà quelque part (par exemple parce que OneDrive l'a déplacé, ou parce que vous réinstallez sur cet ordinateur). Indiquez-le à Galeria : <strong>rien n'est déplacé</strong>, l'app va simplement le lire à ce nouvel endroit.</p>
+      <div class="dest">
+        <input id="dest-adopter" type="text" value="D:\Sauvegarde\Galeria" readonly>
+        <button class="btn-action btn-secondaire-action">Choisir…</button>
+      </div>
+      <ul>
+        <li>Galeria vérifie d'abord que le dossier contient bien une base (<em>galerie.db</em>).</li>
+        <li>Puis elle <strong>redémarre</strong> en lisant à ce nouvel endroit.</li>
+      </ul>
+      <div class="modale-actions">
+        <button class="btn-action btn-secondaire-action" onclick="fermer('ov-adopter')">Annuler</button>
+        <button class="btn-action btn-principal" onclick="simulerProgression('ov-adopter')">Utiliser et redémarrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Modale : progression (redémarrage) ═══ -->
+  <div class="overlay" id="ov-progres">
+    <div class="modale" style="max-width:460px; text-align:center;">
+      <h3 id="prog-titre">Déplacement en cours…</h3>
+      <p id="prog-texte">Sauvegarde de sûreté, puis déplacement de vos fichiers. Galeria va redémarrer automatiquement.</p>
+      <div class="barre"><span id="prog-barre"></span></div>
+      <p class="aide-champ" id="prog-etape" style="text-align:center;">Préparation…</p>
+    </div>
+  </div>
+
+  <script>
+    // Bascule d'état de démo : sous OneDrive ↔ dossier local
+    const bNuage = document.getElementById('b-nuage');
+    const bLocal = document.getElementById('b-local');
+    function setEtat(nuage) {
+      bNuage.classList.toggle('on', nuage);
+      bLocal.classList.toggle('on', !nuage);
+      document.getElementById('bandeau-onedrive').style.display = nuage ? 'flex' : 'none';
+      const chip = document.getElementById('chip');
+      chip.className = 'chip-etat ' + (nuage ? 'chip-nuage' : 'chip-local');
+      chip.textContent = nuage ? 'dans le nuage' : 'local';
+      document.getElementById('chemin-actuel').value = nuage
+        ? 'C:\\Users\\Galerie\\OneDrive\\Documents\\Galeria'
+        : 'C:\\Galeria';
+      // Quand déjà local, "Déplacer" reste possible mais l'avertissement disparaît.
+    }
+    bNuage.onclick = () => setEtat(true);
+    bLocal.onclick = () => setEtat(false);
+
+    function ouvrir(id) { document.getElementById(id).classList.add('ouvert'); }
+    function fermer(id) { document.getElementById(id).classList.remove('ouvert'); }
+    document.getElementById('btn-deplacer').onclick = () => ouvrir('ov-deplacer');
+    document.getElementById('btn-adopter').onclick = () => ouvrir('ov-adopter');
+
+    function simulerProgression(depuis) {
+      fermer(depuis);
+      const est = depuis === 'ov-adopter';
+      document.getElementById('prog-titre').textContent = est ? 'Changement d\'emplacement…' : 'Déplacement en cours…';
+      ouvrir('ov-progres');
+      const barre = document.getElementById('prog-barre');
+      const etape = document.getElementById('prog-etape');
+      const etapes = est
+        ? [[20,'Vérification du dossier…'],[100,'Redémarrage…']]
+        : [[15,'Sauvegarde de sûreté…'],[70,'Déplacement des fichiers…'],[95,'Vérification…'],[100,'Redémarrage…']];
+      let i = 0;
+      barre.style.width = '0';
+      (function suivant() {
+        if (i >= etapes.length) { setTimeout(() => { fermer('ov-progres'); alert('Démo : ici, Galeria redémarrerait sur le nouvel emplacement.'); }, 500); return; }
+        const [pct, txt] = etapes[i++];
+        barre.style.width = pct + '%';
+        etape.textContent = txt;
+        setTimeout(suivant, 700);
+      })();
+    }
+
+    setEtat(true);
+  </script>
+</body>
+</html>

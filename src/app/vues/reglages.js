@@ -110,6 +110,7 @@ function ouvrirModaleRestauration(liste, formaterDateHeure) {
 export async function rendreReglages(contenu, params) {
   const config = JSON.parse(JSON.stringify(await chargerConfig()));
   const infosApp = await window.api.appInfos();
+  const emplacement = await window.api.donneesEmplacement();
   let modifie = false;
   const zoomInitial = Number(config?.affichage?.zoom) || 1.0;
 
@@ -283,8 +284,31 @@ export async function rendreReglages(contenu, params) {
 
             <!-- ═══ DONNÉES ═══ -->
             <section class="cat-panneau${catInitiale === 'donnees' ? ' actif' : ''}" data-cat="donnees">
-              <div class="panneau-tete"><h2>Données</h2><p class="desc">Sauvegardes automatiques, restauration et import.</p></div>
+              <div class="panneau-tete"><h2>Données</h2><p class="desc">Emplacement du dossier, sauvegardes automatiques, restauration et import.</p></div>
               <div class="grille-bento">
+                <div class="carte zone-emplacement">
+                  <h3>Dossier de données Galeria<span class="chip-emplacement ${emplacement.sousOneDrive ? 'nuage' : 'local'}" id="chip-emplacement">${emplacement.sousOneDrive ? 'dans le nuage' : 'local'}</span></h3>
+                  <p class="aide-champ" style="margin-top:0;">C'est là que Galeria conserve tout : le catalogue, les photos, les documents produits et les sauvegardes. Un seul dossier, entièrement sur cet ordinateur.</p>
+                  <div class="sous-section">
+                    <h4>Emplacement actuel</h4>
+                    <div class="ligne-dossier">
+                      <input type="text" id="f-emplacement-actuel" value="${ech(emplacement.chemin)}" readonly>
+                      <button type="button" class="btn-action btn-secondaire-action" id="btn-ouvrir-emplacement">Ouvrir</button>
+                    </div>
+                    ${emplacement.sousOneDrive ? `
+                    <p class="aide-champ attention-secours" id="bandeau-onedrive">
+                      <strong>Vos données sont dans un dossier synchronisé par OneDrive</strong> — elles sont donc aussi copiées dans le nuage Microsoft. Pour que tout reste seulement sur cet ordinateur (recommandé, et conforme à la Loi&nbsp;25), déplacez-les vers un dossier local comme <strong>${ech(emplacement.defautSuggere)}</strong>.
+                    </p>` : ''}
+                  </div>
+                  <div class="ligne-boutons-donnees">
+                    <button type="button" class="btn-action btn-principal btn-gros-bento" id="btn-deplacer-dossier">Déplacer le dossier…</button>
+                  </div>
+                  <p class="aide-champ">Une sauvegarde est faite d'abord, puis Galeria redémarre pour terminer en toute sécurité.</p>
+                  <div class="bloc-recuperation">
+                    Vos données se trouvent déjà ailleurs ? <span class="sous">(OneDrive les a déplacées, ou vous réinstallez Galeria sur cet ordinateur.)</span><br>
+                    <button type="button" class="lien-recup" id="btn-adopter-dossier">→ Indiquer à Galeria où les retrouver</button>
+                  </div>
+                </div>
                 <div class="carte zone-sauvegardes">
                   <h3>Sauvegardes</h3>
                   <div class="grille-form">
@@ -540,6 +564,84 @@ export async function rendreReglages(contenu, params) {
         }
       } catch (err) {
         await alerter({ type: 'error', title: 'Impossible d\'ouvrir le dossier', message: nettoyerErreur(err) });
+      }
+    });
+  }
+
+  // ---- Emplacement du dossier de données : ouvrir / déplacer / retrouver ----
+  const btnOuvrirEmplacement = contenu.querySelector('#btn-ouvrir-emplacement');
+  if (btnOuvrirEmplacement) {
+    btnOuvrirEmplacement.addEventListener('click', () => window.api.ouvrirDossier(emplacement.chemin));
+  }
+
+  const btnDeplacer = contenu.querySelector('#btn-deplacer-dossier');
+  if (btnDeplacer) {
+    btnDeplacer.addEventListener('click', async () => {
+      // 1. Choisir la destination (le dossier local recommandé est proposé).
+      const choix = await confirmer({
+        type: 'question',
+        title: 'Déplacer le dossier de données',
+        message: `Où placer le dossier Galeria ? Nous recommandons un dossier local, hors OneDrive :\n${emplacement.defautSuggere}`,
+        buttons: [`Utiliser ${emplacement.defautSuggere}`, 'Choisir un autre dossier…', 'Annuler'],
+        defaultId: 0, cancelId: 2,
+      });
+      if (choix === 2) return;
+      let destination = emplacement.defautSuggere;
+      if (choix === 1) {
+        const r = await window.api.donneesChoisirDestination();
+        if (!r || r.cancelled) return;
+        destination = r.destination;
+      }
+      // 2. Valider sans rien déplacer.
+      const val = await window.api.donneesValiderDestination(destination);
+      if (!val || !val.ok) {
+        await alerter({ type: 'error', title: 'Emplacement impossible', message: val?.erreur || 'Cette destination ne convient pas.' });
+        return;
+      }
+      // 3. Confirmation finale, puis déplacement au redémarrage.
+      const ok = await confirmer({
+        type: 'warning',
+        title: 'Déplacer et redémarrer',
+        message: `Galeria va déplacer toutes vos données vers :\n${destination}`,
+        detail: 'Une sauvegarde de sûreté est faite d’abord. Si c’est sur le même disque, c’est instantané ; sur un autre disque, une copie vérifiée est faite avant d’effacer l’ancien dossier. Galeria redémarre ensuite. Pendant l’opération, ne fermez pas Galeria et laissez OneDrive tranquille.',
+        buttons: ['Déplacer et redémarrer', 'Annuler'],
+        defaultId: 0, cancelId: 1,
+      });
+      if (ok !== 0) return;
+      const res = await window.api.donneesDeplacer(destination);
+      if (res && !res.ok) {
+        await alerter({ type: 'error', title: 'Déplacement impossible', message: res.erreur || 'Le déplacement n’a pas pu être lancé.' });
+      }
+      // Si tout va bien, Galeria redémarre d’elle-même.
+    });
+  }
+
+  const btnAdopter = contenu.querySelector('#btn-adopter-dossier');
+  if (btnAdopter) {
+    btnAdopter.addEventListener('click', async () => {
+      const r = await window.api.donneesChoisirDossierExistant();
+      if (!r || r.cancelled) return;
+      if (!r.valide) {
+        await alerter({
+          type: 'error',
+          title: 'Dossier non reconnu',
+          message: 'Ce dossier ne contient pas de base Galeria (galerie.db).',
+          detail: 'Choisissez le dossier « Galeria » lui-même — celui qui contient le fichier galerie.db, le dossier Photos et le dossier Sauvegardes.',
+        });
+        return;
+      }
+      const ok = await confirmer({
+        type: 'question',
+        title: 'Indiquer où se trouvent vos données',
+        message: `Utiliser ce dossier ?\n${r.dossier}`,
+        detail: 'Rien n’est déplacé : Galeria va simplement lire vos données à cet endroit, puis redémarrer.',
+        buttons: ['Utiliser et redémarrer', 'Annuler'],
+        defaultId: 0, cancelId: 1,
+      });
+      if (ok !== 0) return;
+      const res = await window.api.donneesAdopter(r.dossier);
+      if (res && !res.ok) {
+        await alerter({ type: 'error', title: 'Impossible', message: res.erreur || 'Ce dossier ne peut pas être utilisé.' });
       }
     });
   }

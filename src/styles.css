@@ -5575,6 +5575,28 @@ select.lot-in.st-pretee { color: var(--info); }
 .cat-panneau[data-cat="documents"] .zone-numerotation { grid-column: span 8; }
 .cat-panneau[data-cat="documents"] .zone-doc-rappel { grid-column: span 4; }
 
+/* ===== Emplacement du dossier de données (Réglages → Données) ===== */
+.cat-panneau[data-cat="donnees"] .zone-emplacement { grid-column: span 12; }
+.zone-emplacement h3 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.chip-emplacement {
+  font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px;
+  text-transform: none; letter-spacing: 0;
+}
+.chip-emplacement.local { background: rgba(62,125,58,0.15); color: var(--succes); }
+.chip-emplacement.nuage { background: rgba(201,154,61,0.18); color: #8a6d15; }
+.ligne-boutons-donnees { display: flex; gap: 10px; flex-wrap: wrap; margin-top: var(--s3); }
+.bloc-recuperation {
+  margin-top: var(--s3); padding-top: var(--s3); border-top: 1px dashed var(--mist);
+  font-size: 13px; color: var(--slate); line-height: 1.55;
+}
+.bloc-recuperation .sous { color: var(--stone); }
+.lien-recup {
+  display: inline-block; margin-top: 4px; background: none; border: none; padding: 0;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--deep-navy);
+  cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
+}
+.lien-recup:hover { color: var(--warm-gold); }
+
 /* Barre Enregistrer : reprend .form-actions (sticky bas) mais répartit
    l'indicateur à gauche et les boutons à droite. */
 .reglages-barre-save { justify-content: space-between; align-items: center; }
