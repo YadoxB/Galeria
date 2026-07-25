@@ -43,7 +43,11 @@ const env = { ...process.env, GH_TOKEN: token };
 
 function run(label, cmd, args) {
   console.log(`\n[release] ${label}…`);
-  const r = spawnSync(cmd, args, { stdio: 'inherit', env, shell: true });
+  // Node 24 (DEP0190) déconseille un tableau d'arguments avec shell:true. Nos
+  // arguments sont écrits en dur ici (aucune donnée externe), donc on assemble
+  // une seule ligne de commande — ce qui lève l'avertissement sans risque.
+  const commande = [cmd, ...args].join(' ');
+  const r = spawnSync(commande, { stdio: 'inherit', env, shell: true });
   if (r.status !== 0) {
     fail(`Étape « ${label} » a échoué (exit ${r.status}).`);
   }
