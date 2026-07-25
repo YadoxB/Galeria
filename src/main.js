@@ -1092,12 +1092,13 @@ async function demarrerApplication() {
   ipcMain.handle('donnees:emplacement', () => {
     const chemin = getDataDir();
     const defaut = path.join(app.getPath('documents'), 'Galeria');
-    const lecteurSysteme = (process.env.SystemDrive || 'C:') + path.sep;
     return {
       chemin,
       sousOneDrive: estSousOneDrive(chemin),
       parDefaut: path.resolve(chemin).toLowerCase() === path.resolve(defaut).toLowerCase(),
-      defautSuggere: path.join(lecteurSysteme, 'Galeria'),
+      // Dossier personnel de l'utilisateur (C:\Users\<nom>\Galeria) : écriture
+      // garantie et HORS du Documents redirigé par OneDrive.
+      defautSuggere: path.join(app.getPath('home'), 'Galeria'),
     };
   });
 
