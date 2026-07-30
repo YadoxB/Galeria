@@ -4091,13 +4091,24 @@ details.bloc.pliable > .bloc-corps {
 .conv-taux { margin-top: var(--s4); max-width: 620px; }
 .conv-taux-input { width: 110px; height: 32px; text-align: right; }
 
+.zone-outil-vers-param { grid-column: span 5; padding: var(--s3) var(--s4); }
+.zone-outil-vers-res   { grid-column: span 7; padding: var(--s3) var(--s4); }
+.vers-acompte-ligne { display: flex; gap: 8px; align-items: stretch; }
+.vers-acompte-ligne input { flex: 1; min-width: 0; }
+.vers-acompte-ligne .taille-vue { flex: none; }
+.vers-res-entete { display: flex; justify-content: space-between; align-items: center; gap: var(--s3); }
+.vers-res-entete h3 { margin: 0; }
+
 @media (max-width: 1200px) {
   .zone-outil-calc,
   .zone-outil-cotes,
   .zone-outil-commission,
   .zone-outil-commission-ref,
   .zone-outil-taxes,
-  .zone-outil-taxes-res { grid-column: span 12; }
+  .zone-outil-taxes-res,
+  .zone-outil-conversion,
+  .zone-outil-vers-param,
+  .zone-outil-vers-res { grid-column: span 12; }
 }
 
 /* Calculateur de commission — cases taxes, tuile de versement, détail */

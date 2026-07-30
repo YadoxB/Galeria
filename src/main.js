@@ -1165,6 +1165,13 @@ async function demarrerApplication() {
   // récupération meilleur effort à la Banque du Canada. Aucune donnée ne sort.
   ipcMain.handle('outils:taux-change', () => tauxMemorises());
   ipcMain.handle('outils:taux-change-recuperer', () => recupererTauxChange());
+  // Copie de texte dans le presse-papier (bouton « Copier le tableau » du plan
+  // de versements). Passe par le processus principal pour éviter les contraintes
+  // de permission du renderer.
+  ipcMain.handle('outils:copier-texte', (_e, texte) => {
+    clipboard.writeText(texte == null ? '' : String(texte));
+    return { ok: true };
+  });
   ipcMain.handle('oeuvres:types', () => listerTypesOeuvre());
   ipcMain.handle('oeuvres:mediums', () => listerMediumsOeuvre());
   ipcMain.handle('oeuvres:mediums-artiste', (_e, artisteId) => listerMediumsArtiste(artisteId));

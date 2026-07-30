@@ -49,6 +49,10 @@ export async function rendreOutils(contenu) {
             <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4 3 8l4 4"/><path d="M3 8h14"/><path d="M17 20l4-4-4-4"/><path d="M21 16H7"/></svg></span>
             Conversion
           </button>
+          <button type="button" class="cat-item" data-cat="versements">
+            <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="16" y2="14"/><line x1="8" y1="17" x2="8" y2="17"/><line x1="12" y1="17" x2="16" y2="17"/></svg></span>
+            Plan de versements
+          </button>
         </nav>
 
         <div class="cat-zone">
@@ -249,6 +253,55 @@ export async function rendreOutils(contenu) {
             </div>
             <p class="aide-champ">Récupérés à la Banque du Canada à l'ouverture si Internet est disponible. Hors-ligne, le dernier taux connu est utilisé. Tu peux corriger un taux à la main (pour ce calcul).</p>
           </div>
+        </div>
+
+          </div>
+        </section>
+
+        <section class="cat-panneau" data-cat="versements">
+          <div class="panneau-tete"><h2>Plan de versements</h2><p class="desc">Un échéancier à proposer au client. Sans intérêt. Rien n'est enregistré.</p></div>
+          <div class="grille-bento">
+
+        <div class="carte zone-outil-vers-param">
+          <h3>Paramètres</h3>
+          <div class="form-champ">
+            <label for="vs-total">Montant total ($)</label>
+            <input type="number" id="vs-total" min="0" step="0.01" placeholder="0">
+          </div>
+          <div class="form-champ">
+            <label for="vs-acompte">Acompte initial</label>
+            <div class="vers-acompte-ligne">
+              <input type="number" id="vs-acompte" min="0" step="0.01" placeholder="0">
+              <div class="taille-vue" id="vs-acompte-mode" role="group" aria-label="Type d'acompte">
+                <button type="button" data-u="montant" class="actif">$</button>
+                <button type="button" data-u="pct">%</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-champ">
+            <label for="vs-nb">Nombre de versements</label>
+            <input type="number" id="vs-nb" min="1" step="1" value="4">
+          </div>
+          <div class="form-champ">
+            <label for="vs-freq">Fréquence</label>
+            <select id="vs-freq">
+              <option value="hebdo">Hebdomadaire</option>
+              <option value="2sem">Aux deux semaines</option>
+              <option value="mois" selected>Mensuelle</option>
+            </select>
+          </div>
+          <div class="form-champ">
+            <label for="vs-date">Date de départ</label>
+            <input type="date" id="vs-date">
+          </div>
+        </div>
+
+        <div class="carte zone-outil-vers-res">
+          <div class="vers-res-entete">
+            <h3>Échéancier</h3>
+            <button type="button" class="btn-action btn-secondaire-action" id="vs-copier">Copier le tableau</button>
+          </div>
+          <div id="vs-resultat" class="calc-resultat"></div>
         </div>
 
           </div>
@@ -648,4 +701,86 @@ export async function rendreOutils(contenu) {
   [cvTauxUsd, cvTauxEur].forEach((el) => el.addEventListener('input', () => cvConvertir('a')));
   contenu.querySelector('#cv-maj').addEventListener('click', () => cvRafraichirTaux());
   cvSetOnglet('longueur');
+
+  // ====== Plan de versements (échéancier, sans intérêt) ======
+  // Purement affichage : aucune écriture en base, aucun PDF. Le dernier versement
+  // absorbe l'écart d'arrondi pour que la somme soit exacte au cent près.
+  let vsAcompteMode = 'montant';
+  const vsTotal = contenu.querySelector('#vs-total');
+  const vsAcompte = contenu.querySelector('#vs-acompte');
+  const vsNb = contenu.querySelector('#vs-nb');
+  const vsFreq = contenu.querySelector('#vs-freq');
+  const vsDate = contenu.querySelector('#vs-date');
+  const vsRes = contenu.querySelector('#vs-resultat');
+  let vsLignesTexte = [];
+
+  // Date de départ par défaut : aujourd'hui.
+  (function vsInitDate() {
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, '0');
+    vsDate.value = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  })();
+
+  function vsAjouterPeriode(d, freq, i) {
+    const r = new Date(d.getTime());
+    if (freq === 'hebdo') r.setDate(r.getDate() + 7 * i);
+    else if (freq === '2sem') r.setDate(r.getDate() + 14 * i);
+    else r.setMonth(r.getMonth() + i);
+    return r;
+  }
+  function vsFmtDate(d) {
+    return d.toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+  function vsCalculer() {
+    const total = commNum(vsTotal.value);
+    if (total <= 0) {
+      vsRes.innerHTML = `<p class="aide-champ" style="font-style:italic;">Entre le montant total pour calculer.</p>`;
+      vsLignesTexte = [];
+      return;
+    }
+    let acompte = commNum(vsAcompte.value);
+    if (vsAcompteMode === 'pct') acompte = total * acompte / 100;
+    acompte = Math.min(Math.max(acompte, 0), total);
+    const nb = Math.max(1, Math.round(commNum(vsNb.value) || 1));
+    const solde = total - acompte;
+    const base = Math.floor((solde / nb) * 100) / 100;   // arrondi au cent inférieur
+    const d0 = vsDate.value ? new Date(vsDate.value + 'T00:00:00') : new Date();
+
+    const rangs = [];
+    if (acompte > 0) rangs.push({ nom: 'Acompte', date: d0, montant: acompte });
+    for (let i = 0; i < nb; i++) {
+      // Le dernier versement prend l'écart d'arrondi pour tomber juste au cent.
+      const montant = i === nb - 1 ? Math.round((solde - base * (nb - 1)) * 100) / 100 : base;
+      rangs.push({ nom: `Versement ${i + 1}`, date: vsAjouterPeriode(d0, vsFreq.value, i + 1), montant });
+    }
+    const somme = rangs.reduce((s, r) => s + r.montant, 0);
+
+    const lignes = rangs.map((r) =>
+      `<div class="ligne"><span class="lib">${ech(r.nom)} · ${ech(vsFmtDate(r.date))}</span><span class="montant">${commMoney(r.montant)}</span></div>`
+    );
+    lignes.push(`<div class="ligne total"><span class="lib">Total</span><span class="montant">${commMoney(somme)}</span></div>`);
+    vsRes.innerHTML = `<div class="comm-detail">${lignes.join('')}</div>`;
+
+    vsLignesTexte = rangs.map((r) => `${r.nom}\t${vsFmtDate(r.date)}\t${commMoney(r.montant)}`);
+    vsLignesTexte.push(`Total\t\t${commMoney(somme)}`);
+  }
+
+  contenu.querySelector('#vs-acompte-mode').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    vsAcompteMode = b.dataset.u;
+    contenu.querySelectorAll('#vs-acompte-mode button').forEach((x) => x.classList.toggle('actif', x === b));
+    vsCalculer();
+  });
+  [vsTotal, vsAcompte, vsNb, vsDate].forEach((el) => el.addEventListener('input', vsCalculer));
+  vsFreq.addEventListener('change', vsCalculer);
+  contenu.querySelector('#vs-copier').addEventListener('click', async () => {
+    if (!vsLignesTexte.length) return;
+    const b = contenu.querySelector('#vs-copier');
+    try {
+      await window.api.outilsCopierTexte(vsLignesTexte.join('\n'));
+      const t = b.textContent; b.textContent = 'Copié ✓';
+      setTimeout(() => { b.textContent = t; }, 1500);
+    } catch { /* silencieux : le presse-papier n'est pas critique */ }
+  });
+  vsCalculer();
 }
