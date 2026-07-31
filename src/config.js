@@ -119,6 +119,25 @@ const DEFAULTS = {
       NT: { nom: 'Territoires du Nord-Ouest', taxes: { TPS: 5 } },
       NU: { nom: 'Nunavut', taxes: { TPS: 5 } },
     },
+    // Estimateur de poids d'expédition. Facteurs de DÉPART, à CALIBRER par des
+    // pesées réelles (voir l'avertissement dans l'outil). Modifiables ici sans
+    // recompiler. type 'surface' = lb par pi² ; type 'volume' = lb par pi³.
+    expedition: {
+      supports: {
+        toile:     { nom: 'Toile tendue sur châssis', type: 'surface', facteur: 1.2 },
+        panneau:   { nom: 'Panneau bois',             type: 'surface', facteur: 2 },
+        papier:    { nom: 'Papier ou carton',         type: 'surface', facteur: 0.1 },
+        sc_bois:   { nom: 'Sculpture bois',           type: 'volume',  facteur: 25 },
+        sc_pierre: { nom: 'Sculpture pierre ou béton', type: 'volume', facteur: 150 },
+        sc_metal:  { nom: 'Sculpture métal',          type: 'volume',  facteur: 300 },
+        verre:     { nom: 'Verre ou vitrail',         type: 'surface', facteur: 3.5 },
+        autre:     { nom: 'Autre',                    type: 'surface', facteur: 1.5 },
+      },
+      facteur_cadre: 0.3,       // lb par pied linéaire de périmètre (si encadré)
+      facteur_verre: 3.5,       // lb par pi² (si sous verre)
+      emballage_pourcent: 20,   // % du poids de l'œuvre ajouté pour l'emballage
+      emballage_minimum: 2,     // lb minimum d'emballage
+    },
   },
   // Tutoriel de bienvenue (#13) : passe à true une fois la visite vue au
   // premier lancement ; rejouable ensuite depuis l'aide.

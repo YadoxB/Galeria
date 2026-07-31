@@ -53,6 +53,10 @@ export async function rendreOutils(contenu) {
             <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="16" y2="14"/><line x1="8" y1="17" x2="8" y2="17"/><line x1="12" y1="17" x2="16" y2="17"/></svg></span>
             Plan de versements
           </button>
+          <button type="button" class="cat-item" data-cat="expedition">
+            <span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5"/><line x1="12" y1="13" x2="12" y2="21"/></svg></span>
+            Expédition (poids)
+          </button>
         </nav>
 
         <div class="cat-zone">
@@ -302,6 +306,49 @@ export async function rendreOutils(contenu) {
             <button type="button" class="btn-action btn-secondaire-action" id="vs-copier">Copier le tableau</button>
           </div>
           <div id="vs-resultat" class="calc-resultat"></div>
+        </div>
+
+          </div>
+        </section>
+
+        <section class="cat-panneau" data-cat="expedition">
+          <div class="panneau-tete"><h2>Estimateur de poids d'expédition</h2><p class="desc">Un poids approximatif pour préparer un envoi.</p></div>
+          <div class="grille-bento">
+
+        <div class="carte zone-outil-exp-form">
+          <h3>L'œuvre</h3>
+          <div class="form-champ">
+            <label for="ex-support">Support</label>
+            <select id="ex-support"></select>
+          </div>
+          <div class="form-champ">
+            <div class="dim-entete">
+              <label>Dimensions</label>
+              <div class="taille-vue" id="ex-unite" role="group" aria-label="Unité de mesure">
+                <button type="button" data-u="po" class="actif">pouces</button>
+                <button type="button" data-u="cm">cm</button>
+              </div>
+            </div>
+            <div class="exp-dims">
+              <div class="dim-champ"><input type="number" id="ex-h" min="0" step="0.1" placeholder="0"><span class="dim-libelle">Hauteur</span></div>
+              <div class="dim-champ"><input type="number" id="ex-l" min="0" step="0.1" placeholder="0"><span class="dim-libelle">Largeur</span></div>
+              <div class="dim-champ"><input type="number" id="ex-p" min="0" step="0.1" placeholder="0"><span class="dim-libelle">Profondeur</span></div>
+            </div>
+            <p class="aide-champ" id="ex-prof-note" style="margin-top:6px;">La profondeur ne sert qu'aux sculptures.</p>
+          </div>
+          <div class="form-champ">
+            <label>Options</label>
+            <div class="comm-taxes">
+              <label><input type="checkbox" id="ex-cadre"> Encadré</label>
+              <label><input type="checkbox" id="ex-verre"> Sous verre</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="carte zone-outil-exp-res">
+          <h3>Estimation</h3>
+          <div id="ex-resultat" class="calc-resultat"></div>
+          <p class="aide-champ attention-secours" style="margin-top: var(--s3);"><strong>Estimation à calibrer.</strong> Ces facteurs sont des points de départ, pas des pesées. Avant de fixer des frais d'envoi, pèse deux ou trois œuvres (une toile, une sculpture) et ajuste les facteurs.</p>
         </div>
 
           </div>
@@ -783,4 +830,76 @@ export async function rendreOutils(contenu) {
     } catch { /* silencieux : le presse-papier n'est pas critique */ }
   });
   vsCalculer();
+
+  // ====== Estimateur de poids d'expédition ======
+  // Facteurs depuis la config (calibrables). surface = lb/pi² ; volume = lb/pi³.
+  // Estimation volontairement approximative — l'avertissement le rappelle.
+  const cfgExp = (config && config.outils && config.outils.expedition) || {};
+  const EXP_SUPPORTS = cfgExp.supports || {};
+  const EXP_CADRE = Number(cfgExp.facteur_cadre) || 0.3;
+  const EXP_VERRE = Number(cfgExp.facteur_verre) || 3.5;
+  const EXP_EMB_PCT = Number(cfgExp.emballage_pourcent) || 20;
+  const EXP_EMB_MIN = Number(cfgExp.emballage_minimum) || 2;
+
+  let exUnite = 'po';
+  const exSupport = contenu.querySelector('#ex-support');
+  const exH = contenu.querySelector('#ex-h');
+  const exL = contenu.querySelector('#ex-l');
+  const exP = contenu.querySelector('#ex-p');
+  const exCadre = contenu.querySelector('#ex-cadre');
+  const exVerre = contenu.querySelector('#ex-verre');
+  const exRes = contenu.querySelector('#ex-resultat');
+  const exProfNote = contenu.querySelector('#ex-prof-note');
+
+  exSupport.innerHTML = Object.entries(EXP_SUPPORTS)
+    .map(([k, s]) => `<option value="${k}">${ech(s.nom || k)}</option>`).join('');
+
+  const exLb = (v) => `${v.toFixed(1).replace('.', ',')} lb`;
+  const exKg = (v) => `${(v * 0.453592).toFixed(1).replace('.', ',')} kg`;
+
+  function exCalculer() {
+    const s = EXP_SUPPORTS[exSupport.value];
+    const estVolume = s && s.type === 'volume';
+    exProfNote.textContent = estVolume
+      ? 'La profondeur est nécessaire pour cette sculpture.'
+      : 'La profondeur ne sert qu\'aux sculptures.';
+    const k = exUnite === 'cm' ? 1 / 2.54 : 1;
+    const h = commNum(exH.value) * k, l = commNum(exL.value) * k, p = commNum(exP.value) * k;
+    if (!s || h <= 0 || l <= 0) {
+      exRes.innerHTML = `<p class="aide-champ" style="font-style:italic;">Entre au moins la hauteur et la largeur.</p>`;
+      return;
+    }
+    if (estVolume && p <= 0) {
+      exRes.innerHTML = `<p class="aide-champ" style="font-style:italic;">Pour une sculpture, entre aussi la profondeur.</p>`;
+      return;
+    }
+    const surface = (h * l) / 144;          // pi²
+    const volume = (h * l * p) / 1728;      // pi³
+    const perimetre = 2 * (h + l) / 12;     // pieds linéaires
+    const facteur = Number(s.facteur) || 0;
+    let oeuvre = estVolume ? volume * facteur : surface * facteur;
+    if (exCadre.checked) oeuvre += perimetre * EXP_CADRE;
+    if (exVerre.checked) oeuvre += surface * EXP_VERRE;
+    const emballage = Math.max(EXP_EMB_MIN, oeuvre * EXP_EMB_PCT / 100);
+    const envoi = oeuvre + emballage;
+
+    exRes.innerHTML = `<div class="comm-detail">
+      <div class="ligne"><span class="lib">Poids de l'œuvre</span><span class="montant">${exLb(oeuvre)} · ${exKg(oeuvre)}</span></div>
+      <div class="ligne"><span class="lib">Emballage estimé (${commRate(EXP_EMB_PCT)} %, min. ${exLb(EXP_EMB_MIN)})</span><span class="montant">${exLb(emballage)}</span></div>
+      <div class="ligne total"><span class="lib">Poids d'expédition</span><span class="montant">${exLb(envoi)} · ${exKg(envoi)}</span></div>
+    </div>`;
+  }
+
+  exSupport.addEventListener('change', exCalculer);
+  [exH, exL, exP].forEach((el) => el.addEventListener('input', exCalculer));
+  [exCadre, exVerre].forEach((el) => el.addEventListener('change', exCalculer));
+  contenu.querySelectorAll('#ex-unite button').forEach((b) => {
+    b.addEventListener('click', () => {
+      if (b.dataset.u === exUnite) return;
+      contenu.querySelectorAll('#ex-unite button').forEach((x) => x.classList.toggle('actif', x === b));
+      exUnite = b.dataset.u;
+      exCalculer();
+    });
+  });
+  exCalculer();
 }

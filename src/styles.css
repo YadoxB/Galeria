@@ -4099,6 +4099,10 @@ details.bloc.pliable > .bloc-corps {
 .vers-res-entete { display: flex; justify-content: space-between; align-items: center; gap: var(--s3); }
 .vers-res-entete h3 { margin: 0; }
 
+.zone-outil-exp-form { grid-column: span 7; padding: var(--s3) var(--s4); }
+.zone-outil-exp-res  { grid-column: span 5; padding: var(--s3) var(--s4); }
+.exp-dims { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 6px; }
+
 @media (max-width: 1200px) {
   .zone-outil-calc,
   .zone-outil-cotes,
@@ -4108,7 +4112,9 @@ details.bloc.pliable > .bloc-corps {
   .zone-outil-taxes-res,
   .zone-outil-conversion,
   .zone-outil-vers-param,
-  .zone-outil-vers-res { grid-column: span 12; }
+  .zone-outil-vers-res,
+  .zone-outil-exp-form,
+  .zone-outil-exp-res { grid-column: span 12; }
 }
 
 /* Calculateur de commission — cases taxes, tuile de versement, détail */
