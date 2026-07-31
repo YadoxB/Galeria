@@ -10,6 +10,14 @@ identifiants.
 
 ## [Non publié]
 
+## [0.11.0] — 2026-07-25
+
+> Grosse version : sécurité (verrou par code + question de secours), remaniement
+> issu de l'usage réel des parents (« retours d'usage »), choix et déplacement du
+> dossier de données (sortie de OneDrive), et quatre calculatrices sur la page
+> Outils. Rien ne change pour les données existantes ; migrations additives et
+> sauvegarde de sûreté automatique avant tout déplacement.
+
 ### Ajouté
 
 - **Quatre calculatrices rapides sur la page Outils.** La page Outils passe en
