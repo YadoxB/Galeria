@@ -167,6 +167,33 @@ et vérifier les noms produits dans `Documents\Galeria\Documents\{année}\`.
   artiste, qui sont des documents numérotés. À confirmer si ce comportement
   convient à l'usage réel.
 
+## Outils complémentaires (page Outils, livrés 2026-07-25)
+
+Quatre calculatrices rapides ajoutées : **Taxes**, **Conversion** (unités +
+devises), **Plan de versements**, **Expédition (poids)**. Aucune n'écrit en base.
+
+- **Taux de change (convertisseur).** ✓ **Réglé** : récupéré automatiquement à la
+  **Banque du Canada** (API Valet, officielle, gratuite) à l'ouverture de l'onglet
+  Devise, mémorisé pour le repli hors-ligne, corrigeable à la main. À confirmer :
+  cette source et ce fonctionnement (mise à jour à l'ouverture) conviennent-ils,
+  ou faut-il un rythme différent ?
+- **Euro dans le convertisseur.** ✓ **Tranché (Dave, 2026-07-25)** : ajouté
+  (CAD / USD / EUR), taux EUR→CAD aussi de la Banque du Canada.
+- **Facteurs de poids d'expédition — À CALIBRER.** Les facteurs par support
+  (`config.outils.expedition`) sont des **points de départ, pas des pesées**.
+  **À faire par Dave** : peser deux ou trois œuvres (une toile, une sculpture) et
+  ajuster les facteurs. À confirmer aussi : quelles catégories de support couvrent
+  la majorité du catalogue ? Faut-il un mode « poids connu » (saisir un poids déjà
+  pesé au lieu d'estimer) ? — non implémenté pour l'instant.
+- **Plan de versements — sans intérêt.** Hypothèse retenue : aucun intérêt sur les
+  versements (pratique courante en galerie). À confirmer si des cas particuliers
+  existent.
+- **Taxes des autres provinces.** Une table de taux **indicatifs** est fournie
+  (`config.outils.taxes_provinces`) pour le calculateur ; le Québec reste branché
+  sur les Réglages. Les taux changent parfois (ex. Nouvelle-Écosse). À confirmer
+  **avec le comptable** : veut-on entretenir cette table, ou se limiter au Québec +
+  un taux libre ? Qui la met à jour ?
+
 ## Préférences UI
 
 - **Dimensions de fenêtre** : confirmer la résolution du moniteur des parents. Actuellement 1600×900, à ajuster si nécessaire.

@@ -12,6 +12,27 @@ identifiants.
 
 ### Ajouté
 
+- **Quatre calculatrices rapides sur la page Outils.** La page Outils passe en
+  barre latérale à deux groupes (« Liés au catalogue » : prix, commission ;
+  « Calculatrices rapides » : les quatre nouvelles). Toutes calculent en direct,
+  n'écrivent rien en base et ne produisent aucun PDF.
+  - **Taxes** : ajouter ou retirer les taxes d'un montant. Sélecteur de
+    province/territoire — Québec au taux des Réglages, autres provinces au taux de
+    la config (`outils.taxes_provinces`, indicatif, à valider avec le comptable).
+    Même arrondi que la facture artiste.
+  - **Conversion** : longueurs (po/cm/pi/m), poids (lb/kg/oz/g) et devises
+    (CAD/USD/EUR) à double sens. Taux de change **récupérés à la Banque du Canada**
+    (API Valet officielle) en meilleur effort, mémorisés pour le repli hors-ligne,
+    corrigeables à la main. L'appel réseau se fait côté application ; aucune donnée
+    de la galerie ne sort.
+  - **Plan de versements** : échéancier (acompte $ ou %, nombre, fréquence, date),
+    dernier versement ajusté pour un total exact au cent, bouton « Copier le
+    tableau ». Sans intérêt.
+  - **Expédition (poids)** : poids estimé de l'œuvre + poids d'expédition selon le
+    support, les dimensions et les options (encadré, sous verre). Facteurs dans la
+    config (`outils.expedition`), **à calibrer par des pesées réelles** (avertissement
+    affiché).
+
 - **Choisir et déplacer l'emplacement du dossier de données (retour d'usage :
   dossier introuvable à cause de OneDrive).** Nouvelle carte **« Dossier de
   données Galeria »** en tête de Réglages → Données : elle affiche l'emplacement

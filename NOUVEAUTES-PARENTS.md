@@ -12,6 +12,28 @@
 
 ---
 
+## Quatre nouvelles calculatrices (page Outils)
+
+La page **Outils** est maintenant classée en deux familles à gauche : les outils
+liés au catalogue (calculateur de prix, de commission) et de nouvelles
+**calculatrices rapides**. Elles calculent toutes seules à mesure que vous tapez,
+et **rien n'est enregistré** — ce sont de simples aides.
+
+- **Taxes** — ajoutez ou retirez les taxes d'un montant, sans créer de vente.
+  Vous pouvez choisir la **province** (utile pour un client d'ailleurs au Canada) ;
+  le Québec utilise vos taux des Réglages.
+- **Conversion** — convertit les **longueurs** (pouces, cm, pieds, mètres), les
+  **poids** (livres, kilos, onces, grammes) et les **devises** (dollars canadiens,
+  américains, euros). Le taux de change est **récupéré tout seul à la Banque du
+  Canada** quand vous avez Internet, et il garde le dernier taux connu sinon.
+- **Plan de versements** — proposez un échéancier à un client : montant total,
+  acompte, nombre de versements, fréquence, date de départ. Le tableau se calcule
+  et un bouton permet de le **copier** (pour le coller dans un courriel).
+- **Expédition (poids)** — donne un **poids approximatif** pour préparer un envoi,
+  d'après le type d'œuvre et ses dimensions. ⚠️ C'est une **estimation à ajuster** :
+  avant de vous en servir pour facturer un envoi, pesez une ou deux œuvres pour
+  vérifier.
+
 ## Choisir où sont rangées vos données (et les sortir du nuage)
 
 Vos données (catalogue, photos, documents, sauvegardes) sont dans un dossier
