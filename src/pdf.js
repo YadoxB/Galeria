@@ -1,4 +1,5 @@
 const { BrowserWindow, ipcMain } = require('electron');
+const { brancherMenuContextuel } = require('./menu-contextuel');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -431,6 +432,9 @@ function ouvrirEditeurDocument({ gabaritNom, donnees, sortie, paysage = false, t
         sandbox: true,
       },
     });
+
+    // Clic droit → Couper / Copier / Coller dans l'éditeur de document.
+    brancherMenuContextuel(win);
 
     let fini = false;
     const onSave = async (e) => {

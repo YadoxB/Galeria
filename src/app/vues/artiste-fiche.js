@@ -521,7 +521,10 @@ export async function rendreArtisteFiche(contenu, params) {
         await confirmer({ type: 'info', title: 'Aucune œuvre', message: "Cet artiste n'a aucune œuvre.", buttons: ['OK'] });
         return;
       }
-      await ouvrirAnnexeModale({ artiste: a, oeuvres, type });
+      const res = await ouvrirAnnexeModale({ artiste: a, oeuvres, type });
+      // Si des œuvres viennent d'être retirées via l'annexe de retrait, recharge
+      // la fiche pour que la liste des œuvres reflète le retrait.
+      if (res && res.retraitEffectue) remplacerCourant('artiste-fiche', { id: a.id });
     };
     const btnAnnexeDepot = contenu.querySelector('#btn-annexe-depot');
     if (btnAnnexeDepot) btnAnnexeDepot.addEventListener('click', () => ouvrirAnnexe('depot'));

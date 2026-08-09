@@ -441,6 +441,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
             ${o.annee ? `<span class="oeuvre-carte-annee">${o.annee}</span>` : ''}
           </div>
           <p class="oeuvre-carte-artiste">${ech(o.artiste_nom)}</p>
+          ${o.numero_inventaire ? `<p class="oeuvre-carte-inv">Nº ${ech(o.numero_inventaire)}</p>` : ''}
           ${o.prix != null ? `<p class="oeuvre-carte-prix">${formaterPrix(o.prix)}</p>` : ''}
           <div class="oeuvre-carte-pied">
             ${badgeStatut(o.statut)}

@@ -4,7 +4,7 @@
 // la génération manuelle « hors flux ». La numérotation et le rendu PDF se font
 // côté main (IPC pdf:annexe-generer).
 
-import { ech, nomComplet, nettoyerErreur } from './commun.js';
+import { ech, nomComplet, nettoyerErreur, pluriel } from './commun.js';
 import { confirmer } from './dialogue.js';
 import { calculerPrixSuggere } from './calcul-prix.js';
 
@@ -103,6 +103,43 @@ export async function proposerAnnexeApres({ type, artisteId, oeuvreIds }) {
   }
 }
 
+// Après une annexe A **de retrait** produite depuis la fiche artiste, propose
+// de retirer réellement les œuvres du catalogue (elles restent sinon actives).
+// Confirmation explicite avant. Ignore les œuvres vendues (non retirables) et
+// celles déjà retirées. Écrit `res.retraitEffectue` (nombre) pour que la fiche
+// se rafraîchisse. Ne touche à rien si l'utilisateur refuse.
+async function proposerRetraitApresAnnexe(choisies, res) {
+  const retirables = choisies.filter(
+    (o) => o.statut !== 'vendu' && o.statut !== 'vendue' && !o.retrait_date
+  );
+  if (!retirables.length) return;
+  const rep = await confirmer({
+    type: 'warning',
+    title: 'Retirer ces œuvres du catalogue ?',
+    message: `L'annexe de retrait est produite. Retirer ${pluriel(retirables.length, 'œuvre')} du catalogue actif (rendue(s) à l'artiste) ?`,
+    detail: 'Les œuvres sortiront des listes actives et seront marquées « retirées ». Réversible via « Réintégrer ». Les œuvres vendues sont ignorées.',
+    buttons: ['Retirer les œuvres', 'Garder au catalogue'],
+    defaultId: 0,
+    cancelId: 1,
+  });
+  if (rep !== 0) return;
+  const ids = retirables.map((o) => o.id);
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  const date = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  const motif = res && res.numero ? `Annexe A de retrait ${res.numero}` : 'Annexe A de retrait';
+  try {
+    const r = await window.api.oeuvresRetraitLot(ids, { date, motif });
+    res.retraitEffectue = (r && r.retirees != null) ? r.retirees : ids.length;
+  } catch (err) {
+    await confirmer({
+      type: 'error', title: 'Retrait non effectué',
+      message: `L'annexe est bien produite, mais le retrait des œuvres a échoué : ${nettoyerErreur(err)}`,
+      buttons: ['OK'],
+    });
+  }
+}
+
 // Modale de sélection pour la génération manuelle depuis la fiche artiste.
 // `oeuvres` = liste détaillée (oeuvresDetailArtiste). Retourne le résultat ou null.
 export function ouvrirAnnexeModale({ artiste, oeuvres, type = 'depot' }) {
@@ -181,7 +218,11 @@ export function ouvrirAnnexeModale({ artiste, oeuvres, type = 'depot' }) {
       btn.textContent = 'Génération…';
       try {
         const res = await produireAnnexe({ artiste, oeuvres: choisies, type: typeCourant, editer });
-        if (res) { fermer(res); return; }
+        if (res) {
+          if (typeCourant === 'retrait') await proposerRetraitApresAnnexe(choisies, res);
+          fermer(res);
+          return;
+        }
         // édition annulée : on rouvre la modale telle quelle
         btn.disabled = false;
         btn.textContent = libelle;

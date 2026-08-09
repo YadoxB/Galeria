@@ -12,6 +12,25 @@
 
 ---
 
+## Depuis la version 0.11.0 — trois petites améliorations
+
+- **Coller avec la souris (clic droit).** Vous pouvez de nouveau faire un
+  **clic droit** dans une case de texte pour **Coller** (ou Copier, ou Couper).
+  Cela fonctionne partout dans l'application, y compris quand vous modifiez un
+  document avant de l'imprimer.
+- **Le numéro d'inventaire s'affiche sur les cartes d'œuvres.** Dans la page
+  **Œuvres**, en affichage « grille », le numéro d'inventaire apparaît maintenant
+  en petit sous le nom de l'artiste.
+- **Retirer les œuvres en produisant l'annexe de retrait.** Quand vous produisez
+  une **Annexe A de retrait** pour un artiste, l'application vous propose ensuite
+  de **retirer ces œuvres du catalogue** (elles sont rendues à l'artiste). Elle
+  demande toujours votre confirmation avant, et c'est réversible.
+
+*(Les nouveautés ci-dessous étaient déjà dans la version 0.11.0, que vous avez
+reçue.)*
+
+---
+
 ## Quatre nouvelles calculatrices (page Outils)
 
 La page **Outils** est maintenant classée en deux familles à gauche : les outils

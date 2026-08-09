@@ -10,6 +10,7 @@ const { recupererTauxChange, tauxMemorises } = require('./taux-change');
 const { seedPhotosIfNeeded } = require('./db/seedPhotos');
 const { choisirPhoto, effacerPhoto, lireFichierImage, lirePourRecadrage, enregistrerImageRecadree } = require('./photos');
 const { obtenirConfig, mettreAJourConfig, infoConfigCorrompue } = require('./config');
+const { brancherMenuContextuel } = require('./menu-contextuel');
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'galerie', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
@@ -214,6 +215,10 @@ function createWindow(splash) {
       event.preventDefault();
     }
   });
+
+  // Menu contextuel (clic droit) : rend « Coller » à la souris, absent depuis
+  // que le menu applicatif est désactivé. Voir src/menu-contextuel.js.
+  brancherMenuContextuel(win);
 
   // Verrou léger : verrouiller quand la fenêtre perd le focus, si l'option est
   // active (l'état réel est relu à chaque blur dans le processus principal).

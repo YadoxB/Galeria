@@ -10,6 +10,36 @@ identifiants.
 
 ## [Non publié]
 
+## [0.12.0] — 2026-08-09
+
+> Corrections issues de l'usage réel : coller à la souris (menu clic droit),
+> numéro d'inventaire sur les cartes d'œuvres, et retrait réel des œuvres au moment
+> de produire l'annexe A de retrait.
+
+### Ajouté
+
+- **Menu clic droit (Couper / Copier / Coller / Tout sélectionner).** Le menu
+  d'édition au clic droit, disparu quand la barre de menus a été retirée en
+  production, est de retour partout dans l'application — y compris dans l'éditeur
+  « Modifier ce document… ». « Coller » n'apparaît que dans un champ de saisie ;
+  « Copier » et « Couper » seulement lorsqu'il y a une sélection. Corrige
+  l'impossibilité de coller du texte à la souris. Nouveau module partagé
+  `src/menu-contextuel.js`, branché sur la fenêtre principale (`main.js`) et sur
+  l'éditeur de document (`pdf.js`).
+- **Numéro d'inventaire sur les cartes d'œuvres (vue grille).** Affiché en petit,
+  sous le nom de l'artiste (« Nº … ») ; rien ne s'affiche si l'œuvre n'a pas de
+  numéro. Il figurait déjà dans la vue liste.
+
+### Modifié
+
+- **Annexe A de retrait : propose de retirer réellement les œuvres.** Quand on
+  produit une annexe A **de retrait** depuis la fiche artiste, l'application
+  demande ensuite, avec confirmation explicite, de retirer les œuvres du catalogue
+  actif (rendues à l'artiste). Les œuvres vendues sont ignorées ; le geste est
+  réversible (« Réintégrer »). Refuser laisse le PDF produit sans rien retirer. La
+  fiche se rafraîchit après le retrait. Le retrait **en lot** depuis la liste des
+  œuvres est inchangé (il retirait déjà les œuvres).
+
 ## [0.11.0] — 2026-07-25
 
 > Grosse version : sécurité (verrou par code + question de secours), remaniement

@@ -15,6 +15,16 @@ La 0.11.0 regroupe, tous **livrés et confirmés par Dave dans l'app** : le **ve
 
 > **État git : sain.** Tout est sur `master`, poussé et publié — l'ancienne alerte « travail non fusionné sur une branche » ne s'applique plus. Les branches de worktree anciennes (`galeria-security-phase-f35c87`, `galeria-data-folder-migration-18aa86`, etc.) sont **historiques** et peuvent être ignorées ; on repart de `master`.
 
+### ✅ v0.12.0 PUBLIÉE (2026-08-09) — trois corrections d'usage
+
+Publiée sur GitHub Releases (tag `v0.12.0`), poussée sur `origin/master`, auto-update actif pour les parents. **Trois corrections issues de l'usage, codées et confirmées par Dave dans l'app.** Détail dans `CHANGELOG.md` (entrée `0.12.0`).
+
+1. **Clic droit — Couper / Copier / Coller / Tout sélectionner** partout dans l'app + l'éditeur de document. Corrige l'impossibilité de coller à la souris (le menu applicatif est désactivé en prod, ce qui avait supprimé « Coller »). Nouveau module partagé `src/menu-contextuel.js` branché sur `main.js` et `pdf.js`.
+2. **N° d'inventaire sur les cartes d'œuvres** (vue grille), en petit sous l'artiste. `oeuvres-liste.js` (`carteGrille`) + `.oeuvre-carte-inv` dans `styles.css`. Démo `demos/oeuvre-carte-inventaire.html`.
+3. **Annexe A de retrait → retire réellement les œuvres**, avec confirmation. La modale d'annexe de la fiche artiste (`ouvrirAnnexeModale`, type `retrait`) appelait le PDF sans retirer les œuvres ; elle propose désormais le retrait (`oeuvresRetraitLot`, vendues ignorées, réversible) puis rafraîchit la fiche. `src/app/annexe.js` + `artiste-fiche.js`. Le retrait **en lot** depuis la liste était déjà correct.
+
+**Reste sur la même demande — #4 « tirer les infos depuis le site » : NON commencé, bloqué hors code.** C'est le début de la **Phase 5 (Web)** et il faut d'abord les **clés REST WooCommerce** de la personne qui gère `galerievieuxstjean.com` + confirmer la plateforme. Sens « tirer » (lecture seule) d'abord, à la demande de Dave. Prochaine action possible : maquette de l'écran « comparer/tirer depuis le site » pour fixer les zones concernées (titre, description, prix, image, statut). Voir `A-VALIDER.md` (« Intégrations externes »).
+
 ### Ce qui est fait (livré en 0.11.0)
 
 - **Sécurité — verrou léger** (`141f41f`, `6009cab`, `0c75244`) : code 4–6 chiffres (empreinte scrypt, jamais en clair), écran de déverrouillage à pavé numérique, inactivité/blur, **question de secours** pour un code oublié. Correctif du pavé numérique (NumLock). **Confirmé.** *Le volet chiffrement reste PARQUÉ* (voir la section ③ Sécurité plus bas — décision de Dave, défaut de fond du plan d'origine).
