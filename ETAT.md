@@ -1,7 +1,7 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-07-24.
+> Date de cette sauvegarde : 2026-07-25.
 >
 > **Voir aussi** : `CHANGELOG.md` (historique versionné détaillé) et `A-VALIDER.md` (questions ouvertes avec les parents).
 
@@ -9,34 +9,31 @@
 
 ## ▶ Reprise — par où commencer (préparé le 2026-07-25)
 
-**Tout le travail (verrou + retours d'usage + dossier de données + 4 outils complémentaires) vit maintenant sur `master`, en une seule ligne d'histoire.** `package.json` = **`0.11.0`** (monté pour la livraison ; CHANGELOG daté 2026-07-25). **Livraison en cours : Dave lance `git push origin master` puis `npm run release`** (gestes de Dave). Tant que la release n'est pas publiée, les parents restent sur leur version antérieure.
+**✅ v0.11.0 PUBLIÉE et INSTALLÉE à la galerie (2026-07-25).** `master` = `origin/master` = `275c0bd`, **tag `v0.11.0`** publié sur GitHub Releases ; les parents ont reçu la mise à jour par auto-update. `package.json` = `0.11.0`. **Rien n'est en attente de livraison — l'arbre est propre, poussé et à jour.**
 
-> **⚠️ État git à confirmer avec Dave (constaté 2026-07-25)** : au fil des recyclages de worktree, `master` local a été **avancé (fast-forward) jusqu'à `40eacb4`**, incluant tout le travail ci-dessus (`d398e58` security-phase → dossier de données `21db398` → 4 outils → `40eacb4`). `origin/master` est à **`21db398`** (donc security-phase + retours + dossier de données sont sur le `master` de GitHub ; les **4 commits d'outils** — `442c611`, `014ced2`, `60a8020`, `cd14433`, `0c77956`, `40eacb4` — sont **locaux seulement**). La branche `claude/galeria-data-folder-migration-18aa86` est restée à `21db398` (sans les outils). **Rien n'a été poussé ni publié par Claude dans cette session.** La « fusion dans master » prévue est donc de fait déjà faite ; **il ne reste que `git push` + `npm run release`, gestes de Dave.** À valider par Dave : est-ce l'état voulu, ou faut-il réorganiser (ex. remettre master à la 0.10.0 et garder le travail sur une branche) ?
+La 0.11.0 regroupe, tous **livrés et confirmés par Dave dans l'app** : le **verrou de sécurité** (code + question de secours), le chantier **« Retours d'usage »**, le **choix/déplacement du dossier de données** (sortie de OneDrive), et **4 calculatrices** sur la page Outils. Détail dans « Ce qui est fait » ci-dessous et dans `CHANGELOG.md` (entrée `0.11.0`).
 
-Le travail a repris la **phase Sécurité** parquée, enchaîné un **chantier « Retours d'usage »** (retours réels des parents), livré son **dernier lot #1** (dossier de données), puis les **outils complémentaires**. Tout est vérifié par bancs d'essai ; **Dave a confirmé chaque lot dans l'app** — y compris le déplacement réel du dossier de données (2026-07-24) et les 4 outils (2026-07-25).
+> **État git : sain.** Tout est sur `master`, poussé et publié — l'ancienne alerte « travail non fusionné sur une branche » ne s'applique plus. Les branches de worktree anciennes (`galeria-security-phase-f35c87`, `galeria-data-folder-migration-18aa86`, etc.) sont **historiques** et peuvent être ignorées ; on repart de `master`.
 
-### Ce qui est fait sur cette branche
+### Ce qui est fait (livré en 0.11.0)
 
 - **Sécurité — verrou léger** (`141f41f`, `6009cab`, `0c75244`) : code 4–6 chiffres (empreinte scrypt, jamais en clair), écran de déverrouillage à pavé numérique, inactivité/blur, **question de secours** pour un code oublié. Correctif du pavé numérique (NumLock). **Confirmé.** *Le volet chiffrement reste PARQUÉ* (voir la section ③ Sécurité plus bas — décision de Dave, défaut de fond du plan d'origine).
 - **Retours d'usage** (voir la section dédiée plus bas pour le détail) : lettre de remerciement remaniée (logo, date à gauche/bas, signature à droite avec espace manuscrit, site web, pied allégé), compteur d'accueil = **œuvres disponibles**, menu **Documents** sur la fiche artiste, **Réglages** en barre latérale (7 catégories, profil galerie fondu dedans, catégorie **Finances**, sélecteur de logo), **édition des documents** (bouton « Modifier ce document… », **saut de page** dans l'éditeur, Démarche/Curriculum sur pages neuves, certificat non écrasé, édition depuis la section Documents), **barre latérale** aussi pour **Documents** (par type) et **Outils** (2 calculateurs), et **typographie française** (espaces insécables) sur **tous** les gabarits.
 - **#1 Dossier de données — choisir et déplacer l'emplacement (dernier lot du chantier, LIVRÉ 2026-07-24, confirmé par Dave)** : commits `42988fd` (Pas A, papier d'adresse dans `userData`), `db3c509` (Pas B, moteur `src/db/deplacer-donnees.js`), `6db2c69` (Pas C-1, branchement démarrage + IPC), `e3aa8f8` (Pas C-2, écran Réglages → Données), `7581a99` (défaut = dossier personnel). Carte « Dossier de données Galeria », avertissement OneDrive + suggestion locale, « Déplacer le dossier… » (sauvegarde d'abord → déplacement au redémarrage base fermée, renommage même disque / copie vérifiée autre disque) et lien « Indiquer à Galeria où les retrouver ». Détails dans la section « Retours d'usage » plus bas.
 - **Outils complémentaires (page Outils) — 4 calculatrices (LIVRÉ 2026-07-25, confirmé par Dave)** : commits `014ced2` (Taxes), `60a8020` + `cd14433` (Conversion + correctif fetch), `0c77956` (Plan de versements), `40eacb4` (Expédition). Barre latérale groupée (« Liés au catalogue » / « Calculatrices rapides »). **Taxes** (ajouter/retirer, province ; Québec = Réglages, autres = `config.outils.taxes_provinces`). **Conversion** (longueur/poids/devise ; taux **Banque du Canada** via `src/taux-change.js`, repli hors-ligne, `config.outils.taux_change_*` ; EUR inclus). **Plan de versements** (échéancier, dernier versement ajusté, bouton copier via IPC `outils:copier-texte`). **Expédition** (poids estimé, facteurs `config.outils.expedition`, avertissement « à calibrer »). Tout en direct, aucune écriture base, aucun PDF. Réutilise les styles existants + `.cat-groupe`. Démo `demos/outils-complementaires.html`. Aussi : `442c611` corrige l'avertissement Node 24 DEP0190 dans `scripts/release.js`.
 
-### Ce qui reste
+### ▶ Prochaine étape (à trancher avec Dave en début de session)
 
-- **Chantiers « Retours d'usage » et « Outils complémentaires » : TERMINÉS.** Reste, hors chantier : la **livraison** (gestes de Dave ci-dessous) et **l'état git à clarifier** (voir l'encadré ⚠️ en tête).
-- **Volet chiffrement** de la Sécurité : parqué (analyse consignée plus bas).
-- **À faire par Dave (outils)** : peser 2-3 œuvres pour **calibrer les facteurs de poids** (`config.outils.expedition`) ; valider les taxes des autres provinces avec le comptable. Questions consignées dans `A-VALIDER.md`.
+La 0.11.0 clôt la séquence **reproductions → robustesse → sécurité (verrou) → retours d'usage → dossier de données → outils**. Rien n'est en cours. Options pour la suite, dans l'ordre de la feuille de route :
 
-### ⚠️ Gestes de livraison (à faire par Dave, pas par Claude — ils sortent vers l'extérieur)
+1. **Phase 5 — Web (WooCommerce)** *(prochaine sur la feuille de route)* : publier une œuvre vers la boutique depuis l'app, la marquer vendue/retirée au moment de la vente, sans ressaisie. Décision déjà prise : seules des infos publiques de catalogue traversent (titre, description, prix, image, statut) ; **aucune donnée client/vente ne sort**. **À confirmer avant de bâtir** : plateforme et accès (clés REST WooCommerce, à fournir par la personne qui gère le site — `galerievieuxstjean.com`). Voir `CLAUDE.md` §7 et `A-VALIDER.md` (« Intégrations externes »).
+2. **Phase 4 — Sage 50** : fichier d'import CSV des ventes (importé par les parents) + lecture ODBC seule. **Jamais d'écriture dans Sage.** Lourd ; commence par déterminer la config Sage chez eux. Voir `CLAUDE.md` §8.
+3. **Volet chiffrement de la base** (Sécurité, **PARQUÉ**) : à ne relancer qu'avec l'accord de Dave et **après avoir lu « Pourquoi le chiffrement a été parqué »** plus bas (défaut de fond du plan d'origine ; reco = **BitLocker d'abord**, puis option C désactivée par défaut).
+4. **Cadre de tests** (dette technique) : le projet n'en a pas ; tout passe par des bancs d'essai jetables. Chantier à proposer.
 
-```
-# quand Dave décide de livrer (la branche data-folder-migration contient TOUT) :
-git checkout master && git merge claude/galeria-data-folder-migration-18aa86
-git push origin master     # publie le code sur GitHub
-npm run release            # bâtit et publie → auto-update chez les parents
-```
-**Le travail est déjà sur `master` local** (voir l'encadré ⚠️ en tête) : la fusion est de fait faite, il ne reste que `git push` + `npm run release`. Mais **ne rien pousser ni publier sans l'accord explicite de Dave** — et d'abord **clarifier l'état git avec lui** (est-ce l'organisation voulue ?). Les 4 commits d'outils sont en local seulement ; `origin/master` = `21db398`.
+**Petites choses à faire par Dave (hors code)** : peser 2-3 œuvres pour **calibrer les facteurs de poids d'expédition** (`config.outils.expedition`) ; valider la **table des taxes des autres provinces** avec le comptable. Voir `A-VALIDER.md` (section « Outils complémentaires »).
+
+**Livraison** : le modèle est désormais **l'auto-update** — quand un nouveau chantier sera prêt, Dave montera la version, `git push origin master`, `npm run release` (ses gestes, rien vers l'extérieur sans son accord).
 
 ### Points de méthode / dette technique (à proposer, non planifiés)
 
