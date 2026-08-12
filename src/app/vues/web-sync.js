@@ -1,0 +1,745 @@
+// Vue « Synchronisation site » — sens TIRER (site → app), LECTURE SEULE côté site.
+// Compare les produits WooCommerce (par SKU = numéro d'inventaire) aux œuvres de
+// l'app. Permet de : filtrer les écarts par type, reprendre une valeur du site
+// (à l'unité ou EN LOT), et mettre le statut à jour d'après le site (avec choix).
+// Rien n'est jamais écrit sur le site depuis cette vue.
+
+import { ech, formaterPrix, nettoyerErreur, pluriel, urlPhoto, badgeStatut, STATUTS, sansAccents, nomComplet } from '../commun.js';
+import { naviguer } from '../router.js';
+import { alerter, confirmer, editerTexteImport } from '../dialogue.js';
+import { recadrerCarre } from '../recadrage.js';
+
+const TYPES_DIFF = [
+  { cle: 'titre', libelle: 'Titre' },
+  { cle: 'description', libelle: 'Description' },
+  { cle: 'prix', libelle: 'Prix' },
+  { cle: 'statut', libelle: 'Statut' },
+];
+const CHAMPS_COPIE = ['titre', 'description', 'prix'];
+
+function valeurAffichee(champ, v) {
+  if (champ === 'prix') return (v == null || v === '') ? '—' : formaterPrix(Number(v));
+  const s = (v == null) ? '' : String(v);
+  return s.trim() ? ech(s) : '<span class="wsync-vide">— (vide)</span>';
+}
+
+export async function rendreWebSync(contenu) {
+  contenu.innerHTML = `
+    <div class="vue-liste web-sync-vue">
+      <div class="entete-page">
+        <div>
+          <h1>Synchronisation avec le site</h1>
+          <p class="sous-titre">Sens « tirer » — l'app lit la boutique et te propose de reprendre des valeurs. <strong>Aucune modification n'est faite sur le site.</strong></p>
+          <div class="wsync-mode" role="tablist" aria-label="Type de synchronisation">
+            <button type="button" class="wsync-mode-btn actif" aria-current="true">Œuvres</button>
+            <button type="button" class="wsync-mode-btn" id="wsync-vers-artistes">Artistes</button>
+          </div>
+        </div>
+        <div class="entete-page-actions">
+          <button type="button" class="btn-action btn-principal" id="btn-comparer">Comparer avec le site</button>
+        </div>
+      </div>
+      <div id="web-sync-corps"></div>
+    </div>
+  `;
+
+  const corps = contenu.querySelector('#web-sync-corps');
+  const btnComparer = contenu.querySelector('#btn-comparer');
+  contenu.querySelector('#wsync-vers-artistes')?.addEventListener('click', () => naviguer('web-sync-artistes'));
+
+  let dataCourant = null;
+  let ongletActif = 'diff'; // 'diff' | 'app' | 'site'
+  let afficherReglees = false; // montrer aussi les différences « déjà gardées »
+  const filtres = new Set(TYPES_DIFF.map((t) => t.cle)); // tous actifs par défaut
+  const selection = new Set(); // clés `${oeuvreId}:${champ}` (champs de copie only)
+
+  const cle = (oeuvreId, champ) => `${oeuvreId}:${champ}`;
+  const champsVisibles = (l) => l.champs.filter((c) => filtres.has(c.champ) && (afficherReglees || !c.ignore));
+  const statutVisible = (l) => !!l.statut_reconcilier && filtres.has('statut') && (afficherReglees || !l.statut_reconcilier.ignore);
+  const ligneVisible = (l) => champsVisibles(l).length > 0 || statutVisible(l);
+  const compteType = (t) => (t === 'statut'
+    ? dataCourant.lignes.filter((l) => l.statut_reconcilier && !l.statut_reconcilier.ignore).length
+    : dataCourant.lignes.filter((l) => l.champs.some((c) => c.champ === t && !c.ignore)).length);
+
+  async function charger() {
+    btnComparer.disabled = true;
+    corps.innerHTML = `<p class="chargement">⏳ Lecture de la boutique et comparaison… (aucune modification du site)</p>`;
+    let data;
+    try {
+      data = await window.api.webComparer();
+    } catch (err) {
+      corps.innerHTML = `<div class="wsync-erreur"><p>✗ ${ech(nettoyerErreur(err))}</p></div>`;
+      btnComparer.disabled = false;
+      return;
+    }
+    btnComparer.disabled = false;
+    btnComparer.textContent = 'Rafraîchir';
+    dataCourant = data;
+    selection.clear();
+    dessiner();
+  }
+
+  function dessiner() {
+    const data = dataCourant;
+    const r = data.resume;
+    const resteDiff = data.lignes.filter((l) => l.champs.some((c) => !c.ignore) || (l.statut_reconcilier && !l.statut_reconcilier.ignore)).length;
+    const nbReglees = data.lignes.reduce((n, l) =>
+      n + l.champs.filter((c) => c.ignore).length + (l.statut_reconcilier && l.statut_reconcilier.ignore ? 1 : 0), 0);
+    const visibles = data.lignes.filter(ligneVisible);
+
+    const resumeHtml = `
+      <div class="wsync-resume">
+        <div class="wsync-stat"><span class="n">${r.relies}</span><span class="lib">œuvre(s) reliée(s)</span></div>
+        <div class="wsync-stat"><span class="n">${resteDiff}</span><span class="lib">avec des différences</span></div>
+        <div class="wsync-stat"><span class="n">${r.app_seul}</span><span class="lib">seulement dans l'app</span></div>
+        <div class="wsync-stat"><span class="n">${r.site_seul}</span><span class="lib">seulement sur le site</span></div>
+        <div class="wsync-stat discret"><span class="n">${r.total_site}</span><span class="lib">produits en ligne</span></div>
+      </div>
+    `;
+
+    const chipsHtml = TYPES_DIFF.map((t) => {
+      const n = compteType(t.cle);
+      const actif = filtres.has(t.cle);
+      return `<button type="button" class="wsync-chip${actif ? ' actif' : ''}" data-type="${t.cle}" ${n === 0 ? 'disabled' : ''}>
+        ${ech(t.libelle)} <span class="wsync-chip-n">${n}</span>
+      </button>`;
+    }).join('');
+
+    const barreHtml = `
+      <div class="wsync-barre">
+        <div class="wsync-filtres" role="group" aria-label="Filtrer les différences">
+          <span class="wsync-filtres-lib">Afficher :</span>
+          ${chipsHtml}
+        </div>
+        <div class="wsync-selection">
+          ${nbReglees ? `<label class="wsync-reglees-toggle"><input type="checkbox" id="wsync-voir-reglees" ${afficherReglees ? 'checked' : ''}> déjà gardées (${nbReglees})</label>` : ''}
+          <button type="button" class="btn-lien" id="wsync-sel-tout">Tout cocher (visible)</button>
+          <button type="button" class="btn-lien" id="wsync-sel-rien">Décocher</button>
+          <button type="button" class="btn-action btn-principal" id="wsync-importer-lot" ${selection.size ? '' : 'disabled'}>
+            Reprendre la sélection${selection.size ? ` (${selection.size})` : ''}
+          </button>
+        </div>
+      </div>
+    `;
+
+    let cartesHtml;
+    if (!resteDiff) {
+      cartesHtml = `<p class="liste-vide">✓ Rien à réconcilier : les fiches reliées concordent avec le site.</p>`;
+    } else if (!visibles.length) {
+      cartesHtml = `<p class="liste-vide">Aucune différence de ce type. Ajuste les filtres ci-dessus.</p>`;
+    } else {
+      cartesHtml = visibles.map((l) => carteLigne(l)).join('');
+    }
+
+    const appSeulHtml = data.appSeul.length
+      ? `<div class="wsync-recon-liste">${data.appSeul.map((o) => `
+            <div class="wsync-recon" data-oeuvre="${o.id}">
+              <div class="wsync-recon-info"><span class="wsync-sku">${ech(o.inv || '—')}</span> <strong>${ech(o.titre)}</strong> <span class="wsync-artiste">${ech(o.artiste)}</span></div>
+              <div class="wsync-recon-actions">
+                <button type="button" class="btn-lien wsync-voir-2" data-oeuvre="${o.id}">Voir</button>
+                <button type="button" class="btn-action btn-secondaire-action wsync-app-retirer">Retirer</button>
+                <button type="button" class="btn-action btn-secondaire-action wsync-app-vendre">Vendre</button>
+                <button type="button" class="btn-action btn-secondaire-action wsync-app-supprimer">Supprimer</button>
+              </div>
+            </div>`).join('')}</div>`
+      : `<p class="liste-vide">✓ Toutes les œuvres de l'app ont un produit relié sur le site.</p>`;
+    const siteSeulHtml = data.siteSeul.length
+      ? `<div class="wsync-recon-liste">${data.siteSeul.map((p, i) => `
+            <div class="wsync-recon" data-idx="${i}">
+              <div class="wsync-recon-info"><span class="wsync-sku">${ech(p.sku)}</span> <strong>${ech(p.name)}</strong>${p.prix != null ? ` <span class="wsync-artiste">${formaterPrix(p.prix)}</span>` : ''}${(p.candidats && p.candidats.some((c) => c.match)) ? ' <span class="wsync-badge-doute">SKU douteux ?</span>' : ''}</div>
+              <div class="wsync-recon-actions">
+                <button type="button" class="btn-action btn-principal wsync-site-creer">Créer la fiche</button>
+                <button type="button" class="btn-action btn-secondaire-action wsync-site-sku">Corriger le SKU</button>
+              </div>
+            </div>`).join('')}</div>`
+      : `<p class="liste-vide">✓ Tous les produits du site ont une œuvre reliée dans l'app.</p>`;
+
+    const onglets = [
+      { cle: 'diff', libelle: 'Différences', n: resteDiff },
+      { cle: 'app', libelle: "Seulement dans l'app", n: data.appSeul.length },
+      { cle: 'site', libelle: 'Seulement sur le site', n: data.siteSeul.length },
+    ];
+    const ongletsHtml = `<div class="wsync-onglets" role="tablist">${onglets.map((o) =>
+      `<button type="button" class="wsync-onglet${ongletActif === o.cle ? ' actif' : ''}" data-onglet="${o.cle}">${ech(o.libelle)} <span class="wsync-onglet-n">${o.n}</span></button>`).join('')}</div>`;
+
+    let panneauHtml;
+    if (ongletActif === 'app') panneauHtml = appSeulHtml;
+    else if (ongletActif === 'site') panneauHtml = siteSeulHtml;
+    else panneauHtml = barreHtml + `<div class="wsync-cartes">${cartesHtml}</div>`;
+
+    corps.innerHTML = resumeHtml + ongletsHtml + `<div class="wsync-panneau">${panneauHtml}</div>`;
+    brancher();
+  }
+
+  function carteLigne(l) {
+    const champsHtml = champsVisibles(l).map((c) => {
+      const k = cle(l.oeuvre_id, c.champ);
+      const tete = c.ignore
+        ? `<div class="wsync-champ-tete"><span class="wsync-lib">${ech(c.libelle)}</span> <span class="wsync-gardee">✓ gardé (version de l'app)</span></div>`
+        : `<div class="wsync-champ-tete"><label class="wsync-check"><input type="checkbox" class="wsync-case" data-cle="${k}" ${selection.has(k) ? 'checked' : ''}><span class="wsync-lib">${ech(c.libelle)}</span></label></div>`;
+      const actions = c.ignore
+        ? `<button type="button" class="btn-lien wsync-degarder" data-champ="${ech(c.champ)}">Ne plus garder</button>`
+        : `<button type="button" class="btn-action btn-secondaire-action wsync-importer" data-champ="${ech(c.champ)}">Reprendre la valeur du site →</button>
+           <button type="button" class="btn-lien wsync-garder" data-champ="${ech(c.champ)}">Garder la version de l'app</button>`;
+      return `
+        <div class="wsync-champ${c.ignore ? ' est-gardee' : ''}" data-champ="${ech(c.champ)}">
+          ${tete}
+          <div class="wsync-cols">
+            <div class="wsync-col">
+              <span class="wsync-et">Dans l'app</span>
+              <div class="wsync-val">${valeurAffichee(c.champ, c.app)}</div>
+            </div>
+            <div class="wsync-col site">
+              <span class="wsync-et">Sur le site</span>
+              <div class="wsync-val">${valeurAffichee(c.champ, c.site)}</div>
+            </div>
+          </div>
+          <div class="wsync-champ-actions">${actions}</div>
+        </div>
+      `;
+    }).join('');
+
+    let statutHtml = '';
+    if (statutVisible(l)) {
+      const sr = l.statut_reconcilier;
+      const cols = `
+        <div class="wsync-cols">
+          <div class="wsync-col">
+            <span class="wsync-et">Dans l'app</span>
+            <div class="wsync-val">${badgeStatut(l.statut_app)}</div>
+          </div>
+          <div class="wsync-col site">
+            <span class="wsync-et">Sur le site</span>
+            <div class="wsync-val">${ech(sr.site_indication)}</div>
+          </div>
+        </div>`;
+      if (sr.ignore) {
+        statutHtml = `
+          <div class="wsync-champ wsync-statut est-gardee" data-champ="statut">
+            <div class="wsync-champ-tete"><span class="wsync-lib">Statut</span> <span class="wsync-gardee">✓ gardé (version de l'app)</span></div>
+            ${cols}
+            <div class="wsync-champ-actions"><button type="button" class="btn-lien wsync-statut-degarder">Ne plus garder</button></div>
+          </div>`;
+      } else {
+        const options = Object.entries(STATUTS).map(([k, v]) =>
+          `<option value="${k}" ${k === sr.suggere ? 'selected' : ''}>${ech(v.libelle)}</option>`).join('');
+        statutHtml = `
+          <div class="wsync-champ wsync-statut" data-champ="statut">
+            <div class="wsync-lib">Statut</div>
+            ${cols}
+            <div class="wsync-champ-actions wsync-statut-actions">
+              <label class="wsync-statut-choix">Mettre le statut de l'app à
+                <select class="wsync-statut-select">${options}</select>
+              </label>
+              <button type="button" class="btn-action btn-secondaire-action wsync-statut-appliquer">Appliquer</button>
+              <button type="button" class="btn-lien wsync-statut-garder">Garder la version de l'app</button>
+            </div>
+            <p class="wsync-statut-aide">Met à jour l'étiquette de statut ; n'enregistre pas de vente.</p>
+          </div>
+        `;
+      }
+    }
+
+    return `
+      <div class="wsync-carte" data-oeuvre="${l.oeuvre_id}">
+        <div class="wsync-tete">
+          <div>
+            <span class="wsync-sku">${ech(l.sku || '—')}</span>
+            <strong class="wsync-titre">${ech(l.titre)}</strong>
+            <span class="wsync-artiste">${ech(l.artiste)}</span>
+          </div>
+          <button type="button" class="btn-lien wsync-voir">Voir la fiche</button>
+        </div>
+        ${champsHtml}
+        ${statutHtml}
+      </div>
+    `;
+  }
+
+  // (Re)branche les écouteurs après chaque rendu.
+  function brancher() {
+    corps.querySelectorAll('.wsync-onglet').forEach((b) => b.addEventListener('click', () => {
+      ongletActif = b.dataset.onglet;
+      dessiner();
+    }));
+    corps.querySelectorAll('.wsync-chip').forEach((chip) => chip.addEventListener('click', () => {
+      const t = chip.dataset.type;
+      if (filtres.has(t)) filtres.delete(t); else filtres.add(t);
+      dessiner();
+    }));
+
+    corps.querySelector('#wsync-sel-tout')?.addEventListener('click', () => {
+      dataCourant.lignes.filter(ligneVisible).forEach((l) => {
+        champsVisibles(l).forEach((c) => selection.add(cle(l.oeuvre_id, c.champ)));
+      });
+      dessiner();
+    });
+    corps.querySelector('#wsync-sel-rien')?.addEventListener('click', () => { selection.clear(); dessiner(); });
+    corps.querySelector('#wsync-importer-lot')?.addEventListener('click', importerLot);
+    corps.querySelector('#wsync-voir-reglees')?.addEventListener('change', (e) => { afficherReglees = e.target.checked; dessiner(); });
+
+    corps.querySelectorAll('.wsync-case').forEach((cb) => cb.addEventListener('change', () => {
+      if (cb.checked) selection.add(cb.dataset.cle); else selection.delete(cb.dataset.cle);
+      const btn = corps.querySelector('#wsync-importer-lot');
+      if (btn) {
+        btn.disabled = selection.size === 0;
+        btn.textContent = `Reprendre la sélection${selection.size ? ` (${selection.size})` : ''}`;
+      }
+    }));
+
+    corps.querySelectorAll('.wsync-carte').forEach((carte) => {
+      const oeuvreId = Number(carte.dataset.oeuvre);
+      carte.querySelector('.wsync-voir')?.addEventListener('click', () => ouvrirApercuOeuvre(oeuvreId));
+      carte.querySelectorAll('.wsync-importer').forEach((btn) =>
+        btn.addEventListener('click', () => importerUn(btn, oeuvreId, btn.dataset.champ)));
+      carte.querySelectorAll('.wsync-garder').forEach((btn) =>
+        btn.addEventListener('click', () => garderChamp(oeuvreId, btn.dataset.champ)));
+      carte.querySelectorAll('.wsync-degarder').forEach((btn) =>
+        btn.addEventListener('click', () => degarderChamp(oeuvreId, btn.dataset.champ)));
+      const btnStatut = carte.querySelector('.wsync-statut-appliquer');
+      if (btnStatut) btnStatut.addEventListener('click', () => appliquerStatut(carte, oeuvreId));
+      carte.querySelector('.wsync-statut-garder')?.addEventListener('click', () => garderStatut(oeuvreId));
+      carte.querySelector('.wsync-statut-degarder')?.addEventListener('click', () => degarderStatut(oeuvreId));
+    });
+
+    // Réconciliation « un seul côté »
+    corps.querySelectorAll('.wsync-voir-2').forEach((b) =>
+      b.addEventListener('click', () => ouvrirApercuOeuvre(Number(b.dataset.oeuvre))));
+    corps.querySelectorAll('.wsync-recon[data-oeuvre]').forEach((row) => {
+      const id = Number(row.dataset.oeuvre);
+      row.querySelector('.wsync-app-retirer')?.addEventListener('click', () => appRetirer(id));
+      row.querySelector('.wsync-app-vendre')?.addEventListener('click', () => naviguer('vente-fiche', { nouveau: true, oeuvre_id: id }));
+      row.querySelector('.wsync-app-supprimer')?.addEventListener('click', () => appSupprimer(id));
+    });
+    corps.querySelectorAll('.wsync-recon[data-idx]').forEach((row) => {
+      const idx = Number(row.dataset.idx);
+      row.querySelector('.wsync-site-creer')?.addEventListener('click', () => creerFiche(idx));
+      row.querySelector('.wsync-site-sku')?.addEventListener('click', () => corrigerSku(idx));
+    });
+  }
+
+  // ----- Actions « œuvres seulement dans l'app » -----
+  async function appRetirer(id) {
+    const o = dataCourant.appSeul.find((x) => x.id === id);
+    const r = await confirmer({
+      type: 'warning', title: 'Retirer cette œuvre ?',
+      message: `Retirer « ${o ? o.titre : ''} » du catalogue actif (rendue à l'artiste) ?`,
+      detail: 'Réversible via « Réintégrer ». Aucune donnée n\'est supprimée.',
+      buttons: ['Retirer', 'Annuler'], defaultId: 0, cancelId: 1,
+    });
+    if (r !== 0) return;
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, '0');
+    const date = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    try {
+      await window.api.oeuvreRetrait(id, { retire: true, date, motif: 'Retrait (absente du site)' });
+      dataCourant.appSeul = dataCourant.appSeul.filter((x) => x.id !== id);
+      dessiner();
+    } catch (err) { await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) }); }
+  }
+  async function appSupprimer(id) {
+    const o = dataCourant.appSeul.find((x) => x.id === id);
+    const r = await confirmer({
+      type: 'warning', title: 'Supprimer cette œuvre ?',
+      message: `Supprimer définitivement « ${o ? o.titre : ''} » ?`,
+      detail: 'Action irréversible. Refusée si l\'œuvre est liée à une vente ou à un certificat.',
+      buttons: ['Supprimer', 'Annuler'], defaultId: 1, cancelId: 1,
+    });
+    if (r !== 0) return;
+    try {
+      await window.api.oeuvreSupprimer(id);
+      dataCourant.appSeul = dataCourant.appSeul.filter((x) => x.id !== id);
+      dessiner();
+    } catch (err) { await alerter({ type: 'error', title: 'Suppression refusée', message: nettoyerErreur(err) }); }
+  }
+
+  // ----- Actions « produits seulement sur le site » -----
+  async function creerFiche(idx) {
+    const produit = dataCourant.siteSeul[idx];
+    if (!produit) return;
+    const res = await modalCreerFiche(produit);
+    if (res && res.cree) {
+      dataCourant.siteSeul.splice(idx, 1);
+      dessiner();
+    }
+  }
+  async function corrigerSku(idx) {
+    const produit = dataCourant.siteSeul[idx];
+    if (!produit) return;
+    const oeuvreId = await modalCorrigerSku(produit);
+    if (oeuvreId) {
+      dataCourant.siteSeul.splice(idx, 1);
+      dataCourant.appSeul = dataCourant.appSeul.filter((x) => x.id !== oeuvreId);
+      dessiner();
+    }
+  }
+
+  async function garderChamp(oeuvreId, champ) {
+    const l = dataCourant.lignes.find((x) => x.oeuvre_id === oeuvreId);
+    const c = l?.champs.find((x) => x.champ === champ);
+    if (!c) return;
+    try {
+      await window.api.webIgnorerDiff(oeuvreId, champ, c.site_cle);
+      c.ignore = true;
+      selection.delete(cle(oeuvreId, champ));
+      dessiner();
+    } catch (err) { await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) }); }
+  }
+  async function degarderChamp(oeuvreId, champ) {
+    const l = dataCourant.lignes.find((x) => x.oeuvre_id === oeuvreId);
+    const c = l?.champs.find((x) => x.champ === champ);
+    if (!c) return;
+    try {
+      await window.api.webRetirerIgnore(oeuvreId, champ);
+      c.ignore = false;
+      dessiner();
+    } catch (err) { await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) }); }
+  }
+  async function garderStatut(oeuvreId) {
+    const l = dataCourant.lignes.find((x) => x.oeuvre_id === oeuvreId);
+    if (!l || !l.statut_reconcilier) return;
+    try {
+      await window.api.webIgnorerDiff(oeuvreId, 'statut', l.statut_reconcilier.site_cle);
+      l.statut_reconcilier.ignore = true;
+      dessiner();
+    } catch (err) { await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) }); }
+  }
+  async function degarderStatut(oeuvreId) {
+    const l = dataCourant.lignes.find((x) => x.oeuvre_id === oeuvreId);
+    if (!l || !l.statut_reconcilier) return;
+    try {
+      await window.api.webRetirerIgnore(oeuvreId, 'statut');
+      l.statut_reconcilier.ignore = false;
+      dessiner();
+    } catch (err) { await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) }); }
+  }
+
+  function retirerChamp(oeuvreId, champ) {
+    const l = dataCourant.lignes.find((x) => x.oeuvre_id === oeuvreId);
+    if (l) l.champs = l.champs.filter((c) => c.champ !== champ);
+    selection.delete(cle(oeuvreId, champ));
+  }
+
+  async function importerUn(btn, oeuvreId, champ) {
+    const l = dataCourant.lignes.find((x) => x.oeuvre_id === oeuvreId);
+    const c = l?.champs.find((x) => x.champ === champ);
+    if (!c) return;
+    // Titre et description : édition possible avant remplacement. Prix : direct.
+    let valeur = c.site;
+    if (champ === 'titre' || champ === 'description') {
+      const edite = await editerTexteImport(c.libelle || champ, c.site == null ? '' : String(c.site));
+      if (edite == null) return; // annulé
+      valeur = edite;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Import…';
+    try {
+      await window.api.webImporterChamp(oeuvreId, champ, valeur);
+      retirerChamp(oeuvreId, champ);
+      dessiner();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Reprendre la valeur du site →';
+      await alerter({ type: 'error', title: 'Import échoué', message: nettoyerErreur(err) });
+    }
+  }
+
+  async function importerLot() {
+    if (!selection.size) return;
+    const items = [];
+    for (const k of selection) {
+      const [idStr, champ] = k.split(':');
+      const oeuvreId = Number(idStr);
+      const l = dataCourant.lignes.find((x) => x.oeuvre_id === oeuvreId);
+      const c = l?.champs.find((x) => x.champ === champ);
+      if (c) items.push({ oeuvreId, champ, valeur: c.site });
+    }
+    if (!items.length) return;
+    const rep = await confirmer({
+      type: 'question', title: 'Reprendre les valeurs du site ?',
+      message: `Importer ${pluriel(items.length, 'valeur')} du site dans l'app ?`,
+      detail: 'Ces champs seront remplacés dans l\'app (réversible en éditant les œuvres). Le site n\'est pas touché.',
+      buttons: ['Importer', 'Annuler'], defaultId: 0, cancelId: 1,
+    });
+    if (rep !== 0) return;
+    let res;
+    try {
+      res = await window.api.webImporterLot(items);
+    } catch (err) {
+      await alerter({ type: 'error', title: 'Import échoué', message: nettoyerErreur(err) });
+      return;
+    }
+    const enErreur = new Set((res.erreurs || []).map((e) => cle(e.oeuvreId, e.champ)));
+    items.forEach((it) => { if (!enErreur.has(cle(it.oeuvreId, it.champ))) retirerChamp(it.oeuvreId, it.champ); });
+    dessiner();
+    if (res.erreurs && res.erreurs.length) {
+      await alerter({ type: 'warning', title: 'Import partiel', message: `${res.reussis}/${res.total} importée(s). ${res.erreurs.length} en erreur.` });
+    } else {
+      await alerter({ type: 'succes', title: 'Import terminé', message: `${res.reussis} valeur(s) importée(s) dans l'app.` });
+    }
+  }
+
+  async function appliquerStatut(carte, oeuvreId) {
+    const select = carte.querySelector('.wsync-statut-select');
+    const btn = carte.querySelector('.wsync-statut-appliquer');
+    if (!select) return;
+    const statut = select.value;
+    btn.disabled = true;
+    const libelle = btn.textContent;
+    btn.textContent = 'Application…';
+    try {
+      await window.api.webDefinirStatut(oeuvreId, statut);
+      const l = dataCourant.lignes.find((x) => x.oeuvre_id === oeuvreId);
+      if (l) { l.statut_app = statut; l.statut_reconcilier = null; }
+      dessiner();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = libelle;
+      await alerter({ type: 'error', title: 'Statut non modifié', message: nettoyerErreur(err) });
+    }
+  }
+
+  btnComparer.addEventListener('click', charger);
+}
+
+// Aperçu de l'œuvre en modale (lecture seule) — pour consulter la fiche sans
+// quitter l'écran de synchronisation. Un bouton permet d'ouvrir la fiche
+// complète et éditable (qui, lui, quitte la synchro).
+async function ouvrirApercuOeuvre(oeuvreId) {
+  let oeuvre;
+  try {
+    const bundle = await window.api.oeuvreFicheBundle(oeuvreId);
+    oeuvre = bundle && bundle.oeuvre ? bundle.oeuvre : null;
+  } catch (err) {
+    await alerter({ type: 'error', title: 'Erreur', message: nettoyerErreur(err) });
+    return;
+  }
+  if (!oeuvre) {
+    await alerter({ type: 'warning', title: 'Introuvable', message: "Cette œuvre est introuvable." });
+    return;
+  }
+
+  const ligneMeta = (lib, val) => (val != null && String(val).trim() !== '')
+    ? `<dt>${ech(lib)}</dt><dd>${ech(String(val))}</dd>` : '';
+  const metaHtml = [
+    ligneMeta('Année', oeuvre.annee),
+    ligneMeta('Dimensions', oeuvre.dimensions),
+    ligneMeta('Médium', oeuvre.medium),
+    ligneMeta('Support', oeuvre.support),
+    ligneMeta('Format', oeuvre.format),
+    ligneMeta('Style', oeuvre.style),
+    ligneMeta('Emplacement', oeuvre.emplacement),
+  ].join('');
+
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay-modale apercu-overlay';
+  overlay.innerHTML = `
+    <div class="apercu-oeuvre" role="dialog" aria-modal="true" aria-label="Aperçu de l'œuvre">
+      <button type="button" class="apercu-fermer" aria-label="Fermer">&times;</button>
+      <div class="apercu-corps">
+        <div class="apercu-image">
+          ${oeuvre.image_path
+            ? `<img src="${urlPhoto(oeuvre.image_path)}" alt="">`
+            : `<span class="apercu-image-vide">&#9635;</span>`}
+        </div>
+        <div class="apercu-infos">
+          ${oeuvre.numero_inventaire ? `<div class="apercu-sku">Nº ${ech(oeuvre.numero_inventaire)}</div>` : ''}
+          <h2 class="apercu-titre">${ech(oeuvre.titre || 'Sans titre')}</h2>
+          <p class="apercu-artiste">${ech(oeuvre.artiste_nom || '')}</p>
+          <div class="apercu-badges">
+            ${badgeStatut(oeuvre.statut)}
+            ${oeuvre.prix != null ? `<span class="apercu-prix">${formaterPrix(oeuvre.prix)}</span>` : ''}
+          </div>
+          ${metaHtml ? `<dl class="apercu-meta">${metaHtml}</dl>` : ''}
+          ${oeuvre.description && String(oeuvre.description).trim()
+            ? `<div class="apercu-desc">${ech(oeuvre.description)}</div>` : ''}
+        </div>
+      </div>
+      <div class="apercu-actions">
+        <button type="button" class="btn-action btn-secondaire-action" id="apercu-ouvrir-fiche">Ouvrir la fiche complète</button>
+        <button type="button" class="btn-action btn-principal" id="apercu-fermer-2">Fermer</button>
+      </div>
+    </div>
+  `;
+
+  const fermer = () => {
+    overlay.remove();
+    window.removeEventListener('keydown', onKey);
+  };
+  const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); fermer(); } };
+  overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) fermer(); });
+  window.addEventListener('keydown', onKey);
+  overlay.querySelector('.apercu-fermer').addEventListener('click', fermer);
+  overlay.querySelector('#apercu-fermer-2').addEventListener('click', fermer);
+  overlay.querySelector('#apercu-ouvrir-fiche').addEventListener('click', () => {
+    fermer();
+    naviguer('oeuvre-fiche', { id: oeuvreId });
+  });
+
+  document.body.appendChild(overlay);
+}
+
+// Modale : créer une fiche d'œuvre à partir d'un produit du site. L'artiste est
+// choisi ici ; titre/description/prix sont pré-remplis et modifiables ; l'image
+// du site peut être téléchargée puis recadrée. Retourne { cree, oeuvre } ou null.
+function modalCreerFiche(produit) {
+  return new Promise(async (resolve) => {
+    let artistes = [];
+    try {
+      artistes = await window.api.artistesListe({ inclureArchives: false });
+    } catch (err) {
+      await alerter({ type: 'error', title: 'Erreur', message: nettoyerErreur(err) });
+      resolve(null); return;
+    }
+    const options = artistes
+      .map((a) => ({ id: a.id, nom: nomComplet(a) || a.nom || '' }))
+      .sort((a, b) => sansAccents(a.nom).localeCompare(sansAccents(b.nom)))
+      .map((a) => `<option value="${a.id}">${ech(a.nom)}</option>`).join('');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay-modale overlay-dialogue';
+    overlay.innerHTML = `
+      <div class="dialogue" role="dialog" aria-modal="true" style="max-width: 560px;">
+        <div class="dialogue-entete"><h3 class="dialogue-titre">Créer une fiche depuis le site</h3></div>
+        <p class="dialogue-message">Produit <span class="wsync-sku">${ech(produit.sku)}</span> — le numéro d'inventaire de la fiche sera ce SKU.</p>
+        <div class="form-champ"><label for="cf-titre">Titre</label><input type="text" id="cf-titre" value="${ech(produit.name || '')}"></div>
+        <div class="form-champ"><label for="cf-artiste">Artiste</label>
+          <select id="cf-artiste"><option value="">— Sélectionner —</option>${options}</select>
+        </div>
+        <div class="form-champ"><label for="cf-prix">Prix</label><input type="number" id="cf-prix" min="0" step="0.01" value="${produit.prix != null ? produit.prix : ''}"></div>
+        <div class="form-champ"><label for="cf-desc">Description</label><textarea id="cf-desc" rows="4">${ech(produit.description || '')}</textarea></div>
+        ${produit.image ? `<label class="cf-image-choix"><input type="checkbox" id="cf-image" checked> Télécharger l'image du site (recadrage ensuite)</label>` : ''}
+        <div class="dialogue-actions">
+          <button type="button" class="btn-action btn-secondaire-action" id="cf-annuler">Annuler</button>
+          <button type="button" class="btn-action btn-principal" id="cf-creer">Créer la fiche</button>
+        </div>
+      </div>`;
+
+    let fini = false;
+    const fermer = (r) => { if (fini) return; fini = true; window.removeEventListener('keydown', onKey); overlay.remove(); resolve(r); };
+    const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); fermer(null); } };
+    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) fermer(null); });
+    window.addEventListener('keydown', onKey);
+    document.body.appendChild(overlay);
+    overlay.querySelector('#cf-titre').focus();
+
+    overlay.querySelector('#cf-annuler').addEventListener('click', () => fermer(null));
+    overlay.querySelector('#cf-creer').addEventListener('click', async (e) => {
+      const titre = overlay.querySelector('#cf-titre').value.trim();
+      const artiste_id = overlay.querySelector('#cf-artiste').value;
+      const prixTxt = overlay.querySelector('#cf-prix').value.trim();
+      const description = overlay.querySelector('#cf-desc').value;
+      if (!titre) { await alerter({ type: 'warning', title: 'Titre manquant', message: 'Donne un titre à l\'œuvre.' }); return; }
+      if (!artiste_id) { await alerter({ type: 'warning', title: 'Artiste manquant', message: 'Choisis un artiste. (Crée-le d\'abord dans Artistes s\'il n\'existe pas.)' }); return; }
+      const veutImage = produit.image && overlay.querySelector('#cf-image') && overlay.querySelector('#cf-image').checked;
+      const btn = e.currentTarget;
+      btn.disabled = true; btn.textContent = 'Création…';
+      let oeuvre;
+      try {
+        const r = await window.api.webCreerOeuvreDepuisSite({
+          sku: produit.sku, titre, artiste_id: Number(artiste_id),
+          description, prix: prixTxt === '' ? null : Number(prixTxt),
+        });
+        oeuvre = r.oeuvre;
+      } catch (err) {
+        btn.disabled = false; btn.textContent = 'Créer la fiche';
+        await alerter({ type: 'error', title: 'Création échouée', message: nettoyerErreur(err) });
+        return;
+      }
+      // Fiche créée : on ferme, puis on gère l'image seule (recadrage par-dessus).
+      fermer({ cree: true, oeuvre });
+      if (veutImage) {
+        try {
+          const dataUrl = await window.api.webTelechargerImage(produit.image);
+          const crop = await recadrerCarre(dataUrl);
+          if (crop) await window.api.photoEnregistrerRecadree('oeuvres', oeuvre.id, crop, dataUrl);
+        } catch (err) {
+          await alerter({ type: 'warning', title: 'Image non ajoutée', message: `${nettoyerErreur(err)} La fiche est créée ; tu pourras ajouter la photo plus tard sur sa fiche.` });
+        }
+      }
+      await alerter({ type: 'succes', title: 'Fiche créée', message: `« ${oeuvre.titre} » ajoutée (Nº ${oeuvre.numero_inventaire}).` });
+    });
+  });
+}
+
+// Modale : corriger le SKU d'une œuvre existante (coquille) = lui donner le SKU
+// du site comme numéro d'inventaire. Propose des candidats, avec recherche.
+// Retourne l'id de l'œuvre corrigée, ou null.
+function modalCorrigerSku(produit) {
+  return new Promise(async (resolve) => {
+    let toutes = [];
+    try {
+      toutes = await window.api.oeuvresListe({ inclureArchives: false });
+    } catch (err) {
+      await alerter({ type: 'error', title: 'Erreur', message: nettoyerErreur(err) });
+      resolve(null); return;
+    }
+    const candidats = produit.candidats || [];
+    const ligne = (o, marque) => `
+      <label class="csku-ligne">
+        <input type="radio" name="csku-cible" value="${o.id}">
+        <span class="csku-info"><span class="wsync-sku">${ech((o.inv ?? o.numero_inventaire) || '—')}</span> ${ech(o.titre)} <span class="wsync-artiste">${ech(o.artiste || o.artiste_nom || '')}</span></span>
+        ${marque ? '<span class="wsync-badge-doute">titre identique</span>' : ''}
+      </label>`;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay-modale overlay-dialogue';
+    overlay.innerHTML = `
+      <div class="dialogue" role="dialog" aria-modal="true" style="max-width: 620px;">
+        <div class="dialogue-entete"><h3 class="dialogue-titre">Corriger le SKU</h3></div>
+        <p class="dialogue-message">Donner le SKU <span class="wsync-sku">${ech(produit.sku)}</span> (« ${ech(produit.name)} ») à une œuvre existante mal numérotée.</p>
+        <div class="form-champ"><input type="search" id="csku-rech" placeholder="Rechercher une œuvre par titre, artiste, numéro…" autocomplete="off"></div>
+        <div class="csku-liste" id="csku-liste">
+          ${candidats.length ? candidats.map((o) => ligne(o, o.match)).join('') : '<p class="aide-champ" style="margin:0;">Aucun candidat évident — cherche ci-dessus.</p>'}
+        </div>
+        <div class="dialogue-actions">
+          <button type="button" class="btn-action btn-secondaire-action" id="csku-annuler">Annuler</button>
+          <button type="button" class="btn-action btn-principal" id="csku-ok" disabled>Corriger le SKU</button>
+        </div>
+      </div>`;
+
+    let fini = false;
+    const fermer = (r) => { if (fini) return; fini = true; window.removeEventListener('keydown', onKey); overlay.remove(); resolve(r); };
+    const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); fermer(null); } };
+    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) fermer(null); });
+    window.addEventListener('keydown', onKey);
+    document.body.appendChild(overlay);
+
+    const liste = overlay.querySelector('#csku-liste');
+    const btnOk = overlay.querySelector('#csku-ok');
+    const majOk = () => { btnOk.disabled = !overlay.querySelector('input[name="csku-cible"]:checked'); };
+    liste.addEventListener('change', majOk);
+
+    const rech = overlay.querySelector('#csku-rech');
+    rech.addEventListener('input', () => {
+      const q = sansAccents(rech.value.trim());
+      if (!q) {
+        liste.innerHTML = candidats.length ? candidats.map((o) => ligne(o, o.match)).join('') : '<p class="aide-champ" style="margin:0;">Aucun candidat évident — cherche ci-dessus.</p>';
+        majOk(); return;
+      }
+      const res = toutes.filter((o) => {
+        const cible = sansAccents([o.titre, o.artiste_nom, o.numero_inventaire].filter(Boolean).join(' '));
+        return cible.includes(q);
+      }).slice(0, 30);
+      liste.innerHTML = res.length ? res.map((o) => ligne(o, false)).join('') : '<p class="aide-champ" style="margin:0;">Aucune œuvre trouvée.</p>';
+      majOk();
+    });
+
+    overlay.querySelector('#csku-annuler').addEventListener('click', () => fermer(null));
+    btnOk.addEventListener('click', async (e) => {
+      const sel = overlay.querySelector('input[name="csku-cible"]:checked');
+      if (!sel) return;
+      const oeuvreId = Number(sel.value);
+      const btn = e.currentTarget;
+      btn.disabled = true; btn.textContent = 'Correction…';
+      try {
+        await window.api.webCorrigerSku(oeuvreId, produit.sku);
+        fermer(oeuvreId);
+        await alerter({ type: 'succes', title: 'SKU corrigé', message: `L'œuvre porte maintenant le numéro d'inventaire « ${produit.sku} ».` });
+      } catch (err) {
+        btn.disabled = false; btn.textContent = 'Corriger le SKU';
+        await alerter({ type: 'error', title: 'Correction refusée', message: nettoyerErreur(err) });
+      }
+    });
+  });
+}

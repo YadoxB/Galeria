@@ -159,3 +159,36 @@ export function demanderTexte(opts = {}) {
     champ.focus();
   });
 }
+
+// Édition multi-ligne AVANT remplacement (import depuis le site) : zone de texte
+// pré-remplie, le vide est autorisé, la mise en page est préservée. Retourne le
+// texte final, ou null si annulé.
+export function editerTexteImport(libelle, valeur) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay-modale overlay-dialogue';
+    overlay.innerHTML = `
+      <div class="dialogue" role="dialog" aria-modal="true" style="max-width: 720px; width: 92vw;">
+        <div class="dialogue-entete"><h3 class="dialogue-titre">Reprendre « ${ech(libelle)} » du site</h3></div>
+        <p class="dialogue-message">Ajuste le texte si besoin (mise en page, coupures), puis remplace-le dans l'app.</p>
+        <div class="form-champ">
+          <textarea class="edit-import-txt" rows="16"></textarea>
+        </div>
+        <div class="dialogue-actions">
+          <button type="button" class="btn-action btn-secondaire-action" data-annuler>Annuler</button>
+          <button type="button" class="btn-action btn-principal" data-ok>Remplacer dans l'app</button>
+        </div>
+      </div>`;
+    const ta = overlay.querySelector('.edit-import-txt');
+    ta.value = valeur == null ? '' : String(valeur);
+    let fini = false;
+    const fermer = (r) => { if (fini) return; fini = true; window.removeEventListener('keydown', onKey); overlay.remove(); resolve(r); };
+    const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); fermer(null); } };
+    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) fermer(null); });
+    window.addEventListener('keydown', onKey);
+    overlay.querySelector('[data-annuler]').addEventListener('click', () => fermer(null));
+    overlay.querySelector('[data-ok]').addEventListener('click', () => fermer(ta.value));
+    document.body.appendChild(overlay);
+    ta.focus();
+  });
+}

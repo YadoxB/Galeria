@@ -2,15 +2,15 @@
 // « ? » flottant présent sur toutes les pages. Panneau à deux volets : catégories
 // collapsibles + recherche à gauche, article complet à droite. Tout est local.
 //
-// Le bouton « Revoir le tutoriel » est prêt mais le tutoriel de 1re ouverture
-// (#13) n'est pas encore bâti : il affiche un message « à venir » pour l'instant.
+// Le bouton « Revoir le tutoriel » relance la visite guidée de bienvenue.
 
 import { lancerTutoriel } from './tutoriel.js';
 
 const CATS = [
   ['demarrage', 'Premiers pas'], ['artistes', 'Artistes'], ['oeuvres', 'Œuvres & catalogue'],
   ['prix', 'Cotes & prix'], ['clients', 'Clients'], ['ventes', 'Ventes'],
-  ['documents', 'Documents'], ['suivi', 'Suivi & cycle de vie'], ['sauvegardes', 'Sauvegardes & données'],
+  ['documents', 'Documents'], ['suivi', 'Suivi & cycle de vie'],
+  ['web', 'Site web & synchronisation'], ['sauvegardes', 'Sauvegardes & données'],
   ['reglages', 'Réglages & profil'], ['securite', 'Sécurité & confidentialité'],
   ['depannage', 'Problèmes courants'], ['glossaire', 'Glossaire'], ['soutien', 'Soutien'],
 ];
@@ -46,6 +46,8 @@ const ARTICLES = [
     `<p>Tout est sur cet ordinateur ; tu peux travailler <b>sans connexion</b>. Aucune donnée n'est envoyée en ligne. Les seules exceptions, optionnelles et explicites : la <b>mise à jour</b> de l'application et « <b>Copier pour ChatGPT</b> » (qui n'envoie que des informations d'œuvre, jamais de client).</p>`),
   A('demarrage', 'Naviguer : recherche, archivés, fiches voisines', 'recherche filtre archivé navigation précédent suivant trouver',
     `<p>Dans chaque liste : une <b>recherche</b> en haut, et sur les fiches des flèches <b>Précédent / Suivant</b> (ordre alphabétique). Les fiches <b>archivées</b> ou <b>retirées</b> sont masquées par défaut — coche « Inclure les archivés / retirées » pour les revoir.</p>`),
+  A('demarrage', 'Couper, copier, coller (clic droit)', 'clic droit couper copier coller souris menu contextuel presse-papier texte',
+    `<p>Dans n'importe quelle case de texte, un <b>clic droit</b> ouvre un petit menu <b>Couper / Copier / Coller / Tout sélectionner</b> — pratique pour coller un texte à la souris, sans passer par le clavier.</p>`),
 
   // ═══════ ARTISTES ═══════
   A('artistes', 'Ajouter un artiste', 'créer artiste nouveau prénom nom type peintre sculpteur enchaîner œuvres',
@@ -83,8 +85,9 @@ const ARTICLES = [
      <li>Le format, l'orientation et souvent le prix se calculent seuls.</li>
      <li>Ajoute une photo, recadre, puis <b>Enregistrer</b>.</li></ol>
      <div class="astuce">« Créer + ajouter les œuvres » sur la fiche artiste enchaîne plusieurs œuvres d'affilée.</div>`),
-  A('oeuvres', 'Numéro d\'inventaire', 'inventaire numéro séquence préfixe automatique',
-    `<p>Le numéro se compose du <b>préfixe de l'artiste</b> + un <b>numéro séquentiel global</b> à la galerie. Il se pré-remplit ; si tu le laisses tel quel, le compteur avance. Le prochain numéro se règle dans <b>Réglages → Documents</b>.</p>`),
+  A('oeuvres', 'Numéro d\'inventaire', 'inventaire numéro séquence préfixe automatique carte grille affiché',
+    `<p>Le numéro se compose du <b>préfixe de l'artiste</b> + un <b>numéro séquentiel global</b> à la galerie. Il se pré-remplit ; si tu le laisses tel quel, le compteur avance. Le prochain numéro se règle dans <b>Réglages → Documents</b>.</p>
+     <p>Il s'affiche aussi sous le nom de l'artiste sur les <b>cartes</b> de la page Œuvres (vue grille), et dans la vue liste.</p>`),
   A('oeuvres', 'Dimensions, format et orientation', 'hauteur largeur profondeur pouces cm format orientation petit moyen grand très grand',
     `<p>Saisis les dimensions en pouces (un sélecteur <b>po / cm</b> convertit l'affichage ; l'enregistrement reste toujours en pouces). Galeria en déduit :</p>
      <ul><li>l'<b>orientation</b> (verticale si H > L, horizontale si L > H, sinon carrée) ;</li>
@@ -122,6 +125,7 @@ const ARTICLES = [
      <ol><li>Fiche de l'œuvre → <b>Retirer</b> → date + motif.</li>
      <li>Badge « Retirée », masquée des listes par défaut. Tu peux la <b>Réintégrer</b>.</li>
      <li>Retrait <b>en lot</b> : sur la liste, active le mode sélection puis « Retirer ».</li></ol>
+     <p>Quand tu produis une <b>Annexe A de retrait</b> pour un artiste (fiche artiste → Documents), Galeria propose ensuite de <b>retirer directement ces œuvres</b> du catalogue, avec confirmation.</p>
      <div class="attention">Une œuvre <b>vendue</b> ne peut pas être retirée.</div>`),
   A('oeuvres', 'Trouver une œuvre (recherche, filtres, tri, affichage)', 'recherche filtre tri grille liste vignette taille statut format style',
     `<p>En haut : la <b>recherche</b> (titre, artiste, n° d'inventaire). Le bouton <b>Filtres</b> ouvre statut, artiste, type, format, style, et « Inclure les retirées ». Le <b>Tri</b> et la bascule <b>Grille / Liste</b> (avec taille des vignettes) sont à côté.</p>`),
@@ -217,6 +221,33 @@ const ARTICLES = [
   // ═══════ SUIVI ═══════
   A('suivi', 'La section Suivi', 'suivi cycle de vie actif complétées files attente préparation expédition',
     `<p><b>Suivi</b> rassemble les œuvres <b>à préparer</b> et les ventes <b>en cours</b>, avec un onglet <b>Complétées</b>. Un bandeau résume les files d'attente (à créer dans Sage, à mettre en stock, à publier, à encaisser, à emballer, à expédier, à livrer). Tout est éditable d'un clic et se sauvegarde aussitôt.</p>`),
+
+  // ═══════ SITE WEB & SYNCHRONISATION ═══════
+  A('web', 'Relier Galeria à votre site web', 'site web woocommerce wordpress connexion clés api rest lecture configurer adresse tester',
+    `<p>Galeria peut <b>comparer</b> vos fiches avec la boutique de votre site web et vous aider à les tenir à jour. <b>Tout se fait en lecture seule : rien n'est jamais modifié sur le site.</b></p>
+     <h4>À configurer une seule fois</h4>
+     <ol><li><b>Réglages → Site web</b>.</li>
+     <li>Dépliez « <b>Connexion au site</b> », entrez l'<b>adresse</b> du site et les <b>clés</b> (fournies par la personne qui gère le site).</li>
+     <li><b>Enregistrer</b>, puis <b>Tester la connexion</b>.</li></ol>
+     <p>Les clés sont <b>chiffrées</b> dans le coffre de Windows (jamais affichées). Une fois en place, l'action <b>« Comparer les fiches avec le site… »</b> est en tête de la page.</p>`),
+  A('web', 'Comparer vos œuvres avec le site', 'comparer synchroniser œuvres différences reprendre valeur titre description prix statut filtres lot garder rafraîchir',
+    `<p>Depuis <b>Réglages → Site web</b>, cliquez <b>Comparer les fiches avec le site…</b>. Galeria relie chaque œuvre à son produit par le <b>numéro d'inventaire</b> (= SKU du site) et affiche les <b>différences</b> (titre, description, prix, statut).</p>
+     <ul><li><b>Reprendre la valeur du site →</b> remplace la valeur dans l'app. Pour le titre et la description, une fenêtre vous laisse d'abord <b>ajuster le texte avant de remplacer</b>.</li>
+     <li><b>Garder la version de l'app</b> : la différence est mémorisée et ne revient plus, tant que le site ne change pas cette valeur.</li>
+     <li>Les <b>filtres</b> (chips) et les cases à cocher permettent de <b>reprendre plusieurs valeurs en lot</b>.</li></ul>
+     <div class="attention">Galeria ne fait que <b>lire</b> le site ; aucune modification n'y est apportée.</div>`),
+  A('web', 'Œuvres présentes d\'un seul côté', 'seulement app site créer fiche corriger sku doublon retirer vendre supprimer manquante onglet',
+    `<p>Sur l'écran de synchronisation, deux onglets listent ce qui est <b>d'un seul côté</b> :</p>
+     <ul><li><b>Seulement sur le site</b> — pour chaque produit : <b>Créer la fiche</b> dans l'app (titre, description, prix et image repris du site ; vous choisissez l'artiste) ; ou <b>Corriger le SKU</b> si c'est en fait une œuvre existante mal numérotée (évite un doublon).</li>
+     <li><b>Seulement dans l'app</b> — pour chaque œuvre : <b>Retirer</b>, <b>Vendre</b> ou <b>Supprimer</b>.</li></ul>`),
+  A('web', 'Synchroniser les artistes', 'artistes portfolio biographie démarche curriculum cv photo citation comparer reprendre créer fiche onglet nom',
+    `<p>Sur l'écran de synchronisation, le sélecteur <b>Œuvres / Artistes</b> (en haut) bascule vers les artistes. Galeria relie chaque artiste à sa page du site par le <b>nom</b> et compare <b>Biographie</b>, <b>Démarche</b>, <b>Curriculum (C.V.)</b>, <b>Citation</b> et <b>Photo</b>.</p>
+     <ul><li><b>Reprendre du site</b> (avec édition avant remplacement) ou <b>Garder la version de l'app</b>, champ par champ.</li>
+     <li>Onglet <b>Seulement sur le site</b> → <b>Créer la fiche artiste</b> (bio, démarche, C.V. et photo repris du site).</li></ul>
+     <p>Le C.V. du site (présenté en tableau) est repris en lignes lisibles « <b>année — description</b> ».</p>`),
+  A('web', 'La citation de l\'artiste et « Séparer les citations »', 'citation extrait exergue biographie séparer champ dédié transition remplir bouton',
+    `<p>Chaque artiste a un champ <b>Citation</b> (une phrase mise en exergue). Sur le site, la citation est rangée à part ; dans d'anciennes fiches, elle était parfois <b>incluse dans la biographie</b>.</p>
+     <p>Le bouton <b>« Séparer les citations »</b> (onglet Artistes) fait le ménage en un clic : il <b>remplit le champ Citation</b> de chaque artiste depuis le site <b>et</b> retire cette citation du texte de la biographie. À faire une seule fois ; il n'agit que sur les artistes dont la citation est encore vide.</p>`),
 
   // ═══════ SAUVEGARDES & DONNÉES ═══════
   A('sauvegardes', 'Faire une sauvegarde maintenant', 'sauvegarde backup copie manuelle sauvegarder',

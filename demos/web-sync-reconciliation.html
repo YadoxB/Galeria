@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Réconciliation (œuvres d'un seul côté)</title>
+<style>
+  :root{--soft-ivory:#FCFAF4;--porcelain:#FFFFFF;--warm-gold:#C99A3D;
+    --ink:#111827;--slate:#5D6875;--stone:#A79E91;--mist:#D8D2C8;--cloud:#EFE8DE;
+    --font-titre:'Cormorant Garamond',Georgia,serif;--font-ui:'Inter',system-ui,sans-serif;}
+  *{box-sizing:border-box;} body{margin:0;background:var(--soft-ivory);font-family:var(--font-ui);color:var(--ink);padding:28px;}
+  h1{font-family:var(--font-titre);font-weight:600;font-size:26px;margin:0 0 14px;}
+  .demo-note{max-width:860px;font-size:13px;color:var(--slate);background:#fff8e8;border:1px solid #e8d9a8;border-radius:10px;padding:10px 13px;margin:0 0 18px;}
+  .demo-note strong{color:var(--ink);}
+  details{max-width:860px;margin:0 0 16px;} summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--ink);padding:8px 0;}
+  .wsync-recon-liste{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .wsync-recon{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--mist);border-radius:10px;background:var(--porcelain);}
+  .wsync-recon-info{font-size:13px;}
+  .wsync-sku{font-size:12px;font-weight:700;color:var(--warm-gold);letter-spacing:.03em;margin-right:6px;}
+  .wsync-artiste{font-size:12.5px;color:var(--slate);margin-left:6px;}
+  .wsync-recon-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .btn-lien{background:none;border:none;color:var(--warm-gold);cursor:pointer;font-size:12.5px;}
+  .btn-action{padding:5px 10px;border-radius:9px;font-size:12.5px;font-weight:500;cursor:pointer;border:1px solid var(--mist);background:var(--porcelain);color:var(--ink);}
+  .btn-principal{background:var(--warm-gold);color:#fff;border-color:var(--warm-gold);}
+  .wsync-badge-doute{display:inline-block;font-size:11px;font-weight:600;color:#8a6d1f;background:#fbf1d6;border:1px solid #e8d9a8;border-radius:999px;padding:1px 8px;margin-left:6px;}
+</style>
+</head>
+<body>
+  <p class="demo-note"><strong>Démo — réconciliation.</strong> Les deux listes du bas de l'écran de synchro deviennent <strong>actionnables</strong>. À gauche/haut : les œuvres qui ne sont que dans l'app. En bas : les produits seulement sur le site (créer la fiche, ou corriger un SKU douteux).</p>
+
+  <h1>Synchronisation avec le site</h1>
+
+  <details open>
+    <summary>3 œuvres seulement dans l'app (aucun produit relié sur le site)</summary>
+    <div class="wsync-recon-liste">
+      <div class="wsync-recon">
+        <div class="wsync-recon-info"><span class="wsync-sku">MTG-0210</span><strong>Reflets d'automne</strong><span class="wsync-artiste">Marie Tremblay-Gagnon</span></div>
+        <div class="wsync-recon-actions"><button class="btn-lien">Voir</button><button class="btn-action">Retirer</button><button class="btn-action">Vendre</button><button class="btn-action">Supprimer</button></div>
+      </div>
+      <div class="wsync-recon">
+        <div class="wsync-recon-info"><span class="wsync-sku">ANC2210</span><strong>Horizon perdu</strong><span class="wsync-artiste">André Coppens</span></div>
+        <div class="wsync-recon-actions"><button class="btn-lien">Voir</button><button class="btn-action">Retirer</button><button class="btn-action">Vendre</button><button class="btn-action">Supprimer</button></div>
+      </div>
+      <div class="wsync-recon">
+        <div class="wsync-recon-info"><span class="wsync-sku">—</span><strong>Étude no 4</strong><span class="wsync-artiste">Aline Roy</span></div>
+        <div class="wsync-recon-actions"><button class="btn-lien">Voir</button><button class="btn-action">Retirer</button><button class="btn-action">Vendre</button><button class="btn-action">Supprimer</button></div>
+      </div>
+    </div>
+  </details>
+
+  <details open>
+    <summary>2 produits sur le site sans correspondance dans l'app</summary>
+    <div class="wsync-recon-liste">
+      <div class="wsync-recon">
+        <div class="wsync-recon-info"><span class="wsync-sku">EDO-0031</span><strong>Sans titre</strong> <span class="wsync-artiste">680 $</span></div>
+        <div class="wsync-recon-actions"><button class="btn-action btn-principal">Créer la fiche</button><button class="btn-action">Corriger le SKU</button></div>
+      </div>
+      <div class="wsync-recon">
+        <div class="wsync-recon-info"><span class="wsync-sku">ETUDE-4</span><strong>Étude no 4</strong> <span class="wsync-artiste">420 $</span><span class="wsync-badge-doute">SKU douteux ?</span></div>
+        <div class="wsync-recon-actions"><button class="btn-action btn-principal">Créer la fiche</button><button class="btn-action">Corriger le SKU</button></div>
+      </div>
+    </div>
+  </details>
+</body>
+</html>

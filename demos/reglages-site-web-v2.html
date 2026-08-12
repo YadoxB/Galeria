@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Réglages → Site web (v2 : action en tête, connexion repliable)</title>
+<style>
+  :root{--soft-ivory:#FCFAF4;--porcelain:#FFFFFF;--warm-gold:#C99A3D;
+    --ink:#111827;--slate:#5D6875;--stone:#A79E91;--mist:#D8D2C8;--cloud:#EFE8DE;--succes:#4F8A5B;--erreur:#B6423C;
+    --font-titre:'Cormorant Garamond',Georgia,serif;--font-ui:'Inter',system-ui,sans-serif;}
+  *{box-sizing:border-box;} body{margin:0;background:var(--soft-ivory);font-family:var(--font-ui);color:var(--ink);padding:32px;}
+  .cadre{max-width:720px;}
+  .panneau-tete h2{font-family:var(--font-titre);font-weight:600;font-size:26px;margin:0 0 2px;}
+  .panneau-tete .desc{color:var(--slate);margin:0 0 20px;font-size:14px;}
+  .carte{background:var(--porcelain);border:1px solid var(--mist);border-radius:14px;padding:18px 22px;box-shadow:0 4px 14px rgba(7,26,47,.06);}
+  .carte h3{font-family:var(--font-titre);font-weight:600;font-size:20px;margin:0 0 4px;}
+  .aide-champ{font-size:12px;color:var(--slate);margin:4px 0 0;line-height:1.5;}
+  .btn-action{padding:9px 15px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid var(--mist);background:var(--porcelain);color:var(--ink);}
+  .btn-principal{background:var(--warm-gold);color:#fff;border-color:var(--warm-gold);}
+
+  .web-action{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--mist);margin-bottom:14px;}
+  .web-action-txt{flex:1;min-width:240px;}
+  .btn-web-grand{font-size:15px;padding:12px 22px;white-space:nowrap;}
+  .web-etat-compact{font-size:12.5px;margin:10px 0 0;font-weight:600;}
+  .web-etat-compact.ok{color:var(--succes);}
+
+  .web-connexion{border:1px solid var(--mist);border-radius:12px;padding:0 14px;}
+  .web-connexion>summary{cursor:pointer;padding:12px 2px;font-size:14px;font-weight:600;color:var(--ink);list-style:none;display:flex;align-items:center;gap:8px;}
+  .web-connexion>summary::-webkit-details-marker{display:none;}
+  .web-connexion>summary::before{content:'▸';color:var(--stone);font-size:12px;}
+  .web-connexion[open]>summary::before{content:'▾';}
+  .web-cle-bloc{padding:2px 0 14px;}
+  .form-champ{margin-bottom:12px;} .form-champ label{display:block;font-size:13px;color:var(--slate);margin-bottom:4px;font-weight:500;}
+  .form-champ input{width:100%;padding:9px 11px;border:1px solid var(--mist);border-radius:10px;font-size:14px;background:var(--porcelain);}
+  .web-cle-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+  .web-cle-statut{font-size:12.5px;margin:10px 0 6px;color:var(--succes);font-weight:600;}
+  .demo-note{max-width:720px;font-size:13px;color:var(--slate);background:#fff8e8;border:1px solid #e8d9a8;border-radius:10px;padding:10px 13px;margin:0 0 20px;}
+  .demo-note strong{color:var(--ink);}
+</style>
+</head>
+<body>
+  <p class="demo-note"><strong>Démo v2.</strong> Une fois les clés entrées, l'action <strong>Comparer</strong> est en tête (grand bouton), et la <strong>connexion</strong> se replie dans une fiche déroulable (« ▸ Connexion au site »). Clique le titre de la fiche pour la dérouler.</p>
+
+  <div class="cadre">
+    <div class="panneau-tete"><h2>Site web</h2><p class="desc">Relier l'application à la boutique WooCommerce du site, pour comparer et tenir à jour les fiches.</p></div>
+    <div class="carte">
+      <div class="web-action">
+        <div class="web-action-txt">
+          <h3>Comparer avec le site</h3>
+          <p class="aide-champ">L'app lit la boutique (par numéro d'inventaire = SKU) et te propose de reprendre des valeurs. <strong>Lecture seule — rien n'est modifié sur le site.</strong></p>
+          <p class="web-etat-compact ok">✓ Connecté — clés enregistrées</p>
+        </div>
+        <button class="btn-action btn-principal btn-web-grand">Comparer les fiches avec le site…</button>
+      </div>
+
+      <details class="web-connexion">
+        <summary>Connexion au site (adresse et clés)</summary>
+        <div class="web-cle-bloc">
+          <div class="form-champ"><label>Adresse du site</label><input type="url" value="https://galerievieuxstjean.com"></div>
+          <div class="form-champ"><label>Clé (Consumer key)</label><input type="password" placeholder="•••••••••••• (enregistrée — laisse vide pour la conserver)"></div>
+          <div class="form-champ"><label>Secret (Consumer secret)</label><input type="password" placeholder="•••••••••••• (enregistré — laisse vide pour le conserver)"></div>
+          <div class="web-cle-actions">
+            <button class="btn-action btn-principal">Enregistrer</button>
+            <button class="btn-action">Tester la connexion</button>
+            <button class="btn-action">Retirer</button>
+          </div>
+          <p class="web-cle-statut">✓ Clés définies · chiffrées dans le coffre Windows</p>
+          <p class="aide-champ">La clé et le secret sont <strong>chiffrés dans le coffre de Windows</strong>. Le test se contente de <strong>lire</strong> la boutique. Révocables à tout moment côté site.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</body>
+</html>

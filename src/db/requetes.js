@@ -120,6 +120,45 @@ function obtenirOeuvre(id) {
   `).get(id);
 }
 
+// Différences de synchro « déjà réglées » (l'utilisateur garde la version app).
+// Retourne les lignes brutes ; main.js les indexe par `${oeuvre_id}:${champ}`.
+function listerWebSyncIgnore() {
+  const db = openDatabase();
+  return db.prepare('SELECT oeuvre_id, champ, site_cle FROM web_sync_ignore').all();
+}
+
+function listerWebSyncIgnoreArtiste() {
+  const db = openDatabase();
+  return db.prepare('SELECT artiste_id, champ, site_cle FROM web_sync_ignore_artiste').all();
+}
+
+// Artistes actifs avec les champs comparables au site (nom, biographie,
+// curriculum, photo). Le curriculum sert à éviter un faux « différent » quand le
+// site combine bio + CV dans un seul bloc. Exclut les archivés.
+function artistesPourComparaisonWeb() {
+  const db = openDatabase();
+  return db.prepare(`
+    SELECT id, prenom, nom, citation, biographie, demarche, curriculum, photo_path
+    FROM artistes
+    WHERE archive = 0
+    ORDER BY nom COLLATE NOCASE
+  `).all();
+}
+
+// Œuvres actives avec les champs comparables au site (Phase 5, sens « tirer »).
+// Inclut `description` (absente de listerOeuvres). Exclut les archivées/retirées.
+function oeuvresPourComparaisonWeb() {
+  const db = openDatabase();
+  return db.prepare(`
+    SELECT o.id, o.numero_inventaire, o.titre, o.description, o.prix, o.statut, o.image_path,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom
+    FROM oeuvres o
+    JOIN artistes a ON a.id = o.artiste_id
+    WHERE o.archive = 0
+    ORDER BY o.numero_inventaire COLLATE NOCASE, o.titre COLLATE NOCASE
+  `).all();
+}
+
 function obtenirFicheOeuvreBundle(id) {
   const oeuvre = obtenirOeuvre(id);
   if (!oeuvre) return null;
@@ -779,6 +818,10 @@ module.exports = {
   voisinsArtiste,
   listerOeuvres,
   obtenirOeuvre,
+  oeuvresPourComparaisonWeb,
+  listerWebSyncIgnore,
+  listerWebSyncIgnoreArtiste,
+  artistesPourComparaisonWeb,
   obtenirFicheOeuvreBundle,
   voisinsOeuvre,
   listerTypesOeuvre,

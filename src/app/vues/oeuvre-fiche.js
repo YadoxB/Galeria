@@ -14,6 +14,7 @@ import {
 import { visionner } from '../visionneuse.js';
 import { confirmer, alerter, demanderTexte } from '../dialogue.js';
 import { ouvrirCreationCertificat } from './certificat-creation.js';
+import { synchroniserOeuvre } from '../sync-fiche.js';
 import { proposerAnnexeApres } from '../annexe.js';
 import { ouvrirCreationClient } from './vente-fiche.js';
 
@@ -435,6 +436,7 @@ export async function rendreOeuvreFiche(contenu, params) {
             : (o.statut !== 'vendu' && o.statut !== 'vendue'
                 ? `<button class="btn-action" id="btn-retirer">Retirer</button>`
                 : '')}
+          <button class="btn-action" id="btn-sync-site" title="Comparer cette œuvre avec le site web">Comparer avec le site</button>
           <button class="btn-action" id="btn-modifier">Modifier</button>
           ${o.statut !== 'vendu' && o.statut !== 'vendue' && o.statut !== 'reserve' && !o.archive
             ? `<button class="btn-action" id="btn-reserver">Réserver</button>`
@@ -626,6 +628,8 @@ export async function rendreOeuvreFiche(contenu, params) {
     `;
 
     contenu.querySelector('#btn-modifier').addEventListener('click', entrerEdition);
+    contenu.querySelector('#btn-sync-site').addEventListener('click', () =>
+      synchroniserOeuvre(o.id, () => remplacerCourant('oeuvre-fiche', { id: o.id })));
     contenu.querySelector('#btn-supprimer').addEventListener('click', supprimer);
     const btnRetirer = contenu.querySelector('#btn-retirer');
     if (btnRetirer) {

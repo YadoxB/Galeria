@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS artistes (
   prenom              TEXT,
   type                TEXT,
   prefixe_inventaire  TEXT,
+  citation            TEXT,
   biographie          TEXT,
   demarche            TEXT,
   curriculum          TEXT,
@@ -176,6 +177,28 @@ CREATE TABLE IF NOT EXISTS annexes (
 CREATE TABLE IF NOT EXISTS meta (
   cle     TEXT PRIMARY KEY,
   valeur  TEXT
+);
+
+-- Synchro site (Phase 5) : différences « déjà réglées ». Quand l'utilisateur
+-- choisit de GARDER la version de l'app pour un champ, on mémorise la clé de la
+-- valeur du site alors présentée (`site_cle`). À la synchro suivante, tant que le
+-- site montre la même valeur, la différence n'est plus reproposée. Si le site
+-- change, la clé diffère et la différence réapparaît.
+CREATE TABLE IF NOT EXISTS web_sync_ignore (
+  oeuvre_id INTEGER NOT NULL REFERENCES oeuvres(id) ON DELETE CASCADE,
+  champ     TEXT NOT NULL,               -- 'titre' | 'description' | 'prix' | 'statut'
+  site_cle  TEXT NOT NULL,               -- clé normalisée de la valeur du site gardée
+  cree_le   TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (oeuvre_id, champ)
+);
+
+-- Même mécanisme « déjà réglé » pour la synchro des ARTISTES (type site `portfolio`).
+CREATE TABLE IF NOT EXISTS web_sync_ignore_artiste (
+  artiste_id INTEGER NOT NULL REFERENCES artistes(id) ON DELETE CASCADE,
+  champ      TEXT NOT NULL,              -- 'biographie' | 'demarche' | 'curriculum' | 'photo'
+  site_cle   TEXT NOT NULL,
+  cree_le    TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (artiste_id, champ)
 );
 
 CREATE INDEX IF NOT EXISTS idx_artistes_nom         ON artistes(nom);

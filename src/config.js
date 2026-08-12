@@ -93,6 +93,14 @@ const DEFAULTS = {
     // base64. Jamais en clair. Vide = génération directe inactive.
     cle_anthropic: '',
   },
+  // Synchronisation avec le site WooCommerce (Phase 5). L'adresse est en clair
+  // (non secrète) ; la clé et le secret sont CHIFFRÉS (safeStorage / coffre
+  // Windows), encodés en base64, jamais en clair. Vides = synchro inactive.
+  web: {
+    url: '',
+    consumer_key: '',
+    consumer_secret: '',
+  },
   // Outils de la page Outils (calculatrices autonomes). Aucune donnée métier.
   outils: {
     // Taux de change mémorisés (dernier connu). Le convertisseur les récupère à

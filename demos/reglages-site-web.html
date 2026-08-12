@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Réglages → Site web (Lot 0)</title>
+<style>
+  :root {
+    --soft-ivory:#FCFAF4; --porcelain:#FFFFFF; --warm-gold:#C99A3D;
+    --ink:#111827; --slate:#5D6875; --stone:#A79E91; --mist:#D8D2C8; --cloud:#EFE8DE;
+    --succes:#4F8A5B; --erreur:#B6423C;
+    --font-titre:'Cormorant Garamond',Georgia,serif;
+    --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --s2:8px; --s3:16px; --s4:22px;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--soft-ivory); font-family:var(--font-ui); color:var(--ink); padding:32px; }
+  .cadre { max-width:720px; }
+  .panneau-tete h2 { font-family:var(--font-titre); font-weight:600; font-size:26px; margin:0 0 2px; }
+  .panneau-tete .desc { color:var(--slate); margin:0 0 20px; font-size:14px; }
+  .carte { background:var(--porcelain); border:1px solid var(--mist); border-radius:14px; padding:var(--s3) var(--s4); box-shadow:0 4px 14px rgba(7,26,47,.06); }
+  .carte h3 { font-family:var(--font-titre); font-weight:600; font-size:19px; margin:0 0 14px; }
+  .web-cle-bloc { padding:12px 14px; margin-bottom:4px; background:var(--soft-ivory); border:1px solid var(--mist); border-radius:12px; }
+  .form-champ { margin-bottom:12px; }
+  .form-champ label { display:block; font-size:13px; color:var(--slate); margin-bottom:4px; font-weight:500; }
+  .form-champ input { width:100%; padding:9px 11px; border:1px solid var(--mist); border-radius:10px; font-family:var(--font-ui); font-size:14px; background:var(--porcelain); color:var(--ink); }
+  .form-champ input:focus { outline:none; border-color:var(--warm-gold); box-shadow:0 0 0 3px rgba(201,154,61,.15); }
+  .web-cle-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+  .btn-action { padding:9px 15px; border-radius:10px; font-family:var(--font-ui); font-size:14px; font-weight:500; cursor:pointer; border:1px solid transparent; }
+  .btn-principal { background:var(--warm-gold); color:#fff; }
+  .btn-secondaire-action { background:var(--porcelain); color:var(--ink); border-color:var(--mist); }
+  .btn-action:disabled { opacity:.6; cursor:default; }
+  .web-cle-statut { font-size:12.5px; margin:10px 0 6px; }
+  .web-cle-statut.ok { color:var(--succes); font-weight:600; }
+  .web-cle-statut.absent { color:var(--stone); }
+  .web-test-resultat { font-size:12.5px; margin:4px 0 6px; padding:8px 10px; border-radius:8px; background:var(--porcelain); border:1px solid var(--mist); }
+  .web-test-resultat.ok { color:var(--succes); font-weight:600; border-color:var(--succes); }
+  .web-test-resultat.absent { color:var(--erreur); border-color:var(--erreur); }
+  .aide-champ { font-size:12px; color:var(--slate); margin:8px 0 0; line-height:1.5; }
+  .demo-note { max-width:720px; font-size:13px; color:var(--slate); background:#fff8e8; border:1px solid #e8d9a8; border-radius:10px; padding:10px 13px; margin:0 0 20px; }
+  .demo-note strong { color:var(--ink); }
+  .etat-btns { max-width:720px; margin:18px 0 0; display:flex; gap:8px; flex-wrap:wrap; }
+  .etat-btns button { padding:7px 12px; font-size:12.5px; border:1px solid var(--mist); background:#fff; border-radius:8px; cursor:pointer; }
+</style>
+</head>
+<body>
+  <p class="demo-note"><strong>Démo — Lot 0.</strong> Écran <em>Réglages → Site web</em> : adresse + clés (chiffrées), et un <strong>test de connexion en lecture seule</strong>. Rien ici ne peut modifier le site. Utilise les boutons en bas pour voir les différents résultats du test.</p>
+
+  <div class="cadre">
+    <div class="panneau-tete"><h2>Site web</h2><p class="desc">Relier l'application à la boutique WooCommerce du site, pour comparer et tenir à jour les fiches.</p></div>
+    <div class="carte">
+      <h3>Connexion à la boutique</h3>
+      <div class="web-cle-bloc">
+        <div class="form-champ"><label>Adresse du site</label><input type="url" value="https://galerievieuxstjean.com"></div>
+        <div class="form-champ"><label>Clé (Consumer key)</label><input type="password" id="ck" placeholder="ck_…"></div>
+        <div class="form-champ"><label>Secret (Consumer secret)</label><input type="password" id="cs" placeholder="cs_…"></div>
+        <div class="web-cle-actions">
+          <button class="btn-action btn-principal">Enregistrer</button>
+          <button class="btn-action btn-secondaire-action" id="btn-test">Tester la connexion</button>
+          <button class="btn-action btn-secondaire-action">Retirer</button>
+        </div>
+        <p class="web-cle-statut ok" id="statut">✓ Clés définies · chiffrées dans le coffre Windows</p>
+        <p class="web-test-resultat" id="resultat" hidden></p>
+        <p class="aide-champ">La clé et le secret sont <strong>chiffrés dans le coffre de Windows</strong> (jamais affichés ni stockés en clair). Le test se contente de <strong>lire</strong> la boutique — il ne peut rien modifier sur le site. Tu peux révoquer ces clés à tout moment depuis le site, sans effet sur son contenu.</p>
+        <p class="aide-champ">Pour créer les clés sur le site : <em>WooCommerce → Réglages → Avancé → API REST → Ajouter une clé</em>. Une permission <strong>Lecture</strong> suffit pour comparer ; la <strong>Lecture/écriture</strong> ne sera utile que plus tard, pour mettre le site à jour depuis l'app (toujours avec confirmation).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="etat-btns">
+    <button data-etat="test">▶ Simuler « Tester » (succès)</button>
+    <button data-etat="401">Résultat : clés refusées</button>
+    <button data-etat="404">Résultat : WooCommerce introuvable</button>
+    <button data-etat="reseau">Résultat : site injoignable</button>
+  </div>
+
+<script>
+  const btnTest = document.getElementById('btn-test');
+  const res = document.getElementById('resultat');
+  function montrer(cls, txt) { res.hidden = false; res.className = 'web-test-resultat ' + cls; res.textContent = txt; }
+  btnTest.addEventListener('click', () => lancer('test'));
+  function lancer(etat) {
+    if (etat === 'test') {
+      btnTest.disabled = true; const l = btnTest.textContent; btnTest.textContent = 'Test en cours…';
+      montrer('', '⏳ Lecture de la boutique…');
+      setTimeout(() => {
+        montrer('ok', "✓ Connexion réussie à « Galerie du Vieux Saint-Jean » — 214 produit(s) en ligne. Aucune modification n'a été faite sur le site.");
+        btnTest.disabled = false; btnTest.textContent = l;
+      }, 1100);
+    } else if (etat === '401') {
+      montrer('absent', '✗ Clés refusées par le site (identifiants invalides ou permissions insuffisantes). Vérifie la clé et le secret.');
+    } else if (etat === '404') {
+      montrer('absent', "✗ L'API WooCommerce est introuvable à cette adresse. Vérifie que c'est bien l'adresse du site WordPress et que WooCommerce y est activé.");
+    } else if (etat === 'reseau') {
+      montrer('absent', "✗ Site injoignable : getaddrinfo ENOTFOUND. Vérifie l'adresse du site.");
+    }
+  }
+  document.querySelectorAll('.etat-btns button').forEach((b) => b.addEventListener('click', () => lancer(b.dataset.etat)));
+</script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Quoi de neuf</title>
+<style>
+  :root{--soft-ivory:#FCFAF4;--porcelain:#FFFFFF;--warm-gold:#C99A3D;--gallery-navy:#1f2d3d;
+    --ink:#111827;--slate:#5D6875;--mist:#D8D2C8;--r-btn:10px;
+    --font-titre:'Cormorant Garamond',Georgia,serif;--font-ui:'Inter',system-ui,sans-serif;
+    --ombre-modal:0 24px 60px rgba(7,26,47,.34);}
+  *{box-sizing:border-box;} body{margin:0;font-family:var(--font-ui);}
+  /* faux fond d'app */
+  .fond{position:fixed;inset:0;background:var(--soft-ivory);}
+  .overlay{position:fixed;inset:0;background:rgba(7,26,47,.45);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;}
+  .tuto-carte{width:480px;max-width:90vw;background:var(--porcelain);border-radius:18px;box-shadow:var(--ombre-modal);padding:30px 32px;text-align:left;}
+  .tuto-carte h2{font-family:var(--font-titre);font-size:26px;color:var(--gallery-navy);margin:8px 0 10px;}
+  .tuto-carte p{font-size:14.5px;line-height:1.65;color:#3f3a31;margin:0;}
+  .tuto-carte p b{color:var(--ink);}
+  .nouv-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--warm-gold);background:#fbf1d6;border:1px solid #e8d9a8;border-radius:999px;padding:2px 10px;margin-bottom:8px;}
+  .tuto-points{display:flex;gap:6px;margin:16px 0 0;}
+  .tuto-point{width:7px;height:7px;border-radius:999px;background:var(--mist);}
+  .tuto-point.actif{background:var(--warm-gold);}
+  .nouv-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:20px;}
+  .tuto-btn{border:0;border-radius:var(--r-btn);font:inherit;font-size:13.5px;padding:8px 14px;cursor:pointer;}
+  .tuto-btn.sec{background:var(--porcelain);border:1px solid var(--mist);color:var(--slate);}
+  .tuto-btn.pri{background:var(--warm-gold);color:var(--soft-ivory);font-weight:600;}
+  .nouv-passer{position:fixed;top:20px;right:24px;background:transparent;border:none;color:rgba(255,255,255,.9);font:inherit;font-size:13px;cursor:pointer;}
+</style>
+</head>
+<body>
+  <div class="fond"></div>
+  <div class="overlay">
+    <div class="tuto-carte nouv-carte" id="carte"></div>
+    <button class="nouv-passer">Passer</button>
+  </div>
+<script>
+  const DIAPOS = [
+    { titre:'Quoi de neuf', texte:"Voici les principales nouveautés ajoutées depuis la version 0.11.0. Vous pourrez tout revoir tranquillement plus tard." },
+    { titre:'Clic droit : couper, copier, coller', texte:"Vous pouvez maintenant faire un <b>clic droit</b> dans n'importe quelle case de texte pour <b>Coller</b> (ou Couper, Copier)." },
+    { titre:"Numéro d'inventaire sur les cartes", texte:"Dans la page <b>Œuvres</b> (affichage en grille), le <b>numéro d'inventaire</b> apparaît maintenant sous le nom de l'artiste." },
+    { titre:'Annexe A de retrait', texte:"Quand vous produisez une <b>Annexe A de retrait</b> pour un artiste, l'application propose ensuite de <b>retirer ces œuvres du catalogue</b>. Elle demande toujours confirmation." },
+    { titre:'Synchronisation avec le site web', texte:"La grande nouveauté : dans <b>Réglages → Site web</b>, Galeria peut <b>comparer vos fiches</b> (œuvres <i>et</i> artistes) avec votre site et vous proposer d'en <b>reprendre les valeurs à jour</b> — en <b>lecture seule</b>, rien n'est modifié sur le site." },
+    { titre:'Comparer depuis une fiche', texte:"Pas besoin de tout comparer d'un coup : sur <b>chaque fiche</b> d'œuvre ou d'artiste, le bouton <b>« Comparer avec le site »</b> vérifie <b>cet élément seul</b> et vous laisse reprendre ce qui a changé, en un clic." },
+    { titre:"C'est tout !", texte:"Bonne exploration. En cas de doute, le bouton <b>?</b> en bas à droite répond à presque tout." },
+  ];
+  let i=0; const carte=document.getElementById('carte');
+  function pts(k){return '<div class="tuto-points">'+DIAPOS.map((_,n)=>'<span class="tuto-point '+(n===k?'actif':'')+'"></span>').join('')+'</div>';}
+  function show(k){i=Math.max(0,Math.min(k,DIAPOS.length-1));const d=DIAPOS[i];const last=i===DIAPOS.length-1;
+    carte.innerHTML='<div class="nouv-badge">Nouveautés</div><h2>'+d.titre+'</h2><p>'+d.texte+'</p>'+pts(i)+
+      '<div class="nouv-actions">'+(i>0?'<button class="tuto-btn sec" id="prec">Précédent</button>':'<span></span>')+
+      '<button class="tuto-btn pri" id="suiv">'+(last?'Terminer':'Suivant')+'</button></div>';
+    document.getElementById('suiv').onclick=()=>{if(last)show(0);else show(i+1);};
+    const p=document.getElementById('prec'); if(p)p.onclick=()=>show(i-1);
+  }
+  show(0);
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { retour, poserGardien, leverGardien } from '../router.js';
+import { retour, poserGardien, leverGardien, naviguer } from '../router.js';
 import { ech, champTexte, champTextarea, champCheckbox, nettoyerErreur } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
 import { chargerConfig, invaliderCacheConfig, rafraichirEntete } from '../marque.js';
@@ -34,6 +34,7 @@ const ICONES_CAT = {
   donnees: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
   securite: '<rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
   ia: '<path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z"/>',
+  web: '<circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z"/>',
   application: '<line x1="4" y1="8" x2="20" y2="8"/><circle cx="9" cy="8" r="2"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="15" cy="16" r="2"/>',
 };
 const CATEGORIES = [
@@ -43,6 +44,7 @@ const CATEGORIES = [
   { cle: 'donnees', libelle: 'Données' },
   { cle: 'securite', libelle: 'Sécurité' },
   { cle: 'ia', libelle: 'Intelligence artificielle' },
+  { cle: 'web', libelle: 'Site web' },
   { cle: 'application', libelle: 'Application' },
 ];
 
@@ -451,6 +453,50 @@ export async function rendreReglages(contenu, params) {
                   <p class="aide-champ">Consignes de base appliquées à <strong>toutes</strong> les générations (voix, langue et format, ancrage factuel, règles d'écriture). Modifiables ici. Les consignes propres à chaque artiste se règlent sur sa fiche (« Aide à la description IA »).</p>
                   ${champTexte({ nom: 'ia_lien_chatgpt_defaut', libelle: 'Lien ChatGPT par défaut', valeur: config.ia?.lien_chatgpt_defaut || 'https://chat.openai.com/', attributs: 'placeholder="https://chat.openai.com/"' })}
                   <p class="aide-champ">Pour « Copier pour ChatGPT » : utilisé quand l'artiste n'a pas de lien vers son propre GPT.</p>
+                </div>
+              </div>
+            </section>
+
+            <!-- ═══ SITE WEB ═══ -->
+            <section class="cat-panneau${catInitiale === 'web' ? ' actif' : ''}" data-cat="web">
+              <div class="panneau-tete"><h2>Site web</h2><p class="desc">Relier l'application à la boutique WooCommerce du site, pour comparer et tenir à jour les fiches.</p></div>
+              <div class="grille-bento">
+                <div class="carte zone-web">
+                  <div class="web-action">
+                    <div class="web-action-txt">
+                      <h3>Comparer avec le site</h3>
+                      <p class="aide-champ">L'app lit la boutique (par numéro d'inventaire = SKU) et te propose de reprendre des valeurs. <strong>Lecture seule — rien n'est modifié sur le site.</strong></p>
+                      <p class="web-etat-compact" id="web-etat-compact"></p>
+                    </div>
+                    <button type="button" class="btn-action btn-principal btn-web-grand" id="btn-web-comparer">Comparer les fiches avec le site…</button>
+                  </div>
+
+                  <details class="web-connexion" id="web-connexion" ${(config.web?.consumer_key && config.web?.consumer_secret) ? '' : 'open'}>
+                    <summary>Connexion au site (adresse et clés)</summary>
+                    <div class="web-cle-bloc">
+                      <div class="form-champ">
+                        <label for="web-url">Adresse du site</label>
+                        <input type="url" id="web-url" placeholder="https://galerievieuxstjean.com" autocomplete="off" spellcheck="false" value="${ech(config.web?.url || '')}">
+                      </div>
+                      <div class="form-champ">
+                        <label for="web-ck">Clé (Consumer key)</label>
+                        <input type="password" id="web-ck" placeholder="ck_…" autocomplete="off" spellcheck="false">
+                      </div>
+                      <div class="form-champ">
+                        <label for="web-cs">Secret (Consumer secret)</label>
+                        <input type="password" id="web-cs" placeholder="cs_…" autocomplete="off" spellcheck="false">
+                      </div>
+                      <div class="web-cle-actions">
+                        <button type="button" class="btn-action btn-principal" id="btn-web-save">Enregistrer</button>
+                        <button type="button" class="btn-action btn-secondaire-action" id="btn-web-test">Tester la connexion</button>
+                        <button type="button" class="btn-action btn-secondaire-action" id="btn-web-suppr">Retirer</button>
+                      </div>
+                      <p class="web-cle-statut" id="web-cle-statut"></p>
+                      <p class="web-test-resultat" id="web-test-resultat" hidden></p>
+                      <p class="aide-champ">La clé et le secret sont <strong>chiffrés dans le coffre de Windows</strong> (jamais affichés ni stockés en clair). Le test se contente de <strong>lire</strong> la boutique — il ne peut rien modifier sur le site. Tu peux révoquer ces clés à tout moment depuis le site, sans effet sur son contenu.</p>
+                      <p class="aide-champ">Pour créer les clés sur le site : <em>WooCommerce → Réglages → Avancé → API REST → Ajouter une clé</em>. Une permission <strong>Lecture</strong> suffit pour comparer ; la <strong>Lecture/écriture</strong> ne sera utile que plus tard, pour mettre le site à jour depuis l'app (toujours avec confirmation).</p>
+                    </div>
+                  </details>
                 </div>
               </div>
             </section>
@@ -931,6 +977,125 @@ export async function rendreReglages(contenu, params) {
         await window.api.iaEffacerCle();
         inCle.value = '';
         await rafraichirStatutCle();
+      } catch (err) {
+        await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) });
+      }
+    });
+  }
+
+  // ---- Site web (WooCommerce) : clés + test de connexion (gérés hors du form) ----
+  const webUrl = contenu.querySelector('#web-url');
+  const webCk = contenu.querySelector('#web-ck');
+  const webCs = contenu.querySelector('#web-cs');
+  const webStatut = contenu.querySelector('#web-cle-statut');
+  const webResultat = contenu.querySelector('#web-test-resultat');
+  const webEtatCompact = contenu.querySelector('#web-etat-compact');
+  const webConnexion = contenu.querySelector('#web-connexion');
+  if (webUrl && webStatut) {
+    // Ces contrôles ne marquent pas le formulaire principal « modifié ».
+    [webUrl, webCk, webCs].forEach((el) => {
+      if (!el) return;
+      el.addEventListener('input', (e) => e.stopPropagation());
+      el.addEventListener('change', (e) => e.stopPropagation());
+    });
+    const majEtatCompact = (etat) => {
+      if (!webEtatCompact) return;
+      if (etat === 'ok') {
+        webEtatCompact.className = 'web-etat-compact ok';
+        webEtatCompact.textContent = '✓ Connecté — clés enregistrées';
+      } else {
+        webEtatCompact.className = 'web-etat-compact absent';
+        webEtatCompact.textContent = '⚠ À configurer — ouvre « Connexion au site » ci-dessous';
+      }
+    };
+    const rafraichirStatutWeb = async () => {
+      try {
+        const r = await window.api.webEtat();
+        if (!r.chiffrement) {
+          webStatut.className = 'web-cle-statut absent';
+          webStatut.textContent = "⚠ Le coffre de chiffrement n'est pas disponible sur cet ordinateur ; les clés ne peuvent pas être enregistrées en sécurité.";
+          majEtatCompact('absent');
+        } else if (r.cles_definies) {
+          webStatut.className = 'web-cle-statut ok';
+          webStatut.textContent = '✓ Clés définies · chiffrées dans le coffre Windows';
+          webCk.placeholder = '•••••••••••• (enregistrée — laisse vide pour la conserver)';
+          webCs.placeholder = '•••••••••••• (enregistré — laisse vide pour le conserver)';
+          majEtatCompact('ok');
+        } else {
+          webStatut.className = 'web-cle-statut absent';
+          webStatut.textContent = 'Aucune clé enregistrée — la connexion au site est inactive.';
+          webCk.placeholder = 'ck_…';
+          webCs.placeholder = 'cs_…';
+          majEtatCompact('absent');
+        }
+      } catch { /* silencieux */ }
+    };
+    rafraichirStatutWeb();
+    contenu.querySelector('#btn-web-save').addEventListener('click', async () => {
+      const url = webUrl.value.trim();
+      if (!url) {
+        await alerter({ type: 'warning', title: 'Adresse manquante', message: "Renseigne l'adresse du site (ex. https://galerievieuxstjean.com)." });
+        return;
+      }
+      try {
+        await window.api.webDefinirCles({
+          url,
+          consumerKey: webCk.value.trim(),
+          consumerSecret: webCs.value.trim(),
+        });
+        webCk.value = '';
+        webCs.value = '';
+        await rafraichirStatutWeb();
+        await alerter({ type: 'succes', title: 'Enregistré', message: "L'adresse est enregistrée ; la clé et le secret sont chiffrés dans le coffre de Windows." });
+      } catch (err) {
+        await alerter({ type: 'error', title: 'Enregistrement échoué', message: nettoyerErreur(err) });
+      }
+    });
+    contenu.querySelector('#btn-web-test').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const libelle = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Test en cours…';
+      webResultat.hidden = false;
+      webResultat.className = 'web-test-resultat';
+      webResultat.textContent = '⏳ Lecture de la boutique…';
+      try {
+        const r = await window.api.webTesterConnexion();
+        webResultat.className = 'web-test-resultat ok';
+        const nom = r.boutique ? `« ${r.boutique} »` : 'la boutique';
+        const nb = (r.produits != null) ? ` — ${r.produits} produit(s) en ligne` : '';
+        webResultat.textContent = `✓ Connexion réussie à ${nom}${nb}. Aucune modification n'a été faite sur le site.`;
+      } catch (err) {
+        webResultat.className = 'web-test-resultat absent';
+        webResultat.textContent = '✗ ' + nettoyerErreur(err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = libelle;
+      }
+    });
+    const btnComparer = contenu.querySelector('#btn-web-comparer');
+    if (btnComparer) btnComparer.addEventListener('click', async () => {
+      const etat = await window.api.webEtat().catch(() => null);
+      if (!etat || !etat.cles_definies) {
+        if (webConnexion) webConnexion.open = true; // déplie la connexion pour guider la saisie
+        await alerter({ type: 'warning', title: 'Clés manquantes', message: "Renseigne d'abord l'adresse, la clé et le secret (section « Connexion au site »), puis teste la connexion." });
+        return;
+      }
+      naviguer('web-sync');
+    });
+    contenu.querySelector('#btn-web-suppr').addEventListener('click', async () => {
+      const r = await confirmer({
+        type: 'warning', title: 'Retirer les clés du site ?',
+        message: "La connexion au site sera désactivée dans l'app. Le site lui-même n'est pas touché.",
+        buttons: ['Retirer', 'Annuler'], defaultId: 1, cancelId: 1,
+      });
+      if (r !== 0) return;
+      try {
+        await window.api.webEffacerCles();
+        webCk.value = '';
+        webCs.value = '';
+        webResultat.hidden = true;
+        await rafraichirStatutWeb();
       } catch (err) {
         await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) });
       }

@@ -1,14 +1,45 @@
 # Galeria — Nouveautés depuis la dernière version installée
 
-> Petit résumé, en mots simples, de ce qui a été ajouté à l'application
-> **depuis la version 0.5.0** (jusqu'à la **version 0.10.0**).
-> À remettre avec la prochaine mise à jour.
-> Document mis à jour au fil du développement.
+> Petit résumé, en mots simples, de ce qui a été ajouté à l'application au fil des
+> versions — **les nouveautés les plus récentes en premier**. À remettre avec la
+> prochaine mise à jour.
 
 > **Une grande partie de la version 0.10.0 ne se voit pas** : c'est un travail
 > de fond pour que l'application soit solide et ne vous laisse jamais dans le
 > doute. Si quelque chose ne fonctionne pas, elle vous le dit maintenant
 > clairement, en français, et vous propose quoi faire.
+
+---
+
+## Depuis la version 0.12.0 — la synchronisation avec votre site web
+
+La grande nouveauté : Galeria peut maintenant **se relier à votre site web** pour
+**comparer vos fiches** avec la boutique en ligne et vous aider à les tenir à jour.
+**Rien n'est jamais modifié sur le site — Galeria ne fait que le lire.**
+
+- **Se connecter (une seule fois).** Dans **Réglages → Site web**, on entre l'adresse
+  du site et les clés (fournies par la personne qui gère le site). Elles sont
+  **rangées en sécurité** et cachées. Un bouton **« Tester la connexion »** confirme
+  que tout va bien.
+- **Comparer et mettre à jour.** Le bouton **« Comparer les fiches avec le site »**
+  montre, côte à côte, ce qui diffère (titre, description, prix, statut pour les
+  œuvres ; biographie, démarche, C.V., citation, photo pour les artistes). Pour
+  chaque écart, vous pouvez **reprendre la valeur du site** (en ajustant le texte
+  avant, si vous voulez) ou **garder la vôtre** (Galeria s'en souvient et ne vous le
+  redemande plus).
+- **Ce qui n'est que d'un côté.** Galeria peut **créer une fiche** à partir d'un
+  produit ou d'un artiste présent seulement sur le site, ou signaler une œuvre qui
+  n'est que dans l'application.
+- **Depuis une fiche.** Sur **chaque fiche** d'œuvre ou d'artiste, un bouton
+  **« Comparer avec le site »** vérifie cet élément tout seul, en un clic.
+
+**Un champ « Citation » pour les artistes.** Les artistes ont maintenant un champ
+dédié pour leur **citation** (la phrase en exergue), au lieu de la mettre dans la
+biographie. Un bouton **« Séparer les citations »** fait le ménage automatiquement à
+partir du site — à faire une seule fois.
+
+**Une petite fenêtre « Quoi de neuf »** s'affiche après une mise à jour pour vous
+présenter les nouveautés.
 
 ---
 

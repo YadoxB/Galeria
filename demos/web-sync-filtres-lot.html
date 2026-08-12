@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Synchro : filtres, lot, statut</title>
+<style>
+  :root{--soft-ivory:#FCFAF4;--porcelain:#FFFFFF;--warm-gold:#C99A3D;--deep-navy:#1f2d3d;
+    --ink:#111827;--slate:#5D6875;--stone:#A79E91;--mist:#D8D2C8;--cloud:#EFE8DE;--succes:#4F8A5B;--erreur:#B6423C;
+    --font-titre:'Cormorant Garamond',Georgia,serif;--font-ui:'Inter',system-ui,sans-serif;--ombre-carte:0 4px 14px rgba(7,26,47,.06);}
+  *{box-sizing:border-box;} body{margin:0;background:var(--soft-ivory);font-family:var(--font-ui);color:var(--ink);padding:28px;}
+  h1{font-family:var(--font-titre);font-weight:600;font-size:28px;margin:0 0 2px;}
+  .sous-titre{color:var(--slate);font-size:13.5px;margin:4px 0 0;max-width:720px;}
+  .demo-note{max-width:860px;font-size:13px;color:var(--slate);background:#fff8e8;border:1px solid #e8d9a8;border-radius:10px;padding:10px 13px;margin:0 0 18px;}
+  .demo-note strong{color:var(--ink);}
+  .wsync-resume{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 18px;}
+  .wsync-stat{background:var(--porcelain);border:1px solid var(--mist);border-radius:12px;padding:10px 16px;display:flex;flex-direction:column;min-width:120px;}
+  .wsync-stat .n{font-family:var(--font-titre);font-size:26px;font-weight:600;line-height:1;}
+  .wsync-stat .lib{font-size:12px;color:var(--slate);margin-top:4px;}
+  .wsync-stat.discret{opacity:.7;}
+  .wsync-barre{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px;max-width:860px;}
+  .wsync-filtres{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .wsync-filtres-lib{font-size:12.5px;color:var(--slate);margin-right:2px;}
+  .wsync-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px solid var(--mist);background:var(--porcelain);color:var(--slate);font-size:12.5px;cursor:pointer;}
+  .wsync-chip.actif{background:var(--deep-navy);color:#fff;border-color:transparent;}
+  .wsync-chip-n{font-weight:700;font-size:11px;background:rgba(0,0,0,.08);border-radius:999px;padding:0 6px;}
+  .wsync-chip.actif .wsync-chip-n{background:rgba(255,255,255,.22);}
+  .wsync-selection{display:flex;align-items:center;gap:12px;}
+  .btn-lien{background:none;border:none;color:var(--warm-gold);cursor:pointer;font-size:13px;font-family:var(--font-ui);}
+  .btn-action{padding:8px 14px;border-radius:10px;font-size:13.5px;font-weight:500;cursor:pointer;border:1px solid var(--mist);background:var(--porcelain);color:var(--ink);}
+  .btn-principal{background:var(--warm-gold);color:#fff;border-color:var(--warm-gold);}
+  .btn-action:disabled{opacity:.55;cursor:default;}
+  .wsync-cartes{display:flex;flex-direction:column;gap:14px;max-width:860px;}
+  .wsync-carte{background:var(--porcelain);border:1px solid var(--mist);border-radius:14px;padding:14px 16px;box-shadow:var(--ombre-carte);}
+  .wsync-tete{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--mist);margin-bottom:12px;}
+  .wsync-sku{font-size:12px;font-weight:700;color:var(--warm-gold);letter-spacing:.03em;margin-right:8px;}
+  .wsync-titre{font-family:var(--font-titre);font-size:18px;}
+  .wsync-artiste{font-size:12.5px;color:var(--slate);margin-left:8px;}
+  .wsync-champ{padding:10px 0;border-top:1px dashed var(--mist);}
+  .wsync-champ:first-of-type{border-top:none;}
+  .wsync-champ-tete{margin-bottom:6px;}
+  .wsync-check{display:inline-flex;align-items:center;gap:8px;cursor:pointer;}
+  .wsync-case{width:16px;height:16px;accent-color:var(--warm-gold);cursor:pointer;}
+  .wsync-lib{font-size:12px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.04em;}
+  .wsync-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .wsync-col{background:var(--soft-ivory);border:1px solid var(--mist);border-radius:10px;padding:8px 10px;}
+  .wsync-col.site{background:#fbf6ea;border-color:#e8d9a8;}
+  .wsync-et{display:block;font-size:11px;font-weight:600;color:var(--stone);margin-bottom:3px;}
+  .wsync-val{font-size:13.5px;line-height:1.45;}
+  .wsync-champ-actions{margin-top:8px;}
+  .badge-statut{font-size:12px;padding:2px 9px;border-radius:999px;font-weight:600;background:#e7f2ea;color:#1f7a45;}
+  .wsync-statut-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .wsync-statut-choix{font-size:13px;color:var(--slate);display:inline-flex;align-items:center;gap:8px;}
+  .wsync-statut-select{padding:6px 9px;border:1px solid var(--mist);border-radius:8px;font-size:13.5px;background:#fff;}
+  .wsync-statut-aide{font-size:11.5px;color:var(--stone);margin:8px 0 0;}
+</style>
+</head>
+<body>
+  <p class="demo-note"><strong>Démo.</strong> Trois nouveautés : <strong>filtrer</strong> par type (chips en haut), <strong>cocher</strong> des valeurs et les <strong>reprendre en lot</strong>, et <strong>mettre le statut à jour</strong> d'après le site (avec choix). Essaie de cliquer les filtres, de cocher des cases, et de changer un statut.</p>
+  <h1>Synchronisation avec le site</h1>
+  <p class="sous-titre">Sens « tirer » — l'app lit la boutique. <strong>Aucune modification n'est faite sur le site.</strong></p>
+
+  <div class="wsync-resume">
+    <div class="wsync-stat"><span class="n">198</span><span class="lib">œuvre(s) reliée(s)</span></div>
+    <div class="wsync-stat"><span class="n" id="reste">5</span><span class="lib">avec des différences</span></div>
+    <div class="wsync-stat"><span class="n">12</span><span class="lib">seulement dans l'app</span></div>
+    <div class="wsync-stat"><span class="n">4</span><span class="lib">seulement sur le site</span></div>
+    <div class="wsync-stat discret"><span class="n">214</span><span class="lib">produits en ligne</span></div>
+  </div>
+
+  <div class="wsync-barre">
+    <div class="wsync-filtres">
+      <span class="wsync-filtres-lib">Afficher :</span>
+      <button class="wsync-chip actif" data-type="titre">Titre <span class="wsync-chip-n">1</span></button>
+      <button class="wsync-chip actif" data-type="description">Description <span class="wsync-chip-n">2</span></button>
+      <button class="wsync-chip actif" data-type="prix">Prix <span class="wsync-chip-n">2</span></button>
+      <button class="wsync-chip actif" data-type="statut">Statut <span class="wsync-chip-n">1</span></button>
+    </div>
+    <div class="wsync-selection">
+      <button class="btn-lien" id="sel-tout">Tout cocher (visible)</button>
+      <button class="btn-lien" id="sel-rien">Décocher</button>
+      <button class="btn-action btn-principal" id="imp-lot" disabled>Reprendre la sélection</button>
+    </div>
+  </div>
+
+  <div class="wsync-cartes">
+    <div class="wsync-carte">
+      <div class="wsync-tete"><div><span class="wsync-sku">MTG-0142</span><strong class="wsync-titre">Matin sur le fleuve</strong><span class="wsync-artiste">Marie Tremblay-Gagnon</span></div><button class="btn-lien">Voir la fiche</button></div>
+      <div class="wsync-champ" data-champ="prix">
+        <div class="wsync-champ-tete"><label class="wsync-check"><input type="checkbox" class="wsync-case"><span class="wsync-lib">Prix</span></label></div>
+        <div class="wsync-cols"><div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val">1 850 $</div></div><div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">1 950 $</div></div></div>
+        <div class="wsync-champ-actions"><button class="btn-action">Reprendre la valeur du site →</button></div>
+      </div>
+      <div class="wsync-champ" data-champ="description">
+        <div class="wsync-champ-tete"><label class="wsync-check"><input type="checkbox" class="wsync-case"><span class="wsync-lib">Description</span></label></div>
+        <div class="wsync-cols"><div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val">Huile sur toile, lever du jour.</div></div><div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">Huile sur toile évoquant le lever du jour sur le Richelieu, palette de bleus et d'ocres.</div></div></div>
+        <div class="wsync-champ-actions"><button class="btn-action">Reprendre la valeur du site →</button></div>
+      </div>
+    </div>
+
+    <div class="wsync-carte">
+      <div class="wsync-tete"><div><span class="wsync-sku">ANC2185</span><strong class="wsync-titre">Even under dark skies</strong><span class="wsync-artiste">André Coppens</span></div><button class="btn-lien">Voir la fiche</button></div>
+      <div class="wsync-champ" data-champ="titre">
+        <div class="wsync-champ-tete"><label class="wsync-check"><input type="checkbox" class="wsync-case"><span class="wsync-lib">Titre</span></label></div>
+        <div class="wsync-cols"><div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val">Even under dark skies</div></div><div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">Even Under Dark Skies (II)</div></div></div>
+        <div class="wsync-champ-actions"><button class="btn-action">Reprendre la valeur du site →</button></div>
+      </div>
+      <div class="wsync-champ" data-champ="statut">
+        <div class="wsync-lib">Statut</div>
+        <div class="wsync-cols"><div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val"><span class="badge-statut">Disponible</span></div></div><div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">Vendu / épuisé</div></div></div>
+        <div class="wsync-champ-actions wsync-statut-actions">
+          <label class="wsync-statut-choix">Mettre le statut de l'app à
+            <select class="wsync-statut-select"><option>Disponible</option><option selected>Vendue</option><option>Réservée</option><option>Prêtée</option></select>
+          </label>
+          <button class="btn-action">Appliquer</button>
+        </div>
+        <p class="wsync-statut-aide">Met à jour l'étiquette de statut ; n'enregistre pas de vente.</p>
+      </div>
+    </div>
+
+    <div class="wsync-carte">
+      <div class="wsync-tete"><div><span class="wsync-sku">EDO-0031</span><strong class="wsync-titre">Sans titre</strong><span class="wsync-artiste">Eder Olguin</span></div><button class="btn-lien">Voir la fiche</button></div>
+      <div class="wsync-champ" data-champ="description">
+        <div class="wsync-champ-tete"><label class="wsync-check"><input type="checkbox" class="wsync-case"><span class="wsync-lib">Description</span></label></div>
+        <div class="wsync-cols"><div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val"><em style="color:var(--stone)">— (vide)</em></div></div><div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">Acrylique sur toile. Format moyen.</div></div></div>
+        <div class="wsync-champ-actions"><button class="btn-action">Reprendre la valeur du site →</button></div>
+      </div>
+      <div class="wsync-champ" data-champ="prix">
+        <div class="wsync-champ-tete"><label class="wsync-check"><input type="checkbox" class="wsync-case"><span class="wsync-lib">Prix</span></label></div>
+        <div class="wsync-cols"><div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val">640 $</div></div><div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">680 $</div></div></div>
+        <div class="wsync-champ-actions"><button class="btn-action">Reprendre la valeur du site →</button></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Filtres : masquer/afficher les blocs par type, cacher les cartes vides.
+  document.querySelectorAll('.wsync-chip').forEach((chip)=>chip.addEventListener('click',()=>{
+    chip.classList.toggle('actif');
+    const actifs = [...document.querySelectorAll('.wsync-chip.actif')].map(c=>c.dataset.type);
+    document.querySelectorAll('.wsync-champ').forEach(ch=>{
+      ch.style.display = actifs.includes(ch.dataset.champ) ? '' : 'none';
+    });
+    document.querySelectorAll('.wsync-carte').forEach(carte=>{
+      const visibles = [...carte.querySelectorAll('.wsync-champ')].some(ch=>ch.style.display!=='none');
+      carte.style.display = visibles ? '' : 'none';
+    });
+  }));
+  // Sélection / compteur du bouton lot
+  const btnLot=document.getElementById('imp-lot');
+  function maj(){const n=document.querySelectorAll('.wsync-case:checked').length;btnLot.disabled=n===0;btnLot.textContent='Reprendre la sélection'+(n?` (${n})`:'');}
+  document.querySelectorAll('.wsync-case').forEach(cb=>cb.addEventListener('change',maj));
+  document.getElementById('sel-tout').addEventListener('click',()=>{document.querySelectorAll('.wsync-carte:not([style*="none"]) .wsync-champ:not([style*="none"]) .wsync-case').forEach(cb=>cb.checked=true);maj();});
+  document.getElementById('sel-rien').addEventListener('click',()=>{document.querySelectorAll('.wsync-case').forEach(cb=>cb.checked=false);maj();});
+</script>
+</body>
+</html>

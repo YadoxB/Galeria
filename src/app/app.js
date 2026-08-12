@@ -13,12 +13,15 @@ import { rendreDocuments } from './vues/documents.js';
 import { rendreRapport } from './vues/rapport.js';
 import { rendreReglages } from './vues/reglages.js';
 import { rendreOutils } from './vues/outils.js';
+import { rendreWebSync } from './vues/web-sync.js';
+import { rendreWebSyncArtistes } from './vues/web-sync-artistes.js';
 import { rafraichirEntete } from './marque.js';
 import { formaterTelephone, nettoyerErreur } from './commun.js';
 import { alerter } from './dialogue.js';
 import { initialiserUpdater } from './updater.js';
 import { initialiserAide } from './aide.js';
 import { initialiserTutoriel } from './tutoriel.js';
+import { initialiserNouveautes } from './nouveautes.js';
 import { proposerCatalogueLivreSiNouveau } from './catalogue-livraison.js';
 import { initialiserVerrou } from './verrou.js';
 
@@ -39,6 +42,8 @@ enregistrer('reglages', rendreReglages);
 // On redirige l'ancienne route pour ne casser aucun lien existant.
 enregistrer('profil-galerie', (contenu) => rendreReglages(contenu, { categorie: 'galerie' }));
 enregistrer('outils', rendreOutils);
+enregistrer('web-sync', rendreWebSync);
+enregistrer('web-sync-artistes', rendreWebSyncArtistes);
 
 document.getElementById('btn-retour').addEventListener('click', retour);
 document.getElementById('logo-galeria').addEventListener('click', () => remplacer('accueil'));
@@ -103,5 +108,10 @@ window.api.onBackupAlerte((a) => {
   await proposerCatalogueLivreSiNouveau();
   initialiserUpdater();
   initialiserAide();
+  // Premier lancement = tutoriel de bienvenue jamais vu. À déterminer AVANT que le
+  // tutoriel ne pose son marqueur, pour ne pas superposer « Quoi de neuf » par-dessus.
+  const cfgDebut = await window.api.configGet().catch(() => null);
+  const premierLancement = !(cfgDebut && cfgDebut.tutoriel_vu);
   initialiserTutoriel();
+  initialiserNouveautes({ premierLancement });
 })().catch(filetErreur);

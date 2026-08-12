@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Synchro artistes</title>
+<style>
+  :root{--soft-ivory:#FCFAF4;--porcelain:#FFFFFF;--warm-gold:#C99A3D;
+    --ink:#111827;--slate:#5D6875;--stone:#A79E91;--mist:#D8D2C8;--cloud:#EFE8DE;
+    --font-titre:'Cormorant Garamond',Georgia,serif;--font-ui:'Inter',system-ui,sans-serif;--ombre-carte:0 4px 14px rgba(7,26,47,.06);}
+  *{box-sizing:border-box;} body{margin:0;background:var(--soft-ivory);font-family:var(--font-ui);color:var(--ink);padding:28px;}
+  h1{font-family:var(--font-titre);font-weight:600;font-size:26px;margin:0 0 2px;}
+  .sous-titre{color:var(--slate);font-size:13.5px;margin:4px 0 0;}
+  .demo-note{max-width:860px;font-size:13px;color:var(--slate);background:#fff8e8;border:1px solid #e8d9a8;border-radius:10px;padding:10px 13px;margin:0 0 18px;}
+  .demo-note strong{color:var(--ink);}
+  .wsync-mode{display:inline-flex;gap:2px;margin:10px 0 18px;background:var(--cloud);border-radius:999px;padding:3px;}
+  .wsync-mode-btn{border:none;background:none;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;color:var(--slate);cursor:pointer;}
+  .wsync-mode-btn.actif{background:var(--porcelain);color:var(--ink);box-shadow:var(--ombre-carte);}
+  .wsync-onglets{display:flex;gap:4px;border-bottom:2px solid var(--mist);margin:0 0 16px;max-width:860px;}
+  .wsync-onglet{background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;padding:9px 14px;font-size:14px;font-weight:500;color:var(--slate);cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+  .wsync-onglet.actif{color:var(--ink);font-weight:600;border-bottom-color:var(--warm-gold);}
+  .wsync-onglet-n{font-size:11px;font-weight:700;background:var(--cloud);color:var(--slate);border-radius:999px;padding:1px 7px;}
+  .wsync-onglet.actif .wsync-onglet-n{background:var(--warm-gold);color:#fff;}
+  .wsync-carte{background:var(--porcelain);border:1px solid var(--mist);border-radius:14px;padding:14px 16px;box-shadow:var(--ombre-carte);max-width:860px;}
+  .wsync-tete{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--mist);margin-bottom:12px;}
+  .wsync-titre{font-family:var(--font-titre);font-size:19px;}
+  .btn-lien{background:none;border:none;color:var(--warm-gold);cursor:pointer;font-size:13px;}
+  .wsync-champ{padding:10px 0;border-top:1px dashed var(--mist);}
+  .wsync-champ:first-of-type{border-top:none;}
+  .wsync-lib{font-size:12px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.04em;}
+  .wsync-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;}
+  .wsync-col{background:var(--soft-ivory);border:1px solid var(--mist);border-radius:10px;padding:8px 10px;}
+  .wsync-col.site{background:#fbf6ea;border-color:#e8d9a8;}
+  .wsync-et{display:block;font-size:11px;font-weight:600;color:var(--stone);margin-bottom:3px;}
+  .wsync-val{font-size:13px;line-height:1.45;max-height:120px;overflow:auto;white-space:pre-wrap;}
+  .wsync-champ-actions{margin-top:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+  .btn-action{padding:6px 12px;border-radius:9px;font-size:12.5px;font-weight:500;cursor:pointer;border:1px solid var(--mist);background:var(--porcelain);color:var(--ink);}
+  .wsync-statut-aide{font-size:11.5px;color:var(--stone);margin:8px 0 0;}
+</style>
+</head>
+<body>
+  <p class="demo-note"><strong>Démo — synchro artistes.</strong> Même écran que les œuvres, avec un sélecteur <strong>Œuvres / Artistes</strong>. On rapproche par le <strong>nom</strong> et on compare <strong>biographie</strong> et <strong>photo</strong>. Les artistes du site sont lus par l'API WordPress publique (aucune clé).</p>
+
+  <h1>Synchronisation avec le site</h1>
+  <p class="sous-titre">Sens « tirer » — l'app lit les artistes du site. <strong>Aucune modification n'est faite sur le site.</strong></p>
+  <div class="wsync-mode"><button class="wsync-mode-btn">Œuvres</button><button class="wsync-mode-btn actif">Artistes</button></div>
+
+  <div class="wsync-onglets">
+    <button class="wsync-onglet actif">Différences <span class="wsync-onglet-n">2</span></button>
+    <button class="wsync-onglet">Seulement dans l'app <span class="wsync-onglet-n">1</span></button>
+    <button class="wsync-onglet">Seulement sur le site <span class="wsync-onglet-n">3</span></button>
+  </div>
+
+  <div class="wsync-carte">
+    <div class="wsync-tete"><strong class="wsync-titre">André Coppens</strong><button class="btn-lien">Voir la fiche</button></div>
+    <div class="wsync-champ">
+      <div class="wsync-lib">Biographie</div>
+      <div class="wsync-cols">
+        <div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val">André Coppens, peintre belge établi au Québec.</div></div>
+        <div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">Biographie
+
+André Coppens est né en décembre 1948 à Berchem Sainte-Agathe, un petit village de la banlieue de Bruxelles. Dès son plus jeune âge, il manifeste un intérêt marqué pour le dessin et la peinture…</div></div>
+      </div>
+      <div class="wsync-champ-actions"><button class="btn-action">Reprendre la valeur du site →</button><button class="btn-lien">Garder la version de l'app</button></div>
+      <p class="wsync-statut-aide">Le site peut combiner biographie et curriculum ; l'import remplace « Biographie » (le champ « Curriculum » n'est pas touché).</p>
+    </div>
+    <div class="wsync-champ">
+      <div class="wsync-lib">Photo</div>
+      <div class="wsync-cols">
+        <div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val">(aucune photo dans l'app)</div></div>
+        <div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">(photo sur le site)</div></div>
+      </div>
+      <div class="wsync-champ-actions"><button class="btn-action">Télécharger la photo du site →</button><button class="btn-lien">Garder la version de l'app</button></div>
+    </div>
+  </div>
+</body>
+</html>

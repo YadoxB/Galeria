@@ -7,6 +7,7 @@
 
 const COLONNES_ATTENDUES = {
   artistes: [
+    ['citation', 'TEXT'],
     ['numeros_taxes', 'TEXT'],
     ['photo_originale_path', 'TEXT'],
     ['pays', 'TEXT'],
@@ -162,6 +163,26 @@ function migrer(db) {
   //     nouveau catalogue quand la base de l'utilisateur en a un différent (ou
   //     aucun, comme une vieille base 0.2.0).
   db.exec(`CREATE TABLE IF NOT EXISTS meta (cle TEXT PRIMARY KEY, valeur TEXT);`);
+
+  // 1f. Table « web_sync_ignore » (Phase 5) : différences de synchro « déjà
+  //     réglées » (l'utilisateur a choisi de garder la version de l'app). Voir
+  //     schema.sql pour le détail. Créée ici pour les bases existantes.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS web_sync_ignore (
+      oeuvre_id INTEGER NOT NULL REFERENCES oeuvres(id) ON DELETE CASCADE,
+      champ     TEXT NOT NULL,
+      site_cle  TEXT NOT NULL,
+      cree_le   TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (oeuvre_id, champ)
+    );
+    CREATE TABLE IF NOT EXISTS web_sync_ignore_artiste (
+      artiste_id INTEGER NOT NULL REFERENCES artistes(id) ON DELETE CASCADE,
+      champ      TEXT NOT NULL,
+      site_cle   TEXT NOT NULL,
+      cree_le    TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (artiste_id, champ)
+    );
+  `);
 
   // 2. Backfill : artistes.numero_taxes (TPS unique) → artistes.numeros_taxes (liste JSON)
   const colsArtistes = db.prepare(`PRAGMA table_info(artistes)`).all().map((c) => c.name);

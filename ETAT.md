@@ -19,6 +19,18 @@ La 0.11.0 regroupe, tous **livrés et confirmés par Dave dans l'app** : le **ve
 
 Publiée sur GitHub Releases (tag `v0.12.0`), poussée sur `origin/master`, auto-update actif pour les parents. **Trois corrections issues de l'usage, codées et confirmées par Dave dans l'app.** Détail dans `CHANGELOG.md` (entrée `0.12.0`).
 
+### ✅ v0.13.0 PUBLIÉE (2026-08-10) — Phase 5, synchronisation avec le site web
+
+Gros chantier **fonctionnellement complet**, publié sur GitHub Releases (tag `v0.13.0`), poussé sur `origin/master`, auto-update actif pour les parents. Détail complet dans `CHANGELOG.md` (entrée `0.13.0`). **À confirmer par Dave dans l'app** (Claude ne capte pas la fenêtre Electron). En résumé :
+
+- **Site du client = WooCommerce + WordPress** (`galerievieuxstjean.com`). Accès **lecture seule**. Clés REST WooCommerce chiffrées dans le coffre Windows (Réglages → Site web). Les **artistes** sont un type WordPress **`portfolio`**, lus par l'**API publique `wp/v2/portfolio` (sans clé)** ; le **`gvsj/v1`** (plugin maison) ne sert pas.
+- **Œuvres** : rapprochement par SKU = n° d'inventaire ; comparaison titre/description/prix/statut ; reprendre (édition avant remplacement) / garder (mémorisé, tables `web_sync_ignore*`) ; filtres, lot ; onglets (Différences / Seulement app / Seulement site) ; créer fiche depuis le site, corriger SKU, retirer/vendre/supprimer.
+- **Artistes** : rapprochement par nom ; comparaison **citation / bio / démarche / C.V. / photo** ; contenu du site **découpé par sections** (`decouperSectionsArtiste`), **C.V. tableau → « année — description »**. Nouveau **champ `citation`** (colonne + fiche) et bouton **« Séparer les citations »** (transition automatique depuis le site). Modale d'aperçu artiste/œuvre. Bouton **« Comparer avec le site »** sur chaque fiche (module `src/app/sync-fiche.js`).
+- **À-côtés** : fenêtre d'ouverture 900→1000 px, icône « Site web » dans Réglages, module **« Quoi de neuf »** à l'ouverture (`src/app/nouveautes.js`), **aide** enrichie (catégorie « Site web & synchronisation »).
+- **Pièges/décisions notés** : `e.currentTarget` devient `null` après un `await` (capturer le bouton avant) ; les bancs d'essai de lecture publique du site sont dans le scratchpad (non commités). Fichiers clés : `src/web/woocommerce.js`, `src/app/vues/web-sync.js` + `web-sync-artistes.js`, `src/app/sync-fiche.js`.
+
+**Reste à confirmer par Dave dans l'app** (Claude ne capte pas la fenêtre Electron) puis livrer. **Bloc `#4` de la feuille de route (« tirer depuis le site ») est donc réalisé** — et même au-delà (deux sens de comparaison, artistes, fiches individuelles).
+
 1. **Clic droit — Couper / Copier / Coller / Tout sélectionner** partout dans l'app + l'éditeur de document. Corrige l'impossibilité de coller à la souris (le menu applicatif est désactivé en prod, ce qui avait supprimé « Coller »). Nouveau module partagé `src/menu-contextuel.js` branché sur `main.js` et `pdf.js`.
 2. **N° d'inventaire sur les cartes d'œuvres** (vue grille), en petit sous l'artiste. `oeuvres-liste.js` (`carteGrille`) + `.oeuvre-carte-inv` dans `styles.css`. Démo `demos/oeuvre-carte-inventaire.html`.
 3. **Annexe A de retrait → retire réellement les œuvres**, avec confirmation. La modale d'annexe de la fiche artiste (`ouvrirAnnexeModale`, type `retrait`) appelait le PDF sans retirer les œuvres ; elle propose désormais le retrait (`oeuvresRetraitLot`, vendues ignorées, réversible) puis rafraîchit la fiche. `src/app/annexe.js` + `artiste-fiche.js`. Le retrait **en lot** depuis la liste était déjà correct.

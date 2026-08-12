@@ -10,6 +10,7 @@ import {
 } from '../commun.js';
 import { parserCotes, TAILLES_COTES, formaterMontant } from '../calcul-prix.js';
 import { ouvrirAnnexeModale } from '../annexe.js';
+import { synchroniserArtiste } from '../sync-fiche.js';
 import { recadrerCarre } from '../recadrage.js';
 import { visionner } from '../visionneuse.js';
 import { confirmer } from '../dialogue.js';
@@ -22,7 +23,7 @@ const GABARIT_VIDE = {
   id: null,
   nom: '',
   type: null, prefixe_inventaire: null,
-  biographie: null, demarche: null, curriculum: null,
+  citation: null, biographie: null, demarche: null, curriculum: null,
   courriel: null, telephone: null, adresse: null,
   pays: 'Canada', province: null, langue: null,
   percoit_taxes: 0, numeros_taxes: null,
@@ -213,6 +214,7 @@ export async function rendreArtisteFiche(contenu, params) {
               </div>
             </div>
             <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
+            <button class="btn-action" id="btn-sync-site" title="Comparer cet artiste avec le site web">Comparer avec le site</button>
             ${boutonArchive({ archive: a.archive })}
             <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
           </div>
@@ -222,6 +224,7 @@ export async function rendreArtisteFiche(contenu, params) {
 
     // === Présentation (onglets Biographie / Démarche / Curriculum) ===
     const onglets = [
+      { cle: 'cit', titre: 'Citation', contenu: a.citation },
       { cle: 'bio', titre: 'Biographie', contenu: a.biographie },
       { cle: 'dem', titre: 'Démarche',  contenu: a.demarche },
       { cle: 'cur', titre: 'Curriculum', contenu: a.curriculum },
@@ -409,6 +412,8 @@ export async function rendreArtisteFiche(contenu, params) {
 
     // === Handlers ===
     contenu.querySelector('#btn-modifier').addEventListener('click', entrerEdition);
+    contenu.querySelector('#btn-sync-site').addEventListener('click', () =>
+      synchroniserArtiste(a.id, () => remplacerCourant('artiste-fiche', { id: a.id })));
     contenu.querySelector('#btn-supprimer').addEventListener('click', supprimer);
 
     // Valeur dispo masquée : révélée au clic, re-masquée quand la souris quitte.
@@ -740,6 +745,7 @@ export async function rendreArtisteFiche(contenu, params) {
             <!-- Présentation (6 col) -->
             <div class="carte span-6">
               <h3>Présentation</h3>
+              ${champTextarea({ nom: 'citation', libelle: 'Citation', valeur: a.citation, lignes: 2 })}
               ${champTextarea({ nom: 'biographie', libelle: 'Biographie', valeur: a.biographie, lignes: 4 })}
               ${champTextarea({ nom: 'demarche', libelle: 'Démarche', valeur: a.demarche, lignes: 4 })}
               ${champTextarea({ nom: 'curriculum', libelle: 'Curriculum', valeur: a.curriculum, lignes: 4 })}

@@ -58,7 +58,8 @@ const {
 } = require('./db/requetes');
 const {
   modifierArtiste, creerArtiste, supprimerArtiste,
-  modifierOeuvre, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre,
+  modifierOeuvre, majChampOeuvre, majStatutOeuvre, corrigerNumeroInventaire, ignorerDiffWeb, retirerIgnoreWeb, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre,
+  majChampArtiste, ignorerDiffArtisteWeb, retirerIgnoreArtisteWeb,
   modifierClient, creerClient, supprimerClient,
   creerVente, modifierVente, supprimerVente, majCycleVente,
   apercuProchainNumeroFacture, reserverProchainNumeroFacture,
@@ -182,11 +183,12 @@ function createSplashWindow() {
 
 function createWindow(splash) {
   // Adapte la taille à l'écran disponible pour que toute l'interface
-  // (barre latérale comprise) reste visible, même sur un écran < 900 px de haut.
+  // (barre latérale comprise) reste visible sans défilement. Hauteur par défaut
+  // portée à 1000 px (barre latérale plus longue), toujours plafonnée à l'écran.
   const { width: dispW, height: dispH } = screen.getPrimaryDisplay().workAreaSize;
   const win = new BrowserWindow({
     width: Math.min(1600, dispW),
-    height: Math.min(900, dispH),
+    height: Math.min(1000, dispH),
     minWidth: 1024,
     minHeight: 576,
     title: 'Galeria',
@@ -547,6 +549,304 @@ function obtenirCleAnthropic() {
   }
 }
 
+// ====== Site web (WooCommerce) — clés chiffrées dans le coffre Windows ======
+// L'adresse est en clair ; la clé et le secret sont chiffrés (safeStorage) et
+// ne sont déchiffrés qu'au moment d'appeler le site. On ne renvoie JAMAIS les
+// clés à l'interface (seulement « définies : oui/non »).
+
+function chiffrerSecret(valeur) {
+  return safeStorage.encryptString(String(valeur)).toString('base64');
+}
+function dechiffrerSecret(base64) {
+  if (!base64) return '';
+  try { return safeStorage.decryptString(Buffer.from(base64, 'base64')); }
+  catch { return ''; }
+}
+
+function definirClesWoo({ url, consumerKey, consumerSecret } = {}) {
+  if (!safeStorage.isEncryptionAvailable()) {
+    throw new Error("Le coffre de chiffrement n'est pas disponible sur cet ordinateur.");
+  }
+  const cfgActuel = require('./config').obtenirConfig();
+  const web = { url: String(url == null ? '' : url).trim() };
+  // Clé/secret : si fournis, on (re)chiffre ; si laissés vides, on conserve
+  // ce qui est déjà enregistré (comme pour la clé Anthropic).
+  const ck = String(consumerKey == null ? '' : consumerKey).trim();
+  const cs = String(consumerSecret == null ? '' : consumerSecret).trim();
+  if (ck) web.consumer_key = chiffrerSecret(ck);
+  else if (cfgActuel?.web?.consumer_key) web.consumer_key = cfgActuel.web.consumer_key;
+  else web.consumer_key = '';
+  if (cs) web.consumer_secret = chiffrerSecret(cs);
+  else if (cfgActuel?.web?.consumer_secret) web.consumer_secret = cfgActuel.web.consumer_secret;
+  else web.consumer_secret = '';
+  require('./config').mettreAJourConfig({ web });
+  return { ok: true };
+}
+
+function effacerClesWoo() {
+  require('./config').mettreAJourConfig({ web: { url: '', consumer_key: '', consumer_secret: '' } });
+  return { ok: true };
+}
+
+// Renvoie les identifiants déchiffrés — USAGE INTERNE au processus principal.
+function obtenirClesWoo() {
+  const cfg = require('./config').obtenirConfig();
+  const w = cfg?.web || {};
+  return {
+    url: w.url || '',
+    consumerKey: dechiffrerSecret(w.consumer_key),
+    consumerSecret: dechiffrerSecret(w.consumer_secret),
+  };
+}
+
+// Clé de comparaison pour DÉTECTER une vraie différence, en ignorant les
+// variantes purement cosmétiques (casse, espaces multiples ou insécables,
+// apostrophes/guillemets courbes vs droits, tirets, points de suspension,
+// espace avant ponctuation double). La valeur affichée/importée, elle, reste
+// l'originale. Évite de signaler « différentes » des descriptions identiques à
+// l'œil (ex. « l'artiste » avec apostrophe courbe côté site).
+function clefComparaison(s) {
+  return String(s == null ? '' : s)
+    .toLowerCase()
+    .replace(/[‘’‛`´]/g, "'")   // ‘ ’ ‛ ` ´ → '
+    .replace(/[“”«»]/g, '"')          // “ ” « » → "
+    .replace(/[–—]/g, '-')                       // – — → -
+    .replace(/…/g, '...')                             // … → ...
+    .replace(/\s+/g, ' ')                                  // tout blanc (incl. insécables) → espace
+    .replace(/\s+([!?;:,.)\]»])/g, '$1')                   // pas d'espace avant ponctuation
+    .replace(/([(\[«])\s+/g, '$1')                         // pas d'espace après ouvrante
+    .trim();
+}
+
+// Clé normalisée de la valeur du site pour un champ (sert à mémoriser un
+// « garder » : tant que le site montre la même valeur, on ne represente pas la
+// différence). Pour le statut, un jeton 'vendu' / 'dispo'.
+function siteCleChamp(champ, valeur) {
+  if (champ === 'statut') return valeur; // déjà un jeton
+  if (champ === 'prix') return valeur == null ? '' : clefComparaison(String(valeur));
+  return clefComparaison(valeur);
+}
+
+// Compare les produits du site (SKU) aux œuvres de l'app (numéro d'inventaire).
+// Ne fait AUCUNE écriture. `ignores` = Map `${oeuvreId}:${champ}` → site_cle des
+// différences que l'utilisateur a choisi de garder. Retourne résumé + lignes.
+function comparerSiteEtApp(produits, oeuvres, ignores = new Map()) {
+  const parSku = new Map();
+  for (const p of produits) if (p.sku) parSku.set(p.sku.toUpperCase(), p);
+
+  const skuAppparies = new Set();
+  const lignes = [];
+  const appSeul = [];
+
+  for (const o of oeuvres) {
+    const inv = (o.numero_inventaire || '').trim();
+    const p = inv ? parSku.get(inv.toUpperCase()) : null;
+    if (!p) { appSeul.push({ id: o.id, inv, titre: o.titre || '', artiste: o.artiste_nom || '' }); continue; }
+    skuAppparies.add(p.sku.toUpperCase());
+
+    const ignoreDe = (champ) => ignores.get(`${o.id}:${champ}`);
+    const ajouter = (arr, champ, libelle, app, site) => {
+      const site_cle = siteCleChamp(champ, site);
+      arr.push({ champ, libelle, app, site, site_cle, ignore: ignoreDe(champ) === site_cle });
+    };
+
+    const champs = [];
+    if (clefComparaison(o.titre) !== clefComparaison(p.name)) {
+      ajouter(champs, 'titre', 'Titre', o.titre || '', p.name || '');
+    }
+    if (clefComparaison(o.description) !== clefComparaison(p.description)) {
+      ajouter(champs, 'description', 'Description', o.description || '', p.description || '');
+    }
+    const pa = (o.prix == null || o.prix === '') ? null : Number(o.prix);
+    const ps = (p.prix == null) ? null : Number(p.prix);
+    if ((Number.isFinite(pa) ? pa : null) !== (Number.isFinite(ps) ? ps : null)) {
+      ajouter(champs, 'prix', 'Prix', Number.isFinite(pa) ? pa : null, Number.isFinite(ps) ? ps : null);
+    }
+
+    // Réconciliation de statut : le site marque « épuisé » (outofstock) une œuvre
+    // vendue. On signale un écart quand l'un dit vendu et pas l'autre, et on
+    // suggère un statut — mais l'utilisateur choisira (outofstock est ambigu).
+    const siteVendu = p.stock_status === 'outofstock';
+    const appVendu = o.statut === 'vendu';
+    let statutReconcilier = null;
+    if (siteVendu !== appVendu) {
+      const site_cle = siteVendu ? 'vendu' : 'dispo';
+      statutReconcilier = {
+        app: o.statut || 'disponible',
+        site_indication: siteVendu ? 'Vendu / épuisé' : 'En vente / en stock',
+        suggere: siteVendu ? 'vendu' : 'disponible',
+        site_cle,
+        ignore: ignoreDe('statut') === site_cle,
+      };
+    }
+
+    lignes.push({
+      oeuvre_id: o.id, sku: inv, titre: o.titre || '', artiste: o.artiste_nom || '',
+      statut_app: o.statut || '', stock_site: p.stock_status || '', statut_site: p.status || '',
+      image_app: !!o.image_path, image_site: !!p.image,
+      champs,
+      statut_reconcilier: statutReconcilier,
+    });
+  }
+
+  // Œuvres de l'app sans produit relié → candidates à une correction de SKU.
+  const appSeulClef = appSeul.map((o) => ({ ...o, clef: clefComparaison(o.titre) }));
+  const siteSeul = produits
+    .filter((p) => p.sku && !skuAppparies.has(p.sku.toUpperCase()))
+    .map((p) => {
+      const cs = clefComparaison(p.name);
+      // Candidats : même titre normalisé (probable coquille de SKU), ou œuvre
+      // sans numéro d'inventaire. Le titre exact d'abord.
+      const candidats = appSeulClef
+        .filter((o) => (cs && o.clef === cs) || !o.inv)
+        .sort((a, b) => Number(cs && b.clef === cs) - Number(cs && a.clef === cs))
+        .slice(0, 8)
+        .map((o) => ({ id: o.id, inv: o.inv, titre: o.titre, artiste: o.artiste, match: !!cs && o.clef === cs }));
+      return {
+        sku: p.sku,
+        name: p.name || '',
+        description: p.description || '',
+        prix: (p.prix == null) ? null : Number(p.prix),
+        image: p.image || '',
+        candidats,
+      };
+    });
+
+  const estActif = (l) => l.champs.some((c) => !c.ignore) || (l.statut_reconcilier && !l.statut_reconcilier.ignore);
+  const ignorees = lignes.reduce((n, l) =>
+    n + l.champs.filter((c) => c.ignore).length + (l.statut_reconcilier && l.statut_reconcilier.ignore ? 1 : 0), 0);
+
+  return {
+    resume: {
+      relies: lignes.length,
+      avec_diff: lignes.filter(estActif).length,
+      ignorees,
+      app_seul: appSeul.length,
+      site_seul: siteSeul.length,
+      total_site: produits.length,
+    },
+    lignes,
+    appSeul,
+    siteSeul,
+  };
+}
+
+// Retire d'une biographie le bloc (paragraphe ou ligne) qui correspond EXACTEMENT
+// à la citation connue (peu importe les guillemets/espaces). Sert à ranger la
+// citation dans son champ dédié sans réécrire toute la bio. Si la citation n'est
+// pas trouvée comme bloc distinct, la bio est laissée telle quelle.
+function retirerCitationDeBio(bio, citation) {
+  const b = String(bio == null ? '' : bio);
+  if (!b.trim() || !citation) return b;
+  const cible = clefComparaison(citation);
+  const sansGuillemets = (bloc) => clefComparaison(bloc.replace(/^[«»"'“”\s]+|[«»"'“”\s]+$/g, ''));
+  const correspond = (bloc) => sansGuillemets(bloc) === cible || clefComparaison(bloc) === cible;
+  // 1) blocs séparés par une ligne vide (cas le plus courant : citation en exergue)
+  let blocs = b.split(/\n{2,}/);
+  let pleins = blocs.filter((bl) => bl.trim());
+  let restes = pleins.filter((bl) => !correspond(bl));
+  if (restes.length !== pleins.length) return restes.join('\n\n').trim();
+  // 2) sinon, lignes simples
+  blocs = b.split(/\n/);
+  pleins = blocs.filter((bl) => bl.trim());
+  restes = pleins.filter((bl) => !correspond(bl));
+  if (restes.length !== pleins.length) return restes.join('\n').trim();
+  return b;
+}
+
+// Compare les artistes du site (type `portfolio`) aux artistes de l'app, par NOM.
+// Champs : biographie (le site combine parfois bio + curriculum → on tolère les
+// deux) et photo (proposée seulement si le site en a une et pas l'app). Lecture
+// seule. `ignores` = Map `${artisteId}:${champ}` → site_cle.
+function comparerArtistesEtSite(portfolios, artistes, ignores = new Map()) {
+  const parNom = new Map();
+  for (const p of portfolios) { const k = clefComparaison(p.nom); if (k) parNom.set(k, p); }
+
+  const nomsVus = new Set();
+  const lignes = [];
+  const appSeul = [];
+
+  for (const a of artistes) {
+    const nomApp = [a.prenom, a.nom].filter(Boolean).join(' ').trim();
+    const k = clefComparaison(nomApp);
+    const p = k ? parNom.get(k) : null;
+    if (!p) { appSeul.push({ id: a.id, nom: nomApp }); continue; }
+    nomsVus.add(k);
+
+    const ignoreDe = (champ) => ignores.get(`${a.id}:${champ}`);
+    const champs = [];
+
+    // Le contenu du site est découpé par section (voir woocommerce.js) et mappé
+    // sur les champs de l'app. On compare chacun indépendamment ; on propose le
+    // champ quand le site a du contenu ET qu'il diffère (le « garder » mémorisé
+    // évite qu'un texte gardé revienne). Ces infos évoluent → comparaison utile.
+    for (const f of [
+      { champ: 'demarche', libelle: 'Démarche', app: a.demarche || '', site: p.demarche || '' },
+      { champ: 'curriculum', libelle: 'Curriculum (C.V.)', app: a.curriculum || '', site: p.curriculum || '' },
+    ]) {
+      if (f.site.trim() && clefComparaison(f.site) !== clefComparaison(f.app)) {
+        const site_cle = clefComparaison(f.site);
+        champs.push({ champ: f.champ, libelle: f.libelle, app: f.app, site: f.site, site_cle, ignore: ignoreDe(f.champ) === site_cle });
+      }
+    }
+
+    // Citation : le site la garde dans l'« extrait » (zone dédiée). L'app a
+    // désormais son propre champ « citation ». On les compare directement.
+    const citation = (p.excerpt || '').replace(/\s*(\[[…\.]+\]|…|\.\.\.)\s*$/u, '').trim();
+    if (citation && clefComparaison(citation) !== clefComparaison(a.citation || '')) {
+      const site_cle = clefComparaison(citation);
+      champs.push({ champ: 'citation', libelle: 'Citation', app: a.citation || '', site: citation, site_cle, ignore: ignoreDe('citation') === site_cle });
+    }
+
+    // Biographie : comparaison directe. Tolérance de transition — tant que la
+    // citation est encore incluse DANS la bio de l'app (données existantes), on
+    // ne signale pas la bio comme différente juste à cause d'elle (on tolère la
+    // citation en début ou en fin).
+    const bioSite = (p.biographie || '').trim();
+    const clefApp = clefComparaison(a.biographie || '');
+    const candidatsBio = [
+      bioSite,
+      citation ? `${citation}\n\n${bioSite}` : bioSite,
+      citation ? `${bioSite}\n\n${citation}` : bioSite,
+    ];
+    if (bioSite && !candidatsBio.some((cand) => clefComparaison(cand) === clefApp)) {
+      const site_cle = clefComparaison(bioSite);
+      champs.push({ champ: 'biographie', libelle: 'Biographie', app: a.biographie || '', site: bioSite, site_cle, ignore: ignoreDe('biographie') === site_cle });
+    }
+
+    if (p.image && !a.photo_path) {
+      const site_cle = 'presente';
+      champs.push({ champ: 'photo', libelle: 'Photo', app: '(aucune photo dans l\'app)', site: '(photo sur le site)', site_image: p.image, site_cle, ignore: ignoreDe('photo') === site_cle });
+    }
+
+    lignes.push({ artiste_id: a.id, nom: nomApp, champs });
+  }
+
+  const siteSeul = portfolios
+    .filter((p) => { const k = clefComparaison(p.nom); return k && !nomsVus.has(k); })
+    .map((p) => ({
+      nom: p.nom,
+      citation: (p.excerpt || '').replace(/\s*(\[[…\.]+\]|…|\.\.\.)\s*$/u, '').trim(),
+      biographie: p.biographie, demarche: p.demarche, curriculum: p.curriculum,
+      excerpt: p.excerpt, image: p.image, link: p.link,
+    }));
+
+  const estActif = (l) => l.champs.some((c) => !c.ignore);
+  const ignorees = lignes.reduce((n, l) => n + l.champs.filter((c) => c.ignore).length, 0);
+
+  return {
+    resume: {
+      relies: lignes.length,
+      avec_diff: lignes.filter(estActif).length,
+      ignorees,
+      app_seul: appSeul.length,
+      site_seul: siteSeul.length,
+      total_site: portfolios.length,
+    },
+    lignes, appSeul, siteSeul,
+  };
+}
+
 function exigerCle() {
   const apiKey = obtenirCleAnthropic();
   if (!apiKey) {
@@ -890,6 +1190,169 @@ async function demarrerApplication() {
   ipcMain.handle('ia:cle-definie', () => {
     const cfg = require('./config').obtenirConfig();
     return { definie: !!(cfg?.ia?.cle_anthropic), chiffrement: safeStorage.isEncryptionAvailable() };
+  });
+
+  // ---- Site web (WooCommerce) ----
+  ipcMain.handle('web:etat', () => {
+    const cfg = require('./config').obtenirConfig();
+    const w = cfg?.web || {};
+    return {
+      url: w.url || '',
+      cles_definies: !!(w.consumer_key && w.consumer_secret),
+      chiffrement: safeStorage.isEncryptionAvailable(),
+    };
+  });
+  ipcMain.handle('web:definir-cles', (_e, data) => definirClesWoo(data || {}));
+  ipcMain.handle('web:effacer-cles', () => effacerClesWoo());
+  ipcMain.handle('web:tester-connexion', async () => {
+    const { url, consumerKey, consumerSecret } = obtenirClesWoo();
+    if (!url) throw new Error("Aucune adresse de site enregistrée. Renseigne l'adresse et les clés, puis Enregistrer.");
+    if (!consumerKey || !consumerSecret) throw new Error('Aucune clé enregistrée. Renseigne la clé et le secret, puis Enregistrer.');
+    return require('./web/woocommerce').testerConnexion({ url, consumerKey, consumerSecret });
+  });
+  // Comparer (lecture seule) : lit les produits du site et les confronte aux
+  // œuvres de l'app par SKU = numéro d'inventaire. N'écrit rien.
+  ipcMain.handle('web:comparer', async () => {
+    const creds = obtenirClesWoo();
+    if (!creds.url || !creds.consumerKey || !creds.consumerSecret) {
+      throw new Error("Configure d'abord l'adresse et les clés dans Réglages → Site web.");
+    }
+    const produits = await require('./web/woocommerce').listerProduits(creds);
+    const req = require('./db/requetes');
+    const oeuvres = req.oeuvresPourComparaisonWeb();
+    const ignores = new Map(req.listerWebSyncIgnore().map((r) => [`${r.oeuvre_id}:${r.champ}`, r.site_cle]));
+    return comparerSiteEtApp(produits, oeuvres, ignores);
+  });
+  // « Garder la version de l'app » pour un champ : mémorise la clé du site.
+  ipcMain.handle('web:ignorer-diff', (_e, oeuvreId, champ, siteCle) => ignorerDiffWeb(oeuvreId, champ, siteCle));
+  // Annuler un « garder » (la différence pourra de nouveau être proposée).
+  ipcMain.handle('web:retirer-ignore', (_e, oeuvreId, champ) => retirerIgnoreWeb(oeuvreId, champ));
+  // Réconciliation « un seul côté ».
+  // Télécharger l'image d'un produit (URL publique) → data URL pour le recadrage.
+  ipcMain.handle('web:telecharger-image', (_e, url) => require('./web/woocommerce').telechargerImage(url));
+  // Créer une fiche d'œuvre à partir d'un produit du site (l'artiste est choisi
+  // dans l'app). Le SKU devient le numéro d'inventaire. Image gérée ensuite côté
+  // renderer (téléchargement + recadrage habituel).
+  ipcMain.handle('web:creer-oeuvre-depuis-site', (_e, data) => {
+    const d = data || {};
+    const oeuvre = creerOeuvre({
+      titre: d.titre,
+      artiste_id: d.artiste_id,
+      numero_inventaire: d.sku,
+      description: d.description,
+      prix: d.prix,
+      statut: 'disponible',
+    });
+    return { ok: true, oeuvre };
+  });
+  // Corriger le SKU d'une œuvre existante (coquille) = aligner son numéro
+  // d'inventaire sur le SKU du site, au lieu de créer un doublon.
+  ipcMain.handle('web:corriger-sku', (_e, oeuvreId, sku) => {
+    const oeuvre = corrigerNumeroInventaire(oeuvreId, sku);
+    return { ok: true, oeuvre };
+  });
+
+  // --- Synchro des ARTISTES (type site `portfolio`, API WordPress publique) ---
+  ipcMain.handle('web:comparer-artistes', async () => {
+    const { url } = obtenirClesWoo();
+    if (!url) throw new Error("Configure d'abord l'adresse du site dans Réglages → Site web.");
+    const portfolios = await require('./web/woocommerce').listerArtistesSite({ url });
+    const req = require('./db/requetes');
+    const artistes = req.artistesPourComparaisonWeb();
+    const ignores = new Map(req.listerWebSyncIgnoreArtiste().map((r) => [`${r.artiste_id}:${r.champ}`, r.site_cle]));
+    return comparerArtistesEtSite(portfolios, artistes, ignores);
+  });
+  ipcMain.handle('web:importer-champ-artiste', (_e, artisteId, champ, valeur) => {
+    const artiste = majChampArtiste(artisteId, champ, valeur);
+    return { ok: true, artiste };
+  });
+  ipcMain.handle('web:ignorer-diff-artiste', (_e, artisteId, champ, siteCle) => ignorerDiffArtisteWeb(artisteId, champ, siteCle));
+  ipcMain.handle('web:retirer-ignore-artiste', (_e, artisteId, champ) => retirerIgnoreArtisteWeb(artisteId, champ));
+  ipcMain.handle('web:creer-artiste-depuis-site', (_e, data) => {
+    const d = data || {};
+    const artiste = creerArtiste({ nom: d.nom, citation: d.citation, biographie: d.biographie, demarche: d.demarche, curriculum: d.curriculum });
+    return { ok: true, artiste };
+  });
+  // Transition assistée (parents) : pour chaque artiste relié dont la citation est
+  // encore VIDE, remplir le champ « Citation » depuis le site et — si la citation
+  // figure comme bloc distinct dans la bio — l'en retirer. Ne réécrit jamais toute
+  // la bio ; ne touche pas aux artistes qui ont déjà une citation.
+  ipcMain.handle('web:ranger-citations', async () => {
+    const { url } = obtenirClesWoo();
+    if (!url) throw new Error("Configure d'abord l'adresse du site dans Réglages → Site web.");
+    const portfolios = await require('./web/woocommerce').listerArtistesSite({ url });
+    const artistes = require('./db/requetes').artistesPourComparaisonWeb();
+    const parNom = new Map();
+    for (const p of portfolios) { const k = clefComparaison(p.nom); if (k) parNom.set(k, p); }
+    let traites = 0, biosNettoyees = 0;
+    for (const a of artistes) {
+      if ((a.citation || '').trim()) continue; // déjà une citation → on n'y touche pas
+      const nomA = [a.prenom, a.nom].filter(Boolean).join(' ').trim();
+      const p = parNom.get(clefComparaison(nomA));
+      if (!p) continue;
+      const citation = (p.excerpt || '').replace(/\s*(\[[…\.]+\]|…|\.\.\.)\s*$/u, '').trim();
+      if (!citation) continue;
+      majChampArtiste(a.id, 'citation', citation);
+      const nouvelleBio = retirerCitationDeBio(a.biographie || '', citation);
+      if (nouvelleBio !== (a.biographie || '')) { majChampArtiste(a.id, 'biographie', nouvelleBio); biosNettoyees += 1; }
+      traites += 1;
+    }
+    return { traites, biosNettoyees, total: artistes.length };
+  });
+
+  // Comparaison d'un SEUL élément, depuis sa fiche.
+  ipcMain.handle('web:comparer-oeuvre', async (_e, oeuvreId) => {
+    const creds = obtenirClesWoo();
+    if (!creds.url || !creds.consumerKey || !creds.consumerSecret) throw new Error("Configure d'abord l'adresse et les clés dans Réglages → Site web.");
+    const oeuvre = require('./db/requetes').obtenirOeuvre(oeuvreId);
+    if (!oeuvre) throw new Error('Œuvre introuvable.');
+    const sku = (oeuvre.numero_inventaire || '').trim();
+    const produit = sku ? await require('./web/woocommerce').produitParSku(creds, sku) : null;
+    if (!produit) return { relie: false, sku };
+    const ignores = new Map(require('./db/requetes').listerWebSyncIgnore()
+      .filter((r) => r.oeuvre_id === oeuvre.id).map((r) => [`${r.oeuvre_id}:${r.champ}`, r.site_cle]));
+    const res = comparerSiteEtApp([produit], [oeuvre], ignores);
+    return { relie: true, sku, ligne: res.lignes[0] || null };
+  });
+  ipcMain.handle('web:comparer-artiste', async (_e, artisteId) => {
+    const creds = obtenirClesWoo();
+    if (!creds.url) throw new Error("Configure d'abord l'adresse du site dans Réglages → Site web.");
+    const artiste = require('./db/requetes').artistesPourComparaisonWeb().find((a) => a.id === artisteId);
+    if (!artiste) throw new Error('Artiste introuvable.');
+    const portfolios = await require('./web/woocommerce').listerArtistesSite({ url: creds.url });
+    const ignores = new Map(require('./db/requetes').listerWebSyncIgnoreArtiste()
+      .filter((r) => r.artiste_id === artiste.id).map((r) => [`${r.artiste_id}:${r.champ}`, r.site_cle]));
+    const res = comparerArtistesEtSite(portfolios, [artiste], ignores);
+    return { relie: res.lignes.length > 0, ligne: res.lignes[0] || null };
+  });
+  // Importer UN champ du site vers l'app (écrit dans la base locale seulement,
+  // jamais sur le site). Liste blanche stricte des champs.
+  ipcMain.handle('web:importer-champ', (_e, oeuvreId, champ, valeur) => {
+    // Écrit UNIQUEMENT le champ visé dans la base locale (jamais sur le site).
+    // La validation et la liste blanche vivent dans majChampOeuvre.
+    const oeuvre = majChampOeuvre(oeuvreId, champ, valeur);
+    return { ok: true, oeuvre };
+  });
+  // Import en lot : liste d'items { oeuvreId, champ, valeur }. Chaque item est
+  // validé indépendamment ; on renvoie le compte de réussites et les erreurs.
+  ipcMain.handle('web:importer-lot', (_e, items) => {
+    const liste = Array.isArray(items) ? items : [];
+    let reussis = 0;
+    const erreurs = [];
+    for (const it of liste) {
+      try {
+        majChampOeuvre(it.oeuvreId, it.champ, it.valeur);
+        reussis += 1;
+      } catch (err) {
+        erreurs.push({ oeuvreId: it.oeuvreId, champ: it.champ, message: err && err.message ? err.message : String(err) });
+      }
+    }
+    return { ok: true, reussis, total: liste.length, erreurs };
+  });
+  // Mettre à jour l'étiquette de statut d'une œuvre depuis la réconciliation.
+  ipcMain.handle('web:definir-statut', (_e, oeuvreId, statut) => {
+    const oeuvre = majStatutOeuvre(oeuvreId, statut);
+    return { ok: true, oeuvre };
   });
   ipcMain.handle('ia:copier-image-seulement', (_e, imageDataUrl) => {
     const r = chargerImageDepuisDataUrl(imageDataUrl);

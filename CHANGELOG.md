@@ -10,6 +10,58 @@ identifiants.
 
 ## [Non publié]
 
+## [0.13.0] — 2026-08-10
+
+> **Phase 5 — Synchronisation avec le site web.** Galeria peut désormais comparer
+> vos fiches (œuvres *et* artistes) avec la boutique WooCommerce du site et en reprendre
+> les valeurs à jour — **en lecture seule, rien n'est modifié sur le site**. Plus une
+> fenêtre « Quoi de neuf » à l'ouverture, une fenêtre d'ouverture un peu plus haute, et
+> l'aide mise à jour.
+
+### Ajouté
+
+- **Synchronisation avec le site web (WooCommerce / WordPress).** Nouvelle section
+  **Réglages → Site web** : adresse + clés REST (chiffrées dans le coffre de Windows,
+  jamais en clair), test de connexion. Le bouton **« Comparer les fiches avec le site… »**
+  ouvre l'écran de synchronisation. **Tout est en lecture seule.**
+  - **Œuvres** — rapprochement par numéro d'inventaire (= SKU du site). Comparaison
+    titre, description, prix, statut ; **reprendre la valeur du site** (avec **édition
+    du texte avant remplacement** pour titre/description), **garder la version de l'app**
+    (choix mémorisé, ne revient plus tant que le site ne rechange pas cette valeur).
+    **Filtres** par type, **reprise en lot**, sélecteur de statut.
+  - **Onglets** : Différences · Seulement dans l'app · Seulement sur le site.
+  - **Réconciliation « un seul côté »** : créer une fiche d'œuvre depuis un produit du
+    site (image téléchargée puis recadrée, artiste choisi), **corriger un SKU** (rattacher
+    une œuvre existante mal numérotée plutôt que créer un doublon) ; **retirer / vendre /
+    supprimer** une œuvre absente du site.
+  - **Artistes** — rapprochement par nom (pages « portfolio » du site, lues par l'API
+    WordPress publique, sans clé). Comparaison **Citation, Biographie, Démarche,
+    Curriculum (C.V.), Photo**. Le C.V. du site (tableau) est repris en lignes lisibles
+    « année — description » ; le contenu est découpé par sections vers les bons champs.
+    Création de fiche artiste depuis le site ; téléchargement de la photo.
+  - **Aperçu en modale** : « Voir la fiche » (œuvre ou artiste) ouvre un aperçu en
+    lecture sans quitter l'écran de synchronisation.
+  - **Bouton « Comparer avec le site »** directement sur chaque **fiche** d'œuvre et
+    d'artiste (comparaison d'un seul élément, mêmes actions).
+- **Champ « Citation » pour les artistes** (colonne en base + champ sur la fiche +
+  onglet d'affichage), et bouton **« Séparer les citations »** : range en un clic la
+  citation dans son champ à partir du site et la retire de la biographie où elle était
+  incluse (n'agit que sur les artistes dont la citation est encore vide).
+- **Fenêtre « Quoi de neuf » à l'ouverture** : résume les nouveautés après une mise à
+  jour, montrée une seule fois aux utilisateurs qui reviennent (pas à une première
+  installation, où le tutoriel de bienvenue suffit).
+- **Aide** : nouvelle catégorie **« Site web & synchronisation »** (5 articles) +
+  articles « clic droit » et notes (retrait via annexe A, n° d'inventaire sur les cartes).
+
+### Modifié
+
+- **Fenêtre d'ouverture un peu plus haute** (hauteur portée à 1000 px, toujours
+  plafonnée à l'espace écran) pour éviter le défilement de la barre latérale.
+- **Icône** ajoutée à la catégorie **Site web** dans les Réglages.
+- **Base de données** : migrations additives (colonne `citation` sur les artistes,
+  tables `web_sync_ignore` et `web_sync_ignore_artiste` pour mémoriser les « garder »).
+  Sans risque pour les données existantes.
+
 ## [0.12.0] — 2026-08-09
 
 > Corrections issues de l'usage réel : coller à la souris (menu clic droit),

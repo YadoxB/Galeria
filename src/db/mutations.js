@@ -138,6 +138,7 @@ const COLONNES_ARTISTE = [
   ['prenom', vide],
   ['type', vide],
   ['prefixe_inventaire', vide],
+  ['citation', vide],
   ['biographie', vide],
   ['demarche', vide],
   ['curriculum', vide],
@@ -254,6 +255,128 @@ function modifierOeuvre(id, data) {
     `UPDATE oeuvres SET ${set}, modifie_le = datetime('now') WHERE id = ?`
   ).run(...valeurs, id);
   return obtenirOeuvre(id);
+}
+
+// Mise à jour d'UN SEUL champ d'une œuvre, via une liste blanche stricte. Sert à
+// l'import « tirer » depuis le site (Phase 5) : contrairement à modifierOeuvre,
+// qui réécrit toute la ligne, ceci ne touche QUE la colonne visée — les autres
+// champs (dimensions, statut, image…) restent intacts.
+const CHAMPS_IMPORT_WEB = new Set(['titre', 'description', 'prix']);
+function majChampOeuvre(id, champ, valeur) {
+  const oid = entier(id);
+  if (oid == null) throw new Error('Identifiant invalide.');
+  if (!CHAMPS_IMPORT_WEB.has(champ)) throw new Error(`Champ non autorisé : ${champ}.`);
+  let v;
+  if (champ === 'prix') {
+    v = (valeur == null || valeur === '') ? null : nombre(valeur);
+    exigerPositifOuNul(v, 'Prix');
+  } else if (champ === 'titre') {
+    v = vide(valeur);
+    if (!v) throw new Error("Le titre ne peut pas être vide.");
+  } else {
+    // description : texte simple, vide autorisé (null si vraiment vide).
+    v = vide(valeur) || null;
+  }
+  const db = openDatabase();
+  const info = db.prepare(
+    `UPDATE oeuvres SET ${champ} = ?, modifie_le = datetime('now') WHERE id = ?`
+  ).run(v, oid);
+  if (!info.changes) throw new Error('Œuvre introuvable.');
+  return obtenirOeuvre(oid);
+}
+
+// Synchro site : mémorise « garder la version de l'app » pour un champ, en
+// enregistrant la clé de la valeur du site alors présentée. Upsert (une entrée
+// par œuvre + champ ; une nouvelle valeur du site remplacera la clé).
+function ignorerDiffWeb(oeuvreId, champ, siteCle) {
+  const oid = entier(oeuvreId);
+  if (oid == null) throw new Error('Identifiant invalide.');
+  const c = vide(champ);
+  if (!c) throw new Error('Champ manquant.');
+  const db = openDatabase();
+  db.prepare(`
+    INSERT INTO web_sync_ignore (oeuvre_id, champ, site_cle, cree_le)
+    VALUES (?, ?, ?, datetime('now'))
+    ON CONFLICT(oeuvre_id, champ) DO UPDATE SET site_cle = excluded.site_cle, cree_le = datetime('now')
+  `).run(oid, c, String(siteCle == null ? '' : siteCle));
+  return { ok: true };
+}
+
+// Annule un « garder » (la différence pourra de nouveau être proposée).
+function retirerIgnoreWeb(oeuvreId, champ) {
+  const oid = entier(oeuvreId);
+  if (oid == null) throw new Error('Identifiant invalide.');
+  const db = openDatabase();
+  db.prepare('DELETE FROM web_sync_ignore WHERE oeuvre_id = ? AND champ = ?').run(oid, vide(champ));
+  return { ok: true };
+}
+
+// --- Artistes : mêmes mécanismes, table web_sync_ignore_artiste ---
+const CHAMPS_IMPORT_ARTISTE = new Set(['citation', 'biographie', 'demarche', 'curriculum']);
+function majChampArtiste(id, champ, valeur) {
+  const aid = entier(id);
+  if (aid == null) throw new Error('Identifiant invalide.');
+  if (!CHAMPS_IMPORT_ARTISTE.has(champ)) throw new Error(`Champ non autorisé : ${champ}.`);
+  const v = vide(valeur) || null;
+  const db = openDatabase();
+  const info = db.prepare(
+    `UPDATE artistes SET ${champ} = ?, modifie_le = datetime('now') WHERE id = ?`
+  ).run(v, aid);
+  if (!info.changes) throw new Error('Artiste introuvable.');
+  return obtenirArtiste(aid);
+}
+function ignorerDiffArtisteWeb(artisteId, champ, siteCle) {
+  const aid = entier(artisteId);
+  if (aid == null) throw new Error('Identifiant invalide.');
+  const c = vide(champ);
+  if (!c) throw new Error('Champ manquant.');
+  const db = openDatabase();
+  db.prepare(`
+    INSERT INTO web_sync_ignore_artiste (artiste_id, champ, site_cle, cree_le)
+    VALUES (?, ?, ?, datetime('now'))
+    ON CONFLICT(artiste_id, champ) DO UPDATE SET site_cle = excluded.site_cle, cree_le = datetime('now')
+  `).run(aid, c, String(siteCle == null ? '' : siteCle));
+  return { ok: true };
+}
+function retirerIgnoreArtisteWeb(artisteId, champ) {
+  const aid = entier(artisteId);
+  if (aid == null) throw new Error('Identifiant invalide.');
+  const db = openDatabase();
+  db.prepare('DELETE FROM web_sync_ignore_artiste WHERE artiste_id = ? AND champ = ?').run(aid, vide(champ));
+  return { ok: true };
+}
+
+// Corrige le numéro d'inventaire d'une œuvre pour l'aligner sur le SKU du site
+// (cas d'une coquille de SKU : on rattache l'œuvre existante au produit plutôt
+// que d'en créer un doublon). Refuse si le numéro est déjà pris par une autre œuvre.
+function corrigerNumeroInventaire(id, sku) {
+  const oid = entier(id);
+  if (oid == null) throw new Error('Identifiant invalide.');
+  const s = vide(sku);
+  if (!s) throw new Error('Le numéro d\'inventaire (SKU) est vide.');
+  const db = openDatabase();
+  const autre = db.prepare('SELECT id FROM oeuvres WHERE numero_inventaire = ? AND id <> ?').get(s, oid);
+  if (autre) throw new Error(`Le numéro « ${s} » est déjà utilisé par une autre œuvre.`);
+  const info = db.prepare(
+    `UPDATE oeuvres SET numero_inventaire = ?, modifie_le = datetime('now') WHERE id = ?`
+  ).run(s, oid);
+  if (!info.changes) throw new Error('Œuvre introuvable.');
+  return obtenirOeuvre(oid);
+}
+
+// Met à jour l'étiquette de statut d'une œuvre (réconciliation avec le site).
+// Ne touche QUE la colonne statut ; n'enregistre pas de vente. Validation stricte.
+function majStatutOeuvre(id, statut) {
+  const oid = entier(id);
+  if (oid == null) throw new Error('Identifiant invalide.');
+  const st = vide(statut);
+  if (!st || !STATUTS_VALIDES.has(st)) throw new Error(`Statut invalide : ${statut}.`);
+  const db = openDatabase();
+  const info = db.prepare(
+    `UPDATE oeuvres SET statut = ?, modifie_le = datetime('now') WHERE id = ?`
+  ).run(st, oid);
+  if (!info.changes) throw new Error('Œuvre introuvable.');
+  return obtenirOeuvre(oid);
 }
 
 function creerOeuvre(data) {
@@ -1074,7 +1197,8 @@ function majPresentationArtiste(id, pdfPath, sig) {
 module.exports = {
   enregistrerAnnexe, majAnnexePdfPath, annulerAnnexe, majPresentationArtiste,
   modifierArtiste, creerArtiste, supprimerArtiste,
-  modifierOeuvre, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre,
+  modifierOeuvre, majChampOeuvre, majStatutOeuvre, corrigerNumeroInventaire, ignorerDiffWeb, retirerIgnoreWeb, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre,
+  majChampArtiste, ignorerDiffArtisteWeb, retirerIgnoreArtisteWeb,
   modifierClient, creerClient, supprimerClient,
   creerVente, modifierVente, supprimerVente, majCycleVente,
   apercuProchainNumeroFacture, reserverProchainNumeroFacture,

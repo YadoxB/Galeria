@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Synchronisation site : comparer / tirer (Lot 1)</title>
+<style>
+  :root {
+    --soft-ivory:#FCFAF4; --porcelain:#FFFFFF; --warm-gold:#C99A3D;
+    --ink:#111827; --slate:#5D6875; --stone:#A79E91; --mist:#D8D2C8; --cloud:#EFE8DE;
+    --succes:#4F8A5B; --erreur:#B6423C;
+    --font-titre:'Cormorant Garamond',Georgia,serif;
+    --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --ombre-carte:0 4px 14px rgba(7,26,47,.06);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--soft-ivory); font-family:var(--font-ui); color:var(--ink); padding:28px; }
+  h1 { font-family:var(--font-titre); font-weight:600; font-size:28px; margin:0 0 2px; }
+  .sous-titre { color:var(--slate); font-size:13.5px; margin:4px 0 0; max-width:720px; }
+  .demo-note { max-width:860px; font-size:13px; color:var(--slate); background:#fff8e8; border:1px solid #e8d9a8; border-radius:10px; padding:10px 13px; margin:0 0 18px; }
+  .demo-note strong { color:var(--ink); }
+
+  .wsync-resume { display:flex; flex-wrap:wrap; gap:10px; margin:8px 0 20px; }
+  .wsync-stat { background:var(--porcelain); border:1px solid var(--mist); border-radius:12px; padding:10px 16px; display:flex; flex-direction:column; min-width:120px; }
+  .wsync-stat .n { font-family:var(--font-titre); font-size:26px; font-weight:600; color:var(--ink); line-height:1; }
+  .wsync-stat .lib { font-size:12px; color:var(--slate); margin-top:4px; }
+  .wsync-stat.discret { opacity:.7; }
+
+  .wsync-cartes { display:flex; flex-direction:column; gap:14px; max-width:860px; }
+  .wsync-carte { background:var(--porcelain); border:1px solid var(--mist); border-radius:14px; padding:14px 16px; box-shadow:var(--ombre-carte); }
+  .wsync-tete { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:10px; border-bottom:1px solid var(--mist); margin-bottom:12px; }
+  .wsync-sku { font-size:12px; font-weight:700; color:var(--warm-gold); letter-spacing:.03em; margin-right:8px; }
+  .wsync-titre { font-family:var(--font-titre); font-size:18px; color:var(--ink); }
+  .wsync-artiste { font-size:12.5px; color:var(--slate); margin-left:8px; }
+  .btn-lien { background:none; border:none; color:var(--warm-gold); cursor:pointer; font-size:13px; font-family:var(--font-ui); }
+
+  .wsync-champ { padding:10px 0; border-top:1px dashed var(--mist); }
+  .wsync-champ:first-of-type { border-top:none; }
+  .wsync-champ.importe { opacity:.7; }
+  .wsync-lib { font-size:12px; font-weight:600; color:var(--slate); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+  .wsync-cols { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .wsync-col { background:var(--soft-ivory); border:1px solid var(--mist); border-radius:10px; padding:8px 10px; }
+  .wsync-col.site { background:#fbf6ea; border-color:#e8d9a8; }
+  .wsync-et { display:block; font-size:11px; font-weight:600; color:var(--stone); margin-bottom:3px; }
+  .wsync-val { font-size:13.5px; color:var(--ink); white-space:pre-wrap; max-height:140px; overflow:auto; line-height:1.45; }
+  .wsync-vide { color:var(--stone); font-style:italic; }
+  .wsync-champ-actions { margin-top:8px; }
+  .btn-action { padding:8px 14px; border-radius:10px; font-family:var(--font-ui); font-size:13.5px; font-weight:500; cursor:pointer; border:1px solid var(--mist); background:var(--porcelain); color:var(--ink); }
+  .wsync-ok { color:var(--succes); font-weight:600; font-size:13px; }
+  .wsync-note-statut { margin-top:8px; font-size:12.5px; color:var(--erreur); background:#fbeeee; border:1px solid #e6c4c1; border-radius:8px; padding:7px 10px; }
+  .wsync-note-statut em { color:var(--slate); font-style:italic; }
+
+  .wsync-details { margin:16px 0 0; max-width:860px; }
+  .wsync-details summary { cursor:pointer; font-size:13.5px; color:var(--slate); padding:8px 0; }
+  .wsync-liste-simple { list-style:none; margin:6px 0 0; padding:0; columns:2; }
+  .wsync-liste-simple li { font-size:12.5px; color:var(--ink); padding:3px 0; break-inside:avoid; }
+  @media (max-width:720px){ .wsync-cols{ grid-template-columns:1fr; } .wsync-liste-simple{ columns:1; } }
+</style>
+</head>
+<body>
+  <p class="demo-note"><strong>Démo — Lot 1.</strong> Écran <em>Synchronisation avec le site</em>. L'app lit la boutique (par numéro d'inventaire = SKU) et affiche les écarts. On reprend une valeur du site <strong>seulement en cliquant</strong>. <strong>Rien n'est modifié sur le site</strong> (lecture seule). Clique les boutons « Reprendre la valeur du site » pour voir l'effet.</p>
+
+  <h1>Synchronisation avec le site</h1>
+  <p class="sous-titre">Sens « tirer » — l'app lit la boutique et te propose de reprendre des valeurs. <strong>Aucune modification n'est faite sur le site.</strong></p>
+
+  <div class="wsync-resume">
+    <div class="wsync-stat"><span class="n">198</span><span class="lib">œuvre(s) reliée(s)</span></div>
+    <div class="wsync-stat"><span class="n">3</span><span class="lib">avec des différences</span></div>
+    <div class="wsync-stat"><span class="n">12</span><span class="lib">seulement dans l'app</span></div>
+    <div class="wsync-stat"><span class="n">4</span><span class="lib">seulement sur le site</span></div>
+    <div class="wsync-stat discret"><span class="n">214</span><span class="lib">produits en ligne</span></div>
+  </div>
+
+  <div class="wsync-cartes">
+    <div class="wsync-carte">
+      <div class="wsync-tete">
+        <div><span class="wsync-sku">MTG-0142</span><strong class="wsync-titre">Matin sur le fleuve</strong><span class="wsync-artiste">Marie Tremblay-Gagnon</span></div>
+        <button class="btn-lien">Voir la fiche</button>
+      </div>
+      <div class="wsync-champ">
+        <div class="wsync-lib">Prix</div>
+        <div class="wsync-cols">
+          <div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val">1 850 $</div></div>
+          <div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">1 950 $</div></div>
+        </div>
+        <div class="wsync-champ-actions"><button class="btn-action wsync-imp">Reprendre la valeur du site →</button></div>
+      </div>
+      <div class="wsync-champ">
+        <div class="wsync-lib">Description</div>
+        <div class="wsync-cols">
+          <div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val">Huile sur toile évoquant le lever du jour sur le Richelieu.</div></div>
+          <div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">Huile sur toile évoquant le lever du jour sur la rivière Richelieu, dans une palette de bleus et d'ocres. Une œuvre lumineuse et apaisante, signée par l'artiste.</div></div>
+        </div>
+        <div class="wsync-champ-actions"><button class="btn-action wsync-imp">Reprendre la valeur du site →</button></div>
+      </div>
+    </div>
+
+    <div class="wsync-carte">
+      <div class="wsync-tete">
+        <div><span class="wsync-sku">ANC2185</span><strong class="wsync-titre">Even under dark skies</strong><span class="wsync-artiste">André Coppens</span></div>
+        <button class="btn-lien">Voir la fiche</button>
+      </div>
+      <div class="wsync-champ">
+        <div class="wsync-lib">Titre</div>
+        <div class="wsync-cols">
+          <div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val">Even under dark skies</div></div>
+          <div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">Even Under Dark Skies (II)</div></div>
+        </div>
+        <div class="wsync-champ-actions"><button class="btn-action wsync-imp">Reprendre la valeur du site →</button></div>
+      </div>
+      <div class="wsync-note-statut">⚠ « Vendu »/épuisé sur le site, mais active dans l'app. <em>(le statut se synchronisera plus tard, dans le sens app → site.)</em></div>
+    </div>
+
+    <div class="wsync-carte">
+      <div class="wsync-tete">
+        <div><span class="wsync-sku">EDO-0031</span><strong class="wsync-titre">Sans titre</strong><span class="wsync-artiste">Eder Olguin</span></div>
+        <button class="btn-lien">Voir la fiche</button>
+      </div>
+      <div class="wsync-champ">
+        <div class="wsync-lib">Description</div>
+        <div class="wsync-cols">
+          <div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val"><span class="wsync-vide">— (vide)</span></div></div>
+          <div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">Acrylique sur toile. Format moyen.</div></div>
+        </div>
+        <div class="wsync-champ-actions"><button class="btn-action wsync-imp">Reprendre la valeur du site →</button></div>
+      </div>
+    </div>
+  </div>
+
+  <details class="wsync-details">
+    <summary>12 œuvres seulement dans l'app (aucun produit relié sur le site)</summary>
+    <ul class="wsync-liste-simple">
+      <li><span class="wsync-sku">MTG-0210</span> Reflets d'automne <span class="wsync-artiste">Marie Tremblay-Gagnon</span></li>
+      <li><span class="wsync-sku">ANC2210</span> Horizon perdu <span class="wsync-artiste">André Coppens</span></li>
+      <li><span class="wsync-sku">—</span> Étude no 4 <span class="wsync-artiste">Aline Roy</span></li>
+    </ul>
+  </details>
+  <details class="wsync-details">
+    <summary>4 produits sur le site sans correspondance dans l'app</summary>
+    <ul class="wsync-liste-simple">
+      <li><span class="wsync-sku">XYZ0001</span> Ancienne œuvre archivée</li>
+      <li><span class="wsync-sku">TEST123</span> Produit de test</li>
+    </ul>
+  </details>
+
+<script>
+  document.querySelectorAll('.wsync-imp').forEach((btn) => btn.addEventListener('click', () => {
+    const bloc = btn.closest('.wsync-champ');
+    bloc.classList.add('importe');
+    bloc.querySelector('.wsync-champ-actions').innerHTML = '<span class="wsync-ok">✓ Importé dans l\'app</span>';
+  }));
+</script>
+</body>
+</html>
