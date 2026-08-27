@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — « Autre » sur les menus de choix</title>
+<style>
+  :root {
+    --soft-ivory:#FCFAF4; --porcelain:#FFFFFF; --warm-gold:#C99A3D; --gallery-navy:#071A2F;
+    --ink:#111827; --slate:#5D6875; --stone:#A79E91; --mist:#D8D2C8; --cloud:#EFE8DE;
+    --rouge:#900001;
+    --font-titre:'Cormorant Garamond',Georgia,serif;
+    --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --s2:8px; --s3:16px; --r-carte:14px; --ombre-carte:0 4px 14px rgba(7,26,47,.06);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--soft-ivory); font-family:var(--font-ui); color:var(--ink); padding:32px; }
+  h1 { font-family:var(--font-titre); font-weight:600; font-size:28px; margin:0 0 4px; }
+  .sous { color:var(--slate); margin:0 0 8px; font-size:14px; max-width:760px; line-height:1.55; }
+  .lot-titre { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone); margin:32px 0 12px; font-weight:600; }
+
+  .duo { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; max-width:1020px; align-items:start; }
+  .carte { background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte);
+           box-shadow:var(--ombre-carte); padding:20px 22px; }
+  .carte h3 { font-family:var(--font-titre); font-size:20px; font-weight:600; margin:0 0 4px; }
+  .carte .etat { font-size:11px; text-transform:uppercase; letter-spacing:.07em; font-weight:700; margin:0 0 14px; }
+  .avant .etat { color:var(--stone); }
+  .apres .etat { color:var(--warm-gold); }
+  .aide-champ { font-size:13px; color:var(--slate); line-height:1.5; margin:0 0 14px; }
+
+  .form-champ { display:flex; flex-direction:column; gap:5px; margin-bottom:16px; position:relative; }
+  .form-champ label { font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--stone); font-weight:600; }
+  select, input[type=text] {
+    font-family:var(--font-ui); font-size:14px; color:var(--ink); background:var(--porcelain);
+    border:1px solid var(--mist); border-radius:8px; padding:9px 10px; width:100%; }
+  select:focus, input:focus { outline:2px solid var(--warm-gold); outline-offset:-1px; }
+
+  /* Le composant, repris de la fiche « Médium » */
+  .select-edit-wrap { position:relative; display:flex; }
+  .select-edit-wrap input { padding-right:34px; }
+  .select-edit-toggle { position:absolute; right:1px; top:1px; bottom:1px; width:30px;
+    border:0; background:transparent; color:var(--slate); cursor:pointer; font-size:12px; border-radius:0 8px 8px 0; }
+  .select-edit-toggle:hover { background:var(--cloud); }
+  .select-edit-panel { position:absolute; z-index:30; top:calc(100% + 4px); left:0; right:0;
+    background:var(--porcelain); border:1px solid var(--mist); border-radius:10px;
+    box-shadow:0 10px 26px rgba(7,26,47,.13); padding:5px; max-height:260px; overflow:auto; }
+  .select-edit-section { font-size:10.5px; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--stone); padding:8px 9px 4px; font-weight:700; }
+  .select-edit-option { display:block; width:100%; text-align:left; border:0; background:transparent;
+    font-family:var(--font-ui); font-size:14px; color:var(--ink); padding:7px 9px; border-radius:6px; cursor:pointer; }
+  .select-edit-option:hover { background:var(--cloud); }
+  .select-edit-option .marque { font-size:10.5px; color:var(--warm-gold); margin-left:7px;
+    text-transform:uppercase; letter-spacing:.05em; }
+
+  .journal { max-width:1020px; margin-top:20px; background:var(--porcelain); border:1px solid var(--mist);
+             border-radius:var(--r-carte); padding:16px 20px; }
+  .journal h4 { font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone); margin:0 0 8px; font-weight:700; }
+  .journal ul { margin:0; padding-left:18px; font-size:13.5px; color:var(--slate); line-height:1.7; }
+  .journal em { color:var(--ink); font-style:normal; font-weight:600; }
+
+  table.perimetre { width:100%; max-width:1020px; border-collapse:collapse; font-size:13.5px; margin-top:8px;
+    background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte); overflow:hidden; }
+  table.perimetre th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--stone); font-weight:700; padding:11px 14px; background:var(--soft-ivory); }
+  table.perimetre td { padding:10px 14px; border-top:1px solid var(--cloud); vertical-align:top; }
+  .oui { color:var(--warm-gold); font-weight:600; }
+  .non { color:var(--slate); }
+
+  .alerte { max-width:1020px; background:#FFF8F8; border:1px solid #E9D2D2; border-left:3px solid var(--rouge);
+            border-radius:10px; padding:16px 20px; margin-top:24px; }
+  .alerte h4 { margin:0 0 8px; font-size:14px; color:var(--rouge); }
+  .alerte p { font-size:13.5px; color:var(--slate); line-height:1.6; margin:0 0 8px; }
+  .alerte p:last-child { margin-bottom:0; }
+  .alerte b { color:var(--ink); }
+  code { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12.5px; background:var(--cloud);
+         padding:1px 5px; border-radius:4px; }
+</style>
+</head>
+<body>
+
+<h1>« Autre » sur les menus de choix</h1>
+<p class="sous">
+  Le champ <b>Médium</b> fait déjà exactement ce qui est demandé : on tape ce qu'on veut, et la valeur
+  saisie revient dans les suggestions des fois suivantes. La proposition est d'étendre ce même composant
+  aux autres menus — en laissant fermés ceux dont la liste pilote un calcul.
+</p>
+
+<div class="lot-titre">Le cas le plus visible : Style</div>
+<div class="duo">
+  <div class="carte avant">
+    <h3>Style</h3>
+    <p class="etat">Aujourd'hui</p>
+    <p class="aide-champ">Un menu fermé : impossible d'ajouter quoi que ce soit sans passer par le code.</p>
+    <div class="form-champ">
+      <label>Style</label>
+      <select>
+        <option>— Aucun —</option>
+        <option selected>Figuratif</option>
+        <option>Abstrait</option>
+        <option>Mi-Figuratif</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="carte apres">
+    <h3>Style</h3>
+    <p class="etat">Proposé</p>
+    <p class="aide-champ">On tape librement, ou on déplie la liste. Toute valeur déjà utilisée dans le catalogue apparaît dans les suggestions.</p>
+    <div class="form-champ">
+      <label>Style</label>
+      <div class="select-edit-wrap" data-champ="style">
+        <input type="text" value="Figuratif" placeholder="Style" autocomplete="off">
+        <button type="button" class="select-edit-toggle" tabindex="-1">▾</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="lot-titre">Les trois autres champs concernés</div>
+<div class="duo">
+  <div class="carte apres">
+    <h3>Fiche d'une œuvre</h3>
+    <p class="etat">Proposé</p>
+    <div class="form-champ">
+      <label>Type</label>
+      <div class="select-edit-wrap" data-champ="type">
+        <input type="text" value="Peinture" placeholder="Type" autocomplete="off">
+        <button type="button" class="select-edit-toggle" tabindex="-1">▾</button>
+      </div>
+    </div>
+    <div class="form-champ">
+      <label>Support</label>
+      <div class="select-edit-wrap" data-champ="support">
+        <input type="text" value="" placeholder="Toile, panneau, papier…" autocomplete="off">
+        <button type="button" class="select-edit-toggle" tabindex="-1">▾</button>
+      </div>
+    </div>
+    <p class="aide-champ" style="margin:0">Le <b>Support</b> n'avait aucune suggestion jusqu'ici : champ libre et rien d'autre.</p>
+  </div>
+
+  <div class="carte apres">
+    <h3>Fiche d'un artiste</h3>
+    <p class="etat">Proposé</p>
+    <div class="form-champ">
+      <label>Type</label>
+      <div class="select-edit-wrap" data-champ="type_artiste">
+        <input type="text" value="Peintre" placeholder="Type d'artiste" autocomplete="off">
+        <button type="button" class="select-edit-toggle" tabindex="-1">▾</button>
+      </div>
+    </div>
+    <p class="aide-champ" style="margin:0">Essayez : tapez <b>Céramiste</b>, puis rouvrez la liste — la valeur s'y trouve, marquée « ajouté ».</p>
+  </div>
+</div>
+
+<div class="journal">
+  <h4>Valeurs ajoutées pendant votre essai</h4>
+  <ul id="journal"><li><em>Aucune pour l'instant</em> — tapez une valeur inédite dans un champ, puis rouvrez sa liste.</li></ul>
+</div>
+
+<div class="lot-titre">Périmètre proposé</div>
+<table class="perimetre">
+  <thead><tr><th style="width:22%">Champ</th><th style="width:23%">Aujourd'hui</th><th>Proposition</th></tr></thead>
+  <tbody>
+    <tr><td>Médium</td><td>déjà ouvert</td><td class="non">Rien à faire — c'est le modèle</td></tr>
+    <tr><td>Sujets</td><td>déjà cumulatif</td><td class="non">Rien à faire</td></tr>
+    <tr><td><b>Style</b></td><td>menu fermé</td><td class="oui">Ouvrir</td></tr>
+    <tr><td><b>Type</b> (œuvre)</td><td>texte libre, sans mémoire</td><td class="oui">Ouvrir + mémoriser</td></tr>
+    <tr><td><b>Support</b></td><td>texte libre, aucune suggestion</td><td class="oui">Ouvrir + mémoriser</td></tr>
+    <tr><td><b>Type</b> (artiste)</td><td>texte libre, sans mémoire</td><td class="oui">Ouvrir + mémoriser</td></tr>
+    <tr><td>Format</td><td>Petit → Hors normes</td><td class="non">Laisser fermé — pilote le calcul des cotes</td></tr>
+    <tr><td>Orientation</td><td>calculée</td><td class="non">Laisser fermé — déduite des dimensions</td></tr>
+    <tr><td>Langue</td><td>Français / Anglais / Bilingue</td><td class="non">Laisser fermé — pilote la langue des documents</td></tr>
+    <tr><td>Étiquettes de taxes</td><td>TPS / TVQ / TVH</td><td class="non">Laisser fermé — pilote les lignes de taxes</td></tr>
+  </tbody>
+</table>
+
+<div class="alerte">
+  <h4>⚠ Une conséquence à connaître avant d'ouvrir le champ « Type » d'une œuvre</h4>
+  <p>Le type choisit le <b>texte d'attestation du certificat d'authenticité</b>, par correspondance partielle :
+     <code>sculpt</code> → sculpteur, <code>reprod</code> → reproduction, <code>photo</code> → photographe,
+     <code>estamp</code>/<code>gravu</code> → graveur, <code>dessin</code> → dessinateur.
+     <b>Tout le reste retombe silencieusement sur « peintre ».</b></p>
+  <p>Un type inédit comme « Céramique » ou « Installation » produirait donc un certificat attestant une
+     « production authentique de l'artiste <b>peintre</b> ». Le type gouverne aussi la commission :
+     <code>sculpt</code> donne 33 %, tout le reste la cote par défaut.</p>
+  <p><b>À noter :</b> ce risque existe déjà — le champ accepte du texte libre aujourd'hui. Le rendre visible
+     le rend simplement plus probable. Si vous le souhaitez, j'ajoute un avertissement au moment de produire
+     un certificat pour une œuvre dont le type n'est pas reconnu, plutôt que de laisser le repli passer sous silence.</p>
+</div>
+
+<script>
+// Valeurs « déjà en base » simulées, pour montrer le mélange défaut + catalogue.
+const BASE = {
+  style:        { defauts:['Figuratif','Abstrait','Mi-Figuratif'], catalogue:['Semi-abstrait'] },
+  type:         { defauts:['Peinture','Sculpture','Reproduction','Photographie','Dessin','Estampe','Mixte'], catalogue:['Techniques mixtes'] },
+  support:      { defauts:[], catalogue:['Toile','Panneau de bois','Papier','Aluminium'] },
+  type_artiste: { defauts:['Peintre','Sculpteur','Photographe','Graveur','Illustrateur'], catalogue:[] },
+};
+const ajoutees = {};              // valeurs tapées pendant l'essai
+const norm = (s) => (s||'').toString().normalize('NFD').replace(/\p{Mn}/gu,'').trim().toLowerCase();
+
+function majJournal() {
+  const lignes = [];
+  for (const [champ, vals] of Object.entries(ajoutees))
+    for (const v of vals) lignes.push(`<li><em>${v}</em> — ajoutée au champ « ${champ.replace('_',' ')} »</li>`);
+  document.getElementById('journal').innerHTML = lignes.length ? lignes.join('')
+    : '<li><em>Aucune pour l\'instant</em> — tapez une valeur inédite dans un champ, puis rouvrez sa liste.</li>';
+}
+
+document.querySelectorAll('.select-edit-wrap').forEach((wrap) => {
+  const champ = wrap.dataset.champ;
+  const input = wrap.querySelector('input');
+  const toggle = wrap.querySelector('.select-edit-toggle');
+  let panneau = null;
+  const fermer = () => { if (panneau) { panneau.remove(); panneau = null; }
+    document.removeEventListener('mousedown', onExt); };
+  const onExt = (e) => { if (!wrap.contains(e.target)) fermer(); };
+
+  const ouvrir = () => {
+    if (panneau) return;
+    const { defauts, catalogue } = BASE[champ];
+    const perso = ajoutees[champ] || [];
+    const vus = new Set();
+    const bloc = (titre, vals, marque) => {
+      const gardes = vals.filter((v) => v && !vus.has(norm(v)) && (vus.add(norm(v)) || true));
+      if (!gardes.length) return '';
+      return `<div class="select-edit-section">${titre}</div>` + gardes.map((v) =>
+        `<button type="button" class="select-edit-option">${v}${marque ? '<span class="marque">'+marque+'</span>' : ''}</button>`).join('');
+    };
+    let html = bloc('Choix courants', defauts, '')
+             + bloc('Déjà utilisés au catalogue', catalogue, '')
+             + bloc('Ajoutés par vous', perso, 'ajouté');
+    if (!html) html = '<div class="select-edit-section">Aucune valeur connue</div>';
+    panneau = document.createElement('div');
+    panneau.className = 'select-edit-panel';
+    panneau.innerHTML = html;
+    wrap.appendChild(panneau);
+    panneau.querySelectorAll('.select-edit-option').forEach((b) => {
+      b.addEventListener('click', () => {
+        input.value = b.childNodes[0].textContent.trim();
+        fermer(); input.focus();
+      });
+    });
+    setTimeout(() => document.addEventListener('mousedown', onExt), 0);
+  };
+
+  toggle.addEventListener('click', (e) => { e.preventDefault(); panneau ? fermer() : ouvrir(); });
+
+  // À la sortie du champ, une valeur inédite rejoint les suggestions.
+  input.addEventListener('blur', () => {
+    const v = input.value.trim();
+    if (!v) return;
+    const { defauts, catalogue } = BASE[champ];
+    const connues = [...defauts, ...catalogue, ...(ajoutees[champ] || [])].map(norm);
+    if (!connues.includes(norm(v))) { (ajoutees[champ] ||= []).push(v); majJournal(); }
+  });
+});
+majJournal();
+</script>
+</body>
+</html>

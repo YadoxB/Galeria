@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — taille manuelle et « Hors normes » au calculateur</title>
+<style>
+  :root {
+    --soft-ivory:#FCFAF4; --porcelain:#FFFFFF; --warm-gold:#C99A3D;
+    --gallery-navy:#071A2F;
+    --ink:#111827; --slate:#5D6875; --stone:#A79E91; --mist:#D8D2C8; --cloud:#EFE8DE;
+    --font-titre:'Cormorant Garamond',Georgia,serif;
+    --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --s2:8px; --s3:16px; --r-carte:14px; --ombre-carte:0 4px 14px rgba(7,26,47,.06);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--soft-ivory); font-family:var(--font-ui); color:var(--ink); padding:32px; }
+  h1 { font-family:var(--font-titre); font-weight:600; font-size:28px; margin:0 0 4px; }
+  .sous { color:var(--slate); margin:0 0 26px; font-size:14px; max-width:720px; line-height:1.55; }
+  .lot-titre { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone); margin:30px 0 12px; font-weight:600; }
+
+  .duo { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; max-width:1020px; align-items:start; }
+  .carte { background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte);
+           box-shadow:var(--ombre-carte); padding:20px 22px; }
+  .carte h3 { font-family:var(--font-titre); font-size:20px; font-weight:600; margin:0 0 6px; }
+  .aide-champ { font-size:13px; color:var(--slate); line-height:1.5; margin:0 0 14px; }
+
+  .grille-form { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .form-champ { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+  .form-champ label { font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--stone); font-weight:600; }
+  select, input[type=text], input[type=number] {
+    font-family:var(--font-ui); font-size:14px; color:var(--ink); background:var(--porcelain);
+    border:1px solid var(--mist); border-radius:8px; padding:9px 10px; width:100%; }
+  select:focus, input:focus { outline:2px solid var(--warm-gold); outline-offset:-1px; }
+
+  .dim-entete { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+  .dim-trio { display:flex; align-items:center; gap:10px; }
+  .dim-champ { flex:1; display:flex; flex-direction:column; gap:3px; }
+  .dim-libelle { font-size:11px; color:var(--stone); text-align:center; }
+  .dim-mult { color:var(--stone); padding-bottom:16px; }
+  .dim-unite { font-size:12px; color:var(--slate); padding-bottom:16px; white-space:nowrap; }
+
+  /* ——— le nouveau champ ——— */
+  .champ-neuf { position:relative; border:1px dashed var(--warm-gold); border-radius:10px;
+                padding:12px 12px 2px; background:rgba(201,154,61,.05); margin-bottom:14px; }
+  .etiquette-neuf { position:absolute; top:-9px; left:12px; background:var(--soft-ivory); padding:0 6px;
+                    font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--warm-gold); font-weight:700; }
+  .note-auto { font-size:12px; color:var(--slate); margin:-8px 0 12px; min-height:17px; }
+  .note-auto strong { color:var(--gallery-navy); }
+
+  .calc-resultat { margin-top:16px; }
+  .prix-suggere { border-radius:10px; padding:14px 16px; }
+  .prix-suggere-actif { background:var(--gallery-navy); color:#fff; }
+  .prix-suggere-aucun { background:var(--cloud); color:var(--slate); font-size:13.5px; line-height:1.5; }
+  .prix-suggere-entete { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+  .prix-suggere-libelle { font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; opacity:.75; }
+  .prix-suggere-valeur { font-family:var(--font-titre); font-size:30px; font-weight:600; }
+  .prix-suggere-detail { font-size:12.5px; opacity:.8; margin-top:8px; line-height:1.5; }
+  .prix-suggere-sec { font-size:13px; opacity:.85; margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,.18); }
+
+  table.cotes { width:100%; border-collapse:collapse; font-size:13.5px; }
+  table.cotes th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+                   color:var(--stone); font-weight:600; padding:0 8px 7px 0; }
+  table.cotes td { padding:7px 8px 7px 0; border-top:1px solid var(--cloud); }
+  table.cotes tr.retenue td { background:rgba(201,154,61,.13); font-weight:600; }
+  .puce-hn { display:inline-block; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
+             background:var(--warm-gold); color:#fff; border-radius:20px; padding:1px 8px; margin-left:6px; }
+
+  .encadre { max-width:1020px; background:var(--porcelain); border:1px solid var(--mist);
+             border-left:3px solid var(--warm-gold); border-radius:10px; padding:16px 20px; margin-top:24px; }
+  .encadre p { font-size:13.5px; color:var(--slate); line-height:1.6; margin:0 0 8px; }
+  .encadre p:last-child { margin-bottom:0; }
+  .encadre b { color:var(--ink); }
+</style>
+</head>
+<body>
+
+<h1>Taille manuelle au calculateur de prix</h1>
+<p class="sous">
+  Aujourd'hui, le calculateur déduit toujours la taille des dimensions — il ne peut donc jamais
+  atteindre une cote « Hors normes », qui ne se calcule pas. Le champ encadré en doré ci-dessous
+  est le seul ajout : un sélecteur de taille qui reste sur <b>Automatique</b> par défaut,
+  et que l'on force au besoin. Essayez-le, c'est fonctionnel.
+</p>
+
+<div class="lot-titre">Proposition</div>
+<div class="duo">
+
+  <div class="carte">
+    <h3>Calculateur de prix</h3>
+    <p class="aide-champ">Sélectionne un artiste et saisis les dimensions de l'œuvre. Le prix préférentiel (sans encadrement) et courant (encadré, +2 $/po linéaire) s'affichent automatiquement à partir des cotes.</p>
+
+    <div class="grille-form">
+      <div class="form-champ">
+        <label for="calc-artiste">Artiste</label>
+        <select id="calc-artiste">
+          <option value="0">Manon Potvin</option>
+        </select>
+      </div>
+      <div class="form-champ">
+        <label for="calc-medium">Médium (optionnel)</label>
+        <input type="text" id="calc-medium" placeholder="Acrylique, encaustique…" value="Acrylique" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="form-champ">
+      <div class="dim-entete"><label>Dimensions</label></div>
+      <div class="dim-trio">
+        <div class="dim-champ">
+          <input type="number" id="calc-hauteur" min="0" step="0.1" value="24">
+          <span class="dim-libelle">Hauteur</span>
+        </div>
+        <span class="dim-mult">×</span>
+        <div class="dim-champ">
+          <input type="number" id="calc-largeur" min="0" step="0.1" value="36">
+          <span class="dim-libelle">Largeur</span>
+        </div>
+        <span class="dim-unite">pouces</span>
+      </div>
+    </div>
+
+    <div class="champ-neuf">
+      <span class="etiquette-neuf">Nouveau</span>
+      <div class="form-champ">
+        <label for="calc-taille">Taille utilisée pour la cote</label>
+        <select id="calc-taille">
+          <option value="">Automatique — d'après les dimensions</option>
+          <option value="Petit">Petit</option>
+          <option value="Moyen">Moyen</option>
+          <option value="Grand">Grand</option>
+          <option value="Très grand">Très grand</option>
+          <option value="Hors normes">Hors normes</option>
+        </select>
+      </div>
+    </div>
+    <p class="note-auto" id="note-auto"></p>
+
+    <div id="calc-resultat" class="calc-resultat"></div>
+  </div>
+
+  <div class="carte">
+    <h3>Cotes de l'artiste</h3>
+    <p class="aide-champ" style="margin-top:0">Se mettent à jour avec l'artiste choisi dans le calculateur. La ligne retenue est surlignée.</p>
+    <table class="cotes">
+      <thead><tr><th>Médium</th><th>Taille</th><th>Cote</th><th>Unité</th></tr></thead>
+      <tbody id="corps-cotes"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="encadre">
+  <p><b>Comportement.</b> Le sélecteur reste sur <b>Automatique</b> : rien ne change pour l'usage courant,
+     la taille continue d'être déduite de √(H×L) avec les seuils 16 / 30 / 42. Dès qu'on choisit une taille
+     précise, c'est elle qui sert, et la ligne sous le champ rappelle ce que le calcul aurait donné —
+     pour qu'on voie toujours qu'on est en train de forcer quelque chose.</p>
+  <p><b>Pourquoi « Hors normes » ne peut pas être automatique.</b> C'est une cote d'exception, décidée
+     œuvre par œuvre, pas un palier de dimensions. Le calcul ne la propose donc jamais de lui-même,
+     ni ici ni sur la fiche d'une œuvre.</p>
+  <p><b>Rien d'autre ne bouge</b> — ni la disposition des autres champs, ni les cotes, ni le calcul lui-même.</p>
+</div>
+
+<script>
+// —— Règles reprises telles quelles de src/app/calcul-prix.js ——
+const SEUILS = [ {max:16,l:'Petit'}, {max:30,l:'Moyen'}, {max:42,l:'Grand'}, {max:Infinity,l:'Très grand'} ];
+function calculerFormat(h, l) {
+  const H = Number(h)||0, L = Number(l)||0;
+  if (H <= 0 || L <= 0) return '';
+  const eq = Math.sqrt(H*L);
+  for (const s of SEUILS) if (eq <= s.max) return s.l;
+  return '';
+}
+const norm = (s) => (s||'').toString().normalize('NFD').replace(/\p{Mn}/gu,'').trim().toLowerCase();
+const eq = (a,b) => norm(a) === norm(b);
+function trouverCoteApplicable(cotes, {medium, taille}) {
+  const m = (medium||'').trim(), t = (taille||'').trim();
+  const ordres = [
+    (c) => m && eq(c.medium,m) && t && eq(c.taille,t),
+    (c) => eq(c.medium,'Tous') && t && eq(c.taille,t),
+    (c) => m && eq(c.medium,m) && eq(c.taille,'Tous'),
+    (c) => eq(c.medium,'Tous') && eq(c.taille,'Tous'),
+  ];
+  for (const test of ordres) { const f = cotes.find(test); if (f) return f; }
+  return null;
+}
+
+const COTES = [
+  { medium:'Tous',      taille:'Tous',        unite:'lineaire', prix_pref:12 },
+  { medium:'Acrylique', taille:'Grand',       unite:'lineaire', prix_pref:18 },
+  { medium:'Acrylique', taille:'Très grand',  unite:'lineaire', prix_pref:22 },
+  { medium:'Tous',      taille:'Hors normes', unite:'lineaire', prix_pref:45 },
+];
+
+const $ = (id) => document.getElementById(id);
+const argent = (n) => Math.round(Number(n)||0).toLocaleString('fr-CA') + ' $';
+
+function dessinerCotes(retenue) {
+  $('corps-cotes').innerHTML = COTES.map((c) => {
+    const est = retenue && c.medium===retenue.medium && c.taille===retenue.taille && c.prix_pref===retenue.prix_pref;
+    const hn = c.taille === 'Hors normes' ? '<span class="puce-hn">manuelle</span>' : '';
+    return `<tr class="${est?'retenue':''}"><td>${c.medium}</td><td>${c.taille}${hn}</td>`
+         + `<td>${c.prix_pref} $</td><td>${c.unite==='carre'?'po²':'po lin'}</td></tr>`;
+  }).join('');
+}
+
+function recalculer() {
+  const h = Number($('calc-hauteur').value)||0;
+  const l = Number($('calc-largeur').value)||0;
+  const medium = $('calc-medium').value.trim();
+  const choix = $('calc-taille').value;
+  const auto = calculerFormat(h, l);
+  const taille = choix || auto;
+
+  $('note-auto').innerHTML = !choix
+    ? (auto ? `Taille calculée : <strong>${auto}</strong> (√(${h} × ${l}) = ${Math.sqrt(h*l).toFixed(1)} po).` : '')
+    : `Taille forcée à <strong>${choix}</strong>${auto ? ` — le calcul aurait donné <strong>${auto}</strong>.` : ''}`;
+
+  if (h <= 0 || l <= 0) {
+    $('calc-resultat').innerHTML = `<p class="aide-champ" style="font-style:italic;">Entre la hauteur et la largeur pour calculer.</p>`;
+    dessinerCotes(null); return;
+  }
+  const cote = trouverCoteApplicable(COTES, { medium, taille });
+  dessinerCotes(cote);
+  if (!cote) {
+    $('calc-resultat').innerHTML = `<div class="prix-suggere prix-suggere-aucun">Aucune cote ne correspond pour la taille <strong>${taille}</strong>.</div>`;
+    return;
+  }
+  const base = cote.unite === 'carre' ? h*l : h+l;
+  const uniteLib = cote.unite === 'carre' ? 'po²' : 'po lin';
+  const pref = cote.prix_pref * base;
+  const cour = (cote.prix_pref + 2) * base;
+  $('calc-resultat').innerHTML = `
+    <div class="prix-suggere prix-suggere-actif">
+      <div class="prix-suggere-entete">
+        <span class="prix-suggere-libelle">Prix courant (encadré)</span>
+        <span class="prix-suggere-valeur">${argent(cour)}</span>
+      </div>
+      <div class="prix-suggere-detail">${cote.prix_pref + 2} $/${uniteLib} × (${h} + ${l}) = ${base} ${uniteLib}</div>
+      <div class="prix-suggere-sec">Préférentiel (non encadré) : <strong>${argent(pref)}</strong>
+        &nbsp;·&nbsp; cote retenue : ${cote.medium} / ${cote.taille}</div>
+    </div>`;
+}
+
+['calc-hauteur','calc-largeur','calc-medium','calc-taille'].forEach((id) =>
+  $(id).addEventListener('input', recalculer));
+recalculer();
+</script>
+</body>
+</html>

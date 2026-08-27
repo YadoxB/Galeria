@@ -137,6 +137,103 @@ export function gabaritSelecteurTaille(taille = 'moyen') {
   return `<div class="taille-vue" role="group" aria-label="Taille des vignettes">${opt('petit', 'Petit')}${opt('moyen', 'Moyen')}${opt('grand', 'Grand')}</div>`;
 }
 
+// ===== Champ à valeurs libres + suggestions (brique générique) =====
+// Un champ texte que l'on remplit librement, doublé d'une liste dépliante de
+// valeurs connues. C'est le composant du Médium, généralisé : il sert aussi au
+// Type d'œuvre, au Support, au Style et au Type d'artiste.
+//
+// Volontairement PAS un <select> : les galeristes doivent pouvoir saisir une
+// valeur inédite sans passer par le code. Les valeurs déjà employées dans le
+// catalogue reviennent ensuite dans les suggestions (requêtes DISTINCT côté
+// base), d'où l'effet « ça s'ajoute tout seul ».
+export function champListe({ nom, libelle, valeur = '', placeholder = '', id } = {}) {
+  const idAttr = id || `f-${nom}`;
+  return `
+    <div class="form-champ">
+      <label for="${idAttr}">${ech(libelle)}</label>
+      <div class="select-edit-wrap" data-liste-wrap="${ech(nom)}">
+        <input type="text" id="${idAttr}" name="${nom}" placeholder="${ech(placeholder || libelle)}" value="${ech(valeur ?? '')}" autocomplete="off">
+        <button type="button" class="select-edit-toggle" aria-label="Voir les valeurs connues" tabindex="-1">▾</button>
+      </div>
+    </div>
+  `;
+}
+
+// Branche la liste dépliante sur un wrap `.select-edit-wrap`.
+//   opts.getGroupes() → [{ titre, valeurs }] , recalculé à chaque ouverture
+//                       (permet de suivre un artiste qui change).
+//   opts.epingle      → valeur épinglée en tête (« Tous » pour les cotes).
+//   opts.vide         → texte affiché quand aucune valeur n'est connue.
+//   opts.onChange     → rappel après un choix dans la liste.
+// Les doublons entre groupes sont retirés : le premier groupe gagne.
+export function brancherDropdownListe(wrap, opts = {}) {
+  if (!wrap) return;
+  const input = wrap.querySelector('input');
+  const toggle = wrap.querySelector('.select-edit-toggle');
+  if (!input || !toggle) return;
+  const norm = (s) => (s || '').toString().normalize('NFD').replace(/\p{Mn}/gu, '').trim().toLowerCase();
+  let panneau = null;
+  const fermer = () => {
+    if (panneau) { panneau.remove(); panneau = null; }
+    document.removeEventListener('mousedown', onClicExt);
+  };
+  const onClicExt = (e) => { if (!wrap.contains(e.target)) fermer(); };
+  const ouvrir = () => {
+    if (panneau) return;
+    const groupes = (opts.getGroupes ? opts.getGroupes() : (opts.groupes || [])) || [];
+    const vus = new Set();
+    if (opts.epingle) vus.add(norm(opts.epingle));
+    let html = opts.epingle
+      ? `<button type="button" class="select-edit-option select-edit-option-tous">${ech(opts.epingle)}</button>`
+      : '';
+    for (const g of groupes) {
+      const valeurs = (g?.valeurs || []).filter((v) => {
+        const n = norm(v);
+        if (!n || vus.has(n)) return false;
+        vus.add(n);
+        return true;
+      });
+      if (!valeurs.length) continue;
+      if (g.titre) html += `<div class="select-edit-section">${ech(g.titre)}</div>`;
+      html += valeurs
+        .map((v) => `<button type="button" class="select-edit-option">${ech(v)}</button>`)
+        .join('');
+    }
+    if (!html) html = `<div class="select-edit-section">${ech(opts.vide || 'Aucune valeur connue')}</div>`;
+    panneau = document.createElement('div');
+    panneau.className = 'select-edit-panel';
+    panneau.innerHTML = html;
+    wrap.appendChild(panneau);
+    panneau.querySelectorAll('.select-edit-option').forEach((b) => {
+      b.addEventListener('click', () => {
+        input.value = b.textContent;
+        fermer();
+        input.focus();
+        if (opts.onChange) opts.onChange(input.value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    });
+    setTimeout(() => document.addEventListener('mousedown', onClicExt), 0);
+  };
+  toggle.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (panneau) fermer(); else ouvrir();
+  });
+}
+
+// Charge les valeurs connues d'un champ : valeurs par défaut + ce qui existe
+// déjà au catalogue, dédoublonné et trié. `chargerDb` est une fonction qui
+// interroge la base (window.api.*) ; en cas d'échec on garde les défauts.
+export async function chargerValeursConnues(defauts, chargerDb) {
+  try {
+    const enBase = (await chargerDb()) || [];
+    const set = new Set([...(defauts || []), ...enBase].filter((v) => v && String(v).trim()));
+    return Array.from(set).sort((x, y) => x.localeCompare(y, 'fr', { sensitivity: 'base' }));
+  } catch {
+    return [...(defauts || [])];
+  }
+}
+
 // ===== Médium : champ texte libre + dropdown (même composant que les cotes) =====
 export const MEDIUMS_PAR_DEFAUT = ['Acrylique', 'Huile', 'Encaustique', 'Aquarelle', 'Pastel', 'Photographie', 'Mixte'];
 
@@ -171,53 +268,19 @@ export async function chargerMediumsConnus() {
 // statiques opts.mediumsArtiste / opts.mediumsConnus.
 // inclureTous : épingle « Tous » en tête (utilisé par les cotes).
 export function brancherDropdownMedium(wrap, opts = {}) {
-  if (!wrap) return;
-  const input = wrap.querySelector('input');
-  const toggle = wrap.querySelector('.select-edit-toggle');
-  if (!input || !toggle) return;
-  const norm = (s) => (s || '').toString().normalize('NFD').replace(/\p{Mn}/gu, '').trim().toLowerCase();
-  let panneau = null;
-  const fermer = () => {
-    if (panneau) { panneau.remove(); panneau = null; }
-    document.removeEventListener('mousedown', onClicExt);
-  };
-  const onClicExt = (e) => { if (!wrap.contains(e.target)) fermer(); };
-  const optionsHtml = (vals) => vals
-    .map((v) => `<button type="button" class="select-edit-option">${ech(v)}</button>`)
-    .join('');
-  const ouvrir = () => {
-    if (panneau) return;
-    const src = opts.getMediums ? opts.getMediums() : opts;
-    const mediumsArtiste = src.mediumsArtiste || [];
-    const mediumsConnus = src.mediumsConnus || [];
-    const ensArtiste = new Set(mediumsArtiste.map(norm));
-    const autres = mediumsConnus.filter((m) => !ensArtiste.has(norm(m)) && norm(m) !== 'tous');
-    panneau = document.createElement('div');
-    panneau.className = 'select-edit-panel';
-    let html = opts.inclureTous ? `<button type="button" class="select-edit-option select-edit-option-tous">Tous</button>` : '';
-    if (mediumsArtiste.length) {
-      html += `<div class="select-edit-section">Médiums de cet artiste</div>` + optionsHtml(mediumsArtiste);
-    }
-    if (autres.length) {
-      html += `<div class="select-edit-section">${mediumsArtiste.length ? 'Autres médiums' : 'Médiums'}</div>` + optionsHtml(autres);
-    }
-    if (!html) html = `<div class="select-edit-section">Aucun médium connu</div>`;
-    panneau.innerHTML = html;
-    wrap.appendChild(panneau);
-    panneau.querySelectorAll('.select-edit-option').forEach((b) => {
-      b.addEventListener('click', () => {
-        input.value = b.textContent;
-        fermer();
-        input.focus();
-        if (opts.onChange) opts.onChange(input.value);
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-      });
-    });
-    setTimeout(() => document.addEventListener('mousedown', onClicExt), 0);
-  };
-  toggle.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (panneau) fermer(); else ouvrir();
+  brancherDropdownListe(wrap, {
+    epingle: opts.inclureTous ? 'Tous' : '',
+    vide: 'Aucun médium connu',
+    onChange: opts.onChange,
+    getGroupes: () => {
+      const src = opts.getMediums ? opts.getMediums() : opts;
+      const mediumsArtiste = src.mediumsArtiste || [];
+      const mediumsConnus = (src.mediumsConnus || []).filter((m) => (m || '').trim().toLowerCase() !== 'tous');
+      return [
+        { titre: mediumsArtiste.length ? 'Médiums de cet artiste' : '', valeurs: mediumsArtiste },
+        { titre: mediumsArtiste.length ? 'Autres médiums' : 'Médiums', valeurs: mediumsConnus },
+      ];
+    },
   });
 }
 

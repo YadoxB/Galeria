@@ -25,7 +25,7 @@ const {
   arreterSauvegardePeriodique,
 } = require('./db/backup');
 const { previewFile, importArtistes, importOeuvres } = require('./import/importer');
-const { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette, indexerTousLesDocuments } = require('./pdf');
+const { analyserTypeOeuvre, genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette, indexerTousLesDocuments } = require('./pdf');
 const {
   listerArtistes,
   obtenirArtiste,
@@ -36,6 +36,9 @@ const {
   obtenirOeuvre,
   obtenirFicheOeuvreBundle,
   listerTypesOeuvre,
+  listerSupportsOeuvre,
+  listerStylesOeuvre,
+  listerTypesArtiste,
   listerMediumsOeuvre,
   listerMediumsArtiste,
   listerClients,
@@ -1640,7 +1643,11 @@ async function demarrerApplication() {
     clipboard.writeText(texte == null ? '' : String(texte));
     return { ok: true };
   });
+  ipcMain.handle('certificat:analyser-type', (_e, type) => analyserTypeOeuvre(type));
   ipcMain.handle('oeuvres:types', () => listerTypesOeuvre());
+  ipcMain.handle('oeuvres:supports', () => listerSupportsOeuvre());
+  ipcMain.handle('oeuvres:styles', () => listerStylesOeuvre());
+  ipcMain.handle('artistes:types', () => listerTypesArtiste());
   ipcMain.handle('oeuvres:mediums', () => listerMediumsOeuvre());
   ipcMain.handle('oeuvres:mediums-artiste', (_e, artisteId) => listerMediumsArtiste(artisteId));
   ipcMain.handle('clients:liste', (_e, filtres) => listerClients(filtres));

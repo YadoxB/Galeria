@@ -3,6 +3,7 @@ import {
   ech, formaterPrix, badgeStatut, STATUTS,
   champTexte, champTextarea, champSelect, champCheckbox, datalist, urlPhoto,
   champMedium, brancherDropdownMedium, chargerMediumsConnus,
+  champListe, brancherDropdownListe, chargerValeursConnues,
   formaterDate, nomComplet, sansAccents, nettoyerErreur,
   badgeArchive, boutonArchive, basculerArchive,
   champNombreInvalide, soumissionUnique,
@@ -37,7 +38,10 @@ const TYPES_OEUVRE = ['Peinture', 'Sculpture', 'Reproduction', 'Photographie', '
 // Reproduction / giclée : seuls types où l'on saisit des frais de production.
 const estReproType = (t) => /reprod|gicl/i.test(t || '');
 const ORIENTATIONS = ['Horizontale', 'Verticale', 'Carrée'];
-const FORMATS = ['Petit', 'Moyen', 'Grand', 'Très grand'];
+// « Hors normes » ne sort jamais du calcul automatique : c'est un choix manuel.
+// Une fois posé, il n'est plus écrasé (le garde-fou formatAuto voit que la
+// valeur ne correspond pas à calculerFormat() et cesse de remplir le champ).
+const FORMATS = ['Petit', 'Moyen', 'Grand', 'Très grand', 'Hors normes'];
 const STYLES = ['Figuratif', 'Abstrait', 'Mi-Figuratif'];
 const SUJETS_PREDEFINIS = ['Marine', 'Portrait', 'Paysage', 'Nature morte', 'Abstraction', 'Coucher de soleil', 'Forêt', 'Côte', 'Urbain', 'Fleurs', 'Animaux', 'Symbolique', 'Argentique', 'Bois', 'Métal', 'Verre'];
 
@@ -954,7 +958,6 @@ export async function rendreOeuvreFiche(contenu, params) {
       <div class="vue-fiche vue-fiche-bento">
         <h2 class="titre-formulaire">${titrePage}</h2>
         ${banniere}
-        ${datalist('types-oeuvre', TYPES_OEUVRE)}
         ${datalist('formats', FORMATS)}
         ${datalist('orientations', ORIENTATIONS)}
         <form id="formulaire" class="formulaire" novalidate>
@@ -973,7 +976,7 @@ export async function rendreOeuvreFiche(contenu, params) {
               <div class="grille-form">
                 ${champTexte({ nom: 'titre', libelle: 'Titre', valeur: o.titre, requis: true })}
                 ${champSelect({ nom: 'artiste_id', libelle: 'Artiste', valeur: o.artiste_id, options: artistesOptions })}
-                ${champTexte({ nom: 'type', libelle: 'Type', valeur: o.type, liste: 'types-oeuvre' })}
+                ${champListe({ nom: 'type', libelle: 'Type', valeur: o.type, placeholder: 'Peinture, sculpture…' })}
                 ${champTexte({ nom: 'annee', libelle: 'Année', valeur: o.annee, type: 'number', attributs: 'min="1000" max="2999"' })}
                 ${champTexte({ nom: 'numero_inventaire', libelle: "Numéro d'inventaire", valeur: o.numero_inventaire })}
                 ${champTexte({ nom: 'numero_delivrance', libelle: 'Numéro de délivrance', valeur: o.numero_delivrance })}
@@ -987,7 +990,7 @@ export async function rendreOeuvreFiche(contenu, params) {
                 <h4>Matériel et facture</h4>
                 <div class="grille-form">
                   ${champMedium({ nom: 'medium', libelle: 'Médium', valeur: o.medium })}
-                  ${champTexte({ nom: 'support', libelle: 'Support', valeur: o.support })}
+                  ${champListe({ nom: 'support', libelle: 'Support', valeur: o.support, placeholder: 'Toile, panneau, papier…' })}
                   ${champTexte({ nom: 'emplacement_signature', libelle: 'Emplacement de la signature', valeur: o.emplacement_signature })}
                 </div>
               </div>
@@ -1022,10 +1025,7 @@ export async function rendreOeuvreFiche(contenu, params) {
                 <div class="grille-form">
                   ${champTexte({ nom: 'format', libelle: 'Format', valeur: o.format, liste: 'formats' })}
                   ${champTexte({ nom: 'orientation', libelle: 'Orientation', valeur: o.orientation, liste: 'orientations' })}
-                  ${champSelect({ nom: 'style', libelle: 'Style', valeur: o.style, options: [
-                    { valeur: '', libelle: '— Non précisé —' },
-                    ...STYLES.map((s) => ({ valeur: s, libelle: s })),
-                  ]})}
+                  ${champListe({ nom: 'style', libelle: 'Style', valeur: o.style, placeholder: 'Figuratif, abstrait…' })}
                 </div>
                 <p class="aide-champ">Format et orientation se calculent automatiquement à partir des dimensions. Le style est à saisir à la main.</p>
               </div>
@@ -1399,6 +1399,24 @@ export async function rendreOeuvreFiche(contenu, params) {
         inclureTous: false,
       });
       if (elArtiste) elArtiste.addEventListener('change', () => { majMediumsArtiste(elArtiste.value); });
+    }
+
+    // Champs à saisie libre + suggestions (type, support, style). Aux valeurs
+    // par défaut s'ajoutent celles déjà employées au catalogue : une valeur
+    // inédite saisie ici revient donc dans la liste la fois suivante.
+    for (const [nom, defauts, chargerDb] of [
+      ['type', TYPES_OEUVRE, () => window.api.oeuvresTypes()],
+      ['support', [], () => window.api.oeuvresSupports()],
+      ['style', STYLES, () => window.api.oeuvresStyles()],
+    ]) {
+            const wrap = contenu.querySelector('[data-liste-wrap="' + nom + '"]');
+      if (!wrap) continue;
+      let valeurs = [...defauts];
+      chargerValeursConnues(defauts, chargerDb).then((v) => { valeurs = v; });
+      brancherDropdownListe(wrap, {
+        vide: 'Aucune valeur connue',
+        getGroupes: () => [{ valeurs }],
+      });
     }
     // Auto-rafraîchir le numéro d'inventaire quand l'artiste change, à condition
     // que l'utilisateur n'ait pas déjà modifié manuellement le champ.

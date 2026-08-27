@@ -10,6 +10,62 @@ identifiants.
 
 ## [Non publié]
 
+## [0.14.0] — 2026-08-27
+
+> **Retours d'usage des parents.** Quatre corrections issues de l'usage réel, plus
+> l'aide sur l'obtention des clés du site restée en attente depuis la 0.13.0.
+
+### Ajouté
+
+- **Cote « Hors normes ».** Nouvelle taille dans l'éditeur de cotes d'un artiste, pour
+  fixer un tarif d'exception sur des œuvres précises. Contrairement aux autres tailles,
+  elle **ne se calcule jamais** à partir des dimensions : on l'attribue à la main dans le
+  champ **Format** de l'œuvre, et Galeria ne l'écrase plus ensuite. Filtrable dans la
+  liste des œuvres.
+- **Taille manuelle au calculateur de prix** (page Outils) : le nouveau champ
+  « Taille utilisée pour la cote » reste sur **Automatique** par défaut ; on peut le
+  forcer, notamment sur « Hors normes » que le calcul ne propose jamais. Une ligne
+  rappelle ce que le calcul aurait donné, et la **cote retenue est surlignée** dans le
+  tableau des cotes de l'artiste.
+- **Valeurs libres sur quatre champs** : **Style** (qui était un menu fermé), **Type** et
+  **Support** de l'œuvre, **Type** de l'artiste. On y saisit ce qu'on veut, et toute valeur
+  déjà employée au catalogue revient ensuite dans les suggestions — le comportement du
+  champ **Médium**, désormais partagé. Format, Orientation, Langue et Étiquettes de taxes
+  restent volontairement fermés : leur liste pilote un calcul.
+- **Avertissement avant un certificat au type non reconnu.** Le type de l'œuvre choisit le
+  texte d'attestation ; un type inédit (« Céramique », « Installation ») retombait
+  silencieusement sur celui de l'artiste peintre. Galeria le signale maintenant avant de
+  produire le document, en disant quel texte sera employé, et laisse continuer ou annuler.
+- **Nombre d'œuvres retirées** dans l'en-tête d'une fiche d'artiste, à côté de
+  « Au catalogue » et « Disponibles ».
+- **Aide** : article « Obtenir les clés du site web (WordPress / WooCommerce) », en six
+  étapes, et guide imprimable `docs/Guide-cles-site-web.html` (en attente depuis la 0.13.0).
+
+### Corrigé
+
+- **Le nombre d'œuvres d'un artiste comptait les œuvres retirées et vendues.** Le nombre
+  principal affiché — sur la carte de l'artiste, dans la liste et dans l'en-tête de sa
+  fiche — est désormais celui des **œuvres disponibles**, et le tri « par nombre d'œuvres »
+  le suit. La statistique « Au catalogue » exclut les retirées. Le garde-fou qui empêche de
+  supprimer un artiste continue, lui, de compter **toutes** ses œuvres : sans cela, un
+  artiste dont tout est vendu serait devenu supprimable sans avertissement.
+- **C.V. collé à la main : lignes traitées comme des titres.** Dans la présentation
+  d'artiste, une **année seule sur sa ligne** ne rejoignait pas le tableau, et une **puce
+  collée au tiret** (« -Musée Beaulne ») était affichée en rouge italique comme un
+  intertitre. Les puces « • » subissaient le même sort. Les puces qui suivent une entrée
+  s'alignent maintenant sous leur année. Vérifié sur les 21 C.V. du site : 30 lignes
+  corrigées, toutes des puces, aucune autre ligne touchée.
+
+### Interne
+
+- Le composant du champ Médium est extrait en brique générique réutilisable
+  (`champListe`, `brancherDropdownListe`, `chargerValeursConnues` dans `commun.js`) ; le
+  Médium l'utilise désormais au lieu d'avoir son propre code.
+- La correspondance « type d'œuvre → attestation du certificat » devient une table unique
+  dans `pdf.js`, exposée à l'interface, au lieu d'être réécrite des deux côtés.
+- Requêtes de valeurs distinctes pour le support, le style et le type d'artiste, avec
+  `TRIM` dans le `DISTINCT` pour éviter les doublons d'espaces.
+
 ## [0.13.0] — 2026-08-10
 
 > **Phase 5 — Synchronisation avec le site web.** Galeria peut désormais comparer

@@ -120,7 +120,11 @@ export function formaterMontant(n) {
 }
 
 // Helpers pour l'UI éditeur de cotes : générer une grille par défaut.
-export const TAILLES_COTES = ['Petit', 'Moyen', 'Grand', 'Très grand'];
+// « Hors normes » est une taille QUI NE SE CALCULE PAS : calculerFormat() ne la
+// renvoie jamais (voir SEUILS_FORMAT plus bas, volontairement inchangé). On
+// l'attribue à la main sur la fiche d'une œuvre, et la cote correspondante
+// s'applique alors comme n'importe quelle autre taille.
+export const TAILLES_COTES = ['Petit', 'Moyen', 'Grand', 'Très grand', 'Hors normes'];
 
 export function cotesParDefaut() {
   // Mode simplifié : une seule cote « Tous médiums + Toutes tailles ».

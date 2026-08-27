@@ -3,6 +3,7 @@ import {
   ech, initiales, pluriel,
   champTexte, champTextarea, champCheckbox, datalist,
   brancherDropdownMedium, chargerMediumsConnus,
+  champListe, brancherDropdownListe, chargerValeursConnues,
   champPays, champSubdivision, brancherChangementPays,
   parserNumerosTaxes, urlPhoto, sansAccents, nomComplet,
   badgeArchive, boutonArchive, basculerArchive, nettoyerErreur,
@@ -34,6 +35,8 @@ const GABARIT_VIDE = {
   lien_chatgpt: null,
   cotes: null,
   nb_oeuvres: 0,
+  nb_oeuvres_catalogue: 0,
+  nb_oeuvres_dispo: 0,
 };
 
 export async function rendreArtisteFiche(contenu, params) {
@@ -52,7 +55,7 @@ export async function rendreArtisteFiche(contenu, params) {
     } catch { mediumsArtiste = []; }
   }
 
-  let stats = { catalogue: 0, disponibles: 0, valeurDispo: 0, ventes: 0 };
+  let stats = { catalogue: 0, disponibles: 0, retirees: 0, valeurDispo: 0, ventes: 0 };
   let apercu = [];
 
   if (estNouveau) {
@@ -120,6 +123,9 @@ export async function rendreArtisteFiche(contenu, params) {
 
   async function supprimer() {
     const nomA = nomComplet(a) || a.nom || '';
+    // Volontairement le total (vendues et retirées comprises) : on ne doit
+    // jamais pouvoir supprimer un artiste qui a encore des œuvres liées, même
+    // si aucune n'est disponible. Ne pas remplacer par nb_oeuvres_dispo.
     if (a.nb_oeuvres > 0) {
       await confirmer({
         type: 'error',
@@ -181,12 +187,13 @@ export async function rendreArtisteFiche(contenu, params) {
           <p class="hero-artiste-meta">
             ${a.type ? ech(a.type) : '<em>type non précisé</em>'}
             ${a.prefixe_inventaire ? ` &middot; Préfixe ${ech(a.prefixe_inventaire)}` : ''}
-            &middot; ${pluriel(a.nb_oeuvres, 'œuvre')} au catalogue
+            &middot; ${pluriel(a.nb_oeuvres_dispo || 0, 'œuvre disponible', 'œuvres disponibles')}
           </p>
           <div class="hero-artiste-filet"></div>
           <div class="hero-artiste-stats">
             <div class="hero-stat"><span class="v">${stats.catalogue}</span><span class="l">Au catalogue</span></div>
             <div class="hero-stat"><span class="v accent">${stats.disponibles}</span><span class="l">Disponibles</span></div>
+            <div class="hero-stat"><span class="v">${stats.retirees || 0}</span><span class="l">Retirées</span></div>
             <div class="hero-stat"><span class="v">${stats.ventes}</span><span class="l">Ventes</span></div>
             <div class="hero-stat hero-stat-valeur" id="stat-valeur-dispo" data-valeur="${ech(formaterMontant(stats.valeurDispo))}" title="Cliquer pour afficher">
               <span class="v" id="valeur-dispo-val">••• ••• $</span>
@@ -341,12 +348,12 @@ export async function rendreArtisteFiche(contenu, params) {
       return `<button type="button" class="vignette-bento" data-oeuvre-id="${o.id}" title="${titre}">${img}${badge}</button>`;
     }).join('');
 
-    const zoneCatalogue = a.nb_oeuvres > 0 ? `
+    const zoneCatalogue = a.nb_oeuvres_catalogue > 0 ? `
       <div class="carte zone-catalogue-bento">
         <div class="entete-bloc-bento">
           <h3>Aperçu du catalogue</h3>
           <div class="entete-bloc-actions">
-            <button class="btn-action" id="btn-voir-oeuvres">Voir ${pluriel(a.nb_oeuvres, 'œuvre')} &rsaquo;</button>
+            <button class="btn-action" id="btn-voir-oeuvres">Voir ${pluriel(a.nb_oeuvres_catalogue || 0, 'œuvre')} &rsaquo;</button>
             <button class="btn-action btn-principal" id="btn-ajouter-oeuvres">+ Ajouter</button>
           </div>
         </div>
@@ -447,7 +454,7 @@ export async function rendreArtisteFiche(contenu, params) {
     const btnCatalogue = contenu.querySelector('#btn-catalogue-pdf');
     if (btnCatalogue) {
       btnCatalogue.addEventListener('click', async () => {
-        if (!a.nb_oeuvres) {
+        if (!a.nb_oeuvres_catalogue) {
           await confirmer({
             type: 'info',
             title: 'Aucune œuvre',
@@ -698,7 +705,6 @@ export async function rendreArtisteFiche(contenu, params) {
     contenu.innerHTML = `
       <div class="vue-fiche vue-fiche-bento">
         <h2 class="titre-formulaire">${titrePage}</h2>
-        ${datalist('types-artiste', TYPES_ARTISTE)}
         ${datalist('langues', LANGUES)}
         ${datalist('etiquettes-taxes', ETIQUETTES_TAXES_COURANTES)}
         <form id="formulaire" class="formulaire" novalidate>
@@ -719,7 +725,7 @@ export async function rendreArtisteFiche(contenu, params) {
                 ${champTexte({ nom: 'nom', libelle: 'Nom de famille', valeur: a.nom, requis: true })}
               </div>
               <div class="grille-form">
-                ${champTexte({ nom: 'type', libelle: 'Type', valeur: a.type, liste: 'types-artiste' })}
+                ${champListe({ nom: 'type', libelle: 'Type', valeur: a.type, placeholder: "Peintre, sculpteur…" })}
                 ${champTexte({ nom: 'prefixe_inventaire', libelle: "Préfixe d'inventaire", valeur: a.prefixe_inventaire, attributs: 'maxlength="10"' })}
                 ${champTexte({ nom: 'langue', libelle: 'Langue', valeur: a.langue, liste: 'langues' })}
               </div>
@@ -768,6 +774,7 @@ export async function rendreArtisteFiche(contenu, params) {
                 </ol>
                 <p class="aide-champ" style="margin-top:8px;"><strong>Exemple.</strong> Tu veux 30 $ partout sauf 35 $ en très grand : 1 cote « Tous / Tous = 30 » + 1 cote « Tous / Très grand = 35 » suffit.</p>
                 <p class="aide-champ"><strong>À noter.</strong> Le médium est insensible à la casse et aux accents.</p>
+                <p class="aide-champ"><strong>Hors normes.</strong> Cette taille ne se calcule pas à partir des dimensions : Galeria ne l'attribue jamais toute seule. Choisis-la à la main dans le champ <em>Format</em> de l'œuvre concernée, et la cote « Hors normes » s'appliquera à celle-là seulement.</p>
               </details>
             </div>
 
@@ -980,6 +987,19 @@ export async function rendreArtisteFiche(contenu, params) {
         </div>
       `;
     }
+    // Type d'artiste : saisie libre + valeurs déjà employées au catalogue.
+    const wrapTypeArtiste = contenu.querySelector('[data-liste-wrap="type"]');
+    if (wrapTypeArtiste) {
+      let typesConnus = [...TYPES_ARTISTE];
+      chargerValeursConnues(TYPES_ARTISTE, () => window.api.artistesTypes())
+        .then((v) => { typesConnus = v; });
+      brancherDropdownListe(wrapTypeArtiste, {
+        vide: 'Aucun type connu',
+        getGroupes: () => [{ valeurs: typesConnus }],
+        onChange: () => { modifie = true; },
+      });
+    }
+
     // Dropdown des médiums (composant partagé, même que la fiche œuvre et le
     // calculateur). « Tous » épinglé en tête, propre aux cotes.
     const brancherMedium = (wrap) => brancherDropdownMedium(wrap, {

@@ -229,7 +229,20 @@ const ARTICLES = [
      <ol><li><b>Réglages → Site web</b>.</li>
      <li>Dépliez « <b>Connexion au site</b> », entrez l'<b>adresse</b> du site et les <b>clés</b> (fournies par la personne qui gère le site).</li>
      <li><b>Enregistrer</b>, puis <b>Tester la connexion</b>.</li></ol>
-     <p>Les clés sont <b>chiffrées</b> dans le coffre de Windows (jamais affichées). Une fois en place, l'action <b>« Comparer les fiches avec le site… »</b> est en tête de la page.</p>`),
+     <p>Les clés sont <b>chiffrées</b> dans le coffre de Windows (jamais affichées). Une fois en place, l'action <b>« Comparer les fiches avec le site… »</b> est en tête de la page.</p>
+     <div class="voir-aussi"><b>Voir aussi :</b> <a data-go="Obtenir les clés du site web (WordPress / WooCommerce)">Obtenir les clés du site, étape par étape</a></div>`),
+  A('web', 'Obtenir les clés du site web (WordPress / WooCommerce)', 'clés obtenir créer wordpress woocommerce api rest consumer key secret lecture générer wp-admin étapes installer avancé permission',
+    `<p>Pour relier Galeria au site, il faut créer une <b>clé d'accès en lecture</b> sur le site — <b>une seule fois</b>. C'est sans danger : cette clé permet seulement de <b>lire</b> le site ; Galeria ne peut rien y modifier.</p>
+     <ol>
+       <li><b>Ouvrir l'administration du site.</b> Dans un navigateur, allez à <code>galerievieuxstjean.com/wp-admin</code> et connectez-vous (identifiant et mot de passe WordPress).</li>
+       <li>Dans le menu de gauche : <b>WooCommerce → Réglages</b> <i>(Settings)</i>.</li>
+       <li>En haut, l'onglet <b>Avancé</b> <i>(Advanced)</i>, puis <b>API REST</b> <i>(REST API)</i>.</li>
+       <li><b>Ajouter une clé</b> <i>(Add key)</i>, puis : <b>Description</b> = <code>Galeria</code> ; <b>Utilisateur</b> = votre compte ; <b>Permissions</b> = <b>« Lecture »</b> <i>(Read)</i>. Cliquez <b>Générer une clé d'API</b>.</li>
+       <li><b>Copiez</b> les deux codes affichés : la <b>Clé du client</b> (<code>ck_…</code>) et le <b>Secret du client</b> (<code>cs_…</code>).</li>
+       <li>Dans Galeria : <b>Réglages → Site web</b>, dépliez <b>« Connexion au site »</b>. Adresse : <code>https://galerievieuxstjean.com</code> ; collez la clé et le secret ; <b>Enregistrer</b> puis <b>Tester la connexion</b>.</li>
+     </ol>
+     <div class="attention">La clé et le secret ne s'affichent qu'<b>une seule fois</b> sur le site : copiez-les tout de suite. Perdus ? Retournez à l'étape 3, <b>supprimez</b> la clé « Galeria » et refaites-en une — rien n'est cassé.</div>
+     <div class="astuce">La permission <b>« Lecture »</b> suffit : Galeria ne fait que lire le site. Une fois entrés, vos codes sont <b>chiffrés</b> dans l'application.</div>`),
   A('web', 'Comparer vos œuvres avec le site', 'comparer synchroniser œuvres différences reprendre valeur titre description prix statut filtres lot garder rafraîchir',
     `<p>Depuis <b>Réglages → Site web</b>, cliquez <b>Comparer les fiches avec le site…</b>. Galeria relie chaque œuvre à son produit par le <b>numéro d'inventaire</b> (= SKU du site) et affiche les <b>différences</b> (titre, description, prix, statut).</p>
      <ul><li><b>Reprendre la valeur du site →</b> remplace la valeur dans l'app. Pour le titre et la description, une fenêtre vous laisse d'abord <b>ajuster le texte avant de remplacer</b>.</li>

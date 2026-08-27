@@ -1,5 +1,5 @@
 import { ech, champTexte, champTextarea, champNombreInvalide, soumissionUnique, nettoyerErreur } from '../commun.js';
-import { alerter } from '../dialogue.js';
+import { alerter, confirmer } from '../dialogue.js';
 import { chargerConfig } from '../marque.js';
 
 function dateAujourdhui() {
@@ -151,6 +151,8 @@ export async function ouvrirCreationCertificat({ oeuvre, vente = null }) {
         return;
       }
 
+      if (!await typeConfirme()) return;
+
       const data = {
         oeuvre_id: oeuvre.id,
         vente_id: vente?.id ?? null,
@@ -169,6 +171,37 @@ export async function ouvrirCreationCertificat({ oeuvre, vente = null }) {
         await alerter({ type: 'error', title: 'Enregistrement échoué', message: nettoyerErreur(err) });
       }
     }));
+
+    // Garde-fou : le type de l'œuvre choisit le texte d'attestation du
+    // certificat. Un type inédit (« Céramique », « Installation ») retombe
+    // silencieusement sur celui de l'artiste peintre — on le dit avant de
+    // produire plutôt que de laisser passer un document officiel inexact.
+    // La reconnaissance vient de pdf.js, source unique (voir analyserTypeOeuvre).
+    async function typeConfirme() {
+      let a;
+      try { a = await window.api.certificatAnalyserType(oeuvre?.type); }
+      catch { return true; }               // en cas d'échec, on ne bloque pas
+      if (!a || a.reconnu) return true;
+      const LIB = { peintre: "d'un artiste peintre", sculpteur: "d'un artiste sculpteur",
+                    reproduction: "d'une reproduction" };
+      const attestation = a.type_autre ? `d'un ${a.type_autre}` : (LIB[a.type] || "d'un artiste peintre");
+      const rep = await confirmer({
+        type: 'warning',
+        title: "Type d'œuvre non reconnu",
+        message: a.vide
+          ? "Cette œuvre n'a pas de type."
+          : `Le type « ${oeuvre.type} » n'est pas un type que Galeria sait attester.`,
+        detail: [
+          `Le certificat portera le texte d'attestation ${attestation}.`,
+          'Types reconnus : peinture, sculpture, reproduction, photographie, dessin, estampe, gravure, mixte.',
+          "Tu peux continuer, ou annuler pour corriger le type sur la fiche de l'œuvre.",
+        ].join('\n\n'),
+        buttons: ['Continuer quand même', 'Annuler'],
+        defaultId: 1,
+        cancelId: 1,
+      });
+      return rep === 0;
+    }
 
     rafraichir();
     overlay.querySelector('#f-numero_sage')?.focus();

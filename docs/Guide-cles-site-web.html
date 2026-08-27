@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Guide — obtenir les clés du site pour Galeria</title>
+<style>
+  :root{
+    --or:#C99A3D; --or-pale:#fbf1d6; --or-bord:#e8d9a8;
+    --encre:#2b2b2b; --gris:#5D6875; --pierre:#8a8172; --brume:#e2ddd2; --creme:#FCFAF4; --blanc:#ffffff;
+    --titre:'Cormorant Garamond','Garamond',Georgia,'Times New Roman',serif;
+    --ui:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:#efe9dd;color:var(--encre);font-family:var(--ui);line-height:1.55;}
+  .page{max-width:760px;margin:24px auto;background:var(--blanc);padding:40px 46px;box-shadow:0 6px 24px rgba(0,0,0,.10);}
+  .marque{font-family:var(--titre);font-style:italic;font-size:26px;color:var(--or);letter-spacing:.5px;}
+  h1{font-family:var(--titre);font-weight:600;font-size:32px;margin:6px 0 4px;line-height:1.15;}
+  .sous{color:var(--gris);font-size:15px;margin:0 0 22px;}
+  .intro{background:var(--creme);border:1px solid var(--brume);border-radius:12px;padding:14px 18px;font-size:14.5px;margin-bottom:26px;}
+  .intro b{color:var(--encre);}
+  h2{font-family:var(--titre);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--pierre);margin:28px 0 12px;font-weight:700;}
+  .etape{display:flex;gap:16px;padding:14px 0;border-top:1px solid var(--brume);}
+  .etape:first-of-type{border-top:none;}
+  .num{flex:none;width:34px;height:34px;border-radius:50%;background:var(--or);color:#fff;font-family:var(--titre);font-size:19px;font-weight:600;display:grid;place-items:center;}
+  .corps{flex:1;}
+  .corps h3{margin:4px 0 6px;font-size:16.5px;}
+  .corps p{margin:0 0 6px;font-size:14.5px;}
+  .corps ul{margin:6px 0;padding-left:20px;font-size:14.5px;}
+  .corps li{margin:3px 0;}
+  code{background:#f4efe4;border:1px solid var(--brume);border-radius:5px;padding:1px 6px;font-family:'Consolas','Courier New',monospace;font-size:13px;color:#5a4a1e;}
+  .chemin{font-weight:600;}
+  .alerte{background:#fbeeee;border:1px solid #e6c4c1;border-radius:10px;padding:12px 15px;font-size:14px;margin:8px 0;}
+  .alerte b{color:#9a2b2b;}
+  .rassure{background:var(--or-pale);border:1px solid var(--or-bord);border-radius:12px;padding:16px 20px;margin-top:28px;}
+  .rassure h3{font-family:var(--titre);font-size:19px;margin:0 0 8px;color:#7a5f1f;}
+  .rassure ul{margin:0;padding-left:20px;font-size:14.5px;}
+  .rassure li{margin:5px 0;}
+  .pied{margin-top:30px;padding-top:14px;border-top:1px solid var(--brume);font-size:12.5px;color:var(--pierre);text-align:center;}
+  @media print{ body{background:#fff;} .page{box-shadow:none;margin:0;max-width:none;padding:0 8mm;} }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="marque">Galeria</div>
+    <h1>Relier Galeria à votre site web</h1>
+    <p class="sous">Comment obtenir la « clé d'accès » du site — à faire une seule fois</p>
+
+    <div class="intro">
+      Galeria peut <b>comparer vos fiches</b> (œuvres et artistes) avec la boutique de votre site
+      et vous aider à les tenir à jour. Pour cela, le site doit lui donner une <b>clé d'accès en lecture</b>.
+      C'est <b>sans danger</b> : cette clé permet seulement de <b>lire</b> le site — Galeria ne peut
+      <b>rien modifier</b> en ligne. La marche à suivre prend environ <b>5 minutes</b>.
+    </div>
+
+    <h2>Les étapes, une à une</h2>
+
+    <div class="etape">
+      <div class="num">1</div>
+      <div class="corps">
+        <h3>Ouvrir l'administration du site</h3>
+        <p>Dans un navigateur (Chrome, Edge…), allez à l'adresse :</p>
+        <p><code>galerievieuxstjean.com/wp-admin</code></p>
+        <p>Connectez-vous avec l'identifiant et le mot de passe du site (ceux de WordPress).</p>
+      </div>
+    </div>
+
+    <div class="etape">
+      <div class="num">2</div>
+      <div class="corps">
+        <h3>Aller dans les réglages de la boutique</h3>
+        <p>Dans le menu de gauche, cliquez sur <span class="chemin">WooCommerce</span>, puis sur
+        <span class="chemin">Réglages</span> <span style="color:var(--pierre)">(Settings)</span>.</p>
+      </div>
+    </div>
+
+    <div class="etape">
+      <div class="num">3</div>
+      <div class="corps">
+        <h3>Ouvrir « API REST »</h3>
+        <p>En haut de la page, cliquez sur l'onglet <span class="chemin">Avancé</span>
+        <span style="color:var(--pierre)">(Advanced)</span>, puis sur
+        <span class="chemin">API REST</span> <span style="color:var(--pierre)">(REST API)</span>.</p>
+      </div>
+    </div>
+
+    <div class="etape">
+      <div class="num">4</div>
+      <div class="corps">
+        <h3>Créer la clé</h3>
+        <p>Cliquez sur <span class="chemin">Ajouter une clé</span>
+        <span style="color:var(--pierre)">(Add key / Create an API key)</span>, puis remplissez :</p>
+        <ul>
+          <li><b>Description</b> : écrivez <code>Galeria</code> (pour la reconnaître plus tard).</li>
+          <li><b>Utilisateur</b> : choisissez votre compte.</li>
+          <li><b>Permissions</b> : choisissez <b>« Lecture »</b> <span style="color:var(--pierre)">(Read)</span>. C'est le plus sûr — Galeria n'a besoin que de lire.</li>
+        </ul>
+        <p>Cliquez ensuite sur <span class="chemin">Générer une clé d'API</span>
+        <span style="color:var(--pierre)">(Generate API key)</span>.</p>
+      </div>
+    </div>
+
+    <div class="etape">
+      <div class="num">5</div>
+      <div class="corps">
+        <h3>Copier les deux codes</h3>
+        <p>Le site affiche alors deux codes :</p>
+        <ul>
+          <li>une <b>Clé du client</b> <span style="color:var(--pierre)">(Consumer key)</span> — commence par <code>ck_…</code></li>
+          <li>un <b>Secret du client</b> <span style="color:var(--pierre)">(Consumer secret)</span> — commence par <code>cs_…</code></li>
+        </ul>
+        <div class="alerte"><b>Important :</b> ces deux codes ne s'affichent qu'<b>une seule fois</b>.
+        Copiez-les tout de suite (bouton « Copier »), ou notez-les soigneusement, avant de fermer la page.</div>
+      </div>
+    </div>
+
+    <div class="etape">
+      <div class="num">6</div>
+      <div class="corps">
+        <h3>Les entrer dans Galeria</h3>
+        <p>Ouvrez Galeria, puis allez dans <span class="chemin">Réglages → Site web</span>.</p>
+        <ul>
+          <li>Dépliez <b>« Connexion au site »</b>.</li>
+          <li><b>Adresse du site</b> : <code>https://galerievieuxstjean.com</code></li>
+          <li>Collez la <b>Clé</b> (<code>ck_…</code>) et le <b>Secret</b> (<code>cs_…</code>).</li>
+          <li>Cliquez sur <b>Enregistrer</b>, puis sur <b>Tester la connexion</b>.</li>
+        </ul>
+        <p>Si le message « Connexion réussie » apparaît : c'est terminé ! 🎉</p>
+      </div>
+    </div>
+
+    <div class="rassure">
+      <h3>Quelques précisions rassurantes</h3>
+      <ul>
+        <li><b>Aucun risque pour le site.</b> La clé est en <b>lecture seule</b> : Galeria ne peut rien changer ni supprimer en ligne.</li>
+        <li><b>Vos codes sont protégés.</b> Une fois entrés dans Galeria, ils sont rangés de façon chiffrée sur l'ordinateur — jamais affichés en clair.</li>
+        <li><b>En cas de doute ou d'erreur.</b> Vous pouvez toujours retourner sur le site (étape&nbsp;3), <b>supprimer</b> la clé nommée « Galeria » et en refaire une nouvelle. Rien n'est cassé.</li>
+      </ul>
+    </div>
+
+    <div class="pied">Galeria — Galerie du Vieux Saint-Jean · Guide de configuration du site web</div>
+  </div>
+</body>
+</html>

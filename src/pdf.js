@@ -138,15 +138,40 @@ function logoGalerieEnDataUrl(cheminConfigure) {
   return fichierImageEnDataUrl(path.join(__dirname, '..', 'gabarits', 'actifs', 'logo-gvsj.png'));
 }
 
+// Correspondance type d'œuvre → catégorie d'attestation du certificat.
+// Source unique : typeContrat() et le garde-fou de l'interface s'en servent
+// tous les deux, pour qu'un type non reconnu ne puisse pas passer inaperçu.
+const CORRESPONDANCES_TYPE = [
+  { motifs: ['sculpt'], type: 'sculpteur', type_autre: '' },
+  { motifs: ['reprod'], type: 'reproduction', type_autre: '' },
+  { motifs: ['photo'], type: 'autre', type_autre: 'photographe' },
+  { motifs: ['estamp', 'gravu'], type: 'autre', type_autre: 'graveur' },
+  { motifs: ['dessin'], type: 'autre', type_autre: 'dessinateur' },
+  { motifs: ['peint'], type: 'peintre', type_autre: '' },
+  // « Mixte » et « Techniques mixtes » sont des types livrés par défaut :
+  // ils attestent comme une peinture, comme ils l ont toujours fait. Les lister
+  // ici évite un avertissement à chaque certificat.
+  { motifs: ['mixte'], type: 'peintre', type_autre: '' },
+];
+const REPLI_TYPE = { type: 'peintre', type_autre: '' };
+
+// Renvoie la catégorie d'attestation ET si elle a été reconnue ou devinée.
+// « reconnu: false » signifie que le certificat retombera sur le texte de
+// l'artiste peintre — ce que l'interface signale avant de produire.
+function analyserTypeOeuvre(typeOeuvre) {
+  const t = (typeOeuvre || '').toLowerCase();
+  if (!t.trim()) return { ...REPLI_TYPE, reconnu: false, vide: true };
+  for (const c of CORRESPONDANCES_TYPE) {
+    if (c.motifs.some((m) => t.includes(m))) {
+      return { type: c.type, type_autre: c.type_autre, reconnu: true, vide: false };
+    }
+  }
+  return { ...REPLI_TYPE, reconnu: false, vide: false };
+}
+
 function typeContrat(typeOeuvre) {
-  if (!typeOeuvre) return { type: 'peintre', type_autre: '' };
-  const t = typeOeuvre.toLowerCase();
-  if (t.includes('sculpt')) return { type: 'sculpteur', type_autre: '' };
-  if (t.includes('reprod')) return { type: 'reproduction', type_autre: '' };
-  if (t.includes('photo'))  return { type: 'autre', type_autre: 'photographe' };
-  if (t.includes('estamp') || t.includes('gravu')) return { type: 'autre', type_autre: 'graveur' };
-  if (t.includes('dessin')) return { type: 'autre', type_autre: 'dessinateur' };
-  return { type: 'peintre', type_autre: '' };
+  const a = analyserTypeOeuvre(typeOeuvre);
+  return { type: a.type, type_autre: a.type_autre };
 }
 
 // Cote (commission) de la galerie selon le type d'œuvre.
@@ -1191,4 +1216,4 @@ function indexerTousLesDocuments() {
   return out;
 }
 
-module.exports = { genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPresentationPersonnalisee, genererLettrePochettePdf, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette, indexerTousLesDocuments };
+module.exports = { analyserTypeOeuvre, genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPresentationPersonnalisee, genererLettrePochettePdf, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette, indexerTousLesDocuments };

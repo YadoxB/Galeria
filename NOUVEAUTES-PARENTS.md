@@ -11,6 +11,54 @@
 
 ---
 
+## Depuis la version 0.13.0 — vos retours d'usage
+
+Quatre choses que vous nous avez signalées en vous servant de Galeria.
+
+**Le nombre d'œuvres d'un artiste était faux.** Il comptait aussi les œuvres
+**retirées** et les œuvres **vendues**, ce qui donnait un total qui ne
+correspondait à rien de visible. Désormais, le nombre affiché sur la carte d'un
+artiste, dans la liste et en haut de sa fiche est celui de ses **œuvres
+disponibles** — celles que vous pouvez vendre aujourd'hui. L'en-tête de la fiche
+montre maintenant aussi le nombre d'œuvres **retirées**, à côté de
+« Au catalogue » et « Disponibles ».
+
+**Les C.V. collés depuis le site s'affichaient mal.** Quand vous copiiez un C.V.
+à la main depuis votre site, certaines lignes ressortaient en **rouge et en
+italique** comme si c'étaient des titres de section — par exemple
+« -Musée Beaulne, Coaticook ». De même, une **année seule sur sa ligne** restait
+en dehors du tableau au lieu de rejoindre sa description. C'est réglé : ces
+lignes se placent maintenant correctement, et les points d'une même année
+s'alignent sous elle.
+
+**Une cote « Hors normes ».** Vous pouvez maintenant fixer un tarif d'exception
+pour des œuvres qui sortent de l'ordinaire. Sur la fiche d'un artiste, ajoutez
+une cote dont la taille est **Hors normes**. Ensuite, sur l'œuvre concernée,
+choisissez **Hors normes** dans le champ *Format* — et c'est ce tarif-là qui
+s'appliquera à elle seule. Galeria ne choisira **jamais** « Hors normes » toute
+seule : c'est un choix qui vous appartient, œuvre par œuvre. Le calculateur de
+prix de la page **Outils** a reçu un nouveau champ pour l'essayer.
+
+**« Autre » dans les menus de choix.** Le champ **Style** était un menu fermé :
+impossible d'y ajouter quoi que ce soit. Il est maintenant libre, comme le
+champ Médium l'était déjà. Même chose pour le **Type** et le **Support** d'une
+œuvre, et le **Type** d'un artiste. Vous tapez ce que vous voulez, et votre
+valeur revient dans la liste des suggestions la fois suivante. *(Quatre champs
+restent volontairement fermés — Format, Orientation, Langue et les étiquettes de
+taxes — parce que Galeria s'en sert pour ses calculs.)*
+
+**Une sécurité de plus sur les certificats.** Le type d'une œuvre détermine le
+texte d'attestation du certificat. Si vous saisissez un type que Galeria ne
+connaît pas — « Céramique », « Installation » — elle vous **prévient avant de
+produire le document** et vous dit quel texte sera utilisé, pour que vous
+puissiez corriger. Avec les types habituels, rien ne change.
+
+**Et l'aide sur les clés du site.** L'aide contient maintenant un article
+**« Obtenir les clés du site web »** qui explique la marche à suivre en six
+étapes. Un guide imprimable existe aussi si vous préférez l'avoir sur papier.
+
+---
+
 ## Depuis la version 0.12.0 — la synchronisation avec votre site web
 
 La grande nouveauté : Galeria peut maintenant **se relier à votre site web** pour

@@ -1,19 +1,40 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-07-25.
+> Date de cette sauvegarde : 2026-08-27 (chantier « retours d’usage » prêt à publier).
 >
 > **Voir aussi** : `CHANGELOG.md` (historique versionné détaillé) et `A-VALIDER.md` (questions ouvertes avec les parents).
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-07-25)
+## ▶ Reprise — par où commencer (préparé le 2026-08-27)
 
-**✅ v0.11.0 PUBLIÉE et INSTALLÉE à la galerie (2026-07-25).** `master` = `origin/master` = `275c0bd`, **tag `v0.11.0`** publié sur GitHub Releases ; les parents ont reçu la mise à jour par auto-update. `package.json` = `0.11.0`. **Rien n'est en attente de livraison — l'arbre est propre, poussé et à jour.**
+**✅ Dernière version PUBLIÉE : v0.13.0 (2026-08-10) — Phase 5, synchronisation avec le site web.** `origin/master` = **tag `v0.13.0`** = `6d73ed7` ; les parents la reçoivent par auto-update. `package.json` = `0.13.0`.
 
-La 0.11.0 regroupe, tous **livrés et confirmés par Dave dans l'app** : le **verrou de sécurité** (code + question de secours), le chantier **« Retours d'usage »**, le **choix/déplacement du dossier de données** (sortie de OneDrive), et **4 calculatrices** sur la page Outils. Détail dans « Ce qui est fait » ci-dessous et dans `CHANGELOG.md` (entrée `0.11.0`).
+> **⚠ Travail NON commité, PRÊT À PUBLIER (chantier « retours d'usage » du 2026-08-27).** Quatre lots codés, testés au banc d'essai et **validés par Dave dans l'app**, plus l'article d'aide resté en attente depuis la 0.13.0. Reste à faire : monter la version, commiter, `npm run release`. Détail complet dans `CHANGELOG.md` (section « Non publié ») et `NOUVEAUTES-PARENTS.md`.
+>
+> 1. **Compte des œuvres** — le nombre principal d'un artiste = ses **disponibles** (carte, liste, en-tête), « Au catalogue » exclut les retirées, nouvelle tuile « Retirées ». ⚠ Le garde-fou de suppression d'un artiste compte toujours **toutes** les œuvres : ne pas « corriger » ça (commentaire explicite dans `requetes.js`).
+> 2. **C.V. collé** — `rendreCV` dans `gabarit-presentation.html` gère l'année seule sur sa ligne et les puces collées au tiret (`-Musée`) ou en `•`. Vérifié sur les 21 C.V. réels du site : 30 lignes corrigées, toutes des puces, 0 régression.
+> 3. **Cote « Hors normes »** — taille jamais calculée, attribuée à la main via le champ Format. ⚠ Touche **cinq** endroits, dont la liste de validation en dur de `mutations.js` (sans elle, la cote est refusée à l'enregistrement). Champ de taille manuelle ajouté au calculateur d'Outils.
+> 4. **Valeurs libres** — Style (était un `<select>` fermé), Type et Support de l'œuvre, Type de l'artiste. Brique générique `champListe` / `brancherDropdownListe` / `chargerValeursConnues` dans `commun.js` ; le Médium y délègue désormais. Plus un **avertissement avant un certificat dont le type n'est pas reconnu** (table unique `CORRESPONDANCES_TYPE` dans `pdf.js`, exposée par IPC).
 
-> **État git : sain.** Tout est sur `master`, poussé et publié — l'ancienne alerte « travail non fusionné sur une branche » ne s'applique plus. Les branches de worktree anciennes (`galeria-security-phase-f35c87`, `galeria-data-folder-migration-18aa86`, etc.) sont **historiques** et peuvent être ignorées ; on repart de `master`.
+> **Où travailler :** dans le dossier principal `F:\Galerie\Automatisation\GalerieApp`, sur `master`. C'est le seul endroit qui a `node_modules` — l'app ne démarre pas depuis un worktree `.claude/worktrees/` et `npm run release` y échoue. Piège vécu le 2026-08-27 : du code écrit dans un worktree a donné l'impression que « rien ne change » à l'essai. Les anciennes branches de worktree sont historiques.
+
+> **Historique des versions :** v0.11.0 (2026-07-25 — verrou + retours d'usage + dossier de données + 4 outils) · v0.12.0 (2026-08-09 — 3 corrections) · v0.13.0 (2026-08-10 — Phase 5 web).
+
+### ▶ Prochaine étape (à trancher avec Dave)
+
+**D'abord : publier le chantier ci-dessus** (version à monter, probablement `0.14.0` — il y a des ajouts, pas que des correctifs).
+
+Ensuite, le **reste de la liste de retours des parents du 2026-08-27**, non commencé :
+
+1. **Documents en anglais** (bio-démarche-C.V., lettre, certificat, catalogue). La **lettre est déjà bilingue** (sélecteur « Langue des documents » sur la vente, `gabarit-lettre.html` gère FR/EN) — le modèle existe. Les trois autres gabarits n'ont **aucun** anglais. ⚠ Question de fond non tranchée : traduire **les étiquettes** seulement, ou aussi **le contenu** ? La biographie et le C.V. d'un artiste sont en français dans la base ; il faudrait des champs anglais par artiste.
+2. **Photos — gros chantier, seul point à risque de perte de données.** Classer le dossier photos par artiste, puis par statut (disponible / vendue / retirée), plus un dossier « divers » ; ajouter une section Photos à la fiche d'artiste. Aujourd'hui tout est à plat (`Photos/artistes/artiste-3-…jpg`) et **les chemins sont référencés en base** → migration de fichiers, sauvegarde obligatoire avant, chemin de retour à prévoir. Démo HTML avant tout code.
+3. **Soutien technique à distance** — décision prise : **copie expurgée** de la base (artistes, œuvres, réglages, photos ; clients et ventes retirés), que les parents envoient à Dave. Respecte le principe « rien ne sort » de `CLAUDE.md` §3 et la Loi 25, et couvre tous les points de leur liste. Partage d'écran (Assistance rapide de Windows) pour les rares cas touchant une vente.
+4. **Bouton « Signaler un problème »** — monte un dossier de diagnostic (version, page, dernières lignes d'`erreurs.log`, compteurs, description écrite, capture facultative), **montré avant envoi**, produisant un fichier ou un courriel prérempli. **Jamais d'envoi automatique.**
+5. **Filtrer les œuvres par numéro** — ⚠ **à clarifier avec Dave** : la barre de recherche cherche **déjà** dans le numéro d'inventaire (`oeuvres-liste.js`). Savoir ce qui manque avant de coder.
+
+Puis la feuille de route : **Phase 4 — Sage 50**, le **cadre de tests** (dette technique, jamais fait) et le **volet chiffrement** (PARQUÉ, reco = BitLocker d'abord).
 
 ### ✅ v0.12.0 PUBLIÉE (2026-08-09) — trois corrections d'usage
 
@@ -44,7 +65,9 @@ Gros chantier **fonctionnellement complet**, publié sur GitHub Releases (tag `v
 - **#1 Dossier de données — choisir et déplacer l'emplacement (dernier lot du chantier, LIVRÉ 2026-07-24, confirmé par Dave)** : commits `42988fd` (Pas A, papier d'adresse dans `userData`), `db3c509` (Pas B, moteur `src/db/deplacer-donnees.js`), `6db2c69` (Pas C-1, branchement démarrage + IPC), `e3aa8f8` (Pas C-2, écran Réglages → Données), `7581a99` (défaut = dossier personnel). Carte « Dossier de données Galeria », avertissement OneDrive + suggestion locale, « Déplacer le dossier… » (sauvegarde d'abord → déplacement au redémarrage base fermée, renommage même disque / copie vérifiée autre disque) et lien « Indiquer à Galeria où les retrouver ». Détails dans la section « Retours d'usage » plus bas.
 - **Outils complémentaires (page Outils) — 4 calculatrices (LIVRÉ 2026-07-25, confirmé par Dave)** : commits `014ced2` (Taxes), `60a8020` + `cd14433` (Conversion + correctif fetch), `0c77956` (Plan de versements), `40eacb4` (Expédition). Barre latérale groupée (« Liés au catalogue » / « Calculatrices rapides »). **Taxes** (ajouter/retirer, province ; Québec = Réglages, autres = `config.outils.taxes_provinces`). **Conversion** (longueur/poids/devise ; taux **Banque du Canada** via `src/taux-change.js`, repli hors-ligne, `config.outils.taux_change_*` ; EUR inclus). **Plan de versements** (échéancier, dernier versement ajusté, bouton copier via IPC `outils:copier-texte`). **Expédition** (poids estimé, facteurs `config.outils.expedition`, avertissement « à calibrer »). Tout en direct, aucune écriture base, aucun PDF. Réutilise les styles existants + `.cat-groupe`. Démo `demos/outils-complementaires.html`. Aussi : `442c611` corrige l'avertissement Node 24 DEP0190 dans `scripts/release.js`.
 
-### ▶ Prochaine étape (à trancher avec Dave en début de session)
+### ▶ Prochaine étape (contexte du 2026-07-25 — PÉRIMÉ, voir le bloc Reprise en tête)
+
+> **Note (2026-08-10) :** cette section date d'avant la Phase 5. **La Phase 5 (Web) est faite et publiée en v0.13.0.** Se fier au bloc « ▶ Prochaine étape » en **tête du document**. Conservé ci-dessous pour l'historique.
 
 La 0.11.0 clôt la séquence **reproductions → robustesse → sécurité (verrou) → retours d'usage → dossier de données → outils**. Rien n'est en cours. Options pour la suite, dans l'ordre de la feuille de route :
 
@@ -84,7 +107,7 @@ Audit complet en 7 axes, rapport priorisé, puis correction **par lots approuvé
 
 ### ▶ Prochaine étape (feuille de route)
 
-Ordre convenu : **① reproductions ✓** · **② robustesse ✓** · **③ Sécurité — volet verrou ✓, volet chiffrement PARQUÉ** · **④ Phase 5 — Web (WooCommerce)** ← *prochaine* · **⑤ Phase 4 — Sage 50**. *(Phases 4 et 5 inversées sur demande de Dave.)*
+Ordre convenu : **① reproductions ✓** · **② robustesse ✓** · **③ Sécurité — volet verrou ✓, volet chiffrement PARQUÉ** · **④ Phase 5 — Web (WooCommerce) ✓ (publiée v0.13.0, 2026-08-10)** · **⑤ Phase 4 — Sage 50** ← *prochaine grosse étape*. *(Phases 4 et 5 inversées sur demande de Dave.)*
 
 ### ③ Sécurité — verrou livré, chiffrement parqué (branche `claude/galeria-security-phase-f35c87`)
 

@@ -80,7 +80,9 @@ function formaterDimensionsTexte(h, l, p) {
   return visibles.map((v) => (v != null ? String(v) : '?')).join(' × ') + ' po';
 }
 
-const TAILLES_COTES = new Set(['Tous', 'Petit', 'Moyen', 'Grand', 'Très grand']);
+// ⚠ Doit rester aligné avec TAILLES_COTES de src/app/calcul-prix.js (interface).
+// « Hors normes » = taille attribuée à la main, jamais calculée.
+const TAILLES_COTES = new Set(['Tous', 'Petit', 'Moyen', 'Grand', 'Très grand', 'Hors normes']);
 const UNITES_COTES = new Set(['lineaire', 'carre']);
 
 const normaliserCotes = (v) => {

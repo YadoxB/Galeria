@@ -107,6 +107,15 @@ export async function rendreOutils(contenu) {
             </div>
           </div>
 
+          <div class="form-champ">
+            <label for="calc-taille">Taille utilisée pour la cote</label>
+            <select id="calc-taille">
+              <option value="">Automatique — d'après les dimensions</option>
+              ${TAILLES_COTES.map((t) => `<option value="${ech(t)}">${ech(t)}</option>`).join('')}
+            </select>
+          </div>
+          <p class="aide-champ calc-note-taille" id="calc-note-taille"></p>
+
           <div id="calc-resultat" class="calc-resultat"></div>
         </div>
 
@@ -375,6 +384,8 @@ export async function rendreOutils(contenu) {
   const inLargeur = contenu.querySelector('#calc-largeur');
   const zoneResultat = contenu.querySelector('#calc-resultat');
   const zoneCotes = contenu.querySelector('#calc-cotes-artiste');
+  const selTaille = contenu.querySelector('#calc-taille');
+  const noteTaille = contenu.querySelector('#calc-note-taille');
 
   let artisteCharge = null;
   let mediumsArtisteCalc = [];
@@ -385,7 +396,7 @@ export async function rendreOutils(contenu) {
   });
 
   async function chargerArtiste(id) {
-    if (!id) { artisteCharge = null; mediumsArtisteCalc = []; afficherCotesArtiste(); calculer(); return; }
+    if (!id) { artisteCharge = null; mediumsArtisteCalc = []; calculer(); return; }
     try {
       artisteCharge = await window.api.artisteGet(Number(id));
     } catch {
@@ -393,11 +404,11 @@ export async function rendreOutils(contenu) {
     }
     try { mediumsArtisteCalc = await window.api.oeuvresMediumsArtiste(Number(id)); }
     catch { mediumsArtisteCalc = []; }
-    afficherCotesArtiste();
     calculer();
   }
 
-  function afficherCotesArtiste() {
+  // coteRetenue : la cote effectivement appliquée, surlignée dans le tableau.
+  function afficherCotesArtiste(coteRetenue = null) {
     if (!artisteCharge) {
       zoneCotes.innerHTML = `<p class="aide-champ" style="font-style:italic; margin:0;">Choisis un artiste pour voir ses cotes.</p>`;
       return;
@@ -418,7 +429,10 @@ export async function rendreOutils(contenu) {
             const cible = (c.medium === 'Tous' && c.taille === 'Tous')
               ? 'Toutes œuvres'
               : `${ech(c.medium)}${c.taille !== 'Tous' ? ` &middot; ${ech(c.taille)}` : ''}`;
-            return `<tr><td class="cote-cible">${cible}</td><td class="cote-prix">${c.prix_pref} $</td><td class="cote-unite">${uniteLib}</td></tr>`;
+            const estRetenue = coteRetenue
+              && c.medium === coteRetenue.medium && c.taille === coteRetenue.taille
+              && c.unite === coteRetenue.unite && c.prix_pref === coteRetenue.prix_pref;
+            return `<tr class="${estRetenue ? 'cote-retenue' : ''}"><td class="cote-cible">${cible}</td><td class="cote-prix">${c.prix_pref} $</td><td class="cote-unite">${uniteLib}</td></tr>`;
           }).join('')}
         </tbody>
       </table>
@@ -428,30 +442,48 @@ export async function rendreOutils(contenu) {
   function calculer() {
     if (!artisteCharge) {
       zoneResultat.innerHTML = `<p class="aide-champ" style="font-style:italic;">Choisis un artiste pour démarrer.</p>`;
+      noteTaille.textContent = '';
+      afficherCotesArtiste();
       return;
     }
     const h = calcPo.h || 0;
     const l = calcPo.l || 0;
+    // Le format vient de la règle partagée (calcul-prix.js), la même que la
+    // fiche d'œuvre : √(H×L) avec les seuils 16/30/42. « Hors normes » n'en
+    // sort jamais : c'est une cote d'exception, d'où le choix manuel ci-dessous.
+    const tailleAuto = (h > 0 && l > 0) ? (calculerFormat(h, l) || 'Très grand') : '';
+    const forcee = selTaille.value;
+    const taille = forcee || tailleAuto;
+
+    // Rappel de ce que le calcul aurait donné : on doit toujours voir qu'on force.
+    if (forcee) {
+      noteTaille.innerHTML = `Taille forcée à <strong>${ech(forcee)}</strong>`
+        + (tailleAuto ? ` — le calcul aurait donné <strong>${ech(tailleAuto)}</strong>.` : '.');
+    } else if (tailleAuto) {
+      noteTaille.innerHTML = `Taille calculée : <strong>${ech(tailleAuto)}</strong> (√(${h} × ${l}) = ${Math.sqrt(h * l).toFixed(1)} po).`;
+    } else {
+      noteTaille.textContent = '';
+    }
+
     if (h <= 0 || l <= 0) {
       zoneResultat.innerHTML = `<p class="aide-champ" style="font-style:italic;">Entre la hauteur et la largeur pour calculer.</p>`;
+      afficherCotesArtiste();
       return;
     }
-    // On calcule directement à partir des cotes en simulant une œuvre.
-    // Le format vient de la règle partagée (calcul-prix.js), la même que la
-    // fiche d'œuvre : √(H×L) avec les seuils 16/30/42.
     const moyGeo = Math.sqrt(h * l);
-    const taille = calculerFormat(h, l) || 'Très grand';
 
     const oeuvreVirt = { hauteur: h, largeur: l, medium: inMedium.value.trim(), format: taille };
     const res = calculerPrixSuggere({ artiste: artisteCharge, oeuvre: oeuvreVirt });
     if (!res) {
+      afficherCotesArtiste();
       zoneResultat.innerHTML = `
         <div class="prix-suggere prix-suggere-aucun">
-          Aucune cote ne correspond. Format calculé : <strong>${taille}</strong> (à partir de √(${h} × ${l}) = ${moyGeo.toFixed(1)} po).
+          Aucune cote ne correspond pour la taille <strong>${ech(taille)}</strong>${forcee ? '' : ` (calculée à partir de √(${h} × ${l}) = ${moyGeo.toFixed(1)} po)`}.
         </div>
       `;
       return;
     }
+    afficherCotesArtiste(res.cote);
     zoneResultat.innerHTML = `
       <div class="prix-suggere prix-suggere-actif">
         <div class="prix-suggere-entete">
@@ -490,6 +522,7 @@ export async function rendreOutils(contenu) {
 
   selArtiste.addEventListener('change', () => chargerArtiste(selArtiste.value));
   inMedium.addEventListener('input', calculer);
+  selTaille.addEventListener('change', calculer);
   [inHauteur, inLargeur].forEach((el) => el.addEventListener('input', () => { lireSaisieCalc(); calculer(); }));
   contenu.querySelectorAll('[data-unite]').forEach((b) => {
     b.addEventListener('click', () => {

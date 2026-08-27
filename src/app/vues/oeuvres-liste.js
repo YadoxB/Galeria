@@ -174,7 +174,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
   let modeSelection = false;
   const selection = new Set();
 
-  const FORMATS_FILTRE = ['Petit', 'Moyen', 'Grand', 'Très grand'];
+  const FORMATS_FILTRE = ['Petit', 'Moyen', 'Grand', 'Très grand', 'Hors normes'];
   const STYLES_FILTRE = ['Figuratif', 'Mi-Figuratif', 'Abstrait'];
 
   const recherche = contenu.querySelector('#recherche');

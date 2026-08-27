@@ -2737,6 +2737,12 @@ details.bloc.pliable > .bloc-corps {
   user-select: text;
 }
 .cotes-table tbody tr:last-child td { border-bottom: 0; }
+/* Ligne de cote effectivement appliquée par le calculateur (page Outils).
+   Utile surtout quand on force la taille : on voit si la cote visée a mordu
+   ou si on est retombé sur le fourre-tout « Toutes œuvres ». */
+.cotes-table tbody tr.cote-retenue td { background: rgba(201, 154, 61, 0.13); font-weight: 600; }
+/* Rappel de la taille calculée / forcée, sous le sélecteur du calculateur. */
+.calc-note-taille { margin: -6px 0 14px; min-height: 17px; }
 .cotes-table .cote-prix {
   text-align: right;
   color: var(--warm-gold);

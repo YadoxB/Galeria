@@ -6,7 +6,12 @@ function listerArtistes(filtres = {}) {
   return db.prepare(`
     SELECT a.id, a.nom, a.prenom, a.type, a.prefixe_inventaire,
            a.courriel, a.telephone, a.province, a.langue, a.photo_path, a.archive,
-           (SELECT COUNT(*) FROM oeuvres o WHERE o.artiste_id = a.id) AS nb_oeuvres
+           (SELECT COUNT(*) FROM oeuvres o WHERE o.artiste_id = a.id) AS nb_oeuvres,
+           (SELECT COUNT(*) FROM oeuvres o
+             WHERE o.artiste_id = a.id AND o.archive = 0) AS nb_oeuvres_catalogue,
+           (SELECT COUNT(*) FROM oeuvres o
+             WHERE o.artiste_id = a.id AND o.archive = 0
+               AND o.statut = 'disponible') AS nb_oeuvres_dispo
     FROM artistes a
     ${where}
     ORDER BY a.nom COLLATE NOCASE, a.prenom COLLATE NOCASE
@@ -17,10 +22,23 @@ function obtenirArtiste(id) {
   const db = openDatabase();
   const artiste = db.prepare('SELECT * FROM artistes WHERE id = ?').get(id);
   if (!artiste) return null;
-  const nb_oeuvres = db
-    .prepare('SELECT COUNT(*) AS n FROM oeuvres WHERE artiste_id = ?')
+  // Trois comptes distincts — ne pas les confondre :
+  //   nb_oeuvres           → TOUTES les œuvres, vendues et retirées comprises.
+  //                          Sert au garde-fou de suppression d'un artiste
+  //                          (artiste-fiche.js). Il doit rester complet, sinon
+  //                          un artiste dont toutes les œuvres sont vendues
+  //                          deviendrait supprimable sans avertissement.
+  //   nb_oeuvres_catalogue → ce qui est encore à la galerie (retirées exclues).
+  //                          Même périmètre que oeuvresPourCatalogue().
+  //   nb_oeuvres_dispo     → le nombre principal montré à l'écran (carte de
+  //                          l'artiste et en-tête de sa fiche).
+  const compte = (cond) => db
+    .prepare(`SELECT COUNT(*) AS n FROM oeuvres WHERE artiste_id = ?${cond}`)
     .get(id).n;
-  return { ...artiste, nb_oeuvres };
+  const nb_oeuvres = compte('');
+  const nb_oeuvres_catalogue = compte(' AND archive = 0');
+  const nb_oeuvres_dispo = compte(" AND archive = 0 AND statut = 'disponible'");
+  return { ...artiste, nb_oeuvres, nb_oeuvres_catalogue, nb_oeuvres_dispo };
 }
 
 function obtenirFicheArtisteBundle(id) {
@@ -53,7 +71,10 @@ function obtenirFicheArtisteBundle(id) {
     artiste,
     voisins,
     stats: {
-      catalogue: artiste.nb_oeuvres,
+      catalogue: artiste.nb_oeuvres_catalogue,
+      // Retirées = rendues à l'artiste (archive = 1). Le total moins ce qui
+      // reste au catalogue : pas de requête de plus.
+      retirees: artiste.nb_oeuvres - artiste.nb_oeuvres_catalogue,
       disponibles: dispoRow.n,
       valeurDispo: dispoRow.v,
       ventes: ventesNb,
@@ -637,6 +658,33 @@ function listerTypesOeuvre() {
     .map((r) => r.type);
 }
 
+// Valeurs déjà employées au catalogue, pour alimenter les suggestions des
+// champs à saisie libre (support, style, type d'artiste). Même esprit que
+// listerTypesOeuvre / listerMediumsOeuvre.
+function listerSupportsOeuvre() {
+  const db = openDatabase();
+  return db
+    .prepare(`SELECT DISTINCT TRIM(support) AS support FROM oeuvres WHERE support IS NOT NULL AND TRIM(support) <> '' ORDER BY TRIM(support) COLLATE NOCASE`)
+    .all()
+    .map((r) => r.support.trim());
+}
+
+function listerStylesOeuvre() {
+  const db = openDatabase();
+  return db
+    .prepare(`SELECT DISTINCT TRIM(style) AS style FROM oeuvres WHERE style IS NOT NULL AND TRIM(style) <> '' ORDER BY TRIM(style) COLLATE NOCASE`)
+    .all()
+    .map((r) => r.style.trim());
+}
+
+function listerTypesArtiste() {
+  const db = openDatabase();
+  return db
+    .prepare(`SELECT DISTINCT TRIM(type) AS type FROM artistes WHERE type IS NOT NULL AND TRIM(type) <> '' ORDER BY TRIM(type) COLLATE NOCASE`)
+    .all()
+    .map((r) => r.type.trim());
+}
+
 function listerMediumsOeuvre() {
   const db = openDatabase();
   return db
@@ -825,6 +873,9 @@ module.exports = {
   obtenirFicheOeuvreBundle,
   voisinsOeuvre,
   listerTypesOeuvre,
+  listerSupportsOeuvre,
+  listerStylesOeuvre,
+  listerTypesArtiste,
   listerMediumsOeuvre,
   listerMediumsArtiste,
   statsOeuvres,

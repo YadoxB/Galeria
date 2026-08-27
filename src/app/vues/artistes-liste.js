@@ -22,8 +22,9 @@ function trier(artistes, tri) {
   const cmpStr = (a, b) => sansAccents(a || '').localeCompare(sansAccents(b || ''));
   switch (tri) {
     case 'nom-asc':       liste.sort((a, b) => cmpStr(nomComplet(a), nomComplet(b))); break;
-    case 'oeuvres-desc':  liste.sort((a, b) => (b.nb_oeuvres || 0) - (a.nb_oeuvres || 0)); break;
-    case 'oeuvres-asc':   liste.sort((a, b) => (a.nb_oeuvres || 0) - (b.nb_oeuvres || 0)); break;
+    // Le tri suit le nombre affiché (les disponibles), pas le total.
+    case 'oeuvres-desc':  liste.sort((a, b) => (b.nb_oeuvres_dispo || 0) - (a.nb_oeuvres_dispo || 0)); break;
+    case 'oeuvres-asc':   liste.sort((a, b) => (a.nb_oeuvres_dispo || 0) - (b.nb_oeuvres_dispo || 0)); break;
     case 'plus-recentes':
     default:              liste.sort((a, b) => b.id - a.id); break;
   }
@@ -146,7 +147,7 @@ export async function rendreArtistesListe(contenu) {
             <h3 class="oeuvre-carte-titre">${ech(nom)} ${a.archive ? badgeArchive() : ''}</h3>
           </div>
           <p class="oeuvre-carte-artiste">${a.type ? ech(a.type) : '<em>type non précisé</em>'}</p>
-          <p class="oeuvre-carte-prix">${pluriel(a.nb_oeuvres, 'œuvre')}</p>
+          <p class="oeuvre-carte-prix">${pluriel(a.nb_oeuvres_dispo || 0, 'œuvre disponible', 'œuvres disponibles')}</p>
           ${a.prefixe_inventaire ? `<p class="oeuvre-carte-artiste">Préfixe ${ech(a.prefixe_inventaire)}</p>` : ''}
         </div>
       </article>
@@ -165,7 +166,7 @@ export async function rendreArtistesListe(contenu) {
           <p class="ligne-meta">
             ${a.type ? ech(a.type) : '<em>type non précisé</em>'}
             &nbsp;&middot;&nbsp;
-            ${pluriel(a.nb_oeuvres, 'œuvre')}
+            ${pluriel(a.nb_oeuvres_dispo || 0, 'œuvre disponible', 'œuvres disponibles')}
             ${a.prefixe_inventaire ? `&nbsp;&middot;&nbsp;Préfixe ${ech(a.prefixe_inventaire)}` : ''}
           </p>
         </div>
