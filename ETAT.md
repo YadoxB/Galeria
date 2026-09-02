@@ -26,6 +26,8 @@
 
 > **Où travailler :** dossier principal `F:\Galerie\Automatisation\GalerieApp`, sur `master`. Seul endroit avec `node_modules` : l'app ne démarre pas depuis un worktree `.claude/worktrees/` et `npm run release` y échoue.
 
+> **Règle de publication (2026-08-27) : la fenêtre « Quoi de neuf » est OBLIGATOIRE à chaque version.** Les diapos sont rangées **par version** dans `VERSIONS` (`src/app/nouveautes.js`), la plus récente en tête ; on **n'efface jamais** les anciennes — elles servent à qui a sauté une mise à jour, les nouveautés s'empilent alors dans l'ordre chronologique. `npm run release` **refuse de publier** si la version en tête ne correspond pas à `package.json`. Voir `CLAUDE.md` §13.
+
 ### ▶ Prochaine étape
 
 1. **Dave teste la 0.15.0 dans l'app**, puis `git push origin master` et `npm run release`. À vérifier en priorité : le démarrage (la migration s'exécute alors), et **une page de cartels imprimée pour de vrai** (les QR se scannent-ils à 22 mm, les traits de découpe tombent-ils juste ?).

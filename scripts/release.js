@@ -14,6 +14,47 @@ function fail(msg) {
   process.exit(1);
 }
 
+// 0. Garde-fou « Quoi de neuf » : à CHAQUE version, la fenêtre de nouveautés
+//    montrée à l'ouverture doit être mise à jour (règle de la galerie,
+//    2026-08-27). On refuse de publier tant que NOUVEAUTES_ID de
+//    src/app/nouveautes.js ne correspond pas à la version de package.json —
+//    sinon les parents recevraient une mise à jour en se faisant présenter
+//    les nouveautés de la précédente.
+function verifierNouveautes() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const version = require('../package.json').version;
+  const attendu = version;
+  const fichier = path.join(__dirname, '..', 'src', 'app', 'nouveautes.js');
+  let src;
+  try {
+    src = fs.readFileSync(fichier, 'utf8');
+  } catch {
+    fail("src/app/nouveautes.js est introuvable : impossible de vérifier la fenêtre « Quoi de neuf ».");
+  }
+  // Première entrée de VERSIONS = la version la plus récente.
+  const m = src.match(/version:\s*'([^']*)'/);
+  if (!m) {
+    fail("Aucune entrée de version trouvée dans VERSIONS (src/app/nouveautes.js).");
+  }
+  if (m[1] !== attendu) {
+    fail([
+      `La fenêtre « Quoi de neuf » n'est pas à jour pour la version ${version}.`,
+      '',
+      `  VERSIONS commence par : '${m[1]}'`,
+      `  il devrait commencer par : '${attendu}'`,
+      '',
+      'Dans src/app/nouveautes.js :',
+      `  1. ajouter une entrée EN TÊTE de VERSIONS avec version: '${attendu}' ;`,
+      '  2. y décrire les nouveautés de cette version (ne pas supprimer les anciennes).',
+      '',
+      'Sans ça, les parents verraient les nouveautés de la version précédente.',
+    ].join('\n'));
+  }
+  console.log(`[release] ✓ Fenêtre « Quoi de neuf » à jour (${attendu}).`);
+}
+verifierNouveautes();
+
 // 1. Récupérer le token via gh
 let token;
 try {

@@ -188,6 +188,24 @@ Conseils pour bien diriger la construction, même sans connaître la programmati
 - Ne jamais coller de mots de passe ou de clés dans le code. Les données restent locales.
 - Pour continuer dans une nouvelle conversation, demander d'abord à Claude Code de résumer l'état du projet dans un fichier `ETAT.md` (ce qui est fait, ce qui reste, la prochaine étape), puis ouvrir la nouvelle conversation en lui faisant lire `CLAUDE.md` et `ETAT.md`.
 
-## 13. Premier message à donner à Claude Code
+## 13. Règle de publication : la fenêtre « Quoi de neuf »
+
+**Obligatoire à chaque version.** Les propriétaires reçoivent les mises à jour
+automatiquement, sans les demander : à l'ouverture qui suit, l'application doit
+leur montrer ce qui a changé, en mots simples.
+
+- Les diapos vivent dans `src/app/nouveautes.js`, rangées **par version** dans
+  le tableau `VERSIONS`, la plus récente en tête.
+- À chaque version : **ajouter une entrée en tête**, avec son numéro et ses
+  diapos. **Ne jamais supprimer les entrées précédentes** — elles servent à
+  quelqu'un qui a sauté une mise à jour : il verra alors les nouveautés de
+  toutes les versions manquées, dans l'ordre chronologique.
+- `npm run release` **refuse de publier** si la version en tête de `VERSIONS`
+  ne correspond pas à celle de `package.json`. La règle est donc tenue par le
+  script, pas par la mémoire.
+- Ton : celui de `NOUVEAUTES-PARENTS.md` — ce que ça change pour eux, jamais
+  comment c'est fait.
+
+## 14. Premier message à donner à Claude Code
 
 > Je veux bâtir une application Windows locale pour gérer une galerie d'art. Lis le fichier `CLAUDE.md` à la racine du projet, il contient tout le contexte. Commençons par la Phase 1 seulement : mets en place une application Electron avec une base SQLite locale, un écran d'accueil simple en français, et la sauvegarde automatique du fichier de base. Présente-moi d'abord ton plan en mots simples, puis attends mon accord avant de coder.
