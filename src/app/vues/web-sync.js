@@ -36,6 +36,7 @@ export async function rendreWebSync(contenu) {
           </div>
         </div>
         <div class="entete-page-actions">
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-recuperer-adresses">Récupérer les adresses du site</button>
           <button type="button" class="btn-action btn-principal" id="btn-comparer">Comparer avec le site</button>
         </div>
       </div>
@@ -45,6 +46,7 @@ export async function rendreWebSync(contenu) {
 
   const corps = contenu.querySelector('#web-sync-corps');
   const btnComparer = contenu.querySelector('#btn-comparer');
+  brancherRecupererAdresses(contenu.querySelector('#btn-recuperer-adresses'));
   contenu.querySelector('#wsync-vers-artistes')?.addEventListener('click', () => naviguer('web-sync-artistes'));
 
   let dataCourant = null;
@@ -741,5 +743,53 @@ function modalCorrigerSku(produit) {
         await alerter({ type: 'error', title: 'Correction refusée', message: nettoyerErreur(err) });
       }
     });
+  });
+}
+// Bouton « Récupérer les adresses du site ». Remplit l'adresse de la fiche de
+// chaque œuvre sur le site, rapprochée par numéro d'inventaire = SKU. Passe par
+// l'API publique de la boutique : fonctionne même sans clés REST configurées.
+// C'est cette adresse que le code QR des cartels d'exposition utilise.
+function brancherRecupererAdresses(btn) {
+  if (!btn) return;
+  btn.addEventListener('click', async (e) => {
+    const bouton = e.currentTarget; // à capturer AVANT tout await (sinon null ensuite)
+    const rep = await confirmer({
+      type: 'question',
+      title: 'Récupérer les adresses du site ?',
+      message: "Remplir, pour chaque œuvre, l'adresse de sa fiche sur le site web.",
+      detail: [
+        "Le rapprochement se fait par numéro d'inventaire (le SKU du site).",
+        "Seule cette adresse est renseignée : aucun autre champ n'est touché, et rien n'est modifié sur le site.",
+        "L'adresse sert au bouton « Voir sur le site » et aux codes QR des cartels.",
+      ].join('\n\n'),
+      buttons: ['Récupérer', 'Annuler'], defaultId: 0, cancelId: 1,
+    });
+    if (rep !== 0) return;
+    bouton.disabled = true;
+    const lib = bouton.textContent;
+    bouton.textContent = 'Lecture du site…';
+    try {
+      const r = await window.api.webRecupererAdresses();
+      const lignes = [
+        `${pluriel(r.total_site, 'produit lu', 'produits lus')} sur le site.`,
+        `${pluriel(r.rapprochees, 'œuvre rapprochée', 'œuvres rapprochées')} par numéro d'inventaire.`,
+      ];
+      if (r.inchangees) lignes.push(`${pluriel(r.inchangees, 'adresse était déjà à jour', 'adresses étaient déjà à jour')}.`);
+      if (r.sans_correspondance) lignes.push(`${pluriel(r.sans_correspondance, 'produit du site n\u2019a', 'produits du site n\u2019ont')} aucune œuvre correspondante.`);
+      if (r.sans_numero) lignes.push(`${pluriel(r.sans_numero, 'œuvre n\u2019a', 'œuvres n\u2019ont')} pas de numéro d'inventaire — impossible de les rapprocher.`);
+      await alerter({
+        type: 'succes',
+        title: r.remplies ? 'Adresses récupérées' : 'Rien à mettre à jour',
+        message: r.remplies
+          ? `${pluriel(r.remplies, 'adresse enregistrée', 'adresses enregistrées')}.`
+          : "Aucune nouvelle adresse à enregistrer.",
+        detail: lignes.join('\n'),
+      });
+    } catch (err) {
+      await alerter({ type: 'error', title: 'Récupération impossible', message: nettoyerErreur(err) });
+    } finally {
+      bouton.disabled = false;
+      bouton.textContent = lib;
+    }
   });
 }

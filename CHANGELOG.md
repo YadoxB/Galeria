@@ -10,6 +10,59 @@ identifiants.
 
 ## [Non publié]
 
+## [0.15.0] — 2026-08-27
+
+> **Préparer une exposition.** Choisir les œuvres qui partent, imprimer leurs
+> cartels avec code QR, puis tout ramener d'un geste à la fin.
+> *(Publiée en même temps que la 0.14.0, qui n'avait pas encore été livrée.)*
+
+### Ajouté
+
+- **Expositions** — nouvelle section dans la barre latérale, sous Œuvres.
+  - **Créer une exposition** : nom, lieu, dates de début et de fin prévue, notes.
+  - **Choisir les œuvres qui partent**, avec recherche et filtre par artiste. Seules les
+    œuvres **disponibles ou réservées**, encore à la galerie et pas déjà dans une autre
+    exposition en cours, sont proposées : une toile ne peut pas être à deux endroits.
+  - Les œuvres parties passent au statut **« En exposition »** et le nom de l'exposition
+    s'inscrit dans leur champ *Exposition actuelle*.
+  - **Rendre une œuvre** isolément, ou **mettre fin à l'exposition** pour toutes les
+    ramener. Chacune retrouve **exactement** le statut qu'elle avait avant de partir :
+    une œuvre réservée redevient réservée, pas disponible.
+  - **Une œuvre vendue pendant l'exposition reste vendue** — elle n'est jamais ramenée
+    en arrière. Le compte-rendu de clôture distingue les œuvres rendues, les vendues et
+    celles dont le statut avait été changé à la main.
+- **Cartels d'exposition en PDF.** Format Lettre, **10 par page par défaut** (4, 6 ou 8
+  au choix), avec traits de découpe. Chaque cartel porte l'artiste, le titre, le médium,
+  les dimensions, le **numéro d'inventaire** et un **code QR** menant à la fiche de
+  l'œuvre sur le site. Case **« Afficher le prix »**, cochée par défaut. Une œuvre sans
+  adresse sur le site reçoit un cartel sans code QR plutôt qu'un code menant nulle part.
+- **« Récupérer les adresses du site »** (écran de synchronisation des œuvres) : remplit
+  l'adresse de la fiche de chaque œuvre en la rapprochant par numéro d'inventaire = SKU.
+  Passe par l'**API publique de la boutique**, donc fonctionne **sans clés REST**. Le
+  bouton « Voir sur le site » de la fiche d'œuvre s'en trouve activé pour tout le
+  catalogue, et c'est cette adresse que visent les codes QR des cartels.
+
+### Modifié
+
+- **Nouveau statut d'œuvre « En exposition »**, avec sa pastille. L'ajout a demandé une
+  **reconstruction de la table des œuvres** (SQLite ne sait pas modifier une contrainte
+  `CHECK`) : elle part du `CREATE TABLE` réel, ne remplace que la contrainte de statut,
+  compare le nombre de lignes et vérifie les clés étrangères **avant** de valider, et
+  annule tout au moindre écart. Exécutée une seule fois par base (`user_version = 3`),
+  après la copie de sauvegarde automatique d'avant migration.
+- La synchro web demande désormais aussi le champ `permalink` à WooCommerce — son
+  absence expliquait pourquoi l'adresse des fiches n'était jamais renseignée.
+
+### Interne
+
+- Nouvelles tables `expositions` et `exposition_oeuvres`. La colonne `statut_avant`
+  mémorise l'état de chaque œuvre au départ, ce qui permet de le lui rendre à la clôture.
+- Nouvelle dépendance **`qrcode-generator`** : JavaScript pur, **aucune dépendance**,
+  aucun outil de compilation. Produit du SVG vectoriel, donc net à l'impression. Tout
+  reste hors ligne. Isolée dans `src/qr.js`.
+- Démos : `expositions.html` (les trois écrans) et `cartels-exposition.html` (les quatre
+  formats, avec de vrais codes QR).
+
 ## [0.14.0] — 2026-08-27
 
 > **Retours d'usage des parents.** Quatre corrections issues de l'usage réel, plus

@@ -92,6 +92,73 @@ const COLONNES_ATTENDUES = {
   ],
 };
 
+// Ajout du statut 'exposee' aux œuvres (fonction Expositions).
+//
+// SQLite ne sait pas modifier une contrainte CHECK : il faut reconstruire la
+// table. Procédure officielle en 12 étapes, resserrée ici parce qu'`oeuvres`
+// n'a NI vue NI déclencheur (vérifié) — seulement 3 index et 3 clés étrangères
+// entrantes (ventes, certificats, web_sync_ignore).
+//
+// Précautions :
+//   - une copie de la base a déjà été prise avant migration par main.js
+//     (sauvegardeAvantMigrationSiNouvelleVersion) ;
+//   - on part du CREATE TABLE réel lu dans sqlite_master, et on n'y remplace
+//     QUE la contrainte de statut : aucun risque de perdre une colonne ajoutée
+//     par une migration antérieure, ni une autre contrainte ;
+//   - si la contrainte n'a pas la forme attendue, on n'y touche pas du tout ;
+//   - le nombre de lignes est comparé avant/après et les clés étrangères sont
+//     vérifiées AVANT le COMMIT ; au moindre écart, on annule tout.
+function ajouterStatutExposee(db) {
+  const ligne = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'oeuvres'")
+    .get();
+  const ddl = ligne && ligne.sql ? ligne.sql : '';
+  if (!ddl) return { fait: false, raison: 'table introuvable' };
+  if (/exposee/.test(ddl)) return { fait: false, raison: 'déjà présent' };
+
+  const reCheck = /CHECK\s*\(\s*statut\s+IN\s*\(([^)]*)\)\s*\)/i;
+  const m = ddl.match(reCheck);
+  if (!m) return { fait: false, raison: 'contrainte de statut non reconnue' };
+
+  const nouveauCheck = `CHECK (statut IN (${m[1].trim()}, 'exposee'))`;
+  const ddlNouveau = ddl
+    .replace(reCheck, nouveauCheck)
+    .replace(/CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?["'`[]?oeuvres["'`\]]?/i, 'CREATE TABLE oeuvres_migr');
+  if (!/CREATE TABLE oeuvres_migr/.test(ddlNouveau)) {
+    return { fait: false, raison: 'réécriture du CREATE TABLE impossible' };
+  }
+
+  const avant = db.prepare('SELECT COUNT(*) AS n FROM oeuvres').get().n;
+
+  // PRAGMA foreign_keys ne peut pas changer à l'intérieur d'une transaction.
+  db.exec('PRAGMA foreign_keys = OFF');
+  try {
+    db.exec('BEGIN');
+    db.exec(ddlNouveau);
+    db.exec('INSERT INTO oeuvres_migr SELECT * FROM oeuvres');
+    const apres = db.prepare('SELECT COUNT(*) AS n FROM oeuvres_migr').get().n;
+    if (apres !== avant) {
+      throw new Error(`copie incomplète : ${apres} lignes copiées sur ${avant}`);
+    }
+    db.exec('DROP TABLE oeuvres');
+    db.exec('ALTER TABLE oeuvres_migr RENAME TO oeuvres');
+    // Les index tombent avec l'ancienne table : on les remonte à l'identique.
+    db.exec('CREATE INDEX IF NOT EXISTS idx_oeuvres_artiste ON oeuvres(artiste_id)');
+    db.exec('CREATE INDEX IF NOT EXISTS idx_oeuvres_statut  ON oeuvres(statut)');
+    db.exec('CREATE INDEX IF NOT EXISTS idx_oeuvres_inv     ON oeuvres(numero_inventaire)');
+    const orphelins = db.prepare('PRAGMA foreign_key_check').all();
+    if (orphelins.length) {
+      throw new Error(`${orphelins.length} référence(s) orpheline(s) après reconstruction`);
+    }
+    db.exec('COMMIT');
+  } catch (err) {
+    try { db.exec('ROLLBACK'); } catch {}
+    db.exec('PRAGMA foreign_keys = ON');
+    throw new Error(`Migration du statut « exposée » abandonnée, base inchangée : ${err.message}`);
+  }
+  db.exec('PRAGMA foreign_keys = ON');
+  return { fait: true, lignes: avant };
+}
 function migrer(db) {
   // 1. Ajout des colonnes manquantes
   for (const [table, colonnes] of Object.entries(COLONNES_ATTENDUES)) {
@@ -140,6 +207,19 @@ function migrer(db) {
     db.exec('PRAGMA user_version = 2');
   }
 
+  // 1e. Statut « exposée » (fonction Expositions). Reconstruction de la table
+  //     `oeuvres` pour élargir la contrainte CHECK — voir ajouterStatutExposee.
+  //     Versionné à 3 : ne s'exécute qu'une fois par base. La garde `< 3` et le
+  //     test « déjà présent » de la fonction se doublent volontairement.
+  if (versionBase < 3) {
+    const r = ajouterStatutExposee(db);
+    if (r.fait) {
+      console.log(`Migration : statut « exposée » ajouté (${r.lignes} œuvres conservées).`);
+    } else if (r.raison !== 'déjà présent') {
+      console.warn(`Migration du statut « exposée » non appliquée : ${r.raison}.`);
+    }
+    db.exec('PRAGMA user_version = 3');
+  }
   // 1d. Nouvelle table « annexes » (Annexe A — dépôt / retrait d'œuvres).
   //     Créée ici pour les bases existantes (schema.sql la crée pour les
   //     installations fraîches). Numérotation séquentielle par artiste.

@@ -2165,6 +2165,7 @@ footer {
 .statut-reserve    { background: var(--badge-reservee-fond);   color: var(--badge-reservee-texte); }
 .statut-vendu      { background: var(--badge-vendue-fond);     color: var(--badge-vendue-texte); }
 .statut-pretee     { background: #dde9f3; color: #2d5a7b; }
+.statut-exposee    { background: #efe3f5; color: #6b3f86; }
 .statut-defaut     { background: var(--mist); color: var(--slate); }
 
 /* ====== Vue : Fiche ====== */
@@ -5873,3 +5874,69 @@ select.lot-in.st-pretee { color: var(--info); }
   .cat-panneau[data-cat="prix"] .grille-bento > .carte,
   .cat-panneau[data-cat="commission"] .grille-bento > .carte { grid-column: span 12 !important; }
 }
+/* ===== Expositions ===================================================== */
+/* Liste : le nombre d'œuvres en tête de ligne, c'est l'information qu'on
+   cherche d'un coup d'œil. */
+.expo-ligne { align-items: center; }
+.expo-ligne .expo-compte {
+  flex: 0 0 62px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.expo-compte-n { font-family: var(--font-titre); font-size: 26px; font-weight: 600; color: var(--gallery-navy); line-height: 1; }
+.expo-compte-l { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--stone); font-weight: 600; }
+.expo-terminee { opacity: 0.68; }
+
+.badge-expo {
+  display: inline-block; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em;
+  border-radius: 20px; padding: 2px 9px; font-weight: 600; vertical-align: 2px;
+}
+.badge-expo-encours  { background: #e6f0e6; color: #3c6b3c; }
+.badge-expo-terminee { background: var(--cloud); color: var(--slate); }
+
+/* Fiche : l'en-tête reprend la structure de celui d'un artiste, que les
+   utilisateurs connaissent déjà (stats sur une rangée, actions à droite). */
+.expo-vue { max-width: 1180px; }
+.lien-retour {
+  background: none; border: 0; padding: 0 0 10px; cursor: pointer;
+  font-family: var(--font-ui); font-size: 13px; color: var(--slate);
+}
+.lien-retour:hover { color: var(--warm-gold); }
+
+.hero-expo { display: flex; gap: 26px; align-items: stretch; }
+.hero-expo-corps { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.hero-expo-nom { font-family: var(--font-titre); font-size: 27px; font-weight: 600; margin: 0 0 4px; color: var(--gallery-navy); }
+.hero-expo-meta { font-size: 13.5px; color: var(--slate); margin: 0 0 14px; }
+.hero-expo-actions {
+  display: flex; flex-direction: column; gap: 10px;
+  align-items: flex-end; justify-content: space-between; flex: 0 0 auto;
+}
+.hero-expo-actions .grp-actions { display: flex; flex-direction: column; gap: 9px; align-items: flex-end; }
+
+/* Tableau des œuvres : mêmes colonnes que le futur cartel, pour qu'on puisse
+   vérifier la liste avant de lancer l'impression. */
+.expo-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.expo-table th {
+  text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--stone); font-weight: 700; padding: 0 10px 8px 0;
+}
+.expo-table td { padding: 9px 10px 9px 0; border-top: 1px solid var(--cloud); vertical-align: middle; }
+.expo-table tbody tr:hover td { background: rgba(201, 154, 61, 0.05); }
+.expo-td-num { font-variant-numeric: tabular-nums; color: var(--slate); }
+.expo-td-prix { text-align: right; font-variant-numeric: tabular-nums; }
+.expo-td-action { text-align: right; }
+
+/* Sélecteur d'œuvres */
+.expo-selecteur { width: min(760px, 92vw); }
+.expo-sel-filtres { display: flex; gap: 10px; margin: 4px 0 12px; }
+.expo-sel-filtres input { flex: 1; }
+.expo-sel-liste { max-height: 46vh; overflow-y: auto; border-top: 1px solid var(--cloud); }
+.expo-sel-choix {
+  display: flex; align-items: center; gap: 12px; padding: 9px 2px;
+  border-bottom: 1px solid var(--cloud); cursor: pointer;
+}
+.expo-sel-choix:last-child { border-bottom: 0; }
+.expo-sel-choix input { width: 17px; height: 17px; accent-color: var(--warm-gold); flex: 0 0 auto; }
+.expo-sel-corps { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.expo-sel-titre { font-size: 14px; color: var(--ink); }
+.expo-sel-meta { font-size: 12px; color: var(--slate); }
+.expo-sel-pied { justify-content: space-between; align-items: center; }
+.expo-sel-boutons { display: flex; gap: 10px; }

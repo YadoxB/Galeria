@@ -662,6 +662,55 @@ async function genererCataloguePdf(artisteId) {
   return { pdf_path: sortie, nb_oeuvres: oeuvres.length };
 }
 
+// ===== Orchestrateur : cartels d'exposition =====
+
+// Prépare les cartels d'une exposition. Le code QR mène à la fiche de l'œuvre
+// sur le site (colonne `url_site`, remplie par « Récupérer les adresses du
+// site »). Une œuvre sans adresse reçoit un cartel sans code — voir src/qr.js.
+function preparerDonneesCartels(expo, { format = 10, afficherPrix = true } = {}) {
+  const { qrSvg } = require('./qr');
+  const presentes = (expo.oeuvres || []).filter((o) => !o.retire_le);
+  return {
+    format,
+    afficherPrix: !!afficherPrix,
+    cartels: presentes.map((o) => ({
+      artiste: [o.artiste_prenom, o.artiste_nom].filter((x) => x && String(x).trim()).join(' ') || o.artiste_nom || '',
+      titre: o.titre || '',
+      technique: o.medium || '',
+      dimensions: o.dimensions || '',
+      inventaire: o.numero_inventaire || '',
+      // Prix arrondi, sans décimales (choix de la galerie).
+      prix: (o.prix != null && o.prix !== '')
+        ? Math.round(Number(o.prix) || 0).toLocaleString('fr-CA') + ' $'
+        : '',
+      qr: qrSvg(o.url_site),
+    })),
+  };
+}
+
+async function genererCartelsPdf(expositionId, options = {}) {
+  const { obtenirExposition } = require('./db/requetes');
+  const expo = obtenirExposition(expositionId);
+  if (!expo) throw new Error('Exposition introuvable.');
+  const donnees = preparerDonneesCartels(expo, options);
+  if (!donnees.cartels.length) {
+    throw new Error("Cette exposition ne contient aucune œuvre : il n'y a pas de cartel à produire.");
+  }
+  const dossier = path.join(getDocumentsDirAnnee(new Date().getFullYear()), 'Cartels');
+  const sortie = await genererPdfTolerant(
+    { gabaritNom: 'gabarit-cartels.html', donnees, paysage: false },
+    dossier,
+    nomDocument(`Cartels ${dateJour()}`, expo.nom),
+  );
+  const sansQr = donnees.cartels.filter((c) => !c.qr).length;
+  return {
+    pdf_path: sortie,
+    nb_cartels: donnees.cartels.length,
+    nb_sans_qr: sansQr,
+    pages: Math.ceil(donnees.cartels.length / donnees.format),
+  };
+}
+
 // ===== Orchestrateur : Annexe A (dépôt / retrait) =====
 
 // Les lignes d'œuvres (codes + prix par cotes) sont préparées côté renderer et
@@ -1216,4 +1265,4 @@ function indexerTousLesDocuments() {
   return out;
 }
 
-module.exports = { analyserTypeOeuvre, genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPresentationPersonnalisee, genererLettrePochettePdf, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette, indexerTousLesDocuments };
+module.exports = { analyserTypeOeuvre, genererCartelsPdf, genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPresentationPersonnalisee, genererLettrePochettePdf, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette, indexerTousLesDocuments };

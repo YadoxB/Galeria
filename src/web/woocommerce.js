@@ -162,7 +162,7 @@ async function listerProduits({ url, consumerKey, consumerSecret }) {
   const cs = String(consumerSecret == null ? '' : consumerSecret).trim();
   if (!ck || !cs) throw new Error('Clé et secret requis.');
   const auth = 'Basic ' + Buffer.from(`${ck}:${cs}`).toString('base64');
-  const champs = 'id,sku,name,description,short_description,price,regular_price,stock_status,status,images';
+  const champs = 'id,sku,name,description,short_description,price,regular_price,stock_status,status,images,permalink';
 
   const produits = [];
   const MAX_PAGES = 50; // garde-fou (5000 produits max) contre une boucle infinie.
@@ -241,7 +241,7 @@ async function produitParSku({ url, consumerKey, consumerSecret }, sku) {
   const cs = String(consumerSecret == null ? '' : consumerSecret).trim();
   if (!ck || !cs) throw new Error('Clé et secret requis.');
   const auth = 'Basic ' + Buffer.from(`${ck}:${cs}`).toString('base64');
-  const champs = 'id,sku,name,description,short_description,price,regular_price,stock_status,status,images';
+  const champs = 'id,sku,name,description,short_description,price,regular_price,stock_status,status,images,permalink';
   const resp = await getJson(`${base}/wp-json/wc/v3/products?sku=${encodeURIComponent(s)}&per_page=1&_fields=${encodeURIComponent(champs)}`, { auth });
   if (resp.status === 401 || resp.status === 403) throw new Error('Clés refusées par le site.');
   if (!resp.ok) throw new Error(`Le site a répondu par une erreur (${resp.status}).`);
@@ -324,4 +324,40 @@ async function telechargerImage(url) {
   return `data:${ctype};base64,${buf.toString('base64')}`;
 }
 
-module.exports = { testerConnexion, normaliserUrl, stripHtml, listerProduits, produitParSku, listerArtistesSite, telechargerImage };
+
+// ===== Adresses des fiches du site, SANS CLÉ =====
+// L'API « Store » de WooCommerce (wc/store/v1) est PUBLIQUE : elle expose le SKU
+// et le permalink de chaque produit sans authentification, comme le fait déjà
+// wp/v2/portfolio pour les artistes. On s'en sert pour remplir `url_site` même
+// chez un utilisateur qui n'a pas configuré de clés REST.
+// Renvoie [{ sku, permalink, nom }].
+async function listerProduitsPublics({ url }) {
+  const base = normaliserUrl(url);
+  const produits = [];
+  const MAX_PAGES = 50; // garde-fou (5000 produits) contre une boucle infinie
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const u = `${base}/wp-json/wc/store/v1/products?per_page=100&page=${page}`;
+    const resp = await getJson(u);
+    if (resp.status === 404) {
+      throw new Error("La boutique du site est introuvable à cette adresse.");
+    }
+    if (!resp.ok) {
+      throw new Error(`Le site a répondu par une erreur (${resp.status}) en lisant la boutique.`);
+    }
+    let lot;
+    try { lot = await resp.json(); }
+    catch { throw new Error('Réponse du site illisible (boutique).'); }
+    if (!Array.isArray(lot) || !lot.length) break;
+    for (const p of lot) {
+      const sku = (p && p.sku ? String(p.sku) : '').trim();
+      const permalink = (p && p.permalink ? String(p.permalink) : '').trim();
+      if (sku && permalink) {
+        produits.push({ sku, permalink, nom: stripHtml((p.name || '')) });
+      }
+    }
+    if (lot.length < 100) break;
+  }
+  return produits;
+}
+
+module.exports = { listerProduitsPublics, testerConnexion, normaliserUrl, stripHtml, listerProduits, produitParSku, listerArtistesSite, telechargerImage };

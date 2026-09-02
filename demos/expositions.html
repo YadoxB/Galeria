@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Expositions</title>
+<style>
+  :root {
+    --soft-ivory:#FCFAF4; --porcelain:#FFFFFF; --warm-gold:#C99A3D; --gallery-navy:#071A2F;
+    --ink:#111827; --slate:#5D6875; --stone:#A79E91; --mist:#D8D2C8; --cloud:#EFE8DE;
+    --font-titre:'Cormorant Garamond',Georgia,serif;
+    --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --s2:8px; --s3:16px; --r-carte:14px; --ombre-carte:0 4px 14px rgba(7,26,47,.06);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--soft-ivory); font-family:var(--font-ui); color:var(--ink); padding:28px 32px 60px; }
+  h1 { font-family:var(--font-titre); font-weight:600; font-size:28px; margin:0 0 4px; }
+  .sous { color:var(--slate); margin:0 0 4px; font-size:14px; max-width:760px; line-height:1.55; }
+  .lot-titre { font-size:12.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone);
+               margin:34px 0 12px; font-weight:700; border-top:1px solid var(--mist); padding-top:16px; }
+  .cadre { max-width:1080px; }
+
+  .btn-action { font-family:var(--font-ui); font-size:13.5px; border:1px solid var(--mist); background:var(--porcelain);
+    color:var(--ink); border-radius:8px; padding:8px 14px; cursor:pointer; }
+  .btn-action:hover { background:var(--cloud); }
+  .btn-principal { background:var(--gallery-navy); border-color:var(--gallery-navy); color:#fff; }
+  .btn-principal:hover { background:#0d2a49; }
+  .btn-danger { color:#8a2020; border-color:#e2c6c6; }
+  .btn-danger:hover { background:#fbf0f0; }
+
+  .entete-page { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-bottom:18px; }
+  .entete-page h2 { font-family:var(--font-titre); font-size:24px; font-weight:600; margin:0; }
+  .entete-page-actions { display:flex; gap:10px; }
+
+  .expo-carte { background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte);
+    box-shadow:var(--ombre-carte); padding:16px 20px; display:flex; align-items:center; gap:18px;
+    margin-bottom:12px; cursor:pointer; text-align:left; width:100%; font-family:inherit; }
+  .expo-carte:hover { border-color:var(--warm-gold); }
+  .expo-carte.terminee { opacity:.68; }
+  .expo-corps { flex:1; min-width:0; }
+  .expo-nom { font-family:var(--font-titre); font-size:19px; font-weight:600; margin:0 0 3px; }
+  .expo-meta { font-size:13px; color:var(--slate); margin:0; }
+  .expo-compte { font-family:var(--font-titre); font-size:26px; font-weight:600; color:var(--gallery-navy); text-align:center; }
+  .expo-compte small { display:block; font-family:var(--font-ui); font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.05em; color:var(--stone); font-weight:600; }
+  .chevron { color:var(--stone); font-size:20px; }
+
+  .badge { display:inline-block; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
+    border-radius:20px; padding:2px 9px; font-weight:600; }
+  .badge-encours { background:#e6f0e6; color:#3c6b3c; }
+  .badge-terminee { background:var(--cloud); color:var(--slate); }
+  .statut-disponible { background:#e6f0e6; color:#3c6b3c; }
+  .statut-reserve    { background:#fdf0dc; color:#8a5a1a; }
+  .statut-vendu      { background:#f3e3e3; color:#8a2020; }
+  .statut-exposee    { background:#efe3f5; color:#6b3f86; }
+
+  /* ——— fiche ——— */
+  .hero { background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte);
+    box-shadow:var(--ombre-carte); padding:22px 26px; display:flex; gap:26px; margin-bottom:18px; }
+  .hero-corps { flex:1; min-width:0; }
+  .hero-nom { font-family:var(--font-titre); font-size:27px; font-weight:600; margin:0 0 4px; }
+  .hero-meta { font-size:13.5px; color:var(--slate); margin:0 0 14px; }
+  .hero-filet { height:1px; background:var(--cloud); margin:0 0 14px; }
+  .hero-stats { display:flex; gap:30px; flex-wrap:wrap; }
+  .hero-stat { display:flex; flex-direction:column; }
+  .hero-stat .v { font-family:var(--font-titre); font-size:24px; color:var(--gallery-navy); }
+  .hero-stat .v.accent { color:var(--warm-gold); }
+  .hero-stat .l { font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--stone); }
+  .hero-actions { display:flex; flex-direction:column; gap:9px; align-items:flex-end; justify-content:space-between; }
+  .grp-actions { display:flex; flex-direction:column; gap:9px; align-items:flex-end; }
+
+  .bloc { background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte);
+    box-shadow:var(--ombre-carte); padding:18px 22px; }
+  .bloc-tete { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .bloc-tete h3 { font-family:var(--font-titre); font-size:19px; font-weight:600; margin:0; }
+
+  table.oeuvres { width:100%; border-collapse:collapse; font-size:13.5px; }
+  table.oeuvres th { text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--stone); font-weight:700; padding:0 10px 8px 0; }
+  table.oeuvres td { padding:9px 10px 9px 0; border-top:1px solid var(--cloud); vertical-align:middle; }
+  table.oeuvres .num { font-variant-numeric:tabular-nums; color:var(--slate); }
+  table.oeuvres .prix { text-align:right; font-variant-numeric:tabular-nums; }
+  .vide { color:var(--slate); font-style:italic; font-size:13.5px; padding:14px 0; }
+
+  /* ——— sélecteur ——— */
+  .voile { position:fixed; inset:0; background:rgba(7,26,47,.45); display:grid; place-items:center; z-index:50; }
+  .modale { background:var(--porcelain); border-radius:16px; width:min(760px,92vw); max-height:86vh;
+    display:flex; flex-direction:column; box-shadow:0 24px 60px rgba(7,26,47,.3); }
+  .modale-tete { padding:20px 24px 14px; border-bottom:1px solid var(--cloud); }
+  .modale-tete h3 { font-family:var(--font-titre); font-size:21px; font-weight:600; margin:0 0 4px; }
+  .modale-tete p { font-size:13px; color:var(--slate); margin:0; }
+  .modale-filtres { display:flex; gap:10px; padding:14px 24px; border-bottom:1px solid var(--cloud); }
+  .modale-filtres input, .modale-filtres select { font-family:var(--font-ui); font-size:13.5px; padding:8px 10px;
+    border:1px solid var(--mist); border-radius:8px; }
+  .modale-filtres input { flex:1; }
+  .modale-corps { overflow:auto; padding:8px 24px 14px; }
+  .modale-pied { padding:14px 24px; border-top:1px solid var(--cloud); display:flex;
+    align-items:center; justify-content:space-between; gap:14px; }
+  .choix { display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid var(--cloud); cursor:pointer; }
+  .choix:last-child { border-bottom:0; }
+  .choix input { width:17px; height:17px; accent-color:var(--warm-gold); }
+  .choix-corps { flex:1; min-width:0; }
+  .choix-titre { font-size:14px; margin:0; }
+  .choix-meta { font-size:12px; color:var(--slate); margin:2px 0 0; }
+  .compteur-sel { font-size:13px; color:var(--slate); }
+
+  .note { background:var(--porcelain); border:1px solid var(--mist); border-left:3px solid var(--warm-gold);
+    border-radius:10px; padding:15px 20px; margin-top:16px; }
+  .note p { font-size:13.5px; color:var(--slate); line-height:1.6; margin:0 0 8px; }
+  .note p:last-child { margin-bottom:0; }
+  .note b { color:var(--ink); }
+  .cache { display:none; }
+</style>
+</head>
+<body>
+<div class="cadre">
+
+<h1>Expositions</h1>
+<p class="sous">Trois écrans : la liste, la fiche d'une exposition, et le sélecteur d'œuvres.
+   Tout est cliquable — ouvrez une exposition, ajoutez des œuvres, mettez-y fin.</p>
+
+<div class="lot-titre">1 — La liste</div>
+<div id="vue-liste">
+  <div class="entete-page">
+    <h2>Expositions</h2>
+    <div class="entete-page-actions">
+      <button class="btn-action btn-principal" id="btn-nouvelle">+ Nouvelle exposition</button>
+    </div>
+  </div>
+  <div id="liste-expos"></div>
+</div>
+
+<div class="lot-titre">2 — La fiche d'une exposition</div>
+<div id="vue-fiche"></div>
+
+<div class="note">
+  <p><b>Quelles œuvres peut-on ajouter ?</b> Seulement celles qui sont <b>disponibles ou réservées</b>,
+     encore à la galerie, et pas déjà dans une autre exposition en cours. Les œuvres <b>vendues</b> et
+     <b>retirées</b> n'apparaissent pas dans le sélecteur — c'est le même principe que le retrait en lot,
+     qui ignore déjà les vendues.</p>
+  <p><b>Au départ,</b> chaque œuvre passe à <b>En exposition</b> et Galeria retient discrètement l'état
+     qu'elle avait avant. <b>À la fin,</b> chacune retrouve exactement cet état — une œuvre réservée
+     redevient réservée, pas disponible.</p>
+  <p><b>Et si une œuvre se vend pendant l'exposition ?</b> Elle reste vendue à la clôture : Galeria ne la
+     ressuscite jamais. Le compte-rendu de fin le dira explicitement.</p>
+</div>
+
+</div>
+
+<script>
+const ARTISTES = ['Manon Potvin','Eder Olguin','Galina Stetco','Claudine Dontigny'];
+const OEUVRES = [
+  { id:1, titre:'Murmure sylvestre', artiste:'Manon Potvin', inv:'MAP2225', medium:'Acrylique', dim:'24 × 36 po', prix:1200, statut:'disponible' },
+  { id:2, titre:'Camélia',           artiste:'Manon Potvin', inv:'MAP1280', medium:'Huile',     dim:'12 × 12 po', prix:400,  statut:'disponible' },
+  { id:3, titre:'Café matin',        artiste:'Eder Olguin',  inv:'EDO1862', medium:'Acrylique', dim:'18 × 24 po', prix:850,  statut:'reserve' },
+  { id:4, titre:'Bruges',            artiste:'Galina Stetco',inv:'GAS2185', medium:'Aquarelle', dim:'11 × 14 po', prix:520,  statut:'disponible' },
+  { id:5, titre:'État d\'âme',       artiste:'Claudine Dontigny', inv:'CLD1992', medium:'Mixte', dim:'30 × 40 po', prix:1800, statut:'disponible' },
+  { id:6, titre:'Vendue déjà',       artiste:'Manon Potvin', inv:'MAP0001', medium:'Huile',     dim:'16 × 20 po', prix:900,  statut:'vendu' },
+];
+let EXPOS = [
+  { id:1, nom:'Salon du printemps', lieu:'Centre culturel Le Parvis, Sherbrooke', debut:'2026-09-10', fin:'2026-10-15', statut:'en_cours', oeuvres:[1,3] },
+  { id:2, nom:'Marais de la rivière aux Cerises', lieu:'Magog', debut:'2026-05-02', fin:'2026-06-30', statut:'terminee', oeuvres:[] },
+];
+let ficheOuverte = 1;
+
+const $ = (s) => document.querySelector(s);
+const argent = (n) => n.toLocaleString('fr-CA') + ' $';
+const dateFr = (iso) => { if(!iso) return '—'; const [a,m,j]=iso.split('-');
+  return `${+j} ${['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'][+m-1]} ${a}`; };
+const oeuvre = (id) => OEUVRES.find(o=>o.id===id);
+
+function dessinerListe() {
+  $('#liste-expos').innerHTML = EXPOS.map(e => `
+    <button class="expo-carte ${e.statut==='terminee'?'terminee':''}" data-expo="${e.id}">
+      <div class="expo-compte">${e.oeuvres.length}<small>œuvres</small></div>
+      <div class="expo-corps">
+        <p class="expo-nom">${e.nom} <span class="badge ${e.statut==='en_cours'?'badge-encours':'badge-terminee'}">${e.statut==='en_cours'?'En cours':'Terminée'}</span></p>
+        <p class="expo-meta">${e.lieu || '<em>lieu non précisé</em>'} &nbsp;·&nbsp; du ${dateFr(e.debut)} au ${dateFr(e.fin)}</p>
+      </div>
+      <span class="chevron">›</span>
+    </button>`).join('');
+  document.querySelectorAll('[data-expo]').forEach(b =>
+    b.addEventListener('click', () => { ficheOuverte = +b.dataset.expo; dessinerFiche(); }));
+}
+
+function dessinerFiche() {
+  const e = EXPOS.find(x=>x.id===ficheOuverte);
+  const liste = e.oeuvres.map(oeuvre);
+  const valeur = liste.reduce((s,o)=>s+o.prix,0);
+  const enCours = e.statut === 'en_cours';
+  $('#vue-fiche').innerHTML = `
+    <div class="hero">
+      <div class="hero-corps">
+        <h2 class="hero-nom">${e.nom}</h2>
+        <p class="hero-meta">${e.lieu || '<em>lieu non précisé</em>'} &nbsp;·&nbsp; du ${dateFr(e.debut)} au ${dateFr(e.fin)}
+          &nbsp;·&nbsp; <span class="badge ${enCours?'badge-encours':'badge-terminee'}">${enCours?'En cours':'Terminée'}</span></p>
+        <div class="hero-filet"></div>
+        <div class="hero-stats">
+          <div class="hero-stat"><span class="v accent">${liste.length}</span><span class="l">Œuvres parties</span></div>
+          <div class="hero-stat"><span class="v">${argent(valeur)}</span><span class="l">Valeur exposée</span></div>
+          <div class="hero-stat"><span class="v">${new Set(liste.map(o=>o.artiste)).size}</span><span class="l">Artistes</span></div>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <div class="grp-actions">
+          <button class="btn-action" id="btn-modifier">Modifier les informations</button>
+          <button class="btn-action btn-principal" id="btn-cartels" ${liste.length?'':'disabled'}>Imprimer les cartels</button>
+        </div>
+        ${enCours
+          ? `<button class="btn-action btn-danger" id="btn-fin">Mettre fin à l'exposition</button>`
+          : `<span class="compteur-sel">Terminée le ${dateFr(e.fin)}</span>`}
+      </div>
+    </div>
+
+    <div class="bloc">
+      <div class="bloc-tete">
+        <h3>Œuvres de l'exposition</h3>
+        ${enCours ? `<button class="btn-action" id="btn-ajouter">+ Ajouter des œuvres</button>` : ''}
+      </div>
+      ${liste.length ? `
+        <table class="oeuvres">
+          <thead><tr><th>N°</th><th>Titre</th><th>Artiste</th><th>Médium</th><th>Dimensions</th><th style="text-align:right">Prix</th><th>Statut</th>${enCours?'<th></th>':''}</tr></thead>
+          <tbody>${liste.map(o=>`
+            <tr>
+              <td class="num">${o.inv}</td>
+              <td>${o.titre}</td>
+              <td>${o.artiste}</td>
+              <td>${o.medium}</td>
+              <td class="num">${o.dim}</td>
+              <td class="prix">${argent(o.prix)}</td>
+              <td><span class="badge statut-${o.statut==='vendu'?'vendu':'exposee'}">${o.statut==='vendu'?'Vendue':'En exposition'}</span></td>
+              ${enCours?`<td><button class="btn-action" data-retirer="${o.id}" title="Retirer de l'exposition">Retirer</button></td>`:''}
+            </tr>`).join('')}</tbody>
+        </table>` : `<p class="vide">Aucune œuvre pour l'instant. Utilisez « Ajouter des œuvres ».</p>`}
+    </div>`;
+
+  $('#btn-ajouter')?.addEventListener('click', ouvrirSelecteur);
+  $('#btn-fin')?.addEventListener('click', terminer);
+  $('#btn-cartels')?.addEventListener('click', () => alert('Le PDF des cartels arrive au lot 4 — avec le code QR.'));
+  document.querySelectorAll('[data-retirer]').forEach(b => b.addEventListener('click', () => {
+    const e2 = EXPOS.find(x=>x.id===ficheOuverte);
+    e2.oeuvres = e2.oeuvres.filter(id => id !== +b.dataset.retirer);
+    dessinerListe(); dessinerFiche();
+  }));
+  dessinerListe();
+}
+
+function ouvrirSelecteur() {
+  const e = EXPOS.find(x=>x.id===ficheOuverte);
+  const dejaAilleurs = new Set(EXPOS.filter(x=>x.statut==='en_cours').flatMap(x=>x.oeuvres));
+  const choisies = new Set();
+  const voile = document.createElement('div');
+  voile.className = 'voile';
+  voile.innerHTML = `
+    <div class="modale">
+      <div class="modale-tete">
+        <h3>Ajouter des œuvres</h3>
+        <p>Seules les œuvres <b>disponibles ou réservées</b>, encore à la galerie et libres, sont proposées.</p>
+      </div>
+      <div class="modale-filtres">
+        <input type="text" id="sel-recherche" placeholder="Rechercher un titre, un artiste, un numéro…">
+        <select id="sel-artiste"><option value="">Tous les artistes</option>${ARTISTES.map(a=>`<option>${a}</option>`).join('')}</select>
+      </div>
+      <div class="modale-corps"><div id="sel-liste"></div></div>
+      <div class="modale-pied">
+        <span class="compteur-sel" id="sel-compteur">Aucune sélectionnée</span>
+        <span style="display:flex;gap:10px">
+          <button class="btn-action" id="sel-annuler">Annuler</button>
+          <button class="btn-action btn-principal" id="sel-ok" disabled>Ajouter</button>
+        </span>
+      </div>
+    </div>`;
+  document.body.appendChild(voile);
+
+  const eligibles = () => OEUVRES.filter(o =>
+    (o.statut === 'disponible' || o.statut === 'reserve') && !dejaAilleurs.has(o.id));
+
+  function dessiner() {
+    const q = voile.querySelector('#sel-recherche').value.trim().toLowerCase();
+    const art = voile.querySelector('#sel-artiste').value;
+    const liste = eligibles().filter(o =>
+      (!art || o.artiste === art) &&
+      (!q || [o.titre,o.artiste,o.inv].join(' ').toLowerCase().includes(q)));
+    voile.querySelector('#sel-liste').innerHTML = liste.length ? liste.map(o=>`
+      <label class="choix">
+        <input type="checkbox" data-sel="${o.id}" ${choisies.has(o.id)?'checked':''}>
+        <span class="choix-corps">
+          <p class="choix-titre">${o.titre} <span class="badge statut-${o.statut}">${o.statut==='reserve'?'Réservée':'Disponible'}</span></p>
+          <p class="choix-meta">${o.artiste} · ${o.inv} · ${o.medium} · ${o.dim} · ${argent(o.prix)}</p>
+        </span>
+      </label>`).join('') : `<p class="vide">Aucune œuvre disponible ne correspond.</p>`;
+    voile.querySelectorAll('[data-sel]').forEach(c => c.addEventListener('change', () => {
+      const id = +c.dataset.sel;
+      c.checked ? choisies.add(id) : choisies.delete(id);
+      maj();
+    }));
+  }
+  function maj() {
+    voile.querySelector('#sel-compteur').textContent =
+      choisies.size ? `${choisies.size} œuvre${choisies.size>1?'s':''} sélectionnée${choisies.size>1?'s':''}` : 'Aucune sélectionnée';
+    voile.querySelector('#sel-ok').disabled = choisies.size === 0;
+  }
+  voile.querySelector('#sel-recherche').addEventListener('input', dessiner);
+  voile.querySelector('#sel-artiste').addEventListener('change', dessiner);
+  voile.querySelector('#sel-annuler').addEventListener('click', () => voile.remove());
+  voile.querySelector('#sel-ok').addEventListener('click', () => {
+    for (const id of choisies) { e.oeuvres.push(id); oeuvre(id).statut = 'exposee'; }
+    voile.remove(); dessinerFiche();
+  });
+  dessiner(); maj();
+}
+
+function terminer() {
+  const e = EXPOS.find(x=>x.id===ficheOuverte);
+  const liste = e.oeuvres.map(oeuvre);
+  const vendues = liste.filter(o=>o.statut==='vendu');
+  const rendues = liste.length - vendues.length;
+  if (!confirm(`Mettre fin à « ${e.nom} » ?\n\n${rendues} œuvre(s) retrouveront leur statut d'avant.`
+    + (vendues.length ? `\n${vendues.length} vendue(s) pendant l'exposition resteront vendues.` : ''))) return;
+  for (const o of liste) if (o.statut === 'exposee') o.statut = 'disponible';
+  e.statut = 'terminee';
+  e.oeuvres = [];
+  dessinerFiche();
+}
+
+$('#btn-nouvelle').addEventListener('click', () => {
+  const nom = prompt('Nom de la nouvelle exposition ?');
+  if (!nom || !nom.trim()) return;
+  const id = Math.max(...EXPOS.map(e=>e.id)) + 1;
+  EXPOS.unshift({ id, nom:nom.trim(), lieu:'', debut:'2026-09-01', fin:'', statut:'en_cours', oeuvres:[] });
+  ficheOuverte = id; dessinerFiche();
+});
+
+dessinerListe(); dessinerFiche();
+</script>
+</body>
+</html>

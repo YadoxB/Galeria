@@ -1,5 +1,5 @@
 const { openDatabase } = require('./database');
-const { obtenirArtiste, obtenirOeuvre, obtenirClient, obtenirVente, obtenirCertificat } = require('./requetes');
+const { obtenirArtiste, obtenirOeuvre, obtenirClient, obtenirVente, obtenirCertificat, obtenirExposition } = require('./requetes');
 const { obtenirConfig, mettreAJourConfig } = require('../config');
 const { construireNomFichier } = require('./nomenclature');
 
@@ -36,7 +36,7 @@ const exigerAnneePlausible = (annee) => {
   }
 };
 
-const STATUTS_VALIDES = new Set(['disponible', 'reserve', 'vendu', 'pretee']);
+const STATUTS_VALIDES = new Set(['disponible', 'reserve', 'vendu', 'pretee', 'exposee']);
 
 // ===== Dérivés des dimensions (mêmes règles que le formulaire d'œuvre) =====
 // Seuils empiriques calés sur 476 œuvres déjà étiquetées (cf.
@@ -961,6 +961,250 @@ function definirRetraitOeuvre(id, data = {}) {
   return obtenirOeuvre(idInt);
 }
 
+// ===== Expositions =====
+// Le départ et le retour des œuvres (changements de statut) viendront plus
+// tard : ici, seulement la vie de la fiche d'exposition elle-même.
+
+function creerExposition(data = {}) {
+  const nom = vide(data.nom);
+  if (!nom) throw new Error("Le nom de l'exposition est requis.");
+  const db = openDatabase();
+  const info = db.prepare(`
+    INSERT INTO expositions (nom, lieu, date_debut, date_fin_prevue, notes)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(nom, vide(data.lieu), vide(data.date_debut), vide(data.date_fin_prevue), vide(data.notes));
+  return obtenirExposition(Number(info.lastInsertRowid));
+}
+
+function modifierExposition(id, data = {}) {
+  const n = entier(id);
+  if (n == null) throw new Error('Identifiant invalide.');
+  const db = openDatabase();
+  const actuel = db.prepare('SELECT * FROM expositions WHERE id = ?').get(n);
+  if (!actuel) throw new Error('Exposition introuvable.');
+  const cols = [], vals = [];
+  const set = (col, v) => { cols.push(`${col} = ?`); vals.push(v); };
+  if ('nom' in data) {
+    const nom = vide(data.nom);
+    if (!nom) throw new Error("Le nom de l'exposition est requis.");
+    set('nom', nom);
+  }
+  for (const c of ['lieu', 'date_debut', 'date_fin_prevue', 'notes']) {
+    if (c in data) set(c, vide(data[c]));
+  }
+  if (!cols.length) return obtenirExposition(n);
+  vals.push(n);
+  db.prepare(`UPDATE expositions SET ${cols.join(', ')}, modifie_le = datetime('now') WHERE id = ?`).run(...vals);
+  return obtenirExposition(n);
+}
+
+// --- Départ et retour des œuvres ---------------------------------------
+// Statuts qu'une œuvre peut avoir pour partir en exposition. Les vendues et
+// les retirées (archive = 1) sont volontairement exclues : même principe que
+// le retrait en lot, qui ignore déjà les vendues.
+const STATUTS_PARTABLES = new Set(['disponible', 'reserve']);
+
+// Ajoute des œuvres à une exposition en cours : mémorise le statut de chacune
+// AVANT le départ (pour le lui rendre à la fin), la passe en 'exposee' et
+// inscrit le nom de l'exposition dans `exposition_actuelle` — le champ qui
+// existait déjà sur la fiche d'œuvre et dans l'édition en lot.
+// Les œuvres inéligibles sont ignorées et comptées, jamais forcées.
+function ajouterOeuvresExposition(expoId, oeuvreIds) {
+  const eid = entier(expoId);
+  if (eid == null) throw new Error('Identifiant invalide.');
+  const db = openDatabase();
+  const expo = db.prepare('SELECT * FROM expositions WHERE id = ?').get(eid);
+  if (!expo) throw new Error('Exposition introuvable.');
+  if (expo.statut !== 'en_cours') throw new Error("Cette exposition est terminée : on ne peut plus y ajouter d'œuvres.");
+
+  const ids = (Array.isArray(oeuvreIds) ? oeuvreIds : []).map(entier).filter((n) => n != null);
+  if (!ids.length) return { ajoutees: 0, ignorees: 0, deja: 0 };
+
+  const lireOeuvre = db.prepare('SELECT id, statut, archive FROM oeuvres WHERE id = ?');
+  const dejaLa = db.prepare('SELECT 1 AS x FROM exposition_oeuvres WHERE exposition_id = ? AND oeuvre_id = ? AND retire_le IS NULL');
+  const lien = db.prepare(`
+    INSERT INTO exposition_oeuvres (exposition_id, oeuvre_id, statut_avant, retire_le)
+    VALUES (?, ?, ?, NULL)
+    ON CONFLICT(exposition_id, oeuvre_id)
+      DO UPDATE SET statut_avant = excluded.statut_avant, ajoute_le = datetime('now'), retire_le = NULL
+  `);
+  const majOeuvre = db.prepare(`
+    UPDATE oeuvres SET statut = 'exposee', exposition_actuelle = ?, modifie_le = datetime('now')
+    WHERE id = ?
+  `);
+
+  let ajoutees = 0, ignorees = 0, deja = 0;
+  db.exec('BEGIN');
+  try {
+    for (const id of ids) {
+      const o = lireOeuvre.get(id);
+      if (!o) { ignorees += 1; continue; }
+      if (dejaLa.get(eid, id)) { deja += 1; continue; }
+      if (o.archive === 1 || !STATUTS_PARTABLES.has(o.statut)) { ignorees += 1; continue; }
+      lien.run(eid, id, o.statut);
+      majOeuvre.run(expo.nom, id);
+      ajoutees += 1;
+    }
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+  return { ajoutees, ignorees, deja };
+}
+
+// Rend UNE œuvre : elle retrouve le statut qu'elle avait avant de partir.
+// Une œuvre vendue pendant l'exposition n'est JAMAIS ressuscitée.
+function retirerOeuvreExposition(expoId, oeuvreId) {
+  const eid = entier(expoId), oid = entier(oeuvreId);
+  if (eid == null || oid == null) throw new Error('Identifiant invalide.');
+  const db = openDatabase();
+  const r = rendreOeuvres(db, eid, [oid]);
+  return r;
+}
+
+// Cœur commun du retour : rend les œuvres passées en paramètre (ou toutes
+// celles encore présentes si `ids` est nul). À utiliser dans une transaction.
+function rendreOeuvres(db, eid, ids) {
+  const lignes = ids
+    ? ids.map((id) => db.prepare(`
+        SELECT eo.oeuvre_id, eo.statut_avant, o.statut, o.archive
+        FROM exposition_oeuvres eo JOIN oeuvres o ON o.id = eo.oeuvre_id
+        WHERE eo.exposition_id = ? AND eo.oeuvre_id = ? AND eo.retire_le IS NULL
+      `).get(eid, id)).filter(Boolean)
+    : db.prepare(`
+        SELECT eo.oeuvre_id, eo.statut_avant, o.statut, o.archive
+        FROM exposition_oeuvres eo JOIN oeuvres o ON o.id = eo.oeuvre_id
+        WHERE eo.exposition_id = ? AND eo.retire_le IS NULL
+      `).all(eid);
+
+  const majOeuvre = db.prepare(`
+    UPDATE oeuvres SET statut = ?, exposition_actuelle = NULL, modifie_le = datetime('now') WHERE id = ?
+  `);
+  const soldeLien = db.prepare(`
+    UPDATE exposition_oeuvres SET retire_le = datetime('now')
+    WHERE exposition_id = ? AND oeuvre_id = ?
+  `);
+  const seulLien = db.prepare(`
+    UPDATE exposition_oeuvres SET retire_le = datetime('now')
+    WHERE exposition_id = ? AND oeuvre_id = ?
+  `);
+
+  let rendues = 0, vendues = 0, inchangees = 0;
+  for (const l of lignes) {
+    if (l.statut === 'vendu') {
+      // Vendue pendant l'exposition : on la sort de l'expo sans toucher au statut.
+      seulLien.run(eid, l.oeuvre_id);
+      vendues += 1;
+      continue;
+    }
+    if (l.statut !== 'exposee') {
+      // Quelqu'un a changé le statut à la main entre-temps : on respecte ce choix.
+      seulLien.run(eid, l.oeuvre_id);
+      inchangees += 1;
+      continue;
+    }
+    const avant = STATUTS_PARTABLES.has(l.statut_avant || '') ? l.statut_avant : 'disponible';
+    majOeuvre.run(avant, l.oeuvre_id);
+    soldeLien.run(eid, l.oeuvre_id);
+    rendues += 1;
+  }
+  return { rendues, vendues, inchangees };
+}
+
+// Met fin à l'exposition : toutes les œuvres encore présentes reviennent.
+function terminerExposition(expoId) {
+  const eid = entier(expoId);
+  if (eid == null) throw new Error('Identifiant invalide.');
+  const db = openDatabase();
+  const expo = db.prepare('SELECT * FROM expositions WHERE id = ?').get(eid);
+  if (!expo) throw new Error('Exposition introuvable.');
+  if (expo.statut === 'terminee') throw new Error('Cette exposition est déjà terminée.');
+  let r;
+  db.exec('BEGIN');
+  try {
+    r = rendreOeuvres(db, eid, null);
+    db.prepare(`
+      UPDATE expositions SET statut = 'terminee', date_fin_reelle = date('now'), modifie_le = datetime('now')
+      WHERE id = ?
+    `).run(eid);
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+  return { ...r, exposition: obtenirExposition(eid) };
+}
+
+// Supprime la fiche d'exposition. Refuse tant qu'elle contient des œuvres :
+// il faut d'abord y mettre fin, pour que les œuvres retrouvent leur statut et
+// ne restent pas bloquées en « En exposition ».
+function supprimerExposition(id) {
+  const n = entier(id);
+  if (n == null) throw new Error('Identifiant invalide.');
+  const db = openDatabase();
+  const expo = db.prepare('SELECT * FROM expositions WHERE id = ?').get(n);
+  if (!expo) throw new Error('Exposition introuvable.');
+  const presentes = db.prepare(`
+    SELECT COUNT(*) AS n FROM exposition_oeuvres
+    WHERE exposition_id = ? AND retire_le IS NULL
+  `).get(n).n;
+  if (presentes > 0) {
+    throw new Error(`Cette exposition contient encore ${presentes} œuvre(s). Mets-y fin d'abord pour qu'elles retrouvent leur statut.`);
+  }
+  db.prepare('DELETE FROM expositions WHERE id = ?').run(n);
+  return { supprime: true };
+}
+
+// Remplit `url_site` à partir des produits du site, rapprochés par
+// numéro d'inventaire = SKU. Ne touche QUE cette colonne, et rien sur le site.
+//
+// `modifie_le` est volontairement laissé intact : c'est un remplissage
+// technique, pas une modification de fiche, et ce champ ordonne la liste des
+// réservations (requetes.js) — le bouger pour 500 œuvres la réordonnerait.
+function majUrlsSiteDepuisSite(produits) {
+  const liste = Array.isArray(produits) ? produits : [];
+  const vide = { total_site: liste.length, rapprochees: 0, remplies: 0, inchangees: 0, sans_correspondance: 0, sans_numero: 0 };
+  if (!liste.length) return vide;
+  const db = openDatabase();
+  const norm = (s) => (s || '').toString().trim().toLowerCase();
+
+  const parInv = new Map();
+  const rows = db.prepare(`
+    SELECT id, numero_inventaire, url_site FROM oeuvres
+    WHERE numero_inventaire IS NOT NULL AND TRIM(numero_inventaire) <> ''
+  `).all();
+  for (const o of rows) {
+    const k = norm(o.numero_inventaire);
+    if (k && !parInv.has(k)) parInv.set(k, o);
+  }
+  const totalOeuvres = db.prepare('SELECT COUNT(*) AS n FROM oeuvres').get().n;
+
+  const upd = db.prepare('UPDATE oeuvres SET url_site = ? WHERE id = ?');
+  let rapprochees = 0, remplies = 0, inchangees = 0, sans = 0;
+  db.exec('BEGIN');
+  try {
+    for (const p of liste) {
+      const o = parInv.get(norm(p && p.sku));
+      if (!o) { sans += 1; continue; }
+      rapprochees += 1;
+      if ((o.url_site || '') === p.permalink) { inchangees += 1; continue; }
+      upd.run(p.permalink, o.id);
+      remplies += 1;
+    }
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+  return {
+    total_site: liste.length,
+    rapprochees, remplies, inchangees,
+    sans_correspondance: sans,
+    sans_numero: totalOeuvres - rows.length,
+  };
+}
+
 // Retrait en lot : retire plusieurs œuvres (rendues à l'artiste) en une fois.
 // Ignore les œuvres déjà vendues (non retirables). Renvoie le nombre retiré.
 function definirRetraitOeuvresLot(ids, data = {}) {
@@ -1197,6 +1441,9 @@ function majPresentationArtiste(id, pdfPath, sig) {
 }
 
 module.exports = {
+  creerExposition, modifierExposition, supprimerExposition,
+  ajouterOeuvresExposition, retirerOeuvreExposition, terminerExposition,
+  majUrlsSiteDepuisSite,
   enregistrerAnnexe, majAnnexePdfPath, annulerAnnexe, majPresentationArtiste,
   modifierArtiste, creerArtiste, supprimerArtiste,
   modifierOeuvre, majChampOeuvre, majStatutOeuvre, corrigerNumeroInventaire, ignorerDiffWeb, retirerIgnoreWeb, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre,

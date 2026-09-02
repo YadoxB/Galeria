@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS oeuvres (
   prix                   REAL,
   frais_production       REAL,           -- reproductions : frais récupérés par la galerie avant le partage
   statut                 TEXT NOT NULL DEFAULT 'disponible'
-                         CHECK (statut IN ('disponible', 'reserve', 'vendu', 'pretee')),
+                         CHECK (statut IN ('disponible', 'reserve', 'vendu', 'pretee', 'exposee')),
   format                 TEXT,
   orientation            TEXT,
   style                  TEXT,
@@ -201,6 +201,36 @@ CREATE TABLE IF NOT EXISTS web_sync_ignore_artiste (
   PRIMARY KEY (artiste_id, champ)
 );
 
+-- Expositions : une sortie d'œuvres hors de la galerie (salon, exposition
+-- ailleurs, prêt). Les œuvres concernées passent au statut 'exposee' et sont
+-- rendues à leur état d'origine à la fin.
+CREATE TABLE IF NOT EXISTS expositions (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  nom              TEXT NOT NULL,
+  lieu             TEXT,
+  date_debut       TEXT,
+  date_fin_prevue  TEXT,
+  date_fin_reelle  TEXT,            -- rempli à la clôture
+  statut           TEXT NOT NULL DEFAULT 'en_cours'
+                   CHECK (statut IN ('en_cours', 'terminee')),
+  notes            TEXT,
+  cree_le          TEXT NOT NULL DEFAULT (datetime('now')),
+  modifie_le       TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Œuvres d'une exposition. `statut_avant` mémorise l'état de l'œuvre au moment
+-- du départ ('disponible', 'reserve', …) pour la lui rendre à la clôture au
+-- lieu de tout basculer sur 'disponible'. `retire_le` marque une œuvre revenue
+-- avant la fin (ou vendue pendant).
+CREATE TABLE IF NOT EXISTS exposition_oeuvres (
+  exposition_id  INTEGER NOT NULL REFERENCES expositions(id) ON DELETE CASCADE,
+  oeuvre_id      INTEGER NOT NULL REFERENCES oeuvres(id) ON DELETE CASCADE,
+  statut_avant   TEXT,
+  ajoute_le      TEXT NOT NULL DEFAULT (datetime('now')),
+  retire_le      TEXT,
+  PRIMARY KEY (exposition_id, oeuvre_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_artistes_nom         ON artistes(nom);
 CREATE INDEX IF NOT EXISTS idx_oeuvres_artiste      ON oeuvres(artiste_id);
 CREATE INDEX IF NOT EXISTS idx_oeuvres_statut       ON oeuvres(statut);
@@ -210,3 +240,5 @@ CREATE INDEX IF NOT EXISTS idx_ventes_client        ON ventes(client_id);
 CREATE INDEX IF NOT EXISTS idx_ventes_date          ON ventes(date_vente);
 CREATE INDEX IF NOT EXISTS idx_certificats_oeuvre   ON certificats(oeuvre_id);
 CREATE INDEX IF NOT EXISTS idx_certificats_vente    ON certificats(vente_id);
+CREATE INDEX IF NOT EXISTS idx_expositions_statut  ON expositions(statut);
+CREATE INDEX IF NOT EXISTS idx_expo_oeuvres_oeuvre ON exposition_oeuvres(oeuvre_id);

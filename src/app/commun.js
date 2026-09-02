@@ -65,6 +65,7 @@ export const STATUTS = {
   reserve:    { libelle: 'Réservée',   classe: 'statut-reserve' },
   vendu:      { libelle: 'Vendue',     classe: 'statut-vendu' },
   pretee:     { libelle: 'Prêtée',     classe: 'statut-pretee' },
+  exposee:    { libelle: 'En exposition', classe: 'statut-exposee' },
 };
 
 export function badgeStatut(statut) {

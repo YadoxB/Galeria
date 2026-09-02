@@ -1,7 +1,7 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-08-27 (chantier « retours d’usage » prêt à publier).
+> Date de cette sauvegarde : 2026-08-27 (Expositions bâtie ; 0.14.0 et 0.15.0 en attente de publication).
 >
 > **Voir aussi** : `CHANGELOG.md` (historique versionné détaillé) et `A-VALIDER.md` (questions ouvertes avec les parents).
 
@@ -9,32 +9,34 @@
 
 ## ▶ Reprise — par où commencer (préparé le 2026-08-27)
 
-**✅ Dernière version PUBLIÉE : v0.13.0 (2026-08-10) — Phase 5, synchronisation avec le site web.** `origin/master` = **tag `v0.13.0`** = `6d73ed7` ; les parents la reçoivent par auto-update. `package.json` = `0.13.0`.
+**✅ Dernière version PUBLIÉE : v0.13.0 (2026-08-10).** `origin/master` = tag `v0.13.0` = `6d73ed7`.
 
-> **⚠ Travail NON commité, PRÊT À PUBLIER (chantier « retours d'usage » du 2026-08-27).** Quatre lots codés, testés au banc d'essai et **validés par Dave dans l'app**, plus l'article d'aide resté en attente depuis la 0.13.0. Reste à faire : monter la version, commiter, `npm run release`. Détail complet dans `CHANGELOG.md` (section « Non publié ») et `NOUVEAUTES-PARENTS.md`.
+> **⚠ DEUX versions commitées mais NI POUSSÉES NI PUBLIÉES.** `package.json` = **0.15.0**. Un seul `npm run release` publiera les deux ensemble (tag `v0.15.0`) ; le tag `v0.14.0` n'existera jamais, c'est voulu.
 >
-> 1. **Compte des œuvres** — le nombre principal d'un artiste = ses **disponibles** (carte, liste, en-tête), « Au catalogue » exclut les retirées, nouvelle tuile « Retirées ». ⚠ Le garde-fou de suppression d'un artiste compte toujours **toutes** les œuvres : ne pas « corriger » ça (commentaire explicite dans `requetes.js`).
-> 2. **C.V. collé** — `rendreCV` dans `gabarit-presentation.html` gère l'année seule sur sa ligne et les puces collées au tiret (`-Musée`) ou en `•`. Vérifié sur les 21 C.V. réels du site : 30 lignes corrigées, toutes des puces, 0 régression.
-> 3. **Cote « Hors normes »** — taille jamais calculée, attribuée à la main via le champ Format. ⚠ Touche **cinq** endroits, dont la liste de validation en dur de `mutations.js` (sans elle, la cote est refusée à l'enregistrement). Champ de taille manuelle ajouté au calculateur d'Outils.
-> 4. **Valeurs libres** — Style (était un `<select>` fermé), Type et Support de l'œuvre, Type de l'artiste. Brique générique `champListe` / `brancherDropdownListe` / `chargerValeursConnues` dans `commun.js` ; le Médium y délègue désormais. Plus un **avertissement avant un certificat dont le type n'est pas reconnu** (table unique `CORRESPONDANCES_TYPE` dans `pdf.js`, exposée par IPC).
+> - **0.14.0 — retours d'usage** (commit `abf30a3`) : compte des œuvres = disponibles, C.V. collé, cote « Hors normes », menus à valeurs libres, avertissement certificat. **Validé par Dave dans l'app.**
+> - **0.15.0 — Expositions** : voir ci-dessous. **PAS ENCORE testé dans l'app par Dave** au moment d'écrire.
 
-> **Où travailler :** dans le dossier principal `F:\Galerie\Automatisation\GalerieApp`, sur `master`. C'est le seul endroit qui a `node_modules` — l'app ne démarre pas depuis un worktree `.claude/worktrees/` et `npm run release` y échoue. Piège vécu le 2026-08-27 : du code écrit dans un worktree a donné l'impression que « rien ne change » à l'essai. Les anciennes branches de worktree sont historiques.
+### La fonction Exposition (0.15.0) — ce qu'il faut savoir pour y revenir
 
-> **Historique des versions :** v0.11.0 (2026-07-25 — verrou + retours d'usage + dossier de données + 4 outils) · v0.12.0 (2026-08-09 — 3 corrections) · v0.13.0 (2026-08-10 — Phase 5 web).
+- **Nouveau statut `exposee`.** Son ajout a demandé une **reconstruction de la table `oeuvres`** (SQLite ne modifie pas un `CHECK`). Voir `ajouterStatutExposee()` dans `migrations.js` : part du `CREATE TABLE` réel, ne remplace que la contrainte de statut, compare les lignes et vérifie les clés étrangères avant de valider, annule sinon. Garde `user_version = 3`. **Testée sur une base reconstituée de 40 œuvres / 43 colonnes : 8 mesures identiques avant/après.**
+- **Tables `expositions` et `exposition_oeuvres`.** La colonne **`statut_avant`** est le cœur : elle mémorise l'état de l'œuvre au départ pour le lui rendre à la clôture. ⚠ Ne pas simplifier en « tout remettre à disponible ».
+- **Règle non négociable :** une œuvre **vendue** pendant l'exposition n'est jamais ramenée en arrière (`rendreOeuvres()` dans `mutations.js`). Idem si son statut a été changé à la main : on respecte.
+- **Cartels** : `gabarit-cartels.html` + `genererCartelsPdf()` dans `pdf.js`. 10 par page par défaut. Le code QR vient de `url_site` via `src/qr.js` (`qrcode-generator`, JS pur, zéro dépendance, SVG vectoriel, hors ligne).
+- **`url_site` se remplit** par « Récupérer les adresses du site » (écran de synchro des œuvres) : rapproche par numéro d'inventaire = SKU via l'**API Store publique de WooCommerce**, donc **sans clé REST**. 510 produits lus sur le site réel lors du test.
 
-### ▶ Prochaine étape (à trancher avec Dave)
+> **Où travailler :** dossier principal `F:\Galerie\Automatisation\GalerieApp`, sur `master`. Seul endroit avec `node_modules` : l'app ne démarre pas depuis un worktree `.claude/worktrees/` et `npm run release` y échoue.
 
-**D'abord : publier le chantier ci-dessus** (version à monter, probablement `0.14.0` — il y a des ajouts, pas que des correctifs).
+### ▶ Prochaine étape
 
-Ensuite, le **reste de la liste de retours des parents du 2026-08-27**, non commencé :
-
-1. **Documents en anglais** (bio-démarche-C.V., lettre, certificat, catalogue). La **lettre est déjà bilingue** (sélecteur « Langue des documents » sur la vente, `gabarit-lettre.html` gère FR/EN) — le modèle existe. Les trois autres gabarits n'ont **aucun** anglais. ⚠ Question de fond non tranchée : traduire **les étiquettes** seulement, ou aussi **le contenu** ? La biographie et le C.V. d'un artiste sont en français dans la base ; il faudrait des champs anglais par artiste.
-2. **Photos — gros chantier, seul point à risque de perte de données.** Classer le dossier photos par artiste, puis par statut (disponible / vendue / retirée), plus un dossier « divers » ; ajouter une section Photos à la fiche d'artiste. Aujourd'hui tout est à plat (`Photos/artistes/artiste-3-…jpg`) et **les chemins sont référencés en base** → migration de fichiers, sauvegarde obligatoire avant, chemin de retour à prévoir. Démo HTML avant tout code.
-3. **Soutien technique à distance** — décision prise : **copie expurgée** de la base (artistes, œuvres, réglages, photos ; clients et ventes retirés), que les parents envoient à Dave. Respecte le principe « rien ne sort » de `CLAUDE.md` §3 et la Loi 25, et couvre tous les points de leur liste. Partage d'écran (Assistance rapide de Windows) pour les rares cas touchant une vente.
-4. **Bouton « Signaler un problème »** — monte un dossier de diagnostic (version, page, dernières lignes d'`erreurs.log`, compteurs, description écrite, capture facultative), **montré avant envoi**, produisant un fichier ou un courriel prérempli. **Jamais d'envoi automatique.**
-5. **Filtrer les œuvres par numéro** — ⚠ **à clarifier avec Dave** : la barre de recherche cherche **déjà** dans le numéro d'inventaire (`oeuvres-liste.js`). Savoir ce qui manque avant de coder.
-
-Puis la feuille de route : **Phase 4 — Sage 50**, le **cadre de tests** (dette technique, jamais fait) et le **volet chiffrement** (PARQUÉ, reco = BitLocker d'abord).
+1. **Dave teste la 0.15.0 dans l'app**, puis `git push origin master` et `npm run release`. À vérifier en priorité : le démarrage (la migration s'exécute alors), et **une page de cartels imprimée pour de vrai** (les QR se scannent-ils à 22 mm, les traits de découpe tombent-ils juste ?).
+2. **Reste de la liste de retours des parents du 2026-08-25**, non commencé :
+   - **Documents en anglais.** La **lettre est déjà bilingue** (sélecteur sur la vente, `gabarit-lettre.html`) ; les trois autres gabarits n'ont aucun anglais. ⚠ Question non tranchée : traduire **les étiquettes** seulement, ou aussi **le contenu** (bio et C.V. sont en français en base — il faudrait des champs anglais par artiste) ?
+   - **Photos — gros chantier à risque.** Classer par artiste puis par statut + dossier « divers », section Photos sur la fiche d'artiste. Tout est à plat aujourd'hui et **les chemins sont en base** → migration de fichiers, sauvegarde obligatoire, chemin de retour. Démo avant tout code.
+   - **Copie expurgée** pour le soutien technique (décidée) : catalogue sans clients ni ventes.
+   - **Bouton « Signaler un problème »** : dossier de diagnostic montré avant envoi, jamais d'envoi automatique.
+   - **Filtrer par numéro** : ⚠ à clarifier, la recherche cherche **déjà** dans le numéro d'inventaire.
+3. **Cote « hors normes » : une collision de vocabulaire subsiste.** La case `cote_hors_normes` (« prix saisi à la main, aucune cote ») coexiste avec la taille de cote « Hors normes » (0.14.0). Dave n'avait pas de préférence ; renommer la case en « Prix fixé à la main (aucune cote) » **n'a pas été fait**.
+4. Feuille de route : **Phase 4 — Sage 50**, **cadre de tests** (dette technique), **chiffrement** (PARQUÉ, reco = BitLocker d'abord).
 
 ### ✅ v0.12.0 PUBLIÉE (2026-08-09) — trois corrections d'usage
 

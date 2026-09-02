@@ -11,6 +11,48 @@
 
 ---
 
+## Depuis la version 0.14.0 — préparer une exposition
+
+Une nouvelle section **Expositions** apparaît dans le menu de gauche, juste
+sous Œuvres. Elle sert à préparer une sortie d'œuvres — un salon, une
+exposition ailleurs, un prêt — et à tout ramener proprement à la fin.
+
+**Comment ça marche, en quatre gestes.**
+
+1. **Nouvelle exposition** : vous lui donnez un nom, un lieu et des dates.
+2. **Ajouter des œuvres** : une fenêtre vous propose vos œuvres, avec une
+   recherche et un filtre par artiste. Vous cochez celles qui partent. Galeria
+   ne vous propose que les œuvres **disponibles ou réservées** — les vendues,
+   les retirées et celles déjà parties ailleurs n'apparaissent pas, pour qu'une
+   toile ne puisse pas se retrouver à deux endroits.
+3. **Imprimer les cartels** : Galeria produit un PDF prêt à découper.
+4. **Mettre fin à l'exposition** : toutes les œuvres reviennent d'un seul clic.
+
+**Ce que Galeria retient pour vous.** Quand une œuvre part, son statut devient
+**En exposition** et le nom de l'exposition s'inscrit sur sa fiche. Surtout,
+Galeria se souvient de l'état qu'elle avait **avant** de partir : à la fin, une
+œuvre qui était réservée redevient **réservée**, pas disponible.
+
+**Et si une œuvre se vend pendant l'exposition ?** Elle reste vendue. Galeria
+ne la remet jamais en vente par erreur, et vous le dit clairement dans le
+résumé de fin d'exposition.
+
+**Les cartels.** Dix par page en format Lettre, avec des traits de découpe.
+Chaque cartel porte l'artiste, le titre, le médium, les dimensions, le numéro
+d'inventaire et un **code QR** : le visiteur le scanne avec son téléphone et
+arrive directement sur la fiche de l'œuvre sur votre site. Une case à cocher
+permet **d'afficher ou non le prix** — pratique selon le lieu. Vous pouvez
+aussi choisir 4, 6 ou 8 cartels par page si vous préférez plus grand.
+
+**Les adresses du site.** Pour que les codes QR fonctionnent, chaque œuvre doit
+connaître l'adresse de sa fiche sur le site. Un nouveau bouton **« Récupérer
+les adresses du site »** les remplit toutes d'un coup — il se trouve dans
+l'écran de comparaison avec le site. Bonne nouvelle : il fonctionne **sans
+aucune clé**, rien à configurer. Au passage, le bouton **« Voir sur le site »**
+de vos fiches d'œuvres se met à fonctionner lui aussi.
+
+---
+
 ## Depuis la version 0.13.0 — vos retours d'usage
 
 Quatre choses que vous nous avez signalées en vous servant de Galeria.

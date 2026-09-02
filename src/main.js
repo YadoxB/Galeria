@@ -25,7 +25,7 @@ const {
   arreterSauvegardePeriodique,
 } = require('./db/backup');
 const { previewFile, importArtistes, importOeuvres } = require('./import/importer');
-const { analyserTypeOeuvre, genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette, indexerTousLesDocuments } = require('./pdf');
+const { analyserTypeOeuvre, genererCartelsPdf, genererCertificatPdf, genererFactureArtistePdf, genererRapportPdf, genererCataloguePdf, genererAnnexePdf, genererPresentationPdf, genererPochette, editerDocument, cheminPochetteSiExiste, infosDossierPochette, supprimerDossierPochette, indexerTousLesDocuments } = require('./pdf');
 const {
   listerArtistes,
   obtenirArtiste,
@@ -35,6 +35,9 @@ const {
   oeuvresParIds,
   obtenirOeuvre,
   obtenirFicheOeuvreBundle,
+  listerExpositions,
+  obtenirExposition,
+  oeuvresEligiblesExposition,
   listerTypesOeuvre,
   listerSupportsOeuvre,
   listerStylesOeuvre,
@@ -70,6 +73,9 @@ const {
   apercuNumeroCertificat,
   apercuProchainNumeroInventaire, reserverProchainNumeroInventaire,
   definirArchive, definirRetraitOeuvre, definirRetraitOeuvresLot,
+  majUrlsSiteDepuisSite,
+  creerExposition, modifierExposition, supprimerExposition,
+  ajouterOeuvresExposition, retirerOeuvreExposition, terminerExposition,
   reserverOeuvre, libererOeuvre,
   rehausserCompteursSelonBase,
 } = require('./db/mutations');
@@ -1280,6 +1286,27 @@ async function demarrerApplication() {
   // encore VIDE, remplir le champ « Citation » depuis le site et — si la citation
   // figure comme bloc distinct dans la bio — l'en retirer. Ne réécrit jamais toute
   // la bio ; ne touche pas aux artistes qui ont déjà une citation.
+  // Remplit l'adresse de la fiche de chaque œuvre sur le site. Passe par l'API
+  // « Store » de WooCommerce, qui est PUBLIQUE : aucune clé REST nécessaire.
+  // ---- Expositions ----
+  ipcMain.handle('expos:liste', (_e, filtres) => listerExpositions(filtres || {}));
+  ipcMain.handle('expos:get', (_e, id) => obtenirExposition(id));
+  ipcMain.handle('expos:creer', (_e, data) => creerExposition(data || {}));
+  ipcMain.handle('expos:modifier', (_e, id, data) => modifierExposition(id, data || {}));
+  ipcMain.handle('expos:supprimer', (_e, id) => supprimerExposition(id));
+  ipcMain.handle('expos:eligibles', () => oeuvresEligiblesExposition());
+  ipcMain.handle('expos:ajouter-oeuvres', (_e, id, ids) => ajouterOeuvresExposition(id, ids));
+  ipcMain.handle('expos:retirer-oeuvre', (_e, id, oeuvreId) => retirerOeuvreExposition(id, oeuvreId));
+  ipcMain.handle('expos:terminer', (_e, id) => terminerExposition(id));
+  ipcMain.handle('expos:cartels', (_e, id, options) => genererCartelsPdf(id, options || {}));
+
+  ipcMain.handle('web:recuperer-adresses', async () => {
+    const { url } = obtenirClesWoo();
+    if (!url) throw new Error("Configure d'abord l'adresse du site dans Réglages → Site web.");
+    const produits = await require('./web/woocommerce').listerProduitsPublics({ url });
+    return majUrlsSiteDepuisSite(produits);
+  });
+
   ipcMain.handle('web:ranger-citations', async () => {
     const { url } = obtenirClesWoo();
     if (!url) throw new Error("Configure d'abord l'adresse du site dans Réglages → Site web.");

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>Cartels · La Galerie du Vieux Saint-Jean</title>
+<style>
+:root{ --accent:#900001; --encre:#1c1a17; --gris:#6b6459; --filet:#c8bfa8; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;background:#e8e3db;color:var(--encre);}
+
+/* Page Lettre 8,5 × 11 (règle du projet : tous les PDF en Lettre). */
+.page{width:8.5in;height:11in;background:#fff;padding:12mm;margin:0 auto;}
+@media screen{ .page{box-shadow:0 4px 24px rgba(0,0,0,.14);margin:18px auto;} body{padding:12px;} }
+@media print{
+  @page{size:letter;margin:0;}
+  body{background:#fff;padding:0;}
+  .page{box-shadow:none;margin:0;}
+}
+
+/* Les cases sont égales pour que les traits de découpe soient droits et
+   réguliers ; le contenu est CENTRÉ dedans, sinon tout l'espace inutilisé
+   s'accumule d'un seul côté. */
+.grille{display:grid;gap:0;height:calc(11in - 24mm);}
+.p4  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,1fr);}
+.p6  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);}
+.p8  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);}
+.p10 .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(5,1fr);}
+
+.cartel{display:flex;align-items:center;justify-content:space-between;gap:4mm;
+        padding:4mm 5mm;border:1px dashed var(--filet);
+        page-break-inside:avoid;overflow:hidden;}
+.cartel-vide{border:0;}
+.cartel-texte{min-width:0;flex:1;}
+.cartel-artiste{font-family:Georgia,'Times New Roman',serif;font-size:10.5pt;font-weight:600;
+                color:var(--accent);letter-spacing:.02em;margin-bottom:1mm;}
+.cartel-titre{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:13pt;
+              line-height:1.2;margin-bottom:1.5mm;}
+.cartel-tech{font-size:9pt;color:var(--gris);line-height:1.35;margin-bottom:2mm;}
+.cartel-pied{display:flex;align-items:baseline;gap:4mm;font-size:8.5pt;}
+.cartel-inv{color:var(--gris);letter-spacing:.04em;}
+.cartel-prix{font-family:Georgia,'Times New Roman',serif;font-size:11.5pt;font-weight:600;margin-left:auto;}
+.cartel-qr{flex:0 0 auto;width:26mm;height:26mm;}
+.cartel-qr svg{width:100%;height:100%;display:block;}
+/* Pas d'adresse sur le site : on laisse la place vide plutôt que d'imprimer
+   un code qui ne mènerait nulle part. */
+.cartel-qr-vide{width:100%;height:100%;}
+
+.p4 .cartel-titre{font-size:15pt;} .p4 .cartel-qr{width:32mm;height:32mm;}
+.p8 .cartel{padding:3.5mm 4.5mm;} .p8 .cartel-titre{font-size:12pt;} .p8 .cartel-qr{width:24mm;height:24mm;}
+.p10 .cartel{padding:3mm 4mm;gap:3mm;}
+.p10 .cartel-artiste{font-size:9.5pt;margin-bottom:.6mm;}
+.p10 .cartel-titre{font-size:11pt;margin-bottom:1mm;}
+.p10 .cartel-tech{font-size:8pt;margin-bottom:1.4mm;}
+.p10 .cartel-pied{font-size:8pt;}
+.p10 .cartel-prix{font-size:10.5pt;}
+.p10 .cartel-qr{width:22mm;height:22mm;}
+</style></head>
+<body>
+<div id="doc"></div>
+<script>
+function escHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c];
+  });
+}
+
+// data = { format: 4|6|8|10, afficherPrix: bool, cartels: [
+//   { artiste, titre, technique, inventaire, prix, qr } ] }
+// `qr` est déjà un <svg> produit côté application (src/qr.js) : le gabarit ne
+// calcule rien, il met en page — comme les autres gabarits du projet.
+function remplir(data){
+  data = data || {};
+  var parPage = [4,6,8,10].indexOf(data.format) >= 0 ? data.format : 10;
+  var avecPrix = !!data.afficherPrix;
+  var cartels = data.cartels || [];
+
+  var html = '';
+  for (var d = 0; d < cartels.length; d += parPage) {
+    var lot = cartels.slice(d, d + parPage);
+    var cases = '';
+    for (var i = 0; i < lot.length; i++) {
+      var c = lot[i];
+      var tech = [c.technique, c.dimensions].filter(Boolean).join(' · ');
+      cases += '<div class="cartel">'
+        + '<div class="cartel-texte">'
+          + '<p class="cartel-artiste">' + escHtml(c.artiste) + '</p>'
+          + '<p class="cartel-titre">' + escHtml(c.titre) + '</p>'
+          + (tech ? '<p class="cartel-tech">' + escHtml(tech) + '</p>' : '')
+          + '<p class="cartel-pied">'
+            + '<span class="cartel-inv">' + escHtml(c.inventaire || '') + '</span>'
+            + (avecPrix && c.prix ? '<span class="cartel-prix">' + escHtml(c.prix) + '</span>' : '')
+          + '</p>'
+        + '</div>'
+        + '<div class="cartel-qr">' + (c.qr || '<div class="cartel-qr-vide"></div>') + '</div>'
+        + '</div>';
+    }
+    // Cases vides pour que la dernière page garde la même grille de découpe.
+    for (var v = lot.length; v < parPage; v++) cases += '<div class="cartel cartel-vide"></div>';
+    html += '<div class="page p' + parPage + '"><div class="grille">' + cases + '</div></div>';
+  }
+  document.getElementById('doc').innerHTML = html || '<div class="page"></div>';
+}
+</script>
+</body></html>

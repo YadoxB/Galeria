@@ -703,6 +703,69 @@ function listerMediumsArtiste(artisteId) {
     .map((r) => r.medium.trim());
 }
 
+// ===== Expositions =====
+
+// Liste des expositions, la plus récente d'abord, avec le nombre d'œuvres
+// encore présentes (celles rendues avant la fin ne comptent plus).
+function listerExpositions({ inclureTerminees = true } = {}) {
+  const db = openDatabase();
+  const where = inclureTerminees ? '' : "WHERE e.statut = 'en_cours'";
+  return db.prepare(`
+    SELECT e.*,
+           (SELECT COUNT(*) FROM exposition_oeuvres eo
+             WHERE eo.exposition_id = e.id AND eo.retire_le IS NULL) AS nb_oeuvres,
+           (SELECT COUNT(*) FROM exposition_oeuvres eo
+             WHERE eo.exposition_id = e.id) AS nb_oeuvres_total
+    FROM expositions e
+    ${where}
+    ORDER BY (e.statut = 'terminee'), COALESCE(e.date_debut, e.cree_le) DESC, e.id DESC
+  `).all();
+}
+
+// Une exposition et ses œuvres (avec de quoi bâtir un cartel).
+function obtenirExposition(id) {
+  const n = Number(id);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  const db = openDatabase();
+  const expo = db.prepare('SELECT * FROM expositions WHERE id = ?').get(n);
+  if (!expo) return null;
+  const oeuvres = db.prepare(`
+    SELECT o.id, o.titre, o.numero_inventaire, o.medium, o.dimensions,
+           o.hauteur, o.largeur, o.profondeur, o.prix, o.statut, o.image_path,
+           o.url_site, o.annee,
+           a.nom AS artiste_nom, a.prenom AS artiste_prenom,
+           eo.statut_avant, eo.ajoute_le, eo.retire_le
+    FROM exposition_oeuvres eo
+    JOIN oeuvres o   ON o.id = eo.oeuvre_id
+    JOIN artistes a  ON a.id = o.artiste_id
+    WHERE eo.exposition_id = ?
+    ORDER BY a.nom COLLATE NOCASE, o.numero_inventaire COLLATE NOCASE, o.titre COLLATE NOCASE
+  `).all(n);
+  return { ...expo, oeuvres };
+}
+
+// Œuvres qu'on peut envoyer en exposition : disponibles ou réservées, encore
+// à la galerie (pas retirées), et pas déjà parties dans une exposition en
+// cours — une toile ne peut pas être à deux endroits à la fois.
+function oeuvresEligiblesExposition() {
+  const db = openDatabase();
+  return db.prepare(`
+    SELECT o.id, o.titre, o.numero_inventaire, o.medium, o.dimensions, o.prix,
+           o.statut, o.image_path, o.format,
+           a.nom AS artiste_nom, a.prenom AS artiste_prenom, a.id AS artiste_id
+    FROM oeuvres o
+    JOIN artistes a ON a.id = o.artiste_id
+    WHERE o.archive = 0
+      AND o.statut IN ('disponible', 'reserve')
+      AND NOT EXISTS (
+        SELECT 1 FROM exposition_oeuvres eo
+        JOIN expositions e ON e.id = eo.exposition_id
+        WHERE eo.oeuvre_id = o.id AND eo.retire_le IS NULL AND e.statut = 'en_cours'
+      )
+    ORDER BY a.nom COLLATE NOCASE, o.numero_inventaire COLLATE NOCASE, o.titre COLLATE NOCASE
+  `).all();
+}
+
 function listerVentes() {
   const db = openDatabase();
   return db.prepare(`
@@ -857,6 +920,7 @@ function oeuvresParIds(ids) {
 }
 
 module.exports = {
+  listerExpositions, obtenirExposition, oeuvresEligiblesExposition,
   listerArtistes,
   obtenirArtiste,
   oeuvresPourCatalogue,
