@@ -232,6 +232,10 @@ function preparerDonneesCertificat(certificat, cfg) {
     numero: certificat.numero_delivrance || '',
     date: certificat.date_delivrance || '',
     photo: photoEnDataUrl(certificat.image_path),
+    // 'FR' | 'EN' — pilote les libellés, le format de date et le texte
+    // d'attestation du gabarit. Conservé sur le certificat, donc une
+    // régénération reste dans la même langue.
+    langue: certificat.langue === 'EN' ? 'EN' : 'FR',
   };
 }
 

@@ -32,6 +32,10 @@ export const VERSIONS = [
         texte: "Galeria produit vos <b>cartels</b> en PDF, dix par page, prêts à découper : artiste, titre, médium, dimensions, numéro d'inventaire et un <b>code QR</b> qui mène à la fiche de l'œuvre sur votre site. Une case permet <b>d'afficher ou non le prix</b>.",
       },
       {
+        titre: 'Certificats en anglais',
+        texte: "La fenêtre de création d'un certificat propose maintenant sa <b>langue</b> : français ou anglais. Tout le document suit — les libellés, la date et le texte d'attestation. La langue est conservée, donc régénérer le certificat plus tard le refait à l'identique.",
+      },
+      {
         titre: 'Les adresses de votre site',
         texte: "Pour que les codes QR fonctionnent, un bouton <b>« Récupérer les adresses du site »</b> relie chaque œuvre à sa fiche en ligne, d'un seul coup. Il ne demande aucune configuration, et le bouton <b>« Voir sur le site »</b> de vos fiches se met à fonctionner du même coup.",
       },

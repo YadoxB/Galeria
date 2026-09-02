@@ -36,6 +36,14 @@ identifiants.
   les dimensions, le **numéro d'inventaire** et un **code QR** menant à la fiche de
   l'œuvre sur le site. Case **« Afficher le prix »**, cochée par défaut. Une œuvre sans
   adresse sur le site reçoit un cartel sans code QR plutôt qu'un code menant nulle part.
+- **Certificat d'authenticité en anglais.** La fenêtre de création propose la **langue du
+  document** (français ou anglais), choisie à chaque certificat. Sont traduits : les dix
+  libellés imprimés, les trois textes d'attestation (peintre, sculpteur, reproduction), le
+  cas du métier libre, et le format de date (« August 27, 2026 »). La langue est
+  **conservée sur le certificat** : une régénération reste dans la même langue. Les
+  certificats existants restent en français. *(La présentation d'artiste et le catalogue
+  ne sont pas concernés : leur contenu — biographie, démarche, C.V., descriptions — est du
+  français rédigé, qui demande une traduction à part.)*
 - **« Récupérer les adresses du site »** (écran de synchronisation des œuvres) : remplit
   l'adresse de la fiche de chaque œuvre en la rapprochant par numéro d'inventaire = SKU.
   Passe par l'**API publique de la boutique**, donc fonctionne **sans clés REST**. Le

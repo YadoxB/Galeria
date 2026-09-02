@@ -157,6 +157,10 @@ CREATE TABLE IF NOT EXISTS certificats (
   -- seq_artiste = compteur par artiste ; numero_sage = n° de facture Sage requis.
   seq_artiste        INTEGER,
   numero_sage        TEXT,
+  -- Langue du certificat : 'FR' (défaut) ou 'EN'. Choisie à la création ;
+  -- conservée pour qu'une régénération du PDF reste dans la même langue.
+  langue             TEXT NOT NULL DEFAULT 'FR'
+                     CHECK (langue IN ('FR', 'EN')),
   cree_le            TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

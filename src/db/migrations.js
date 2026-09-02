@@ -84,6 +84,9 @@ const COLONNES_ATTENDUES = {
     ['numero_facture_sage', 'TEXT'],
   ],
   certificats: [
+    // Langue du certificat ('FR' | 'EN'). Les certificats existants sont en
+    // français : le DEFAULT les couvre sans retouche.
+    ['langue', "TEXT NOT NULL DEFAULT 'FR'"],
     // Nouveau format de numéro de certificat : {n° inventaire}-{année}-{seq
     // artiste}-{n° Sage}. Les anciens certificats « C-2026-NNN » gardent
     // seq_artiste/numero_sage à NULL.

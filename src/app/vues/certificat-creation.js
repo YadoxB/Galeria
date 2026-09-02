@@ -71,6 +71,13 @@ export async function ouvrirCreationCertificat({ oeuvre, vente = null }) {
           </div>
           <div class="grille-form">
             ${champTexte({ nom: 'valeur', libelle: 'Valeur (CAD)', valeur: valeurDefaut, type: 'number', attributs: 'min="0" step="0.01"' })}
+            <div class="form-champ">
+              <label for="f-langue">Langue du certificat</label>
+              <select id="f-langue" name="langue">
+                <option value="FR" selected>Français</option>
+                <option value="EN">Anglais</option>
+              </select>
+            </div>
             ${champTexte({ nom: 'signataire', libelle: 'Signataire', valeur: signataireDefaut })}
           </div>
           ${champTextarea({ nom: 'particularite', libelle: 'Particularité (optionnel)', valeur: '', lignes: 2 })}
@@ -161,6 +168,7 @@ export async function ouvrirCreationCertificat({ oeuvre, vente = null }) {
         signataire: val('signataire'),
         particularite: val('particularite'),
         numero_sage: numeroSage,
+        langue: val('langue') || 'FR',
         pdf_path: null,
       };
 

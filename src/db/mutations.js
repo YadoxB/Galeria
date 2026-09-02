@@ -1359,11 +1359,14 @@ function creerCertificat(data) {
   const seq = ((row && row.m) || 0) + 1;
   const numero = composerNumeroCertificat({ numeroInventaire: oeuvre.numero_inventaire, seq, numeroSage });
 
-  const cols = ['oeuvre_id', 'vente_id', 'numero_delivrance', 'date_delivrance', 'valeur', 'signataire', 'particularite', 'pdf_path', 'seq_artiste', 'numero_sage'];
+  const langue = (vide(data.langue) || 'FR').toUpperCase();
+  if (langue !== 'FR' && langue !== 'EN') throw new Error('Langue de certificat invalide.');
+
+  const cols = ['oeuvre_id', 'vente_id', 'numero_delivrance', 'date_delivrance', 'valeur', 'signataire', 'particularite', 'pdf_path', 'seq_artiste', 'numero_sage', 'langue'];
   const valeurs = [
     entier(data.oeuvre_id), entier(data.vente_id), numero, dateDelivrance,
     nombre(data.valeur), vide(data.signataire), vide(data.particularite), vide(data.pdf_path),
-    seq, numeroSage,
+    seq, numeroSage, langue,
   ];
   const info = db.prepare(`INSERT INTO certificats (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`).run(...valeurs);
 

@@ -11,7 +11,7 @@
 
 ---
 
-## Depuis la version 0.14.0 — préparer une exposition
+## Depuis la version 0.14.0 — préparer une exposition, et des certificats en anglais
 
 Une nouvelle section **Expositions** apparaît dans le menu de gauche, juste
 sous Œuvres. Elle sert à préparer une sortie d'œuvres — un salon, une
@@ -43,6 +43,16 @@ d'inventaire et un **code QR** : le visiteur le scanne avec son téléphone et
 arrive directement sur la fiche de l'œuvre sur votre site. Une case à cocher
 permet **d'afficher ou non le prix** — pratique selon le lieu. Vous pouvez
 aussi choisir 4, 6 ou 8 cartels par page si vous préférez plus grand.
+
+**Les certificats en anglais.** Quand vous produisez un certificat
+d'authenticité, une nouvelle ligne vous demande sa **langue** : français ou
+anglais. Tout le document suit — les intitulés, la date et le texte
+d'attestation. Le choix est conservé : si vous refaites le PDF plus tard, il
+ressort dans la même langue. Vos certificats déjà produits ne changent pas.
+
+*(La présentation d'artiste et le catalogue ne sont pas encore traduisibles :
+leur contenu — biographie, démarche, C.V., descriptions — est du texte rédigé
+en français, ce qui demande un travail à part. C'est le prochain chantier.)*
 
 **Les adresses du site.** Pour que les codes QR fonctionnent, chaque œuvre doit
 connaître l'adresse de sa fiche sur le site. Un nouveau bouton **« Récupérer
