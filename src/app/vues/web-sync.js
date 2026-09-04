@@ -36,6 +36,7 @@ export async function rendreWebSync(contenu) {
           </div>
         </div>
         <div class="entete-page-actions">
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-importer-anglais">Importer les textes anglais</button>
           <button type="button" class="btn-action btn-secondaire-action" id="btn-recuperer-adresses">Récupérer les adresses du site</button>
           <button type="button" class="btn-action btn-principal" id="btn-comparer">Comparer avec le site</button>
         </div>
@@ -47,6 +48,7 @@ export async function rendreWebSync(contenu) {
   const corps = contenu.querySelector('#web-sync-corps');
   const btnComparer = contenu.querySelector('#btn-comparer');
   brancherRecupererAdresses(contenu.querySelector('#btn-recuperer-adresses'));
+  brancherImporterAnglais(contenu.querySelector('#btn-importer-anglais'));
   contenu.querySelector('#wsync-vers-artistes')?.addEventListener('click', () => naviguer('web-sync-artistes'));
 
   let dataCourant = null;
@@ -749,6 +751,56 @@ function modalCorrigerSku(produit) {
 // chaque œuvre sur le site, rapprochée par numéro d'inventaire = SKU. Passe par
 // l'API publique de la boutique : fonctionne même sans clés REST configurées.
 // C'est cette adresse que le code QR des cartels d'exposition utilise.
+// Bouton « Importer les textes anglais du site ». Le site est bilingue (WPML) :
+// les mêmes fiches y existent en anglais, rédigées à la main. On les récupère
+// pour alimenter les documents en anglais, sans traduction automatique.
+// Ne remplit que ce qui est vide côté app ; ne touche jamais au français.
+function brancherImporterAnglais(btn) {
+  if (!btn) return;
+  btn.addEventListener('click', async (e) => {
+    const bouton = e.currentTarget; // à capturer AVANT tout await (sinon null ensuite)
+    const rep = await confirmer({
+      type: 'question',
+      title: 'Importer les textes anglais du site ?',
+      message: "Récupérer les versions anglaises des biographies, démarches, C.V. et descriptions d'œuvres.",
+      detail: [
+        "Les artistes sont rapprochés par nom, les œuvres par numéro d'inventaire.",
+        "Seuls les champs anglais ENCORE VIDES sont remplis : une traduction que vous auriez déjà corrigée n'est pas écrasée.",
+        "Les textes français ne sont jamais touchés, et rien n'est modifié sur le site.",
+      ].join('\n\n'),
+      buttons: ['Importer', 'Annuler'], defaultId: 0, cancelId: 1,
+    });
+    if (rep !== 0) return;
+    bouton.disabled = true;
+    const lib = bouton.textContent;
+    bouton.textContent = 'Lecture du site…';
+    try {
+      const r = await window.api.webImporterAnglais();
+      const lignes = [];
+      lignes.push(`${pluriel(r.champs_artistes, 'texte d\u2019artiste importé', 'textes d\u2019artistes importés')} sur ${pluriel(r.artistes_touches, 'artiste', 'artistes')}.`);
+      lignes.push(`${pluriel(r.oeuvres_touchees, 'description d\u2019œuvre importée', 'descriptions d\u2019œuvres importées')}.`);
+      if (r.champs_deja_remplis) lignes.push(`${pluriel(r.champs_deja_remplis, 'champ était déjà rempli', 'champs étaient déjà remplis')} en anglais : laissé tel quel.`);
+      if (r.oeuvres_deja) lignes.push(`${pluriel(r.oeuvres_deja, 'œuvre avait déjà', 'œuvres avaient déjà')} sa description anglaise.`);
+      if (r.artistes_sans_site) lignes.push(`${pluriel(r.artistes_sans_site, 'artiste est introuvable', 'artistes sont introuvables')} sur le site.`);
+      if (r.oeuvres_sans_site) lignes.push(`${pluriel(r.oeuvres_sans_site, 'œuvre est sans', 'œuvres sont sans')} équivalent anglais sur le site.`);
+      const total = r.champs_artistes + r.oeuvres_touchees;
+      await alerter({
+        type: 'succes',
+        title: total ? 'Textes anglais importés' : 'Rien à importer',
+        message: total
+          ? `${pluriel(total, 'texte anglais enregistré', 'textes anglais enregistrés')}.`
+          : 'Aucun texte anglais nouveau à enregistrer.',
+        detail: lignes.join('\n'),
+      });
+    } catch (err) {
+      await alerter({ type: 'error', title: 'Importation impossible', message: nettoyerErreur(err) });
+    } finally {
+      bouton.disabled = false;
+      bouton.textContent = lib;
+    }
+  });
+}
+
 function brancherRecupererAdresses(btn) {
   if (!btn) return;
   btn.addEventListener('click', async (e) => {

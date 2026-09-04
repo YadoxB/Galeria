@@ -15,6 +15,7 @@ import { synchroniserArtiste } from '../sync-fiche.js';
 import { recadrerCarre } from '../recadrage.js';
 import { visionner } from '../visionneuse.js';
 import { confirmer } from '../dialogue.js';
+import { brancherTraduction } from '../traduction.js';
 
 const TYPES_ARTISTE = ['Peintre', 'Sculpteur', 'Photographe', 'Graveur', 'Illustrateur'];
 const LANGUES = ['Français', 'Anglais', 'Bilingue'];
@@ -25,6 +26,8 @@ const GABARIT_VIDE = {
   nom: '',
   type: null, prefixe_inventaire: null,
   citation: null, biographie: null, demarche: null, curriculum: null,
+  // Versions anglaises : importées du site, ou traduites puis relues.
+  citation_en: null, biographie_en: null, demarche_en: null, curriculum_en: null,
   courriel: null, telephone: null, adresse: null,
   pays: 'Canada', province: null, langue: null,
   percoit_taxes: 0, numeros_taxes: null,
@@ -106,9 +109,16 @@ export async function rendreArtisteFiche(contenu, params) {
     return reponse === 0;
   }
 
-  function entrerEdition() {
+  // Langue affichée par le bloc « Présentation » du formulaire. Les champs de
+  // l'AUTRE langue restent dans le formulaire, simplement masqués : sans eux,
+  // enregistrer en anglais viderait le français (modifierArtiste réécrit
+  // toutes les colonnes).
+  let langueEdition = 'fr';
+
+  function entrerEdition(langue = 'fr') {
     mode = 'edition';
     modifie = false;
+    langueEdition = langue === 'en' ? 'en' : 'fr';
     poserGardien(gardienChangements);
     dessiner();
   }
@@ -229,28 +239,55 @@ export async function rendreArtisteFiche(contenu, params) {
       </div>
     `;
 
-    // === Présentation (onglets Biographie / Démarche / Curriculum) ===
+    // === Présentation (onglets Citation / Biographie / Démarche / Curriculum) ===
+    // Deux dimensions : la SECTION (les onglets) et la LANGUE (la bascule
+    // FR/EN à droite de la barre). Les huit corps sont tous rendus, un seul
+    // visible — les basculer ne coûte rien et ne redessine pas la fiche.
     const onglets = [
-      { cle: 'cit', titre: 'Citation', contenu: a.citation },
-      { cle: 'bio', titre: 'Biographie', contenu: a.biographie },
-      { cle: 'dem', titre: 'Démarche',  contenu: a.demarche },
-      { cle: 'cur', titre: 'Curriculum', contenu: a.curriculum },
+      { cle: 'cit', titre: 'Citation', champ: 'citation', vide_en: 'de la citation', contenu: a.citation, contenu_en: a.citation_en },
+      { cle: 'bio', titre: 'Biographie', champ: 'biographie', vide_en: 'de la biographie', contenu: a.biographie, contenu_en: a.biographie_en },
+      { cle: 'dem', titre: 'Démarche', champ: 'demarche', vide_en: 'de la démarche', contenu: a.demarche, contenu_en: a.demarche_en },
+      { cle: 'cur', titre: 'Curriculum', champ: 'curriculum', vide_en: 'du curriculum', contenu: a.curriculum, contenu_en: a.curriculum_en },
     ];
-    const cleActive = (onglets.find((o) => o.contenu) || onglets[0]).cle;
+    const rempli = (t) => !!(t && String(t).trim());
+    // La pastille dorée sur EN promet quelque chose : on ne l'affiche que si
+    // au moins une section anglaise existe vraiment.
+    const aDeLAnglais = onglets.some((o) => rempli(o.contenu_en));
+    const cleActive = (onglets.find((o) => rempli(o.contenu)) || onglets[0]).cle;
     const tetes = onglets.map((o) =>
       `<button type="button" class="onglet-bento ${o.cle === cleActive ? 'actif' : ''}" data-onglet="${o.cle}">${o.titre}</button>`
     ).join('');
-    const corpsOnglets = onglets.map((o) => {
-      const cache = o.cle !== cleActive ? 'style="display:none;"' : '';
-      if (o.contenu) {
-        return `<div class="onglet-corps" data-corps="${o.cle}" ${cache}>${ech(o.contenu).replace(/\n/g, '<br>')}</div>`;
+    const corpsOnglets = onglets.flatMap((o) => ['fr', 'en'].map((lg) => {
+      const texte = lg === 'en' ? o.contenu_en : o.contenu;
+      const cache = (o.cle !== cleActive || lg !== 'fr') ? 'style="display:none;"' : '';
+      const attrs = `data-corps="${o.cle}" data-langue="${lg}" ${cache}`;
+      if (rempli(texte)) {
+        return `<div class="onglet-corps" ${attrs}>${ech(texte).replace(/\n/g, '<br>')}</div>`;
       }
-      return `<div class="onglet-corps onglet-corps-vide" data-corps="${o.cle}" ${cache}>Aucune ${o.titre.toLowerCase()} renseignée.</div>`;
-    }).join('');
+      if (lg === 'fr') {
+        return `<div class="onglet-corps onglet-corps-vide" ${attrs}>Aucune ${o.titre.toLowerCase()} renseignée.</div>`;
+      }
+      // Vide en anglais : on ne laisse pas un blanc, on propose de le combler.
+      // La traduction n'enregistre rien toute seule, elle ouvre l'édition.
+      return `
+        <div class="onglet-corps onglet-corps-vide" ${attrs}>
+          <span>Pas de version anglaise ${o.vide_en}.</span>
+          <span class="vide-actions">
+            <button type="button" class="btn-action btn-principal" data-traduire="${o.champ}">Traduire avec l'assistant</button>
+            <button type="button" class="btn-action" data-ecrire-en="${o.champ}">Écrire à la main</button>
+          </span>
+        </div>`;
+    })).join('');
+    const basculeLangue = `
+      <span class="bascule-langue" id="bascule-presentation" role="group" aria-label="Langue des textes">
+        <button type="button" class="actif" data-langue="fr">FR</button>
+        <button type="button" class="${aDeLAnglais ? '' : 'vide'}" data-langue="en"${aDeLAnglais ? '' : ' title="Aucun texte anglais pour cet artiste"'}>EN${aDeLAnglais ? '<span class="pastille-langue"></span>' : ''}</button>
+      </span>`;
     const zonePresentation = `
       <div class="carte carte-presentation">
         <div class="onglets-bento">
           ${tetes}
+          ${basculeLangue}
           <button type="button" class="btn-presentation-agrandir" id="btn-presentation-agrandir" title="Ouvrir en grand">⤢</button>
         </div>
         ${corpsOnglets}
@@ -418,7 +455,7 @@ export async function rendreArtisteFiche(contenu, params) {
     `;
 
     // === Handlers ===
-    contenu.querySelector('#btn-modifier').addEventListener('click', entrerEdition);
+    contenu.querySelector('#btn-modifier').addEventListener('click', () => entrerEdition('fr'));
     contenu.querySelector('#btn-sync-site').addEventListener('click', () =>
       synchroniserArtiste(a.id, () => remplacerCourant('artiste-fiche', { id: a.id })));
     contenu.querySelector('#btn-supprimer').addEventListener('click', supprimer);
@@ -615,34 +652,76 @@ export async function rendreArtisteFiche(contenu, params) {
       });
     }
 
-    // Onglets de la carte Présentation : bascule sans re-render.
+    // Onglets et bascule FR/EN : deux dimensions indépendantes, aucun
+    // re-render — on ne fait qu'afficher le corps qui correspond au couple
+    // (section, langue) courant.
+    let ongletActif = cleActive;
+    let langueActive = 'fr';
+    const majCorpsVisible = () => {
+      contenu.querySelectorAll('[data-corps]').forEach((c) => {
+        c.style.display = (c.dataset.corps === ongletActif && c.dataset.langue === langueActive) ? '' : 'none';
+      });
+    };
     contenu.querySelectorAll('.onglet-bento').forEach((tete) => {
       tete.addEventListener('click', () => {
-        const cle = tete.dataset.onglet;
+        ongletActif = tete.dataset.onglet;
         contenu.querySelectorAll('.onglet-bento').forEach((t) => t.classList.toggle('actif', t === tete));
-        contenu.querySelectorAll('[data-corps]').forEach((c) => {
-          c.style.display = (c.dataset.corps === cle) ? '' : 'none';
+        majCorpsVisible();
+      });
+    });
+    const basculeP = contenu.querySelector('#bascule-presentation');
+    if (basculeP) {
+      basculeP.querySelectorAll('button').forEach((b) => {
+        b.addEventListener('click', () => {
+          langueActive = b.dataset.langue;
+          basculeP.querySelectorAll('button').forEach((x) => x.classList.toggle('actif', x === b));
+          majCorpsVisible();
         });
+      });
+    }
+
+    // Boutons de l'état vide anglais. « Écrire à la main » ouvre l'édition ;
+    // la traduction assistée est branchée plus bas (elle passe par l'IA).
+    contenu.querySelectorAll('[data-ecrire-en]').forEach((b) => {
+      b.addEventListener('click', () => entrerEdition('en'));
+    });
+    // « Traduire avec l'assistant » : on passe en édition côté anglais et on
+    // lance la traduction du champ concerné. Le texte arrive dans le champ, à
+    // relire — rien n'est enregistré tant qu'on ne clique pas sur « Enregistrer ».
+    contenu.querySelectorAll('[data-traduire]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const champ = b.dataset.traduire;
+        entrerEdition('en');
+        const lancer = contenu.querySelector(`[data-traduire-champ="${champ}"]`);
+        if (lancer) lancer.click();
       });
     });
 
-    // Bouton « ⤢ » : ouvre la présentation complète (3 sections) en modale.
+    // Bouton « ⤢ » : ouvre la présentation complète (3 sections) en modale,
+    // dans la langue affichée au moment du clic.
     const btnAgrandir = contenu.querySelector('#btn-presentation-agrandir');
     if (btnAgrandir) {
       btnAgrandir.addEventListener('click', () => {
-        const sections = [
-          { t: 'Biographie', c: a.biographie },
-          { t: 'Démarche', c: a.demarche },
-          { t: 'Curriculum', c: a.curriculum },
-        ].filter((s) => s.c && String(s.c).trim());
+        const en = langueActive === 'en';
+        const sections = (en
+          ? [
+            { t: 'Biography', c: a.biographie_en },
+            { t: "Artist's statement", c: a.demarche_en },
+            { t: 'C.V.', c: a.curriculum_en },
+          ]
+          : [
+            { t: 'Biographie', c: a.biographie },
+            { t: 'Démarche', c: a.demarche },
+            { t: 'Curriculum', c: a.curriculum },
+          ]).filter((s) => s.c && String(s.c).trim());
         const corps = sections.length
           ? sections.map((s) => `<h4 class="modale-presentation-titre">${ech(s.t)}</h4><div class="modale-presentation-texte">${ech(s.c).replace(/\n/g, '<br>')}</div>`).join('')
-          : '<p class="aide-champ">Aucune présentation renseignée.</p>';
+          : `<p class="aide-champ">${en ? 'Pas de version anglaise de la présentation.' : 'Aucune présentation renseignée.'}</p>`;
         const overlay = document.createElement('div');
         overlay.className = 'overlay-modale overlay-dialogue';
         overlay.innerHTML = `
           <div class="dialogue" role="dialog" aria-modal="true" style="max-width:760px;max-height:88vh;display:flex;flex-direction:column;">
-            <div class="dialogue-entete"><h3 class="dialogue-titre">Présentation — ${ech(nomCompletA)}</h3></div>
+            <div class="dialogue-entete"><h3 class="dialogue-titre">Présentation${en ? ' (anglais)' : ''} — ${ech(nomCompletA)}</h3></div>
             <div class="modale-presentation-corps">${corps}</div>
             <div class="dialogue-actions"><button type="button" class="btn-action btn-principal" id="presentation-fermer">Fermer</button></div>
           </div>`;
@@ -748,13 +827,42 @@ export async function rendreArtisteFiche(contenu, params) {
               </div>
             </div>
 
-            <!-- Présentation (6 col) -->
+            <!-- Présentation (6 col) — bilingue.
+                 Les deux jeux de champs sont TOUJOURS dans le formulaire ; la
+                 bascule ne fait que masquer l'un des deux. Les retirer du DOM
+                 viderait la langue cachée à l'enregistrement. -->
             <div class="carte span-6">
-              <h3>Présentation</h3>
-              ${champTextarea({ nom: 'citation', libelle: 'Citation', valeur: a.citation, lignes: 2 })}
-              ${champTextarea({ nom: 'biographie', libelle: 'Biographie', valeur: a.biographie, lignes: 4 })}
-              ${champTextarea({ nom: 'demarche', libelle: 'Démarche', valeur: a.demarche, lignes: 4 })}
-              ${champTextarea({ nom: 'curriculum', libelle: 'Curriculum', valeur: a.curriculum, lignes: 4 })}
+              <div class="carte-tete-langue">
+                <h3>Présentation</h3>
+                <span class="bascule-langue" id="bascule-edition" role="group" aria-label="Langue des textes">
+                  <button type="button" class="${langueEdition === 'fr' ? 'actif' : ''}" data-langue="fr">FR</button>
+                  <button type="button" class="${langueEdition === 'en' ? 'actif' : ''}" data-langue="en">EN</button>
+                </span>
+              </div>
+              <p class="bandeau-langue" id="bandeau-langue-en" ${langueEdition === 'en' ? '' : 'style="display:none;"'}>
+                Vous modifiez la version <b>anglaise</b>. Le français reste intact et sera enregistré avec, même sans y revenir.
+              </p>
+              <div data-champs-langue="fr" ${langueEdition === 'fr' ? '' : 'style="display:none;"'}>
+                ${champTextarea({ nom: 'citation', libelle: 'Citation', valeur: a.citation, lignes: 2 })}
+                ${champTextarea({ nom: 'biographie', libelle: 'Biographie', valeur: a.biographie, lignes: 4 })}
+                ${champTextarea({ nom: 'demarche', libelle: 'Démarche', valeur: a.demarche, lignes: 4 })}
+                ${champTextarea({ nom: 'curriculum', libelle: 'Curriculum', valeur: a.curriculum, lignes: 4 })}
+              </div>
+              <div data-champs-langue="en" ${langueEdition === 'en' ? '' : 'style="display:none;"'}>
+                ${['citation', 'biographie', 'demarche', 'curriculum'].map((c) => `
+                  <div class="champ-traduisible">
+                    ${champTextarea({
+    nom: `${c}_en`,
+    libelle: `${{ citation: 'Citation', biographie: 'Biographie', demarche: 'Démarche', curriculum: 'Curriculum' }[c]} (anglais)`,
+    valeur: a[`${c}_en`],
+    lignes: c === 'citation' ? 2 : 4,
+  })}
+                    <button type="button" class="btn-action btn-traduire-champ" data-traduire-champ="${c}">
+                      <span class="ia-icone" aria-hidden="true">✦</span> Traduire depuis le français
+                    </button>
+                  </div>`).join('')}
+                <p class="aide-champ">La traduction remplit le champ, à relire avant d'enregistrer. Rien n'est envoyé au site.</p>
+              </div>
             </div>
 
             <!-- Cotes (12 col) -->
@@ -1038,6 +1146,37 @@ export async function rendreArtisteFiche(contenu, params) {
     form.addEventListener('change', () => { modifie = true; });
 
     brancherChangementPays(form, { paysNom: 'pays', subNom: 'province', subZoneId: 'zone-province-artiste' });
+
+    // Bascule FR/EN du bloc Présentation : elle ne fait que masquer un jeu de
+    // champs. Rien n'est retiré du formulaire, donc les deux langues partent
+    // ensemble à l'enregistrement.
+    const basculeE = contenu.querySelector('#bascule-edition');
+    if (basculeE) {
+      const bandeau = contenu.querySelector('#bandeau-langue-en');
+      basculeE.querySelectorAll('button').forEach((b) => {
+        b.addEventListener('click', () => {
+          langueEdition = b.dataset.langue === 'en' ? 'en' : 'fr';
+          basculeE.querySelectorAll('button').forEach((x) => x.classList.toggle('actif', x === b));
+          contenu.querySelectorAll('[data-champs-langue]').forEach((z) => {
+            z.style.display = (z.dataset.champsLangue === langueEdition) ? '' : 'none';
+          });
+          if (bandeau) bandeau.style.display = langueEdition === 'en' ? '' : 'none';
+        });
+      });
+    }
+
+    // Un bouton « Traduire » par champ anglais.
+    contenu.querySelectorAll('[data-traduire-champ]').forEach((b) => {
+      const c = b.dataset.traduireChamp;
+      brancherTraduction({
+        bouton: b,
+        source: () => (form.elements[c] ? form.elements[c].value : ''),
+        cible: () => form.elements[`${c}_en`],
+        champ: c,
+        contexte: nomComplet(a) || a.nom || '',
+        onRempli: () => { modifie = true; },
+      });
+    });
 
     // Auto-préfixe d'inventaire : 2 premières lettres du prénom + 1 du nom, en majuscules sans accents.
     // S'applique seulement tant que l'utilisateur n'a pas modifié le préfixe à la main.

@@ -81,4 +81,91 @@ async function genererDescription({ apiKey, prompt, imageDataUrl }) {
   return texte;
 }
 
-module.exports = { genererDescription, MODELE };
+// ===== Traduction française → anglaise =====
+// Sert aux documents en anglais (présentation d'artiste, catalogue) dont le
+// contenu — biographie, démarche, C.V., descriptions — est rédigé en français.
+//
+// Modèle distinct de la génération de descriptions : traduire une biographie
+// d'artiste demande plus de finesse que décrire une toile. Une seule constante
+// à changer si l'on veut revenir à un modèle plus économique.
+const MODELE_TRADUCTION = 'claude-opus-5';
+
+const SYSTEME_TRADUCTION = [
+  "Tu traduis du français vers l'anglais pour une galerie d'art québécoise.",
+  "Rends un anglais naturel et soigné, du registre d'un catalogue d'exposition :",
+  "ni littéral ni embelli. Conserve la structure du texte — paragraphes, sauts de",
+  "ligne, listes, années en tête de ligne d'un curriculum.",
+  "Ne traduis PAS les noms propres, les titres d'œuvres, les noms de lieux, de",
+  "galeries, de musées ni de prix : laisse-les tels quels.",
+  "N'ajoute rien, ne retire rien, ne commente pas.",
+  "Réponds UNIQUEMENT avec la traduction, sans préambule ni guillemets.",
+].join(' ');
+
+// Ce que chaque champ est, pour que la traduction adopte le bon ton.
+const NATURE_CHAMP = {
+  biographie: "une notice biographique d'artiste",
+  demarche: "un texte de démarche artistique, écrit à la première personne",
+  curriculum: "un curriculum d'artiste : expositions, prix, collections, souvent en lignes « année — description »",
+  citation: "une courte citation de l'artiste, mise en exergue",
+  description: "la description d'une œuvre, destinée au catalogue et au site",
+};
+
+// texte : le français à traduire. champ : clé de NATURE_CHAMP (facultatif).
+// contexte : nom de l'artiste ou de l'œuvre, pour lever les ambiguïtés.
+async function traduireVersAnglais({ apiKey, texte, champ, contexte }) {
+  const source = (texte == null ? '' : String(texte)).trim();
+  if (!source) {
+    const e = new Error('Aucun texte à traduire.');
+    e.code = 'VIDE';
+    throw e;
+  }
+  if (!apiKey) {
+    const e = new Error('Aucune clé API configurée.');
+    e.code = 'NO_KEY';
+    throw e;
+  }
+  let Anthropic;
+  try {
+    Anthropic = require('@anthropic-ai/sdk');
+  } catch {
+    throw new Error("Le module d'IA n'est pas installé (@anthropic-ai/sdk).");
+  }
+
+  const nature = NATURE_CHAMP[champ] || 'un texte de galerie';
+  const entete = [
+    `Traduis en anglais ${nature}${contexte ? ` (${contexte})` : ''}.`,
+    '',
+    'Texte français :',
+  ].join('\n');
+
+  const client = new Anthropic({ apiKey });
+  let reponse;
+  try {
+    reponse = await client.messages.create({
+      model: MODELE_TRADUCTION,
+      max_tokens: 16000,
+      // Une traduction n'est pas un problème à creuser : effort faible, donc
+      // rapide et économique, sans perte de qualité sur cette tâche.
+      output_config: { effort: 'low' },
+      system: SYSTEME_TRADUCTION,
+      messages: [{ role: 'user', content: `${entete}\n\n${source}` }],
+    });
+  } catch (err) {
+    throw new Error(messageErreur(err));
+  }
+
+  if (reponse.stop_reason === 'refusal') {
+    throw new Error("La traduction a été refusée par le service. Vérifie le texte source.");
+  }
+
+  const traduit = (reponse.content || [])
+    .filter((b) => b && b.type === 'text')
+    .map((b) => b.text)
+    .join('\n')
+    .trim();
+
+  if (!traduit) throw new Error("Aucune traduction n'a été renvoyée. Réessaie.");
+  return traduit;
+}
+
+module.exports = { genererDescription, traduireVersAnglais, MODELE, MODELE_TRADUCTION };

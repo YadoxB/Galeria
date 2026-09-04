@@ -14,6 +14,7 @@ import {
 } from '../calcul-prix.js';
 import { visionner } from '../visionneuse.js';
 import { confirmer, alerter, demanderTexte } from '../dialogue.js';
+import { brancherTraduction } from '../traduction.js';
 import { ouvrirCreationCertificat } from './certificat-creation.js';
 import { synchroniserOeuvre } from '../sync-fiche.js';
 import { proposerAnnexeApres } from '../annexe.js';
@@ -61,6 +62,8 @@ const GABARIT_VIDE = {
   format: null, orientation: null, style: null, sujets: null,
   cote_hors_normes: 0,
   emplacement_signature: null, particularite: null, description: null,
+  // Version anglaise : importée du site, ou traduite puis relue.
+  description_en: null,
   prix: null, statut: 'disponible',
   emplacement: null, exposition_actuelle: null,
   url_site: null,
@@ -570,13 +573,35 @@ export async function rendreOeuvreFiche(contenu, params) {
       </div>
     `;
 
-    // === Description ===
+    // === Description (bilingue) ===
+    // Seul champ de l'œuvre qui a une version anglaise : le titre, lui, ne se
+    // traduit pas — un tableau garde son titre, ici comme sur le site.
+    const aDescEn = !!(o.description_en && String(o.description_en).trim());
+    const corpsDesc = (texte, langue) => {
+      const visible = langue === 'fr' ? '' : ' style="display:none;"';
+      if (texte && String(texte).trim()) {
+        return `<div class="texte-long" data-desc-langue="${langue}"${visible}>${ech(texte).replace(/\n/g, '<br>')}</div>`;
+      }
+      if (langue === 'fr') {
+        return `<div class="description-vide" data-desc-langue="fr"${visible}>Aucune description renseignée.</div>`;
+      }
+      return `
+        <div class="description-vide description-vide-en" data-desc-langue="en"${visible}>
+          <span>Pas de description anglaise.</span>
+          <button type="button" class="btn-action btn-principal" id="btn-traduire-description">Traduire avec l'assistant</button>
+        </div>`;
+    };
     const zoneDescription = `
       <div class="carte zone-description-bento">
-        <h3>Description</h3>
-        ${o.description
-          ? `<div class="texte-long">${ech(o.description).replace(/\n/g, '<br>')}</div>`
-          : `<div class="description-vide">Aucune description renseignée.</div>`}
+        <div class="carte-tete-langue">
+          <h3>Description</h3>
+          <span class="bascule-langue" id="bascule-description" role="group" aria-label="Langue de la description">
+            <button type="button" class="actif" data-langue="fr">FR</button>
+            <button type="button" class="${aDescEn ? '' : 'vide'}" data-langue="en"${aDescEn ? '' : ' title="Aucune description anglaise pour cette œuvre"'}>EN${aDescEn ? '<span class="pastille-langue"></span>' : ''}</button>
+          </span>
+        </div>
+        ${corpsDesc(o.description, 'fr')}
+        ${corpsDesc(o.description_en, 'en')}
       </div>
     `;
 
@@ -634,6 +659,36 @@ export async function rendreOeuvreFiche(contenu, params) {
     contenu.querySelector('#btn-modifier').addEventListener('click', entrerEdition);
     contenu.querySelector('#btn-sync-site').addEventListener('click', () =>
       synchroniserOeuvre(o.id, () => remplacerCourant('oeuvre-fiche', { id: o.id })));
+
+    // Bascule FR/EN de la description : on n'affiche que le corps de la
+    // langue choisie, sans redessiner la fiche.
+    const basculeD = contenu.querySelector('#bascule-description');
+    if (basculeD) {
+      basculeD.querySelectorAll('button').forEach((b) => {
+        b.addEventListener('click', () => {
+          const lg = b.dataset.langue;
+          basculeD.querySelectorAll('button').forEach((x) => x.classList.toggle('actif', x === b));
+          contenu.querySelectorAll('[data-desc-langue]').forEach((c) => {
+            c.style.display = (c.dataset.descLangue === lg) ? '' : 'none';
+          });
+        });
+      });
+    }
+
+    // « Traduire avec l'assistant » depuis la consultation : on passe en
+    // édition côté anglais et on lance la traduction. Le texte arrive dans le
+    // champ, à relire — rien n'est enregistré tant qu'on ne clique pas sur
+    // « Enregistrer ».
+    const btnTradDesc = contenu.querySelector('#btn-traduire-description');
+    if (btnTradDesc) {
+      btnTradDesc.addEventListener('click', async () => {
+        await entrerEdition();
+        const versEn = contenu.querySelector('#bascule-description-edition [data-langue="en"]');
+        if (versEn) versEn.click();
+        const lancer = contenu.querySelector('#btn-traduire-description-edition');
+        if (lancer) lancer.click();
+      });
+    }
     contenu.querySelector('#btn-supprimer').addEventListener('click', supprimer);
     const btnRetirer = contenu.querySelector('#btn-retirer');
     if (btnRetirer) {
@@ -1089,20 +1144,45 @@ export async function rendreOeuvreFiche(contenu, params) {
               <input type="hidden" name="sujets" id="f-sujets" value="${ech(o.sujets || '')}">
             </div>
 
-            <!-- Description (12 col) -->
+            <!-- Description (12 col) — bilingue.
+                 Les deux champs restent dans le formulaire ; la bascule ne
+                 fait que masquer l'un des deux, sinon enregistrer en anglais
+                 viderait le français (modifierOeuvre réécrit toutes les
+                 colonnes). -->
             <div class="carte span-12">
-              <h3>Description</h3>
-              ${champTextarea({ nom: 'description', libelle: '', valeur: o.description, lignes: 5 })}
-              <div class="actions-ia">
-                <button type="button" class="btn-action btn-principal" id="btn-generer-ia">
-                  <span class="ia-icone" aria-hidden="true">✦</span>
-                  Générer la description
-                </button>
-                <button type="button" class="btn-action btn-secondaire-action" id="btn-copier-chatgpt">
-                  <span class="ia-icone" aria-hidden="true">✦</span>
-                  Copier pour ChatGPT
-                </button>
-                <p class="aide-champ">« Générer » envoie la photo + les consignes (galerie + artiste) à Claude et remplit le champ ci-dessus (à relire). « Copier pour ChatGPT » copie le tout dans le presse-papier pour le coller à la main. La génération directe demande une clé API dans Réglages → IA.</p>
+              <div class="carte-tete-langue">
+                <h3>Description</h3>
+                <span class="bascule-langue" id="bascule-description-edition" role="group" aria-label="Langue de la description">
+                  <button type="button" class="actif" data-langue="fr">FR</button>
+                  <button type="button" data-langue="en">EN</button>
+                </span>
+              </div>
+              <p class="bandeau-langue" id="bandeau-description-en" style="display:none;">
+                Vous modifiez la version <b>anglaise</b>. Le français reste intact et sera enregistré avec, même sans y revenir.
+              </p>
+              <div data-champs-langue="fr">
+                ${champTextarea({ nom: 'description', libelle: '', valeur: o.description, lignes: 5 })}
+                <div class="actions-ia">
+                  <button type="button" class="btn-action btn-principal" id="btn-generer-ia">
+                    <span class="ia-icone" aria-hidden="true">✦</span>
+                    Générer la description
+                  </button>
+                  <button type="button" class="btn-action btn-secondaire-action" id="btn-copier-chatgpt">
+                    <span class="ia-icone" aria-hidden="true">✦</span>
+                    Copier pour ChatGPT
+                  </button>
+                  <p class="aide-champ">« Générer » envoie la photo + les consignes (galerie + artiste) à Claude et remplit le champ ci-dessus (à relire). « Copier pour ChatGPT » copie le tout dans le presse-papier pour le coller à la main. La génération directe demande une clé API dans Réglages → IA.</p>
+                </div>
+              </div>
+              <div data-champs-langue="en" style="display:none;">
+                ${champTextarea({ nom: 'description_en', libelle: '', valeur: o.description_en, lignes: 5 })}
+                <div class="actions-ia">
+                  <button type="button" class="btn-action btn-principal" id="btn-traduire-description-edition">
+                    <span class="ia-icone" aria-hidden="true">✦</span>
+                    Traduire depuis le français
+                  </button>
+                  <p class="aide-champ">Traduit la description française ci-contre et remplit ce champ, à relire avant d'enregistrer. Rien n'est envoyé au site.</p>
+                </div>
               </div>
             </div>
 
@@ -1292,6 +1372,22 @@ export async function rendreOeuvreFiche(contenu, params) {
       return window.api.iaCopierPourChatGPTInline(collecterDonneesIA());
     }
 
+    // ---- Bascule FR/EN du bloc Description, en édition ----
+    const basculeDE = contenu.querySelector('#bascule-description-edition');
+    if (basculeDE) {
+      const bandeauDE = contenu.querySelector('#bandeau-description-en');
+      basculeDE.querySelectorAll('button').forEach((b) => {
+        b.addEventListener('click', () => {
+          const lg = b.dataset.langue === 'en' ? 'en' : 'fr';
+          basculeDE.querySelectorAll('button').forEach((x) => x.classList.toggle('actif', x === b));
+          contenu.querySelectorAll('[data-champs-langue]').forEach((z) => {
+            z.style.display = (z.dataset.champsLangue === lg) ? '' : 'none';
+          });
+          if (bandeauDE) bandeauDE.style.display = lg === 'en' ? '' : 'none';
+        });
+      });
+    }
+
     // ---- Bouton « Générer la description » (Claude, directement dans l'app) ----
     const btnGenererIA = contenu.querySelector('#btn-generer-ia');
     if (btnGenererIA) {
@@ -1337,6 +1433,16 @@ export async function rendreOeuvreFiche(contenu, params) {
         }
       });
     }
+
+    // ---- Bouton « Traduire depuis le français » (description anglaise) ----
+    brancherTraduction({
+      bouton: contenu.querySelector('#btn-traduire-description-edition'),
+      source: () => (form.elements['description'] ? form.elements['description'].value : ''),
+      cible: () => form.elements['description_en'],
+      champ: 'description',
+      contexte: o.titre || '',
+      onRempli: () => { modifie = true; },
+    });
 
     // ---- Bouton « Copier pour ChatGPT » ----
     const btnCopierChatGPT = contenu.querySelector('#btn-copier-chatgpt');

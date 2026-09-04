@@ -10,6 +10,13 @@ CREATE TABLE IF NOT EXISTS artistes (
   biographie          TEXT,
   demarche            TEXT,
   curriculum          TEXT,
+  -- Versions anglaises, alimentées par la traduction assistée (relue et
+  -- corrigée avant enregistrement). Vides tant que personne ne les a produites :
+  -- les documents anglais retombent alors sur le français.
+  citation_en         TEXT,
+  biographie_en       TEXT,
+  demarche_en         TEXT,
+  curriculum_en       TEXT,
   photo_path          TEXT,
   photo_originale_path TEXT,
   courriel            TEXT,
@@ -58,6 +65,7 @@ CREATE TABLE IF NOT EXISTS oeuvres (
   emplacement_signature  TEXT,
   particularite          TEXT,
   description            TEXT,
+  description_en         TEXT,
   image_path             TEXT,
   emplacement            TEXT,
   exposition_actuelle    TEXT,

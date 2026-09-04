@@ -866,6 +866,16 @@ function exigerCle() {
   return apiKey;
 }
 
+// Traduit un champ vers l'anglais. Ne touche PAS à la base : renvoie la
+// proposition, que l'utilisateur relit et corrige avant d'enregistrer.
+async function traduireChamp({ champ, texte, contexte }) {
+  const apiKey = exigerCle();
+  return {
+    texte: await require('./ia').traduireVersAnglais({ apiKey, texte, champ, contexte }),
+    modele: require('./ia').MODELE_TRADUCTION,
+  };
+}
+
 async function genererDescriptionPourOeuvre(oeuvreId) {
   const apiKey = exigerCle();
   const oeuvre = require('./db/requetes').obtenirOeuvre(oeuvreId);
@@ -1193,6 +1203,7 @@ async function demarrerApplication() {
   ipcMain.handle('ia:copier-pour-chatgpt', (_e, oeuvreId) => preparerCopiePourChatGPT(oeuvreId));
   ipcMain.handle('ia:copier-pour-chatgpt-inline', (_e, params) => preparerCopiePourChatGPTInline(params || {}));
   ipcMain.handle('ia:generer-description', (_e, oeuvreId) => genererDescriptionPourOeuvre(oeuvreId));
+  ipcMain.handle('ia:traduire', (_e, params) => traduireChamp(params || {}));
   ipcMain.handle('ia:generer-description-inline', (_e, params) => genererDescriptionInline(params || {}));
   ipcMain.handle('ia:definir-cle', (_e, cle) => definirCleAnthropic(cle));
   ipcMain.handle('ia:effacer-cle', () => effacerCleAnthropic());
@@ -1305,6 +1316,75 @@ async function demarrerApplication() {
     if (!url) throw new Error("Configure d'abord l'adresse du site dans Réglages → Site web.");
     const produits = await require('./web/woocommerce').listerProduitsPublics({ url });
     return majUrlsSiteDepuisSite(produits);
+  });
+
+  // Importe les textes ANGLAIS du site. Le site est bilingue (WPML) : les mêmes
+  // fiches existent en anglais, rédigées à la main, et l'API publique les
+  // expose via ?lang=en — aucune clé REST nécessaire.
+  //
+  // Ne remplit que les champs anglais ENCORE VIDES : une traduction déjà
+  // relue et corrigée dans l'app n'est jamais écrasée. Les champs français ne
+  // sont jamais touchés.
+  ipcMain.handle('web:importer-anglais', async () => {
+    const { url } = obtenirClesWoo();
+    if (!url) throw new Error("Configure d'abord l'adresse du site dans Réglages → Site web.");
+    const woo = require('./web/woocommerce');
+    const req = require('./db/requetes');
+
+    // --- Artistes : rapprochement par nom ---
+    const portfolios = await woo.listerArtistesSite({ url, langue: 'en' });
+    const parNom = new Map();
+    for (const p of portfolios) {
+      const k = clefComparaison(p.nom);
+      if (k) parNom.set(k, p);
+    }
+    const CHAMPS = [['biographie', 'biographie_en'], ['demarche', 'demarche_en'], ['curriculum', 'curriculum_en']];
+    let artistesTouches = 0, champsArtistes = 0, artistesSansSite = 0, dejaRemplis = 0;
+    for (const a of req.artistesPourComparaisonWeb()) {
+      const nomA = [a.prenom, a.nom].filter(Boolean).join(' ').trim();
+      const p = parNom.get(clefComparaison(nomA));
+      if (!p) { artistesSansSite += 1; continue; }
+      let touche = false;
+      const complet = req.obtenirArtiste(a.id) || {};
+      for (const [source, cible] of CHAMPS) {
+        const valeur = (p[source] || '').trim();
+        if (!valeur) continue;
+        if ((complet[cible] || '').trim()) { dejaRemplis += 1; continue; }
+        majChampArtiste(a.id, cible, valeur);
+        champsArtistes += 1;
+        touche = true;
+      }
+      if (touche) artistesTouches += 1;
+    }
+
+    // --- Œuvres : rapprochement par numéro d'inventaire = SKU ---
+    const produits = await woo.listerProduitsPublics({ url, langue: 'en' });
+    const parSku = new Map();
+    for (const p of produits) {
+      const k = (p.sku || '').trim().toLowerCase();
+      if (k && (p.description || '').trim()) parSku.set(k, p);
+    }
+    let oeuvresTouchees = 0, oeuvresSansSite = 0, oeuvresDeja = 0;
+    for (const o of req.listerOeuvres({ inclureArchives: true })) {
+      const k = (o.numero_inventaire || '').trim().toLowerCase();
+      if (!k) continue;
+      const p = parSku.get(k);
+      if (!p) { oeuvresSansSite += 1; continue; }
+      const complet = req.obtenirOeuvre(o.id) || {};
+      if ((complet.description_en || '').trim()) { oeuvresDeja += 1; continue; }
+      majChampOeuvre(o.id, 'description_en', p.description);
+      oeuvresTouchees += 1;
+    }
+
+    return {
+      artistes_touches: artistesTouches,
+      champs_artistes: champsArtistes,
+      artistes_sans_site: artistesSansSite,
+      champs_deja_remplis: dejaRemplis,
+      oeuvres_touchees: oeuvresTouchees,
+      oeuvres_sans_site: oeuvresSansSite,
+      oeuvres_deja: oeuvresDeja,
+    };
   });
 
   ipcMain.handle('web:ranger-citations', async () => {

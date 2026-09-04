@@ -221,9 +221,12 @@ function decouperSectionsArtiste(html) {
   let m;
   while ((m = re.exec(s))) heads.push({ titre: normTitreSection(m[2]), contentStart: re.lastIndex, headStart: m.index });
   const corps = (i) => s.slice(heads[i].contentStart, i + 1 < heads.length ? heads[i + 1].headStart : s.length);
-  const idxBio = heads.findIndex((h) => /^bio(graphie)?$/.test(h.titre));
-  const idxDem = heads.findIndex((h) => /^d[ée]marche/.test(h.titre));
-  const idxCv = heads.findIndex((h) => /^(c\.?\s*v\.?|curriculum)/.test(h.titre));
+  // Titres français ET anglais : le site est bilingue (WPML). Les intitulés
+  // anglais relevés sur les 21 fiches sont « Biography », « Artist's statement »
+  // (casse variable) et « C.V. ».
+  const idxBio = heads.findIndex((h) => /^bio(graphie|graphy)?$/.test(h.titre));
+  const idxDem = heads.findIndex((h) => /^(d[ée]marche|artist.s statement|statement)/.test(h.titre));
+  const idxCv = heads.findIndex((h) => /^(c\.?\s*v\.?|curriculum|r[ée]sum[ée])/.test(h.titre));
   return {
     biographie: idxBio >= 0 ? stripHtml(corps(idxBio)) : '',
     demarche: idxDem >= 0 ? stripHtml(corps(idxDem)) : '',
@@ -264,12 +267,15 @@ async function produitParSku({ url, consumerKey, consumerSecret }, sku) {
 // PUBLIQUEMENT par l'API standard wp/v2 (aucune clé nécessaire — contenu publié).
 // Champs retenus : nom (title), biographie (content, peut inclure le curriculum),
 // courte présentation (excerpt), photo (image mise en avant). Lecture seule.
-async function listerArtistesSite({ url }) {
+// langue : 'fr' | 'en' | undefined. WPML expose les traductions via ?lang=,
+// sur la même API publique — aucune clé requise.
+async function listerArtistesSite({ url, langue }) {
   const base = normaliserUrl(url);
   const artistes = [];
   const MAX_PAGES = 20;
   for (let page = 1; page <= MAX_PAGES; page++) {
-    const u = `${base}/wp-json/wp/v2/portfolio?per_page=100&page=${page}&orderby=title&order=asc&_embed=wp:featuredmedia`;
+    const lang = langue ? `&lang=${encodeURIComponent(langue)}` : '';
+    const u = `${base}/wp-json/wp/v2/portfolio?per_page=100&page=${page}&orderby=title&order=asc&_embed=wp:featuredmedia${lang}`;
     const resp = await getJson(u);
     if (resp.status === 404) {
       throw new Error("La liste des artistes est introuvable sur le site (type « portfolio » absent de l'API).");
@@ -331,12 +337,16 @@ async function telechargerImage(url) {
 // wp/v2/portfolio pour les artistes. On s'en sert pour remplir `url_site` même
 // chez un utilisateur qui n'a pas configuré de clés REST.
 // Renvoie [{ sku, permalink, nom }].
-async function listerProduitsPublics({ url }) {
+// langue : 'fr' | 'en' | undefined (voir listerArtistesSite).
+// La description d'une œuvre vit dans `short_description`, pas dans
+// `description`, qui est vide sur ce site.
+async function listerProduitsPublics({ url, langue }) {
   const base = normaliserUrl(url);
   const produits = [];
   const MAX_PAGES = 50; // garde-fou (5000 produits) contre une boucle infinie
   for (let page = 1; page <= MAX_PAGES; page++) {
-    const u = `${base}/wp-json/wc/store/v1/products?per_page=100&page=${page}`;
+    const lang = langue ? `&lang=${encodeURIComponent(langue)}` : '';
+    const u = `${base}/wp-json/wc/store/v1/products?per_page=100&page=${page}${lang}`;
     const resp = await getJson(u);
     if (resp.status === 404) {
       throw new Error("La boutique du site est introuvable à cette adresse.");
@@ -351,8 +361,13 @@ async function listerProduitsPublics({ url }) {
     for (const p of lot) {
       const sku = (p && p.sku ? String(p.sku) : '').trim();
       const permalink = (p && p.permalink ? String(p.permalink) : '').trim();
-      if (sku && permalink) {
-        produits.push({ sku, permalink, nom: stripHtml((p.name || '')) });
+      if (sku) {
+        produits.push({
+          sku,
+          permalink,
+          nom: stripHtml((p.name || '')),
+          description: stripHtml((p && p.short_description) || ''),
+        });
       }
     }
     if (lot.length < 100) break;

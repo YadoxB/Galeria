@@ -8,6 +8,11 @@
 const COLONNES_ATTENDUES = {
   artistes: [
     ['citation', 'TEXT'],
+    // Versions anglaises (traduction assistée) — voir src/ia.js.
+    ['citation_en', 'TEXT'],
+    ['biographie_en', 'TEXT'],
+    ['demarche_en', 'TEXT'],
+    ['curriculum_en', 'TEXT'],
     ['numeros_taxes', 'TEXT'],
     ['photo_originale_path', 'TEXT'],
     ['pays', 'TEXT'],
@@ -22,6 +27,7 @@ const COLONNES_ATTENDUES = {
     ['presentation_sig', 'TEXT'],
   ],
   oeuvres: [
+    ['description_en', 'TEXT'],
     ['format', 'TEXT'],
     ['orientation', 'TEXT'],
     ['sujets', 'TEXT'],

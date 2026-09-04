@@ -2662,6 +2662,75 @@ details.bloc.pliable > .bloc-corps {
   padding: var(--s5);
   min-height: 140px;
 }
+/* L'état vide anglais porte deux boutons : il lui faut une colonne. */
+.onglet-corps-vide .vide-actions { display: flex; gap: var(--s2); flex-wrap: wrap; justify-content: center; }
+.onglet-corps-vide:has(.vide-actions) { flex-direction: column; gap: var(--s3); font-style: normal; }
+
+/* --- Bascule FR / EN (textes de catalogue bilingues) ---
+   L'interface reste en français : seuls les textes du catalogue ont une
+   version anglaise, et cette bascule sert à passer de l'une à l'autre. */
+.bascule-langue {
+  display: inline-flex;
+  border: 1px solid var(--mist);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--soft-ivory);
+  align-self: center;
+  flex: 0 0 auto;
+}
+.bascule-langue button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--stone);
+  padding: 5px 12px;
+  transition: background .12s, color .12s;
+}
+.bascule-langue button:hover { color: var(--gallery-navy); }
+.bascule-langue button.actif { background: var(--gallery-navy); color: #fff; }
+.bascule-langue button.actif:hover { color: #fff; }
+/* « EN » pâli : aucun texte anglais derrière. Cliquable quand même — c'est
+   par là qu'on en ajoute un premier. */
+.bascule-langue button.vide { color: var(--mist); }
+.bascule-langue button.vide:hover { color: var(--slate); }
+/* La pastille dorée promet qu'une version anglaise existe. */
+.pastille-langue {
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--warm-gold);
+  vertical-align: middle;
+  margin-left: 5px;
+}
+/* Dans la barre d'onglets, c'est la bascule qui pousse vers la droite ;
+   le bouton « ⤢ » la suit de près. */
+.onglets-bento .bascule-langue { margin-left: auto; }
+.bascule-langue + .btn-presentation-agrandir { margin-left: var(--s2); }
+/* En édition : la bascule s'aligne sur le titre de la carte. */
+.carte-tete-langue { display: flex; align-items: center; gap: var(--s3); margin-bottom: var(--s3); }
+.carte-tete-langue h3 { margin: 0; }
+.carte-tete-langue .bascule-langue { margin-left: auto; }
+/* Un champ vide en anglais ressemble à un champ vide tout court : il faut
+   voir d'un coup d'œil dans quelle langue on écrit. */
+.bandeau-langue {
+  background: var(--soft-ivory);
+  border: 1px solid var(--cloud);
+  border-radius: var(--r-btn);
+  padding: 9px 12px;
+  margin: 0 0 var(--s3);
+  font-size: 12.5px;
+  color: var(--slate);
+  line-height: 1.5;
+}
+.bandeau-langue b { color: var(--ink); font-weight: 600; }
+/* Bouton « Traduire » collé sous son champ anglais. */
+.champ-traduisible { margin-bottom: var(--s3); }
+.champ-traduisible .form-champ { margin-bottom: 6px; }
+.btn-traduire-champ { font-size: 12.5px; padding: 5px 11px; }
 
 /* --- Carte Conditions galerie (Cotes + Fiscalité) --- */
 .carte-conditions { grid-column: span 6; padding: var(--s3) var(--s4); }
@@ -3080,6 +3149,14 @@ details.bloc.pliable > .bloc-corps {
   border-radius: var(--r-btn);
   padding: var(--s4);
   text-align: center;
+}
+/* Vide en anglais : on propose de le combler plutôt que de laisser un blanc. */
+.description-vide-en {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s3);
+  font-style: normal;
 }
 
 /* --- Certificats --- */

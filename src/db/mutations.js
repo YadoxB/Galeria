@@ -144,6 +144,11 @@ const COLONNES_ARTISTE = [
   ['biographie', vide],
   ['demarche', vide],
   ['curriculum', vide],
+  // Versions anglaises (traduction assistée, relue avant enregistrement).
+  ['citation_en', vide],
+  ['biographie_en', vide],
+  ['demarche_en', vide],
+  ['curriculum_en', vide],
   ['courriel', vide],
   ['telephone', vide],
   ['adresse', vide],
@@ -178,6 +183,7 @@ const COLONNES_OEUVRE = [
   ['emplacement_signature', vide],
   ['particularite', vide],
   ['description', vide],
+  ['description_en', vide],
   ['prix', nombre],
   ['frais_production', nombre],
   ['statut', vide],
@@ -263,7 +269,7 @@ function modifierOeuvre(id, data) {
 // l'import « tirer » depuis le site (Phase 5) : contrairement à modifierOeuvre,
 // qui réécrit toute la ligne, ceci ne touche QUE la colonne visée — les autres
 // champs (dimensions, statut, image…) restent intacts.
-const CHAMPS_IMPORT_WEB = new Set(['titre', 'description', 'prix']);
+const CHAMPS_IMPORT_WEB = new Set(['titre', 'description', 'prix', 'description_en']);
 function majChampOeuvre(id, champ, valeur) {
   const oid = entier(id);
   if (oid == null) throw new Error('Identifiant invalide.');
@@ -314,7 +320,10 @@ function retirerIgnoreWeb(oeuvreId, champ) {
 }
 
 // --- Artistes : mêmes mécanismes, table web_sync_ignore_artiste ---
-const CHAMPS_IMPORT_ARTISTE = new Set(['citation', 'biographie', 'demarche', 'curriculum']);
+// Les champs _en reçoivent les textes anglais du site (WPML) ou une traduction
+// assistée relue. Mêmes garde-fous que leurs équivalents français.
+const CHAMPS_IMPORT_ARTISTE = new Set(['citation', 'biographie', 'demarche', 'curriculum',
+  'citation_en', 'biographie_en', 'demarche_en', 'curriculum_en']);
 function majChampArtiste(id, champ, valeur) {
   const aid = entier(id);
   if (aid == null) throw new Error('Identifiant invalide.');
