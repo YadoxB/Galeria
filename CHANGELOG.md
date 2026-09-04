@@ -10,6 +10,60 @@ identifiants.
 
 ## [Non publié]
 
+> **Le catalogue en anglais.** Les textes anglais qui existent déjà sur le site
+> entrent dans l'application, une bascule FR/EN les rend visibles sur les fiches,
+> et un assistant traduit ce qui manque.
+
+### Ajouté
+
+- **Importation des textes anglais depuis le site.** Bouton **« Importer les textes
+  anglais »** dans l'écran de synchronisation. Il lit le site en anglais (`?lang=en`)
+  **sans aucune clé d'accès** — l'interface publique suffit —, rapproche les artistes
+  par leur nom et les œuvres par leur numéro d'inventaire, puis remplit les champs
+  anglais.
+  - **Ne remplit que ce qui est vide** : une traduction déjà relue et corrigée n'est
+    jamais écrasée.
+  - **Ne touche jamais au français**, ni dans l'application ni sur le site.
+  - Le compte-rendu distingue les textes importés, ceux qui étaient déjà remplis et
+    les fiches introuvables sur le site.
+- **Champs anglais** pour la citation, la biographie, la démarche et le curriculum d'un
+  artiste, et pour la description d'une œuvre.
+- **Bascule FR / EN sur les fiches.** À droite des onglets de la carte *Présentation*
+  d'un artiste, et à côté du titre du bloc *Description* d'une œuvre. Une **pastille
+  dorée** signale qu'une version anglaise existe ; un **« EN » pâli** qu'il n'y en a
+  aucune. Le bouton **« ⤢ »** suit la langue affichée.
+  - Quand une section est vide en anglais, la fiche propose **« Traduire avec
+    l'assistant »** ou **« Écrire à la main »** plutôt que de laisser un blanc.
+  - L'édition a la même bascule. Les champs de l'autre langue **restent dans le
+    formulaire**, simplement masqués : sans eux, enregistrer en anglais viderait le
+    français, puisque `modifierArtiste` et `modifierOeuvre` réécrivent toutes les
+    colonnes.
+- **Traduction assistée** (`src/app/traduction.js`). Un bouton par champ anglais. Elle
+  **propose** : le texte arrive dans le champ, à relire, et rien n'est enregistré avant
+  un clic sur *Enregistrer*. Un texte anglais existant n'est remplacé qu'après
+  confirmation. Modèle isolé dans `MODELE_TRADUCTION` (`src/ia.js`).
+
+- **Tri par numéro d'inventaire**, dans le menu *Trier par* de la liste des œuvres :
+  artiste d'abord, puis numéro. Répond à la demande « voir les toiles d'un artiste dans
+  un ordre facile à suivre ».
+
+### Corrigé
+
+- **Les numéros d'inventaire étaient triés comme du texte.** Les numéros mêlent des
+  lettres et un bloc de chiffres de longueur variable (`CLB565`, `CLB1236`) : le tri
+  alphabétique plaçait `CLB565` **après** `CLB1236`. Mesuré sur le catalogue réel :
+  **6 artistes sur 20** avaient une liste mal ordonnée. SQLite ne sait pas faire ce tri
+  (`COLLATE NOCASE` reste alphabétique), donc l'ordre est refait en JavaScript après la
+  requête (`trierParInventaire()` dans `requetes.js`). Corrige les **cinq** listes qui
+  annonçaient un tri par numéro : catalogue imprimé, Annexe A (par artiste et par ids),
+  œuvres d'une exposition — donc **l'ordre des cartels** — et œuvres éligibles à une
+  exposition. Une œuvre sans numéro passe désormais en fin de liste.
+
+### Sécurité
+
+- L'importation et la traduction sont **à sens unique** : rien ne remonte vers le site.
+  Aucune donnée de client ni de vente n'entre dans ces échanges.
+
 ## [0.15.0] — 2026-08-27
 
 > **Préparer une exposition.** Choisir les œuvres qui partent, imprimer leurs

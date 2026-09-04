@@ -17,6 +17,34 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
+    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.16.0 :
+    // `npm run release` refuse de publier si elle ne correspond pas à
+    // package.json.
+    version: '0.16.0',
+    diapos: [
+      {
+        titre: 'Vos textes anglais, rapatriés du site',
+        texte: "Les biographies, démarches et C.V. que votre site affiche déjà en anglais peuvent maintenant entrer dans Galeria. Un bouton <b>« Importer les textes anglais »</b>, dans l'écran de synchronisation, va les chercher tout seul.",
+      },
+      {
+        titre: 'Une bascule FR / EN sur les fiches',
+        texte: "Sur la fiche d'un artiste, un petit bouton <b>FR&nbsp;/&nbsp;EN</b> à droite des onglets fait passer le texte d'une langue à l'autre. Même chose pour la <b>description</b> d'une œuvre. Un <b>point doré</b> vous dit qu'une version anglaise existe.",
+      },
+      {
+        titre: 'Traduire ce qui manque',
+        texte: "Quand un texte n'existe pas en anglais, Galeria vous propose de le <b>traduire</b> ou de l'<b>écrire à la main</b>. La traduction ne fait que remplir le champ&nbsp;: vous la relisez, et rien n'est conservé tant que vous n'avez pas cliqué sur <b>Enregistrer</b>.",
+      },
+      {
+        titre: 'Vos textes français ne bougent pas',
+        texte: "L'importation ne remplit que les cases <b>vides</b> — une traduction que vous avez corrigée n'est jamais écrasée. Et rien ne repart vers le site&nbsp;: ces échanges vont dans un seul sens.",
+      },
+      {
+        titre: "Les numéros d'inventaire en ordre",
+        texte: "Le menu <b>Trier par</b> de la liste des œuvres propose maintenant <b>N° d'inventaire</b>. Et les numéros se suivent enfin correctement&nbsp;: <b>CLB565</b> venait avant, après <b>CLB1236</b>. Les catalogues, les annexes et les cartels en profitent aussi.",
+      },
+    ],
+  },
+  {
     version: '0.15.0',
     diapos: [
       {

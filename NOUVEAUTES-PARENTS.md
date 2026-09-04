@@ -11,6 +11,56 @@
 
 ---
 
+## Le catalogue en anglais
+
+Votre site affiche déjà, en anglais, les biographies et les démarches de vos
+artistes. Ces textes peuvent maintenant **entrer dans Galeria**, au lieu d'être
+retapés.
+
+**Aller les chercher.** Dans l'écran de synchronisation avec le site, un bouton
+**« Importer les textes anglais »**. Vous cliquez, Galeria lit votre site, et
+remplit les cases anglaises de vos fiches. Il vous dit ensuite ce qu'il a
+trouvé, ce qui était déjà rempli, et ce qu'il n'a pas su rapprocher.
+
+**Les voir.** Sur la fiche d'un artiste, un petit bouton **FR / EN** apparaît à
+droite des onglets *Citation, Biographie, Démarche, Curriculum*. Vous cliquez
+sur **EN** : le texte passe en anglais. Vous recliquez sur **FR** : il revient.
+Même chose pour la **description** d'une œuvre.
+
+Un **petit point doré** à côté du EN vous prévient qu'une version anglaise
+existe. Quand le EN est **pâle**, c'est qu'il n'y en a aucune — mais vous pouvez
+quand même cliquer dessus pour en écrire une.
+
+**Ce qui manque.** Quelques œuvres n'ont pas d'anglais sur le site. Galeria ne
+laisse pas un blanc : il vous propose de **traduire** le texte français, ou de
+l'**écrire à la main**. La traduction ne fait que remplir la case — vous la
+relisez, vous la corrigez si besoin, et **rien n'est conservé tant que vous
+n'avez pas cliqué sur Enregistrer**.
+
+**Deux garanties.** L'importation ne remplit que les cases **vides** : une
+traduction que vous avez corrigée ne sera jamais écrasée par un nouvel import.
+Et **rien ne repart vers votre site** — ces échanges vont dans un seul sens.
+
+---
+
+## Les numéros d'inventaire se suivent enfin
+
+Dans la liste des œuvres, le menu **Trier par** propose maintenant
+**N° d'inventaire**. Choisissez un artiste dans les filtres, puis ce tri : ses
+toiles s'affichent dans l'ordre de leurs numéros, facile à suivre du doigt sur
+une liste papier.
+
+Au passage, une erreur ancienne est corrigée. Les numéros étaient rangés comme
+des mots, pas comme des nombres — **CLB565** se retrouvait donc **après**
+**CLB1236**, ce qui rendait toute vérification pénible. Sur votre catalogue,
+**six artistes sur vingt** étaient concernés.
+
+La correction vaut partout où une liste est censée suivre les numéros : le
+**catalogue imprimé**, les **annexes A** de dépôt et de retrait, et l'ordre des
+**cartels d'exposition**.
+
+---
+
 ## Depuis la version 0.14.0 — préparer une exposition, et des certificats en anglais
 
 Une nouvelle section **Expositions** apparaît dans le menu de gauche, juste

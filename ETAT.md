@@ -1,20 +1,48 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-08-27 (Expositions bâtie ; 0.14.0 et 0.15.0 en attente de publication).
+> Date de cette sauvegarde : 2026-09-04 (catalogue bilingue bâti ; 0.14.0, 0.15.0 et l'anglais en attente de publication).
 >
 > **Voir aussi** : `CHANGELOG.md` (historique versionné détaillé) et `A-VALIDER.md` (questions ouvertes avec les parents).
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-08-27)
+## ▶ Reprise — par où commencer (préparé le 2026-09-04)
 
 **✅ Dernière version PUBLIÉE : v0.13.0 (2026-08-10).** `origin/master` = tag `v0.13.0` = `6d73ed7`.
 
-> **⚠ DEUX versions commitées mais NI POUSSÉES NI PUBLIÉES.** `package.json` = **0.15.0**. Un seul `npm run release` publiera les deux ensemble (tag `v0.15.0`) ; le tag `v0.14.0` n'existera jamais, c'est voulu.
+> ### 🟥 Trois lots de travail attendent, aucun n'est chez les parents
+>
+> | Lot | État du code | Testé dans l'app par Dave |
+> |---|---|---|
+> | **0.14.0** — retours d'usage | commité (`abf30a3`), non poussé | ✅ oui |
+> | **0.15.0** — Expositions + certificat EN | commité (`d76c80d`, `fc12c21`, `0c1230c`), non poussé | ❌ **non** |
+> | **Catalogue bilingue** (→ 0.16.0) | **non commité**, dans le dossier principal | ❌ non |
+>
+> **La priorité n'est pas une fonction de plus, c'est de faire tourner tout ça
+> puis de publier.** Deux points ne se vérifient qu'en vrai : le **premier
+> démarrage** (les migrations s'exécutent — reconstruction de `oeuvres` pour le
+> statut « en exposition », puis les 5 colonnes anglaises) et **une page de
+> cartels imprimée** (les QR se scannent-ils à 22 mm ? les traits de découpe
+> tombent-ils juste ?).
+>
+> Ensuite : `git push origin master` puis `npm run release`.
+
+> **⚠ Versions commitées mais NI POUSSÉES NI PUBLIÉES.** `package.json` = **0.15.0**. Un seul `npm run release` publiera 0.14.0 et 0.15.0 ensemble ; le tag `v0.14.0` n'existera jamais, c'est voulu.
 >
 > - **0.14.0 — retours d'usage** (commit `abf30a3`) : compte des œuvres = disponibles, C.V. collé, cote « Hors normes », menus à valeurs libres, avertissement certificat. **Validé par Dave dans l'app.**
 > - **0.15.0 — Expositions** : voir ci-dessous. **PAS ENCORE testé dans l'app par Dave** au moment d'écrire.
+> - **Catalogue bilingue** : non commité. Si c'est publié en **0.16.0**, `package.json` doit être bumpé — l'entrée en tête de `VERSIONS` (`nouveautes.js`) porte déjà `'0.16.0'`, à corriger si le numéro diffère, sinon `npm run release` refuse.
+
+### Le catalogue bilingue (→ 0.16.0) — ce qu'il faut savoir pour y revenir
+
+**Décisions de Dave (2026-09-04) :** bascule FR/EN, **pas** de côte-à-côte ; les œuvres sans anglais restent **vides** avec le bouton de traduction ; on **garde `claude-opus-5`** pour la traduction.
+
+- **Colonnes** : `artistes.citation_en / biographie_en / demarche_en / curriculum_en`, `oeuvres.description_en`. Ajout additif via `COLONNES_ATTENDUES` (`migrations.js`), pas de reconstruction de table.
+- **Importation depuis le site** — `web:importer-anglais` (`main.js`), bouton dans l'écran de synchro des œuvres. Lit le site en `?lang=en` par l'**API Store publique + `wp/v2/portfolio`**, donc **sans clé REST**. Artistes rapprochés par nom, œuvres par SKU = n° d'inventaire. **Ne remplit que ce qui est vide**, ne touche jamais au français, ne remonte rien vers le site. `decouperSectionsArtiste` reconnaît les intitulés anglais (*Biography*, *Artist's statement*, *C.V.*) — **testé sur le site réel : 21/21 artistes, 3 sections, 2 langues ; 510 produits anglais lus.**
+- **Bascule FR/EN** — dans la barre d'onglets de la carte *Présentation* (fiche d'artiste) et à côté du titre du bloc *Description* (fiche d'œuvre). Pastille dorée = une version anglaise existe ; EN pâli = aucune, mais cliquable. Le bouton « ⤢ » suit la langue.
+- **⚠ PIÈGE MAJEUR, corrigé — ne pas le réintroduire.** `modifierArtiste` et `modifierOeuvre` réécrivent **toutes** les colonnes depuis le `FormData`. Les champs de la langue masquée doivent donc **rester dans le formulaire** (`display:none`, jamais retirés du DOM), sinon enregistrer en anglais vide le français. **Vérifié au banc : un `<textarea>` masqué en CSS part bien avec le `FormData`.**
+- **Traduction assistée** — `src/app/traduction.js` (module partagé), `ia:traduire` → `traduireVersAnglais()` dans `src/ia.js`. Modèle isolé dans **`MODELE_TRADUCTION = 'claude-opus-5'`**, `effort: 'low'`. Elle **propose** : remplit le champ, ne l'enregistre pas ; confirme avant d'écraser un texte anglais existant. Clé chiffrée dans le coffre Windows. Coût mesuré : **1 à 2 ¢ par texte**, ~1-2 $ pour tout ce qui manque au catalogue. ⚠ `claude-haiku-4-5` refuserait le paramètre `effort` s'il fallait descendre un jour.
 
 ### La fonction Exposition (0.15.0) — ce qu'il faut savoir pour y revenir
 
@@ -30,15 +58,20 @@
 
 ### ▶ Prochaine étape
 
-1. **Dave teste la 0.15.0 dans l'app**, puis `git push origin master` et `npm run release`. À vérifier en priorité : le démarrage (la migration s'exécute alors), et **une page de cartels imprimée pour de vrai** (les QR se scannent-ils à 22 mm, les traits de découpe tombent-ils juste ?).
-2. **Reste de la liste de retours des parents du 2026-08-25**, non commencé :
-   - **Documents en anglais — le certificat est FAIT** (fondu dans la 0.15.0) : colonne `certificats.langue` ('FR'|'EN'), sélecteur à la création, dix libellés + trois attestations + métier libre + format de date traduits dans `gabarit-certificat.html` (dictionnaire `LIB`, `ATT_EN`, marqueurs `data-lib`). La langue est conservée pour qu'une régénération reste identique. **Reste la présentation et le catalogue** : leur contenu est du français rédigé (bio, démarche, C.V., descriptions), donc **décision prise = traduction assistée** (bouton « Traduire », relecture avant enregistrement). Le projet a déjà `@anthropic-ai/sdk` et `src/ia.js`, à réutiliser. ⚠ Argument à retenir : bios et démarches sont **déjà publiques sur le site**, donc les traduire ne heurte pas le principe « rien ne sort », qui vise les données de clients.
-   - **Photos — gros chantier à risque.** Classer par artiste puis par statut + dossier « divers », section Photos sur la fiche d'artiste. Tout est à plat aujourd'hui et **les chemins sont en base** → migration de fichiers, sauvegarde obligatoire, chemin de retour. Démo avant tout code.
+1. **Dave lance l'app et essaie**, puis `git push origin master` et `npm run release`. À vérifier en priorité : le **démarrage** (les migrations s'exécutent alors), **une page de cartels imprimée pour de vrai** (QR à 22 mm, traits de découpe), et la **bascule FR/EN** sur une fiche d'artiste.
+2. **Chantier suivant recommandé : la présentation et le catalogue en anglais.** Les champs `_en` existent et sont remplis ; il ne reste que le rendu, avec **repli sur le français** quand l'anglais manque. C'est du pur affichage — le moins risqué de ce qui reste, et ça referme le chantier bilingue. (Le certificat, lui, est **FAIT** : colonne `certificats.langue` ('FR'|'EN'), sélecteur à la création, dictionnaires `LIB` / `ATT_EN` et marqueurs `data-lib` dans `gabarit-certificat.html` ; la langue est conservée pour qu'une régénération reste identique.)
+3. **Reste de la liste de retours des parents du 2026-08-25** :
+   - **Photos — gros chantier à risque, à faire dans sa propre session.** Classer par artiste puis par statut + dossier « divers », section Photos sur la fiche d'artiste. Tout est à plat aujourd'hui et **les chemins sont en base** → migration de fichiers, sauvegarde obligatoire, chemin de retour. Démo avant tout code.
    - **Copie expurgée** pour le soutien technique (décidée) : catalogue sans clients ni ventes.
    - **Bouton « Signaler un problème »** : dossier de diagnostic montré avant envoi, jamais d'envoi automatique.
-   - **Filtrer par numéro** : ⚠ à clarifier, la recherche cherche **déjà** dans le numéro d'inventaire.
-3. **Cote « hors normes » : une collision de vocabulaire subsiste.** La case `cote_hors_normes` (« prix saisi à la main, aucune cote ») coexiste avec la taille de cote « Hors normes » (0.14.0). Dave n'avait pas de préférence ; renommer la case en « Prix fixé à la main (aucune cote) » **n'a pas été fait**.
-4. Feuille de route : **Phase 4 — Sage 50**, **cadre de tests** (dette technique), **chiffrement** (PARQUÉ, reco = BitLocker d'abord).
+   - ~~**Filtrer par numéro**~~ — **CLARIFIÉ ET FAIT (2026-09-04).** La demande n'était pas un filtre mais un **ordre d'affichage** : voir les toiles d'un artiste dans l'ordre de leurs numéros d'inventaire, pour suivre une liste facilement. Voir le point 4 ci-dessous.
+4. **Ordre naturel des numéros d'inventaire — FAIT (2026-09-04), non commité.** Les numéros mêlent lettres et chiffres de longueur variable (`CLB565`, `CLB1236`, `HUP99`, `HUP1069`) ; un tri de texte plaçait `CLB565` **après** `CLB1236`. **Mesuré : 6 artistes sur 20 avaient une liste mal ordonnée.** SQLite ne sait pas trier ainsi (`COLLATE NOCASE` reste alphabétique) → tri en JavaScript après la requête, via `Intl.Collator(numeric:true)`.
+   - `trierParInventaire()` + `comparerInventaire()` dans `requetes.js`, appliqués aux **5 requêtes** qui prétendaient trier par numéro : catalogue imprimé, Annexe A (par artiste et par ids), œuvres d'une exposition (donc **l'ordre des cartels**), œuvres éligibles à une exposition.
+   - Nouveau choix **« N° d'inventaire »** dans le menu *Trier par* de la liste des œuvres (`oeuvres-liste.js`), artiste d'abord puis numéro.
+   - ⚠ **Le comparateur existe en double** (`requetes.js` côté principal, `oeuvres-liste.js` côté interface) : les processus ne partagent pas de module. Commentaires croisés en place — **les modifier ensemble**.
+   - Une œuvre **sans numéro** passe en fin de liste (fiche à compléter, pas début de série).
+5. **Cote « hors normes » : une collision de vocabulaire subsiste.** La case `cote_hors_normes` (« prix saisi à la main, aucune cote ») coexiste avec la taille de cote « Hors normes » (0.14.0). Dave n'avait pas de préférence ; renommer la case en « Prix fixé à la main (aucune cote) » **n'a pas été fait**.
+6. Feuille de route : **Phase 4 — Sage 50**, **cadre de tests** (dette technique), **chiffrement** (PARQUÉ, reco = BitLocker d'abord).
 
 ### ✅ v0.12.0 PUBLIÉE (2026-08-09) — trois corrections d'usage
 
