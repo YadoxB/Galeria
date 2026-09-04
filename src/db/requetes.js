@@ -1,5 +1,45 @@
 const { openDatabase } = require('./database');
 
+// ---------------------------------------------------------------------------
+// Ordre « naturel » des numéros d'inventaire
+//
+// Les numéros mêlent des lettres et un bloc de chiffres de longueur variable
+// (CLB565, CLB1236, HUP99, HUP1069). Un tri de texte compare alors chiffre par
+// chiffre : CLB565 se retrouve APRÈS CLB1236, et la liste devient impossible à
+// suivre. Mesuré sur le catalogue réel : 6 artistes sur 20 étaient concernés.
+//
+// SQLite ne sait pas faire ce tri (COLLATE NOCASE reste alphabétique), donc on
+// remet la liste en ordre côté JavaScript après la requête.
+// ⚠ Une copie de ce comparateur vit dans src/app/commun.js pour l'interface :
+// les deux processus ne partagent pas de module. Les modifier ensemble.
+// ---------------------------------------------------------------------------
+const COLLATEUR_NATUREL = new Intl.Collator('fr', { numeric: true, sensitivity: 'base' });
+
+function comparerInventaire(a, b) {
+  const x = String(a == null ? '' : a).trim();
+  const y = String(b == null ? '' : b).trim();
+  // Une œuvre sans numéro passe à la fin : c'est une fiche à compléter, pas le
+  // début de la série.
+  if (!x && !y) return 0;
+  if (!x) return 1;
+  if (!y) return -1;
+  return COLLATEUR_NATUREL.compare(x, y);
+}
+
+// Remet une liste d'œuvres dans l'ordre attendu : artiste (quand la ligne le
+// porte), puis numéro d'inventaire naturel, puis titre.
+function trierParInventaire(lignes) {
+  return [...lignes].sort((x, y) => {
+    if (x.artiste_nom != null && y.artiste_nom != null) {
+      const c = COLLATEUR_NATUREL.compare(x.artiste_nom || '', y.artiste_nom || '');
+      if (c !== 0) return c;
+    }
+    const n = comparerInventaire(x.numero_inventaire, y.numero_inventaire);
+    if (n !== 0) return n;
+    return COLLATEUR_NATUREL.compare(x.titre || '', y.titre || '');
+  });
+}
+
 function listerArtistes(filtres = {}) {
   const db = openDatabase();
   const where = filtres.inclureArchives ? '' : 'WHERE a.archive = 0';
@@ -741,7 +781,7 @@ function obtenirExposition(id) {
     WHERE eo.exposition_id = ?
     ORDER BY a.nom COLLATE NOCASE, o.numero_inventaire COLLATE NOCASE, o.titre COLLATE NOCASE
   `).all(n);
-  return { ...expo, oeuvres };
+  return { ...expo, oeuvres: trierParInventaire(oeuvres) };
 }
 
 // Œuvres qu'on peut envoyer en exposition : disponibles ou réservées, encore
@@ -749,7 +789,7 @@ function obtenirExposition(id) {
 // cours — une toile ne peut pas être à deux endroits à la fois.
 function oeuvresEligiblesExposition() {
   const db = openDatabase();
-  return db.prepare(`
+  return trierParInventaire(db.prepare(`
     SELECT o.id, o.titre, o.numero_inventaire, o.medium, o.dimensions, o.prix,
            o.statut, o.image_path, o.format,
            a.nom AS artiste_nom, a.prenom AS artiste_prenom, a.id AS artiste_id
@@ -763,7 +803,7 @@ function oeuvresEligiblesExposition() {
         WHERE eo.oeuvre_id = o.id AND eo.retire_le IS NULL AND e.statut = 'en_cours'
       )
     ORDER BY a.nom COLLATE NOCASE, o.numero_inventaire COLLATE NOCASE, o.titre COLLATE NOCASE
-  `).all();
+  `).all());
 }
 
 function listerVentes() {
@@ -877,13 +917,13 @@ function voisinsVente(id) {
 // retirées, ordonnées par numéro d'inventaire puis titre.
 function oeuvresPourCatalogue(artisteId) {
   const db = openDatabase();
-  return db.prepare(`
+  return trierParInventaire(db.prepare(`
     SELECT o.id, o.titre, o.numero_inventaire, o.medium, o.support,
            o.dimensions, o.statut, o.prix, o.image_path
     FROM oeuvres o
     WHERE o.artiste_id = ? AND o.archive = 0 AND o.retrait_date IS NULL
     ORDER BY o.numero_inventaire COLLATE NOCASE, o.titre COLLATE NOCASE
-  `).all(artisteId);
+  `).all(artisteId));
 }
 
 // Œuvres d'un artiste avec tous les champs utiles à une Annexe A (dépôt/retrait) :
@@ -891,7 +931,7 @@ function oeuvresPourCatalogue(artisteId) {
 // les archivées.
 function oeuvresDetailArtiste(artisteId) {
   const db = openDatabase();
-  return db.prepare(`
+  return trierParInventaire(db.prepare(`
     SELECT o.id, o.numero_inventaire, o.titre, o.format,
            o.hauteur, o.largeur, o.profondeur,
            o.medium, o.support, o.emplacement_signature, o.annee,
@@ -899,7 +939,7 @@ function oeuvresDetailArtiste(artisteId) {
     FROM oeuvres o
     WHERE o.artiste_id = ? AND o.archive = 0
     ORDER BY o.numero_inventaire COLLATE NOCASE, o.titre COLLATE NOCASE
-  `).all(artisteId);
+  `).all(artisteId));
 }
 
 // Œuvres par liste d'IDs, avec les champs utiles à une Annexe A. Sans filtre
@@ -908,7 +948,7 @@ function oeuvresParIds(ids) {
   if (!Array.isArray(ids) || !ids.length) return [];
   const db = openDatabase();
   const ph = ids.map(() => '?').join(',');
-  return db.prepare(`
+  return trierParInventaire(db.prepare(`
     SELECT o.id, o.numero_inventaire, o.titre, o.format,
            o.hauteur, o.largeur, o.profondeur,
            o.medium, o.support, o.emplacement_signature, o.annee,
@@ -916,7 +956,7 @@ function oeuvresParIds(ids) {
     FROM oeuvres o
     WHERE o.id IN (${ph})
     ORDER BY o.numero_inventaire COLLATE NOCASE, o.titre COLLATE NOCASE
-  `).all(...ids);
+  `).all(...ids));
 }
 
 module.exports = {

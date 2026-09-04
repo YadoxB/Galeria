@@ -20,11 +20,33 @@ function ecrirePref(cle, val) {
   try { localStorage.setItem(cle, val); } catch {}
 }
 
+// Ordre « naturel » : les blocs de chiffres sont comparés comme des nombres.
+// Sans ça, CLB565 arrive APRÈS CLB1236 et la liste devient impossible à suivre.
+// ⚠ Copie du comparateur de src/db/requetes.js (les deux processus ne partagent
+// pas de module) : les modifier ensemble.
+const COLLATEUR_NATUREL = new Intl.Collator('fr', { numeric: true, sensitivity: 'base' });
+function comparerInventaire(a, b) {
+  const x = String(a == null ? '' : a).trim();
+  const y = String(b == null ? '' : b).trim();
+  // Une œuvre sans numéro passe à la fin : fiche à compléter, pas début de série.
+  if (!x && !y) return 0;
+  if (!x) return 1;
+  if (!y) return -1;
+  return COLLATEUR_NATUREL.compare(x, y);
+}
+
 function trier(oeuvres, tri) {
   const liste = [...oeuvres];
   const cmpStr = (a, b) => sansAccents(a || '').localeCompare(sansAccents(b || ''));
   switch (tri) {
     case 'titre-asc':    liste.sort((a, b) => cmpStr(a.titre, b.titre)); break;
+    case 'numero-asc':
+      // Artiste d'abord : sans filtre par artiste, des numéros de plusieurs
+      // artistes entremêlés ne se suivent pas.
+      liste.sort((a, b) => cmpStr(a.artiste_nom, b.artiste_nom)
+        || comparerInventaire(a.numero_inventaire, b.numero_inventaire)
+        || cmpStr(a.titre, b.titre));
+      break;
     case 'prix-asc':     liste.sort((a, b) => (a.prix || 0) - (b.prix || 0)); break;
     case 'prix-desc':    liste.sort((a, b) => (b.prix || 0) - (a.prix || 0)); break;
     case 'artiste-asc':  liste.sort((a, b) => cmpStr(a.artiste_nom, b.artiste_nom)); break;
@@ -138,6 +160,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
             <label for="tri-oeuvres" class="tri-deroulant-libelle">Trier par</label>
             <select id="tri-oeuvres">
               <option value="plus-recentes" ${triCourant === 'plus-recentes' ? 'selected' : ''}>Plus récentes</option>
+              <option value="numero-asc"    ${triCourant === 'numero-asc' ? 'selected' : ''}>N° d'inventaire</option>
               <option value="titre-asc"     ${triCourant === 'titre-asc' ? 'selected' : ''}>Titre A→Z</option>
               <option value="artiste-asc"   ${triCourant === 'artiste-asc' ? 'selected' : ''}>Artiste A→Z</option>
               <option value="prix-asc"      ${triCourant === 'prix-asc' ? 'selected' : ''}>Prix croissant</option>
