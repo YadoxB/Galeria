@@ -9,30 +9,31 @@
 
 ## ▶ Reprise — par où commencer (préparé le 2026-09-04)
 
-**✅ Dernière version PUBLIÉE : v0.13.0 (2026-08-10).** `origin/master` = tag `v0.13.0` = `6d73ed7`.
+**✅ Dernière version PUBLIÉE : v0.16.0 (2026-09-04).** `origin/master` = tag `v0.16.0` = `9b34106`.
+Testée dans l'app par Dave, poussée, publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
 
-> ### 🟥 Trois lots de travail attendent, aucun n'est chez les parents
+> ### ✅ Tout est livré, rien n'attend
 >
-> | Lot | État du code | Testé dans l'app par Dave |
-> |---|---|---|
-> | **0.14.0** — retours d'usage | commité (`abf30a3`), non poussé | ✅ oui |
-> | **0.15.0** — Expositions + certificat EN | commité (`d76c80d`, `fc12c21`, `0c1230c`), non poussé | ❌ **non** |
-> | **Catalogue bilingue** (→ 0.16.0) | **non commité**, dans le dossier principal | ❌ non |
+> La 0.16.0 a publié **trois versions d'un coup** : 0.14.0 (retours d'usage), 0.15.0
+> (Expositions + certificat EN) et 0.16.0 (catalogue bilingue, ordre des numéros, quatre
+> ajustements). Les tags `v0.14.0` n'existent pas, c'est voulu. Les parents étaient à la
+> **0.13.0** : la fenêtre « Quoi de neuf » leur empile les nouveautés des trois versions
+> dans l'ordre — 19 diapos.
 >
-> **La priorité n'est pas une fonction de plus, c'est de faire tourner tout ça
-> puis de publier.** Deux points ne se vérifient qu'en vrai : le **premier
-> démarrage** (les migrations s'exécutent — reconstruction de `oeuvres` pour le
-> statut « en exposition », puis les 5 colonnes anglaises) et **une page de
-> cartels imprimée** (les QR se scannent-ils à 22 mm ? les traits de découpe
-> tombent-ils juste ?).
->
-> Ensuite : `git push origin master` puis `npm run release`.
+> **Deux vérifications sur PAPIER n'ont pas été faites** et ne peuvent l'être que par
+> Dave : une page de **cartels avec photos** imprimée et découpée (l'image tient-elle à
+> six par page ? les QR se scannent-ils à 20 mm ?), et un **certificat estampé** (les 4 mm
+> gagnés suffisent-ils ?). À faire avant de s'appuyer dessus.
 
-> **⚠ Versions commitées mais NI POUSSÉES NI PUBLIÉES.** `package.json` = **0.15.0**. Un seul `npm run release` publiera 0.14.0 et 0.15.0 ensemble ; le tag `v0.14.0` n'existera jamais, c'est voulu.
+> **⚠ Piège de publication, vécu le 2026-09-04.** `npm run release` lancé depuis un
+> worktree `.claude/worktrees/` échoue avec *« Cannot compute electron version from
+> installed node modules »* : le worktree n'a pas de `node_modules`. Pire, son
+> `package.json` est resté à une vieille version — on aurait publié un code périmé si le
+> build avait abouti. **Toujours `cd F:\Galerie\Automatisation\GalerieApp` d'abord.**
 >
-> - **0.14.0 — retours d'usage** (commit `abf30a3`) : compte des œuvres = disponibles, C.V. collé, cote « Hors normes », menus à valeurs libres, avertissement certificat. **Validé par Dave dans l'app.**
-> - **0.15.0 — Expositions** : voir ci-dessous. **PAS ENCORE testé dans l'app par Dave** au moment d'écrire.
-> - **Catalogue bilingue** : non commité. Si c'est publié en **0.16.0**, `package.json` doit être bumpé — l'entrée en tête de `VERSIONS` (`nouveautes.js`) porte déjà `'0.16.0'`, à corriger si le numéro diffère, sinon `npm run release` refuse.
+> **`npm run release` ne bump pas la version** : il lit `package.json` et pose le tag
+> correspondant. La séquence complète est `npm version minor --no-git-tag-version` →
+> `git commit -am "chore(release): vX.Y.0"` → `git push origin master` → `npm run release`.
 
 ### Le catalogue bilingue (→ 0.16.0) — ce qu'il faut savoir pour y revenir
 
@@ -58,14 +59,14 @@
 
 ### ▶ Prochaine étape
 
-1. **Dave lance l'app et essaie**, puis `git push origin master` et `npm run release`. À vérifier en priorité : le **démarrage** (les migrations s'exécutent alors), **une page de cartels imprimée pour de vrai** (QR à 22 mm, traits de découpe), et la **bascule FR/EN** sur une fiche d'artiste.
+1. **Vérifications sur PAPIER, pas encore faites** : une page de **cartels avec photos** imprimée et découpée (l'image tient-elle à six par page ? les QR se scannent-ils à 20 mm ?) et un **certificat estampé** (les 4 mm gagnés suffisent-ils ?). Claude ne peut ni l'un ni l'autre.
 2. **Chantier suivant recommandé : la présentation et le catalogue en anglais.** Les champs `_en` existent et sont remplis ; il ne reste que le rendu, avec **repli sur le français** quand l'anglais manque. C'est du pur affichage — le moins risqué de ce qui reste, et ça referme le chantier bilingue. (Le certificat, lui, est **FAIT** : colonne `certificats.langue` ('FR'|'EN'), sélecteur à la création, dictionnaires `LIB` / `ATT_EN` et marqueurs `data-lib` dans `gabarit-certificat.html` ; la langue est conservée pour qu'une régénération reste identique.)
 3. **Reste de la liste de retours des parents du 2026-08-25** :
    - **Photos — gros chantier à risque, à faire dans sa propre session.** Classer par artiste puis par statut + dossier « divers », section Photos sur la fiche d'artiste. Tout est à plat aujourd'hui et **les chemins sont en base** → migration de fichiers, sauvegarde obligatoire, chemin de retour. Démo avant tout code.
    - **Copie expurgée** pour le soutien technique (décidée) : catalogue sans clients ni ventes.
    - **Bouton « Signaler un problème »** : dossier de diagnostic montré avant envoi, jamais d'envoi automatique.
    - ~~**Filtrer par numéro**~~ — **CLARIFIÉ ET FAIT (2026-09-04).** La demande n'était pas un filtre mais un **ordre d'affichage** : voir les toiles d'un artiste dans l'ordre de leurs numéros d'inventaire, pour suivre une liste facilement. Voir le point 4 ci-dessous.
-4. **Ordre naturel des numéros d'inventaire — FAIT (2026-09-04), non commité.** Les numéros mêlent lettres et chiffres de longueur variable (`CLB565`, `CLB1236`, `HUP99`, `HUP1069`) ; un tri de texte plaçait `CLB565` **après** `CLB1236`. **Mesuré : 6 artistes sur 20 avaient une liste mal ordonnée.** SQLite ne sait pas trier ainsi (`COLLATE NOCASE` reste alphabétique) → tri en JavaScript après la requête, via `Intl.Collator(numeric:true)`.
+4. **Ordre naturel des numéros d'inventaire — FAIT et PUBLIÉ dans la 0.16.0.** Les numéros mêlent lettres et chiffres de longueur variable (`CLB565`, `CLB1236`, `HUP99`, `HUP1069`) ; un tri de texte plaçait `CLB565` **après** `CLB1236`. **Mesuré : 6 artistes sur 20 avaient une liste mal ordonnée.** SQLite ne sait pas trier ainsi (`COLLATE NOCASE` reste alphabétique) → tri en JavaScript après la requête, via `Intl.Collator(numeric:true)`.
    - `trierParInventaire()` + `comparerInventaire()` dans `requetes.js`, appliqués aux **5 requêtes** qui prétendaient trier par numéro : catalogue imprimé, Annexe A (par artiste et par ids), œuvres d'une exposition (donc **l'ordre des cartels**), œuvres éligibles à une exposition.
    - Nouveau choix **« N° d'inventaire »** dans le menu *Trier par* de la liste des œuvres (`oeuvres-liste.js`), artiste d'abord puis numéro.
    - ⚠ **Le comparateur existe en double** (`requetes.js` côté principal, `oeuvres-liste.js` côté interface) : les processus ne partagent pas de module. Commentaires croisés en place — **les modifier ensemble**.

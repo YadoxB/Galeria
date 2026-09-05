@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.16.0] — 2026-09-04
+
 > **Le catalogue en anglais.** Les textes anglais qui existent déjà sur le site
 > entrent dans l'application, une bascule FR/EN les rend visibles sur les fiches,
 > et un assistant traduit ce qui manque.
