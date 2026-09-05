@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.18.0] — 2026-09-05
+
 > **Les photos rangées par artiste.** Le dossier Photos suit désormais la méthode de
 > suivi de la galerie : l'emplacement d'un fichier dit où en est une toile.
 

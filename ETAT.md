@@ -7,22 +7,28 @@
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-09-04)
+## ▶ Reprise — par où commencer (préparé le 2026-09-05)
 
-**✅ Dernière version PUBLIÉE : v0.17.0 (2026-09-04).** `origin/master` = tag `v0.17.0` = `a89d0d1`.
-Essayée dans l'app par Dave, poussée, publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
+**✅ Dernière version PUBLIÉE : v0.18.0 (2026-09-05).** `origin/master` = tag `v0.18.0` = `92ec651`.
+Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
 
-> ### 🟥 Un lot commité, NON PUBLIÉ et JAMAIS LANCÉ : les photos (→ 0.18.0)
+> ### 🟥 LA MIGRATION DES PHOTOS N'A JAMAIS TOURNÉ SUR DES DONNÉES RÉELLES
 >
-> Le premier démarrage déplacera les **539 photos** de Dave. C'est éprouvé sur une copie
-> complète (aller ET retour, 0 fichier perdu, 0 altéré), mais **ça n'a jamais tourné sur les
-> vraies données**. `package.json` est à **0.17.0** ; l'entrée en tête de `VERSIONS` porte
-> `'0.18.0'`. Détail dans « Le chantier photos » plus bas.
+> La 0.18.0 est **publiée**, donc elle partira chez les parents à leur prochain démarrage et
+> y déplacera leurs photos. Elle est éprouvée sur une **copie** complète des données de Dave
+> (aller ET retour, 542 fichiers, 0 perdu, 0 altéré) — mais une copie reste une copie, et
+> **Dave n'avait pas encore lancé l'app** au moment de publier. Premier réflexe en cas de
+> souci : le journal `photos-migration-<horodatage>.json`, déposé à côté de la base, et
+> `annulerMigrationPhotos()`.
 >
-> Quatre versions sont sorties le 2026-09-04 : la **0.16.0** en a livré trois d'un coup
+> ⚠ **`npm run release`, jamais `node scripts/release.js`** : lancé directement, le script
+> échoue sur *« electron-builder is not recognized »* — npm est ce qui met `node_modules/.bin`
+> dans le chemin.
+>
+> Cinq versions sont sorties les 4 et 5 septembre : la **0.16.0** en a livré trois d'un coup
 > (0.14.0 retours d'usage, 0.15.0 Expositions + certificat EN, 0.16.0 catalogue bilingue,
-> ordre des numéros, quatre ajustements), puis la **0.17.0** (documents en anglais). Les
-> tags intermédiaires n'existent pas, c'est voulu.
+> ordre des numéros, quatre ajustements), puis la **0.17.0** (documents en anglais) et la
+> **0.18.0** (photos rangées par artiste). Les tags intermédiaires n'existent pas, c'est voulu.
 >
 > **Le chantier bilingue est REFERMÉ** : certificat (0.15.0) → fiches et import des textes
 > anglais du site (0.16.0) → présentation, catalogue et pochette de vente (0.17.0).
@@ -48,7 +54,7 @@ Essayée dans l'app par Dave, poussée, publiée sur GitHub Releases avec `lates
 > quotidien, et le plus risqué (voir plus bas). À faire à tête reposée, pas en fin de
 > session.
 
-### Le chantier photos (→ 0.18.0) — ce qu'il faut savoir pour y revenir
+### Le chantier photos (0.18.0) — ce qu'il faut savoir pour y revenir
 
 **⚠ LE CONSTAT QUI A TOUT CHANGÉ.** La note de reprise disait « tout est à plat » : **c'était
 faux**. Les photos d'œuvres étaient déjà classées par artiste, et base et disque se
@@ -155,11 +161,11 @@ seul fichier dont seul le nom suit la langue.
 
 ### ▶ Prochaine étape
 
-0. **LANCER L'APP** — le premier démarrage exécute la migration des photos (539 fichiers). Puis vérifier dans l'Explorateur qu'une **vente déplace bien la photo** de `disponible\` vers `vendu\`, et essayer la section Photos (ajouter dans Divers, copier, enregistrer).
+0. **LANCER L'APP — le plus urgent.** Le premier démarrage exécute la migration des photos (539 fichiers), déjà publiée chez les parents. Puis vérifier dans l'Explorateur qu'une **vente déplace bien la photo** de `disponible\` vers `vendu\`, et essayer la section Photos (ajouter dans Divers, copier, enregistrer).
 1. **Vérifications sur PAPIER, pas encore faites** : une page de **cartels avec photos** imprimée et découpée (l'image tient-elle à six par page ? les QR se scannent-ils à 20 mm ?) et un **certificat estampé** (les 4 mm gagnés suffisent-ils ?). Claude ne peut ni l'un ni l'autre.
 2. ~~**La présentation et le catalogue en anglais**~~ — **FAIT et PUBLIÉ dans la 0.17.0.** Le **chantier bilingue est refermé** : le certificat (0.15.0), les fiches et l'import (0.16.0), la présentation, le catalogue et toute la pochette (0.17.0). Voir la section dédiée plus haut. Maquette : `demos/documents-en-anglais.html`.
 3. **Reste de la liste de retours des parents du 2026-08-25** :
-   - ~~**Photos**~~ — **FAIT (2026-09-04)**, commité, non publié, **jamais lancé**. Voir « Le chantier photos » ci-dessous.
+   - ~~**Photos**~~ — **FAIT et PUBLIÉ dans la 0.18.0**, mais **jamais lancé sur des données réelles**. Voir « Le chantier photos » ci-dessous.
    - **Copie expurgée** pour le soutien technique (décidée) : catalogue sans clients ni ventes.
    - **Bouton « Signaler un problème »** : dossier de diagnostic montré avant envoi, jamais d'envoi automatique.
    - ~~**Filtrer par numéro**~~ — **CLARIFIÉ ET FAIT (2026-09-04).** La demande n'était pas un filtre mais un **ordre d'affichage** : voir les toiles d'un artiste dans l'ordre de leurs numéros d'inventaire, pour suivre une liste facilement. Voir le point 4 ci-dessous.
