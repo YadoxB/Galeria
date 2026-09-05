@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Photos sur les cartels et la facture, cadre du certificat</title>
+<style>
+  :root {
+    --soft-ivory:#FCFAF4; --porcelain:#FFFFFF; --warm-gold:#C99A3D; --gallery-navy:#071A2F;
+    --ink:#111827; --slate:#5D6875; --stone:#A79E91; --mist:#D8D2C8; --cloud:#EFE8DE;
+    --rouge:#900001; --filet:#c8bfa8; --gris:#6b6459;
+    --font-titre:'Cormorant Garamond',Georgia,serif;
+    --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r-carte:14px; --ombre-carte:0 4px 14px rgba(7,26,47,.06);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--soft-ivory); font-family:var(--font-ui); color:var(--ink); padding:32px; }
+  h1 { font-family:var(--font-titre); font-weight:600; font-size:28px; margin:0 0 6px; }
+  .sous { color:var(--slate); margin:0 0 10px; font-size:14px; max-width:860px; line-height:1.6; }
+  .lot-titre { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone);
+               margin:44px 0 6px; font-weight:600; }
+  .lot-note { font-size:13.5px; color:var(--slate); max-width:860px; line-height:1.6; margin:0 0 16px; }
+  .etiq { font-size:11px; text-transform:uppercase; letter-spacing:.07em; font-weight:700;
+          margin:0 0 10px; color:var(--stone); }
+  .etiq.reco { color:var(--warm-gold); }
+  .rangee { display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap; }
+
+  .journal { max-width:1060px; margin-top:20px; background:var(--porcelain); border:1px solid var(--mist);
+             border-radius:var(--r-carte); padding:16px 20px; }
+  .journal h4 { font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone);
+                margin:0 0 8px; font-weight:700; }
+  .journal ul { margin:0; padding-left:18px; font-size:13.5px; color:var(--slate); line-height:1.75; }
+  .journal em { color:var(--ink); font-style:normal; font-weight:600; }
+
+  /* ---------- feuille de papier, à l'échelle ---------- */
+  /* 1mm = 2.6px : une feuille Lettre tient à l'écran en restant lisible. */
+  .feuille { background:#fff; box-shadow:0 4px 20px rgba(0,0,0,.13); }
+  .lettre { width:561px; height:727px; padding:31px; }            /* 8,5×11 po, marge 12mm */
+  .lettre-large { padding:21px; }                                  /* marge 8mm */
+  .paysage { width:727px; height:561px; padding:31px; }
+
+  /* ---------- CARTELS ---------- */
+  .grille { display:grid; gap:0; height:100%; }
+  .g10 { grid-template-columns:1fr 1fr; grid-template-rows:repeat(5,1fr); }
+  .g6  { grid-template-columns:1fr 1fr; grid-template-rows:repeat(3,1fr); }
+  .g4  { grid-template-columns:1fr 1fr; grid-template-rows:repeat(2,1fr); }
+  .cartel { border:1px dashed var(--filet); overflow:hidden; font-family:Georgia,'Times New Roman',serif; }
+
+  /* sans photo — l'existant : texte à gauche, QR à droite */
+  .c-h { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; }
+  .c-txt { min-width:0; flex:1; }
+  .c-art { font-size:9px; font-weight:600; color:var(--rouge); letter-spacing:.02em; margin:0 0 1px; }
+  .c-tit { font-size:11px; font-style:italic; line-height:1.2; margin:0 0 3px; }
+  .c-tec { font-size:7.5px; color:var(--gris); line-height:1.3; margin:0 0 3px; font-family:var(--font-ui); }
+  .c-pied { display:flex; align-items:baseline; gap:8px; font-size:7.5px; font-family:var(--font-ui); }
+  .c-inv { color:var(--gris); letter-spacing:.04em; }
+  .c-prix { font-size:10px; font-weight:600; margin-left:auto; font-family:Georgia,serif; }
+  .qr { flex:0 0 auto; background:
+        repeating-conic-gradient(#1c1a17 0 25%, #fff 0 50%) 0 0/6px 6px;
+        border:2px solid #fff; outline:1px solid #ddd; }
+  .qr-22 { width:57px; height:57px; }
+  .qr-18 { width:47px; height:47px; }
+
+  /* avec photo, disposition VERTICALE : photo en haut, texte dessous */
+  .c-v { display:flex; flex-direction:column; height:100%; padding:7px 9px; }
+  .c-v .photo { width:100%; flex:1 1 auto; min-height:0; margin-bottom:5px; }
+  .c-v .bas { display:flex; align-items:flex-end; justify-content:space-between; gap:8px; }
+
+  /* avec photo, disposition HORIZONTALE : photo à gauche */
+  .c-hp { display:flex; align-items:center; gap:7px; padding:7px 9px; height:100%; }
+  .c-hp .photo { flex:0 0 62px; height:78%; }
+
+  .photo { background:linear-gradient(135deg,#dfd6c4 0%,#c9bda6 45%,#e6ded0 100%);
+           border:1px solid #d8cfb6; position:relative; }
+  .photo::after { content:'photo de l’œuvre'; position:absolute; inset:0; display:flex;
+                  align-items:center; justify-content:center; font-family:var(--font-ui);
+                  font-size:7px; letter-spacing:.05em; color:#8a8170; text-transform:uppercase; }
+
+  /* ---------- FACTURE ---------- */
+  .fact { font-family:Georgia,'Times New Roman',serif; font-size:9px; color:#1c1a17;
+          display:flex; flex-direction:column; height:100%; }
+  .f-head { display:flex; justify-content:space-between; align-items:flex-start; }
+  .f-logo { width:120px; height:26px; background:var(--rouge); opacity:.85; }
+  .f-ft { font-size:15px; letter-spacing:.06em; text-align:right; }
+  .f-rule { height:1px; background:var(--rouge); margin:9px 0 11px; }
+  .f-parties { display:flex; gap:24px; }
+  .f-part { flex:1; }
+  .f-pt { font-size:7px; text-transform:uppercase; letter-spacing:.09em; color:#8a8170; margin-bottom:3px; }
+  .f-ligne { height:5px; background:#efeade; margin:3px 0; border-radius:2px; }
+  .f-ligne.court { width:60%; }
+  .f-oeuvre { margin-top:16px; padding-top:9px; border-top:.5px solid #e9e3d4; }
+  .f-oel { font-size:7px; text-transform:uppercase; letter-spacing:.09em; color:#8a8170; }
+  .f-oed { font-size:13px; font-style:italic; margin:3px 0 2px; }
+  .f-oes { font-size:8px; color:#6b6253; }
+  .f-bas { display:flex; gap:18px; margin-top:16px; align-items:flex-start; }
+  .f-photo { flex:0 0 130px; height:96px; }
+  .f-calc { width:200px; margin-left:auto; }
+  .f-crow { display:flex; justify-content:space-between; padding:2.5px 0;
+            border-bottom:.5px solid #f0ebdd; font-size:8.5px; }
+  .f-crow.total { border-bottom:0; border-top:1px solid var(--rouge); font-weight:700;
+                  margin-top:3px; padding-top:5px; font-size:10px; }
+  .f-spacer { flex:1 1 auto; }
+  .f-pied { border-top:.5px solid #e9e3d4; padding-top:6px; font-size:7px; color:#8a8170; text-align:center; }
+
+  /* ---------- CERTIFICAT ---------- */
+  .cadre { height:100%; border:2px solid var(--rouge); padding:8px; }
+  .ci { height:100%; border:.6px solid var(--rouge); padding:21px 29px;
+        display:flex; flex-direction:column; position:relative; }
+  .ci-tete { height:40px; border-bottom:0; }
+  .ci-logo { width:120px; height:36px; background:var(--rouge); opacity:.85; }
+  .ci-corps { flex:1; display:flex; gap:26px; min-height:0; margin-top:10px; }
+  .ci-info { flex:1; }
+  .ci-t { font-size:14px; font-style:italic; font-family:Georgia,serif; margin-bottom:2px; }
+  .ci-a { font-size:8px; letter-spacing:.08em; color:#4a443a; margin-bottom:10px; text-transform:uppercase; }
+  .ci-ph { width:150px; height:104px; }
+  .ci-sign { width:150px; margin-top:16px; }
+  .ci-sign .lig { border-top:.8px solid #1c1a17; margin-bottom:3px; }
+  .ci-sign .nom { font-size:7.5px; color:#6b6253; font-family:var(--font-ui); }
+
+  /* l'estampe : cercle en relief appliqué à la main après impression */
+  .estampe { position:absolute; width:74px; height:74px; border-radius:50%;
+             border:2px dashed #b08a3c; background:rgba(201,154,61,.10);
+             display:flex; align-items:center; justify-content:center; text-align:center;
+             font-family:var(--font-ui); font-size:6.5px; letter-spacing:.06em;
+             color:#8a6a22; text-transform:uppercase; line-height:1.3; }
+  .estampe.deborde { left:-26px; bottom:34px; border-color:var(--rouge); color:var(--rouge);
+                     background:rgba(144,0,1,.09); }
+  .estampe.ok { left:6px; bottom:34px; }
+
+  .legende { font-size:12px; color:var(--slate); margin:10px 0 0; max-width:300px; line-height:1.5; }
+  .legende b { color:var(--ink); }
+
+  /* ---------- BANDEAU FICHE ARTISTE ---------- */
+  .hero { background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte);
+          box-shadow:var(--ombre-carte); padding:20px 24px; max-width:760px; }
+  .hero h3 { font-family:var(--font-titre); font-size:26px; font-weight:600; margin:0 0 2px; }
+  .hero .sstitre { font-size:13px; color:var(--slate); margin:0 0 12px; }
+  .hero-filet { height:1px; background:var(--mist); margin:0 0 14px; }
+  .stats { display:flex; gap:30px; flex-wrap:wrap; }
+  .stat .v { display:block; font-family:var(--font-titre); font-size:24px; font-weight:600; line-height:1; }
+  .stat .v.accent { color:var(--warm-gold); }
+  .stat .v.expo { color:var(--rouge); }
+  .stat .l { display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.07em;
+             color:var(--stone); margin-top:5px; font-weight:600; }
+
+  table.opt { width:100%; max-width:1060px; border-collapse:collapse; font-size:13.5px; margin-top:10px;
+    background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte); overflow:hidden; }
+  table.opt th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--stone); font-weight:700; padding:11px 14px; background:var(--soft-ivory); }
+  table.opt td { padding:10px 14px; border-top:1px solid var(--cloud); vertical-align:top; }
+  .oui { color:var(--warm-gold); font-weight:600; }
+  .non { color:var(--slate); }
+</style>
+</head>
+<body>
+
+<h1>Photos sur les cartels et la facture, cadre du certificat</h1>
+<p class="sous">Quatre ajouts demandés le 2026-09-04. Les feuilles ci-dessous sont à l'échelle
+(1 mm ≈ 2,6 px) : ce que vous voyez a les proportions du papier imprimé.</p>
+
+<!-- ====================== LOT 1 ====================== -->
+<p class="lot-titre">Lot 1 &middot; La photo sur les cartels</p>
+<p class="lot-note">Une photo demande de la place. À dix par page, une case fait 96 × 51 mm — il n'y
+entre pas d'image lisible. <b>Cocher « photo » change donc les choix de format disponibles.</b></p>
+
+<div class="rangee">
+  <div>
+    <p class="etiq">Aujourd'hui &middot; 10 par page, sans photo</p>
+    <div class="feuille lettre">
+      <div class="grille g10">
+        <div class="cartel"><div class="c-h">
+          <div class="c-txt">
+            <p class="c-art">Louise Potvin</p>
+            <p class="c-tit">Marée basse, fin d'août</p>
+            <p class="c-tec">Huile sur toile · 24 × 36 po</p>
+            <p class="c-pied"><span class="c-inv">HUP912</span><span class="c-prix">2 400 $</span></p>
+          </div><div class="qr qr-22"></div></div></div>
+        <div class="cartel"><div class="c-h">
+          <div class="c-txt">
+            <p class="c-art">Jean Simard</p>
+            <p class="c-tit">Bois de grève III</p>
+            <p class="c-tec">Bois flotté · 18 × 9 po</p>
+            <p class="c-pied"><span class="c-inv">JES204</span><span class="c-prix">950 $</span></p>
+          </div><div class="qr qr-22"></div></div></div>
+        <div class="cartel"></div><div class="cartel"></div>
+        <div class="cartel"></div><div class="cartel"></div>
+        <div class="cartel"></div><div class="cartel"></div>
+        <div class="cartel"></div><div class="cartel"></div>
+      </div>
+    </div>
+    <p class="legende">96 × 51 mm par cartel. Reste le format par défaut quand la case n'est pas cochée.</p>
+  </div>
+
+  <div>
+    <p class="etiq reco">Avec photo &middot; 6 par page &nbsp;— recommandé</p>
+    <div class="feuille lettre">
+      <div class="grille g6">
+        <div class="cartel"><div class="c-v">
+          <div class="photo"></div>
+          <div class="bas">
+            <div class="c-txt">
+              <p class="c-art">Louise Potvin</p>
+              <p class="c-tit">Marée basse, fin d'août</p>
+              <p class="c-tec">Huile sur toile · 24 × 36 po</p>
+              <p class="c-pied"><span class="c-inv">HUP912</span></p>
+            </div>
+            <div class="qr qr-18"></div>
+          </div>
+          <p class="c-pied" style="margin-top:2px;"><span class="c-prix">2 400 $</span></p>
+        </div></div>
+        <div class="cartel"><div class="c-v">
+          <div class="photo"></div>
+          <div class="bas">
+            <div class="c-txt">
+              <p class="c-art">Jean Simard</p>
+              <p class="c-tit">Bois de grève III</p>
+              <p class="c-tec">Bois flotté · 18 × 9 po</p>
+              <p class="c-pied"><span class="c-inv">JES204</span></p>
+            </div>
+            <div class="qr qr-18"></div>
+          </div>
+          <p class="c-pied" style="margin-top:2px;"><span class="c-prix">950 $</span></p>
+        </div></div>
+        <div class="cartel"></div><div class="cartel"></div>
+        <div class="cartel"></div><div class="cartel"></div>
+      </div>
+    </div>
+    <p class="legende">96 × 85 mm. La photo prend le haut, le texte et le code QR se rangent dessous.
+    <b>Format le plus proche d'un cartel de salon.</b></p>
+  </div>
+
+  <div>
+    <p class="etiq">Avec photo &middot; 4 par page</p>
+    <div class="feuille lettre">
+      <div class="grille g4">
+        <div class="cartel"><div class="c-v">
+          <div class="photo"></div>
+          <div class="bas">
+            <div class="c-txt">
+              <p class="c-art" style="font-size:11px;">Louise Potvin</p>
+              <p class="c-tit" style="font-size:14px;">Marée basse, fin d'août</p>
+              <p class="c-tec" style="font-size:9px;">Huile sur toile · 24 × 36 po</p>
+              <p class="c-pied" style="font-size:9px;"><span class="c-inv">HUP912</span></p>
+            </div>
+            <div class="qr qr-22"></div>
+          </div>
+          <p class="c-pied" style="margin-top:3px;"><span class="c-prix" style="font-size:13px;">2 400 $</span></p>
+        </div></div>
+        <div class="cartel"></div>
+        <div class="cartel"></div><div class="cartel"></div>
+      </div>
+    </div>
+    <p class="legende">96 × 128 mm. Pour une exposition où l'image doit se voir de loin.</p>
+  </div>
+</div>
+
+<p class="lot-titre" style="margin-top:26px;">Et la variante horizontale, pour comparer</p>
+<div class="rangee">
+  <div>
+    <p class="etiq">Avec photo &middot; 6 par page, photo à gauche</p>
+    <div class="feuille lettre">
+      <div class="grille g6">
+        <div class="cartel"><div class="c-hp">
+          <div class="photo"></div>
+          <div class="c-txt">
+            <p class="c-art">Louise Potvin</p>
+            <p class="c-tit">Marée basse, fin d'août</p>
+            <p class="c-tec">Huile sur toile · 24 × 36 po</p>
+            <p class="c-pied"><span class="c-inv">HUP912</span><span class="c-prix">2 400 $</span></p>
+          </div>
+          <div class="qr qr-18"></div>
+        </div></div>
+        <div class="cartel"><div class="c-hp">
+          <div class="photo"></div>
+          <div class="c-txt">
+            <p class="c-art">Jean Simard</p>
+            <p class="c-tit">Bois de grève III</p>
+            <p class="c-tec">Bois flotté · 18 × 9 po</p>
+            <p class="c-pied"><span class="c-inv">JES204</span><span class="c-prix">950 $</span></p>
+          </div>
+          <div class="qr qr-18"></div>
+        </div></div>
+        <div class="cartel"></div><div class="cartel"></div>
+        <div class="cartel"></div><div class="cartel"></div>
+      </div>
+    </div>
+    <p class="legende">Trois colonnes dans 96 mm : la photo tombe à 24 mm de large, le titre se casse
+    en trois lignes. <b>Lisible, mais serré.</b></p>
+  </div>
+</div>
+
+<table class="opt">
+  <thead><tr><th style="width:22%;">Case « photo »</th><th style="width:30%;">Formats proposés</th><th>Par défaut</th></tr></thead>
+  <tbody>
+    <tr><td class="non">Décochée</td><td>4, 6, 8, 10 par page</td><td><b>10</b> — inchangé</td></tr>
+    <tr><td class="oui">Cochée</td><td>2, 4, 6 par page</td><td><b>6</b></td></tr>
+  </tbody>
+</table>
+
+<div class="journal">
+  <h4>Comment la case se comporte</h4>
+  <ul>
+    <li>Cocher « photo » <em>réduit</em> la liste des formats : 8 et 10 disparaissent, parce qu'une image
+      n'y serait pas lisible. Le choix bascule sur 6.</li>
+    <li>Décocher rend les quatre formats et remet 10.</li>
+    <li>Une œuvre <em>sans photo</em> garde un cartel complet, avec un simple blanc à la place de l'image —
+      comme le code QR d'une œuvre sans adresse sur le site.</li>
+    <li>La disposition <em>verticale</em> est proposée : à six par page, mettre la photo à gauche laisse
+      24 mm d'image et casse le titre en trois lignes.</li>
+  </ul>
+</div>
+
+<!-- ====================== LOT 2 ====================== -->
+<p class="lot-titre">Lot 2 &middot; Les œuvres en exposition, dans l'en-tête de l'artiste</p>
+<p class="lot-note">Un sixième compteur dans la rangée, à côté de « Retirées ».</p>
+
+<div class="hero">
+  <h3>Louise Potvin</h3>
+  <p class="sstitre">Peintre &middot; 41 œuvres disponibles</p>
+  <div class="hero-filet"></div>
+  <div class="stats">
+    <div class="stat"><span class="v">48</span><span class="l">Au catalogue</span></div>
+    <div class="stat"><span class="v accent">41</span><span class="l">Disponibles</span></div>
+    <div class="stat"><span class="v expo">3</span><span class="l">En exposition</span></div>
+    <div class="stat"><span class="v">4</span><span class="l">Retirées</span></div>
+    <div class="stat"><span class="v">12</span><span class="l">Ventes</span></div>
+    <div class="stat"><span class="v">••• ••• $</span><span class="l">Valeur dispo <span style="color:var(--warm-gold);">afficher</span></span></div>
+  </div>
+</div>
+
+<div class="journal">
+  <h4>Deux détails à trancher</h4>
+  <ul>
+    <li>Le compteur <em>s'affiche toujours</em>, à zéro comme « Retirées », plutôt que d'apparaître et
+      disparaître — une rangée dont le nombre de cases change est déroutante.</li>
+    <li>Le chiffre est en <em>rouge</em> quand il y en a : c'est un état temporaire, pas un total.</li>
+    <li>Ces œuvres ne sont ni « disponibles » ni « retirées » : elles ont le statut <em>En exposition</em>
+      et sont donc déjà exclues du compte des disponibles.</li>
+  </ul>
+</div>
+
+<!-- ====================== LOT 3 ====================== -->
+<p class="lot-titre">Lot 3 &middot; La photo sur la facture</p>
+<p class="lot-note">La facture a une place vide évidente : la moitié gauche, en face du bloc de calcul
+qui est aligné à droite. La photo s'y range sans rien déplacer.</p>
+
+<div class="rangee">
+  <div>
+    <p class="etiq reco">La photo en face du calcul &nbsp;— recommandé</p>
+    <div class="feuille lettre">
+      <div class="fact">
+        <div class="f-head">
+          <div class="f-logo"></div>
+          <div class="f-ft">Facture<div style="font-size:8px;letter-spacing:0;">N° FA-2026-014<br>4 septembre 2026</div></div>
+        </div>
+        <div class="f-rule"></div>
+        <div class="f-parties">
+          <div class="f-part"><div class="f-pt">Artiste</div>
+            <div class="f-ligne"></div><div class="f-ligne court"></div><div class="f-ligne court"></div></div>
+          <div class="f-part"><div class="f-pt">Facturé à</div>
+            <div class="f-ligne"></div><div class="f-ligne court"></div><div class="f-ligne court"></div></div>
+        </div>
+        <div class="f-oeuvre">
+          <div class="f-oel">Œuvre</div>
+          <div class="f-oed">« Marée basse, fin d'août »</div>
+          <div class="f-oes">HUP912 &middot; 24 × 36 po</div>
+        </div>
+        <div class="f-bas">
+          <div class="photo f-photo"></div>
+          <div class="f-calc">
+            <div class="f-crow"><span>Prix régulier</span><span>2 400 $</span></div>
+            <div class="f-crow"><span>Prix de vente</span><span>2 400 $</span></div>
+            <div class="f-crow"><span>Cote de la galerie (40 %)</span><span>−960 $</span></div>
+            <div class="f-crow"><span>Part de l'artiste</span><span>1 440 $</span></div>
+            <div class="f-crow"><span>TPS</span><span>72 $</span></div>
+            <div class="f-crow"><span>TVQ</span><span>143,64 $</span></div>
+            <div class="f-crow total"><span>Montant payé</span><span>1 655,64 $</span></div>
+          </div>
+        </div>
+        <div class="f-spacer"></div>
+        <div class="f-pied">La Galerie du Vieux Saint-Jean &middot; 000 rue Richelieu, Saint-Jean-sur-Richelieu</div>
+      </div>
+    </div>
+    <p class="legende">La photo occupe un espace <b>déjà vide</b> : rien ne descend, aucun risque de
+    déborder sur une deuxième page.</p>
+  </div>
+
+  <div>
+    <p class="etiq">La photo dans le bloc « Œuvre »</p>
+    <div class="feuille lettre">
+      <div class="fact">
+        <div class="f-head">
+          <div class="f-logo"></div>
+          <div class="f-ft">Facture<div style="font-size:8px;letter-spacing:0;">N° FA-2026-014<br>4 septembre 2026</div></div>
+        </div>
+        <div class="f-rule"></div>
+        <div class="f-parties">
+          <div class="f-part"><div class="f-pt">Artiste</div>
+            <div class="f-ligne"></div><div class="f-ligne court"></div><div class="f-ligne court"></div></div>
+          <div class="f-part"><div class="f-pt">Facturé à</div>
+            <div class="f-ligne"></div><div class="f-ligne court"></div><div class="f-ligne court"></div></div>
+        </div>
+        <div class="f-oeuvre" style="display:flex;gap:14px;align-items:flex-start;">
+          <div class="photo" style="flex:0 0 96px;height:70px;"></div>
+          <div>
+            <div class="f-oel">Œuvre</div>
+            <div class="f-oed">« Marée basse, fin d'août »</div>
+            <div class="f-oes">HUP912 &middot; 24 × 36 po</div>
+          </div>
+        </div>
+        <div class="f-bas">
+          <div class="f-calc">
+            <div class="f-crow"><span>Prix régulier</span><span>2 400 $</span></div>
+            <div class="f-crow"><span>Prix de vente</span><span>2 400 $</span></div>
+            <div class="f-crow"><span>Cote de la galerie (40 %)</span><span>−960 $</span></div>
+            <div class="f-crow"><span>Part de l'artiste</span><span>1 440 $</span></div>
+            <div class="f-crow"><span>TPS</span><span>72 $</span></div>
+            <div class="f-crow"><span>TVQ</span><span>143,64 $</span></div>
+            <div class="f-crow total"><span>Montant payé</span><span>1 655,64 $</span></div>
+          </div>
+        </div>
+        <div class="f-spacer"></div>
+        <div class="f-pied">La Galerie du Vieux Saint-Jean &middot; 000 rue Richelieu, Saint-Jean-sur-Richelieu</div>
+      </div>
+    </div>
+    <p class="legende">La photo colle au titre de l'œuvre, mais <b>pousse tout le calcul vers le bas</b> et
+    laisse la moitié gauche vide plus bas.</p>
+  </div>
+</div>
+
+<div class="journal">
+  <h4>Le seul document « facture » du projet</h4>
+  <ul>
+    <li>C'est la <em>facture artiste</em> — le relevé de versement. La facture au client n'a jamais été
+      conçue (elle attend un exemple, voir `CLAUDE.md` §6). Dites-moi si c'est bien celle-là que vous
+      visiez.</li>
+    <li>Une vente dont l'œuvre <em>n'a pas de photo</em> produit la facture d'aujourd'hui, sans trou
+      ni cadre vide.</li>
+  </ul>
+</div>
+
+<!-- ====================== LOT 4 ====================== -->
+<p class="lot-titre">Lot 4 &middot; Le cadre du certificat</p>
+<p class="lot-note">Le certificat est en <b>paysage</b>. Aujourd'hui la marge du papier est de 12 mm :
+le cadre rouge passe donc à 12 mm du bord, et l'estampe appliquée à la main mord dessus.</p>
+
+<div class="rangee">
+  <div>
+    <p class="etiq">Aujourd'hui &middot; marge 12 mm</p>
+    <div class="feuille paysage">
+      <div class="cadre">
+        <div class="ci">
+          <div class="ci-tete"><div class="ci-logo"></div></div>
+          <div class="ci-corps">
+            <div class="ci-info">
+              <div class="ci-t">« Marée basse, fin d'août »</div>
+              <div class="ci-a">Louise Potvin</div>
+              <div class="f-ligne"></div><div class="f-ligne"></div>
+              <div class="f-ligne court"></div><div class="f-ligne"></div>
+              <div class="ci-sign"><div class="lig"></div><div class="nom">La Galerie du Vieux Saint-Jean</div></div>
+            </div>
+            <div class="photo ci-ph"></div>
+          </div>
+          <div class="estampe deborde">estampe<br>appliquée<br>à la main</div>
+        </div>
+      </div>
+    </div>
+    <p class="legende">L'estampe déborde sur le filet rouge — <b>c'est le problème signalé.</b></p>
+  </div>
+
+  <div>
+    <p class="etiq reco">Proposé &middot; marge 8 mm</p>
+    <div class="feuille paysage lettre-large" style="width:727px;height:561px;">
+      <div class="cadre">
+        <div class="ci">
+          <div class="ci-tete"><div class="ci-logo"></div></div>
+          <div class="ci-corps">
+            <div class="ci-info">
+              <div class="ci-t">« Marée basse, fin d'août »</div>
+              <div class="ci-a">Louise Potvin</div>
+              <div class="f-ligne"></div><div class="f-ligne"></div>
+              <div class="f-ligne court"></div><div class="f-ligne"></div>
+              <div class="ci-sign"><div class="lig"></div><div class="nom">La Galerie du Vieux Saint-Jean</div></div>
+            </div>
+            <div class="photo ci-ph"></div>
+          </div>
+          <div class="estampe ok">estampe<br>appliquée<br>à la main</div>
+        </div>
+      </div>
+    </div>
+    <p class="legende">Le cadre gagne <b>4 mm de chaque côté</b> — 8 mm de largeur utile. L'estampe tombe
+    à l'intérieur, et le document respire davantage.</p>
+  </div>
+</div>
+
+<div class="journal">
+  <h4>Ce qu'il me manque pour viser juste</h4>
+  <ul>
+    <li><em>Où l'estampe tombe-t-elle réellement ?</em> Je l'ai dessinée en bas à gauche, près de la
+      signature. Si elle se pose ailleurs — au centre, en bas à droite — la correction change.</li>
+    <li>8 mm est le minimum sûr : <em>sous 6 mm</em>, beaucoup d'imprimantes coupent, et le cadre
+      sortirait de la page.</li>
+    <li>Autre voie si le débordement est très localisé : garder la marge et <em>réserver un espace</em>
+      pour l'estampe à l'intérieur du cadre. Plus chirurgical, mais il faut savoir où.</li>
+  </ul>
+</div>
+
+</body></html>

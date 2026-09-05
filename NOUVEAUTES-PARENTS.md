@@ -61,6 +61,42 @@ La correction vaut partout où une liste est censée suivre les numéros : le
 
 ---
 
+## Des cartels avec la photo de l'œuvre
+
+Dans la fenêtre **Imprimer les cartels**, deux nouvelles cases :
+
+**« Ajouter la photo de l'œuvre »**. La photo prend le haut du cartel, le nom
+de l'artiste, le titre et le reste se rangent dessous.
+
+Comme une image demande de la place, cocher cette case **change les formats
+proposés** : 8 et 10 par page disparaissent — à cette taille, une case fait
+9,6 × 5,1 cm et l'image ne se verrait pas — et il vous reste **2, 4 ou 6 par
+page**, avec 6 par défaut. Décochez la case, et les formats habituels
+reviennent avec 10 par page.
+
+**« Afficher le code QR »**. Si vous préférez un cartel sans code, décochez.
+Galeria cesse alors de vous avertir des œuvres sans adresse sur le site : sans
+code imprimé, l'adresse ne sert plus à rien.
+
+Une œuvre sans photo reçoit quand même son cartel, avec un blanc à la place de
+l'image.
+
+---
+
+## Trois petites choses
+
+**La facture à l'artiste montre la photo de l'œuvre vendue**, à gauche du
+calcul, dans un espace qui était vide. Les factures d'œuvres sans photo sont
+exactement les mêmes qu'avant.
+
+**Le cadre du certificat a été élargi** de 4 mm de chaque côté, pour que votre
+estampe en relief, appliquée en bas à droite, ne morde plus sur le filet rouge.
+
+**La fiche d'un artiste compte ses œuvres en exposition**, en rouge, dans la
+rangée de l'en-tête, à côté des disponibles et des retirées.
+
+---
+
 ## Depuis la version 0.14.0 — préparer une exposition, et des certificats en anglais
 
 Une nouvelle section **Expositions** apparaît dans le menu de gauche, juste

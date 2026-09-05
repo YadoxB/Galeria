@@ -70,8 +70,13 @@
    - Nouveau choix **« N° d'inventaire »** dans le menu *Trier par* de la liste des œuvres (`oeuvres-liste.js`), artiste d'abord puis numéro.
    - ⚠ **Le comparateur existe en double** (`requetes.js` côté principal, `oeuvres-liste.js` côté interface) : les processus ne partagent pas de module. Commentaires croisés en place — **les modifier ensemble**.
    - Une œuvre **sans numéro** passe en fin de liste (fiche à compléter, pas début de série).
-5. **Cote « hors normes » : une collision de vocabulaire subsiste.** La case `cote_hors_normes` (« prix saisi à la main, aucune cote ») coexiste avec la taille de cote « Hors normes » (0.14.0). Dave n'avait pas de préférence ; renommer la case en « Prix fixé à la main (aucune cote) » **n'a pas été fait**.
-6. Feuille de route : **Phase 4 — Sage 50**, **cadre de tests** (dette technique), **chiffrement** (PARQUÉ, reco = BitLocker d'abord).
+5. **Ajustements demandés le 2026-09-04 — FAITS.** Maquette : `demos/ajouts-photos-et-cadre.html`.
+   - **Photo sur les cartels** (case à cocher) + **code QR optionnel**. Cocher « photo » **refait la liste des formats** : 8 et 10 disparaissent (96 × 51 mm ne contient pas d'image lisible), il reste 2/4/6 avec **6 par défaut**. Disposition **verticale** — photo en haut, texte et QR dessous ; l'horizontale a été écartée (24 mm d'image, titre cassé en trois lignes). Le QR et la photo ne sont calculés que s'ils sont imprimés. Rendu vérifié sur 7 vraies œuvres, 8 cas mesurés.
+   - **Compteur « En exposition »** dans l'en-tête de la fiche d'artiste (`stats.exposees`), en rouge, toujours affiché même à zéro.
+   - **Photo sur la facture artiste**, à gauche du bloc de calcul — un espace déjà vide. **Mesuré : le bloc de calcul ne bouge pas d'un pixel** avec ou sans photo, donc aucune facture ne passe sur une 2ᵉ page.
+   - **Cadre du certificat** : marge du papier 12 → **8 mm** (l'estampe se pose **en bas à droite** et mordait sur le filet). Mesuré à 8 mm sur les trois côtés, sans débordement. ⚠ Ne jamais descendre sous 6 mm.
+6. **Cote « hors normes » : une collision de vocabulaire subsiste.** La case `cote_hors_normes` (« prix saisi à la main, aucune cote ») coexiste avec la taille de cote « Hors normes » (0.14.0). Dave n'avait pas de préférence ; renommer la case en « Prix fixé à la main (aucune cote) » **n'a pas été fait**.
+7. Feuille de route : **Phase 4 — Sage 50**, **cadre de tests** (dette technique), **chiffrement** (PARQUÉ, reco = BitLocker d'abord).
 
 ### ✅ v0.12.0 PUBLIÉE (2026-08-09) — trois corrections d'usage
 

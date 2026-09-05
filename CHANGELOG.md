@@ -46,6 +46,30 @@ identifiants.
 - **Tri par numéro d'inventaire**, dans le menu *Trier par* de la liste des œuvres :
   artiste d'abord, puis numéro. Répond à la demande « voir les toiles d'un artiste dans
   un ordre facile à suivre ».
+- **Photo de l'œuvre sur les cartels d'exposition**, par une case à cocher. La photo prend
+  le haut du cartel, le texte et le code QR se rangent dessous. **Cocher la case refait la
+  liste des formats** : 8 et 10 par page disparaissent — une case de 96 × 51 mm ne contient
+  pas d'image lisible — et il reste 2, 4 ou 6, avec **6 par défaut**. Décocher rend les
+  quatre formats et remet 10. Un format impossible retombe sur le défaut de son mode plutôt
+  que de casser la grille. Une œuvre sans photo garde un cartel complet, avec un blanc à la
+  place de l'image.
+- **Code QR optionnel sur les cartels.** Décoché, le code n'est plus calculé et
+  l'avertissement sur les adresses manquantes disparaît : sans code imprimé, une adresse
+  absente n'est plus un manque.
+- **Compteur « En exposition »** dans l'en-tête de la fiche d'artiste, entre *Disponibles*
+  et *Retirées*. En rouge quand il y en a — c'est un état temporaire, pas un total. Affiché
+  même à zéro, pour que la rangée garde le même nombre de cases d'un artiste à l'autre.
+- **Photo de l'œuvre vendue sur la facture artiste**, à gauche, en face du bloc de calcul —
+  un espace jusque-là vide. **Le bloc de calcul ne bouge pas d'un pixel**, avec ou sans
+  photo : aucune facture ne risque de passer sur une deuxième page. Une vente dont l'œuvre
+  n'a pas de photo produit exactement la facture d'avant.
+
+### Modifié
+
+- **Cadre du certificat élargi** : la marge du papier passe de 12 à **8 mm**, parce que
+  l'estampe en relief, appliquée à la main en bas à droite, mordait sur le filet rouge. Le
+  cadre gagne 4 mm de chaque côté et le corps du document 8 mm de hauteur utile. ⚠ Ne pas
+  descendre sous 6 mm : beaucoup d'imprimantes coupent au-delà.
 
 ### Corrigé
 

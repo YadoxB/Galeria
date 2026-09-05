@@ -42,6 +42,18 @@ export const VERSIONS = [
         titre: "Les numéros d'inventaire en ordre",
         texte: "Le menu <b>Trier par</b> de la liste des œuvres propose maintenant <b>N° d'inventaire</b>. Et les numéros se suivent enfin correctement&nbsp;: <b>CLB565</b> venait avant, après <b>CLB1236</b>. Les catalogues, les annexes et les cartels en profitent aussi.",
       },
+      {
+        titre: 'Des cartels avec la photo',
+        texte: "La fenêtre d'impression des cartels propose <b>d'ajouter la photo de l'œuvre</b>, et de <b>montrer ou non le code QR</b>. Quand la photo est demandée, Galeria n'offre plus que 2, 4 ou 6 cartels par page&nbsp;: à dix, l'image serait trop petite pour se voir.",
+      },
+      {
+        titre: 'Deux détails sur vos documents',
+        texte: "La <b>facture à l'artiste</b> montre maintenant la <b>photo de l'œuvre vendue</b>, à gauche du calcul. Et le <b>cadre du certificat</b> a été élargi de 4&nbsp;mm de chaque côté, pour que votre <b>estampe</b> ne morde plus sur le filet rouge.",
+      },
+      {
+        titre: 'Les œuvres parties en exposition',
+        texte: "L'en-tête d'une fiche d'artiste compte désormais ses œuvres <b>en exposition</b>, en rouge, à côté des disponibles et des retirées.",
+      },
     ],
   },
   {
