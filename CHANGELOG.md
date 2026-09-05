@@ -10,6 +10,55 @@ identifiants.
 
 ## [Non publié]
 
+> **Les photos rangées par artiste.** Le dossier Photos suit désormais la méthode de
+> suivi de la galerie : l'emplacement d'un fichier dit où en est une toile.
+
+### Ajouté
+
+- **Nouvelle arborescence du dossier Photos**, un seul dossier par artiste :
+  ```
+  Photos\<Artiste>\Oeuvres\disponible|en exposition|vendu|retiré\
+  Photos\<Artiste>\Portraits\  (+ originaux\)
+  Photos\<Artiste>\Divers\
+  ```
+  Les racines `artistes\` et `oeuvres\` disparaissent. Un fichier sans artiste (fiche
+  supprimée) va dans `Photos\_non-rattachés\` — jamais effacé.
+- **Migration unique au démarrage** (`src/db/migrer-photos.js`), avec cinq garde-fous :
+  un **plan calculé avant toute modification** (collision de noms, fichier manquant →
+  arrêt sans rien toucher) ; **copie, vérification par empreinte SHA-256, puis
+  suppression** ; la **base réécrite seulement une fois tous les fichiers arrivés**, en une
+  transaction ; un **journal** permettant de tout remettre en place
+  (`annulerMigrationPhotos`). Éprouvée sur une copie des données réelles :
+  **542 fichiers, 0 perdu, 0 altéré**, aller et retour.
+- **La photo suit le statut** (`src/db/photos-ranger.js`). Une œuvre vendue voit sa photo
+  passer dans `vendu\`, une œuvre partie en exposition dans `en exposition\`, et revenir
+  ensuite. « Réservé » reste dans `disponible` (la toile est encore à la galerie) ;
+  « retiré » l'emporte sur le statut.
+- **Un artiste renommé emporte son dossier**, portrait compris. Sans ça, corriger une
+  faute de frappe créerait un second dossier et séparerait ses photos en deux.
+- **Section « Photos » sur la fiche d'artiste** : les œuvres groupées par statut (les
+  vendues désaturées), le portrait, le contenu de *Divers*, le nombre et le poids total.
+  **Ajouter** dépose dans *Divers* en gardant les noms d'origine ; **Copier** met l'image
+  dans le presse-papier ; **Enregistrer** en fait une copie ailleurs ; **Ouvrir le
+  dossier** mène à l'Explorateur. Un clic sur une œuvre ouvre sa fiche.
+
+### Modifié
+
+- Les **nouvelles photos** ajoutées depuis l'app sont écrites directement au bon endroit.
+  Elles atterrissaient jusqu'ici à plat dans `Photos\oeuvres\` ou `Photos\artistes\`, ce
+  qui aurait recréé le désordre dès la première photo suivant la migration.
+
+### Sécurité
+
+- Le rangement est **réconciliateur et jamais bloquant** : plutôt que de brancher un
+  déplacement sur les quatorze endroits qui changent un statut — en oublier un ne se
+  verrait pas — on compare l'emplacement réel à l'emplacement attendu, à chaque démarrage
+  et après chaque action. Un fichier verrouillé par l'Explorateur ne fait donc **jamais
+  échouer une vente** : l'écart est rattrapé au démarrage suivant.
+- Les déplacements ont lieu **hors transaction** : un déplacement de fichier n'est pas
+  annulable par un `ROLLBACK`, et laisserait sinon une photo déplacée pour une vente
+  abandonnée.
+
 ## [0.17.0] — 2026-09-04
 
 > **Les documents en anglais.** La présentation, le catalogue et toute la pochette de

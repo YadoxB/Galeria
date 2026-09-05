@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Organisation des photos</title>
+<style>
+  :root {
+    --soft-ivory:#FCFAF4; --porcelain:#FFFFFF; --warm-gold:#C99A3D; --gallery-navy:#071A2F;
+    --ink:#111827; --slate:#5D6875; --stone:#A79E91; --mist:#D8D2C8; --cloud:#EFE8DE;
+    --rouge:#900001; --vert:#2E6B4F;
+    --font-titre:'Cormorant Garamond',Georgia,serif;
+    --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r-carte:14px; --ombre-carte:0 4px 14px rgba(7,26,47,.06);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--soft-ivory); font-family:var(--font-ui); color:var(--ink); padding:32px; }
+  h1 { font-family:var(--font-titre); font-weight:600; font-size:28px; margin:0 0 6px; }
+  .sous { color:var(--slate); margin:0 0 10px; font-size:14px; max-width:900px; line-height:1.6; }
+  .lot-titre { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone);
+               margin:44px 0 6px; font-weight:600; }
+  .lot-note { font-size:13.5px; color:var(--slate); max-width:900px; line-height:1.6; margin:0 0 16px; }
+  .etiq { font-size:11px; text-transform:uppercase; letter-spacing:.07em; font-weight:700;
+          margin:0 0 10px; color:var(--stone); }
+  .etiq.reco { color:var(--warm-gold); }
+  .etiq.danger { color:var(--rouge); }
+  .rangee { display:flex; gap:22px; align-items:flex-start; flex-wrap:wrap; }
+
+  .constat { max-width:1060px; background:var(--porcelain); border:1px solid var(--mist);
+             border-radius:var(--r-carte); box-shadow:var(--ombre-carte); padding:20px 24px; }
+  .constat h3 { font-family:var(--font-titre); font-size:20px; margin:0 0 4px; }
+  .chiffres { display:flex; gap:34px; flex-wrap:wrap; margin:16px 0 4px; }
+  .ch .v { display:block; font-family:var(--font-titre); font-size:26px; font-weight:600; line-height:1; }
+  .ch .v.bon { color:var(--vert); }
+  .ch .v.att { color:var(--warm-gold); }
+  .ch .l { display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.07em;
+           color:var(--stone); margin-top:6px; font-weight:600; }
+
+  .arbre { font-family:ui-monospace,Consolas,monospace; font-size:12.5px; line-height:1.75;
+           background:var(--porcelain); border:1px solid var(--mist); border-radius:11px;
+           padding:16px 18px; white-space:pre; overflow-x:auto; }
+  .arbre .dos { color:var(--gallery-navy); font-weight:600; }
+  .arbre .neuf { color:var(--warm-gold); font-weight:600; }
+  .arbre .cmt { color:var(--stone); }
+
+  .journal { max-width:1060px; margin-top:20px; background:var(--porcelain); border:1px solid var(--mist);
+             border-radius:var(--r-carte); padding:16px 20px; }
+  .journal h4 { font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone);
+                margin:0 0 8px; font-weight:700; }
+  .journal ul { margin:0; padding-left:18px; font-size:13.5px; color:var(--slate); line-height:1.75; }
+  .journal em { color:var(--ink); font-style:normal; font-weight:600; }
+
+  table.opt { width:100%; max-width:1060px; border-collapse:collapse; font-size:13.5px; margin-top:10px;
+    background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte); overflow:hidden; }
+  table.opt th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--stone); font-weight:700; padding:11px 14px; background:var(--soft-ivory); }
+  table.opt td { padding:11px 14px; border-top:1px solid var(--cloud); vertical-align:top; }
+  .oui { color:var(--vert); font-weight:600; }
+  .non { color:var(--rouge); font-weight:600; }
+  .moyen { color:var(--warm-gold); font-weight:600; }
+
+  /* --- section Photos de la fiche artiste --- */
+  .carte { background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte);
+           box-shadow:var(--ombre-carte); padding:18px 20px; max-width:640px; }
+  .carte-tete { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .carte-tete h3 { font-family:var(--font-titre); font-size:20px; font-weight:600; margin:0; }
+  .cpt { font-size:12px; color:var(--stone); }
+  .btn { font-family:var(--font-ui); font-size:12.5px; border:1px solid var(--mist);
+         background:var(--porcelain); border-radius:8px; padding:7px 12px; cursor:pointer; margin-left:auto; }
+  .btn:hover { background:var(--cloud); }
+  .filtres { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+  .puce { font-size:11.5px; border:1px solid var(--mist); background:var(--soft-ivory);
+          border-radius:999px; padding:4px 11px; cursor:pointer; color:var(--slate); }
+  .puce.actif { background:var(--gallery-navy); color:#fff; border-color:var(--gallery-navy); }
+  .puce .n { opacity:.65; margin-left:4px; }
+  .groupe-titre { font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; font-weight:700;
+                  color:var(--stone); margin:14px 0 8px; display:flex; align-items:center; gap:8px; }
+  .groupe-titre::after { content:''; flex:1; height:1px; background:var(--cloud); }
+  .grille { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+  .vign { aspect-ratio:1; border-radius:7px; border:1px solid var(--mist);
+          background:linear-gradient(135deg,#dfd6c4,#c9bda6); position:relative; overflow:hidden; }
+  .vign.vendue { filter:grayscale(.55); }
+  .vign .pastille { position:absolute; top:4px; right:4px; width:7px; height:7px; border-radius:50%; }
+  .p-dispo { background:var(--warm-gold); }
+  .p-vendu { background:var(--slate); }
+  .p-expo { background:var(--rouge); }
+
+  .alerte { max-width:1060px; background:#FFF8F8; border:1px solid #E9D2D2; border-left:3px solid var(--rouge);
+            border-radius:10px; padding:16px 20px; margin-top:24px; }
+  .alerte h4 { margin:0 0 8px; font-size:14px; color:var(--rouge); }
+  .alerte p { margin:0 0 8px; font-size:13.5px; color:var(--slate); line-height:1.6; }
+  .alerte p:last-child { margin-bottom:0; }
+  .legende { font-size:12px; color:var(--slate); margin:10px 0 0; max-width:440px; line-height:1.5; }
+  .legende b { color:var(--ink); }
+</style>
+</head>
+<body>
+
+<h1>Organisation des photos</h1>
+<p class="sous">Avant de concevoir quoi que ce soit, j'ai mesuré ce qu'il y a réellement sur le
+disque et dans la base. Le constat change la question posée.</p>
+
+<div class="alerte" style="margin:18px 0 0;">
+  <h4>⚠ Cette maquette est dépassée sur deux points — lire avant de s'y fier</h4>
+  <p>Elle a servi à poser les questions ; les réponses de Dave (2026-09-04) l'ont corrigée :</p>
+  <p><b>1. C'est l'option A qui a été retenue</b>, pas B. La méthode de suivi actuelle des
+  parents <b>repose sur l'emplacement des photos</b> : un fichier rangé dans « vendu » est
+  leur façon de savoir qu'une toile est vendue. Le classement sur le disque n'est donc pas
+  décoratif, et son coût d'entretien est assumé.</p>
+  <p><b>2. Le dossier « Divers » n'est pas un fourre-tout pour orphelins</b>, comme je
+  l'avais compris. C'est un endroit où <b>déposer d'autres photos liées à l'artiste</b> —
+  vernissage, atelier, portraits supplémentaires. Il est donc créé pour chaque artiste,
+  même vide.</p>
+  <p><b>3. L'arborescence retenue diffère aussi</b> : un seul dossier par artiste
+  (<code>Photos\&lt;Artiste&gt;\Oeuvres\&lt;statut&gt;\</code>, <code>\Portraits\</code>,
+  <code>\Divers\</code>), au lieu des deux racines <code>artistes\</code> et
+  <code>oeuvres\</code> montrées plus bas. Le nom de l'artiste n'apparaît qu'une fois.</p>
+  <p>Ce qui reste valable : le <b>constat mesuré</b> ci-dessous, la <b>section Photos</b> de
+  la fiche, et les <b>garde-fous de la migration</b>.</p>
+</div>
+
+<!-- ================= CONSTAT ================= -->
+<p class="lot-titre">Le constat, mesuré aujourd'hui</p>
+
+<div class="constat">
+  <h3>Vos photos sont en bien meilleur état que prévu</h3>
+  <p class="sous" style="margin:6px 0 0;">La note de reprise disait « tout est à plat ». C'est
+  faux : les photos d'œuvres sont <b>déjà classées par artiste</b>, et la base et le disque se
+  répondent parfaitement.</p>
+  <div class="chiffres">
+    <div class="ch"><span class="v">506</span><span class="l">œuvres</span></div>
+    <div class="ch"><span class="v bon">506</span><span class="l">avec photo</span></div>
+    <div class="ch"><span class="v bon">0</span><span class="l">photo manquante</span></div>
+    <div class="ch"><span class="v att">2</span><span class="l">fichiers orphelins</span></div>
+    <div class="ch"><span class="v">19</span><span class="l">dossiers d'artistes</span></div>
+    <div class="ch"><span class="v">209 Mo</span><span class="l">au total</span></div>
+  </div>
+</div>
+
+<div class="rangee" style="margin-top:18px;">
+  <div>
+    <p class="etiq">Ce qu'il y a aujourd'hui</p>
+    <div class="arbre"><span class="dos">Photos/</span>
+├─ <span class="dos">artistes/</span>          <span class="cmt">22 portraits</span>
+│  └─ <span class="dos">originaux/</span>      <span class="cmt">14 fichiers avant recadrage</span>
+└─ <span class="dos">oeuvres/</span>
+   ├─ <span class="dos">André Coppens/</span>  <span class="cmt">52 photos</span>
+   ├─ <span class="dos">Clarence Bourgoin/</span>
+   ├─ <span class="dos">Humberto Pinochet/</span>
+   └─ … <span class="cmt">19 dossiers, un par artiste</span></div>
+    <p class="legende">Chaque dossier porte le <b>nom complet</b> de l'artiste, et la
+    correspondance avec la base est <b>parfaite</b> — aucun dossier orphelin.</p>
+  </div>
+
+  <div>
+    <p class="etiq">Les 2 seuls orphelins</p>
+    <div class="arbre"><span class="dos">artistes/</span>artiste-24-1781810394642.jpg
+<span class="dos">artistes/originaux/</span>artiste-24-…-orig.jpg</div>
+    <p class="legende">Deux fichiers d'un artiste supprimé. <b>C'est tout.</b> Un dossier
+    « divers » serait donc presque vide — la question devient : vaut-il la peine d'exister ?</p>
+  </div>
+</div>
+
+<!-- ================= LE VRAI SUJET ================= -->
+<p class="lot-titre">Le vrai sujet · classer par statut a un coût caché</p>
+<p class="lot-note">Ranger les fichiers dans <code>disponible/</code>, <code>vendu/</code>,
+<code>en exposition/</code> se dessine bien. Mais un statut <b>change</b> : chaque vente
+déplacerait un fichier sur le disque et réécrirait son chemin en base. Une œuvre partie en
+exposition puis revenue ferait l'aller-retour.</p>
+
+<table class="opt">
+  <thead><tr>
+    <th style="width:24%;">Option</th>
+    <th style="width:16%;">Migration</th>
+    <th style="width:20%;">Entretien</th>
+    <th>Ce que ça donne</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td><b>A — Le disque suit le statut</b><br><span style="color:var(--slate);font-size:12.5px;">
+        oeuvres/&lt;artiste&gt;/&lt;statut&gt;/</span></td>
+      <td class="non">506 fichiers déplacés<br>506 chemins réécrits</td>
+      <td class="non">chaque vente,<br>chaque exposition<br>déplace un fichier</td>
+      <td>L'Explorateur Windows montre le classement voulu, même sans ouvrir Galeria.</td>
+    </tr>
+    <tr>
+      <td><b>B — Le classement vit dans l'app</b><br><span style="color:var(--slate);font-size:12.5px;">
+        disque inchangé</span></td>
+      <td class="oui">aucune</td>
+      <td class="oui">aucun</td>
+      <td>Une section <b>Photos</b> sur la fiche d'artiste, groupée par statut, toujours juste
+      puisqu'elle lit la base en direct.</td>
+    </tr>
+    <tr>
+      <td><b>C — Export sur demande</b><br><span style="color:var(--slate);font-size:12.5px;">
+        « Exporter les photos de cet artiste »</span></td>
+      <td class="oui">aucune</td>
+      <td class="oui">aucun</td>
+      <td>Une <b>copie</b> classée par statut dans le dossier de votre choix, pour un envoi ou
+      une impression. Les originaux ne bougent jamais.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="journal">
+  <h4>Pourquoi je recommande B, puis C si le besoin persiste</h4>
+  <ul>
+    <li>Le classement par statut est une <em>question</em> qu'on pose aux photos, pas une
+      propriété du fichier. Une question se pose au moment où on la pose — l'app répond
+      toujours juste, un dossier se périme dès la vente suivante.</li>
+    <li>L'option A fait entrer un déplacement de fichier dans le chemin d'une <em>vente</em>.
+      Un fichier verrouillé par l'Explorateur, une synchronisation OneDrive en cours, un
+      antivirus : autant de façons nouvelles de faire échouer une vente.</li>
+    <li>Le statut <em>en exposition</em> est temporaire par nature. Sous A, cinq œuvres
+      feraient l'aller-retour à chaque exposition.</li>
+    <li>Si vos parents regardent vraiment les photos <em>dans l'Explorateur</em>, alors A
+      répond à leur besoin et B ne suffit pas. <b>C'est la seule chose que j'ai besoin de
+      savoir.</b></li>
+  </ul>
+</div>
+
+<!-- ================= LA SECTION PHOTOS ================= -->
+<p class="lot-titre">La section Photos sur la fiche d'artiste</p>
+<p class="lot-note">Commune aux trois options — c'est la partie que vos parents ont demandée
+explicitement.</p>
+
+<div class="carte">
+  <div class="carte-tete">
+    <h3>Photos</h3>
+    <span class="cpt">52 photos &middot; 21 Mo</span>
+    <button class="btn">Ouvrir le dossier</button>
+  </div>
+  <div class="filtres">
+    <span class="puce actif">Toutes <span class="n">52</span></span>
+    <span class="puce">Disponibles <span class="n">34</span></span>
+    <span class="puce">Vendues <span class="n">16</span></span>
+    <span class="puce">En exposition <span class="n">2</span></span>
+    <span class="puce">Retirées <span class="n">0</span></span>
+  </div>
+
+  <div class="groupe-titre">Disponibles</div>
+  <div class="grille">
+    <div class="vign"><span class="pastille p-dispo"></span></div>
+    <div class="vign"><span class="pastille p-dispo"></span></div>
+    <div class="vign"><span class="pastille p-dispo"></span></div>
+    <div class="vign"><span class="pastille p-dispo"></span></div>
+    <div class="vign"><span class="pastille p-dispo"></span></div>
+  </div>
+
+  <div class="groupe-titre">En exposition</div>
+  <div class="grille">
+    <div class="vign"><span class="pastille p-expo"></span></div>
+    <div class="vign"><span class="pastille p-expo"></span></div>
+  </div>
+
+  <div class="groupe-titre">Vendues</div>
+  <div class="grille">
+    <div class="vign vendue"><span class="pastille p-vendu"></span></div>
+    <div class="vign vendue"><span class="pastille p-vendu"></span></div>
+    <div class="vign vendue"><span class="pastille p-vendu"></span></div>
+  </div>
+</div>
+
+<div class="journal">
+  <h4>Détails de cette section</h4>
+  <ul>
+    <li>Les vendues sont <em>désaturées</em> : on les distingue d'un coup d'œil sans lire une
+      étiquette.</li>
+    <li>Un clic sur une vignette ouvre la <em>fiche de l'œuvre</em>, pas la photo : c'est
+      presque toujours ce qu'on cherche.</li>
+    <li><em>Ouvrir le dossier</em> mène au dossier de l'artiste dans l'Explorateur — utile
+      dans les trois options.</li>
+    <li>Le poids total est affiché : c'est ce qui grossit vos sauvegardes (209 Mo
+      aujourd'hui).</li>
+  </ul>
+</div>
+
+<!-- ================= SI A ================= -->
+<p class="lot-titre">Si vous choisissez A · comment la migration se déroulerait</p>
+<p class="lot-note">Je ne le proposerais pas sans ces garde-fous.</p>
+
+<div class="rangee">
+  <div>
+    <p class="etiq danger">Le disque après migration</p>
+    <div class="arbre"><span class="dos">oeuvres/André Coppens/</span>
+├─ <span class="neuf">disponible/</span>       <span class="cmt">34</span>
+├─ <span class="neuf">vendu/</span>            <span class="cmt">16</span>
+├─ <span class="neuf">en exposition/</span>    <span class="cmt">2</span>
+└─ <span class="neuf">retiré/</span>           <span class="cmt">0</span></div>
+  </div>
+  <div style="flex:1;min-width:330px;">
+    <p class="etiq">Les garde-fous</p>
+    <div class="journal" style="margin-top:0;">
+      <ul>
+        <li><em>Sauvegarde de la base</em> prise avant, comme pour toute migration.</li>
+        <li><em>Copier puis vérifier puis supprimer</em>, fichier par fichier — jamais un
+          déplacement sec.</li>
+        <li>La base n'est réécrite qu'<em>après</em> que les 506 fichiers sont arrivés :
+          un échec à mi-chemin laisse tout cohérent.</li>
+        <li>Un <em>chemin de retour</em> qui remet la structure d'avant.</li>
+        <li>À lancer <em>une seule fois</em>, sur votre machine, avant livraison — pas chez
+          vos parents pendant qu'ils travaillent.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="alerte">
+  <h4>La question à trancher</h4>
+  <p><b>Vos parents regardent-ils les photos dans l'Explorateur Windows, ou dans Galeria ?</b></p>
+  <p>Dans Galeria → l'option <b>B</b> leur donne exactement ce qu'ils demandent, sans rien
+  déplacer, et le classement reste juste pour toujours.</p>
+  <p>Dans l'Explorateur → seule l'option <b>A</b> répond, et j'accepte son coût d'entretien
+  en connaissance de cause.</p>
+  <p>Et le <b>dossier « divers »</b> : avec deux orphelins seulement, je propose de ne pas le
+  créer, et d'offrir plutôt un bouton qui signale les fichiers non rattachés quand il y en a.</p>
+</div>
+
+<script>
+  document.querySelectorAll('.filtres').forEach(function (f) {
+    f.addEventListener('click', function (e) {
+      var p = e.target.closest('.puce');
+      if (!p) return;
+      f.querySelectorAll('.puce').forEach(function (x) { x.classList.remove('actif'); });
+      p.classList.add('actif');
+    });
+  });
+</script>
+</body></html>

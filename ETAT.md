@@ -12,7 +12,12 @@
 **✅ Dernière version PUBLIÉE : v0.17.0 (2026-09-04).** `origin/master` = tag `v0.17.0` = `a89d0d1`.
 Essayée dans l'app par Dave, poussée, publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
 
-> ### ✅ Rien n'attend d'être publié
+> ### 🟥 Un lot commité, NON PUBLIÉ et JAMAIS LANCÉ : les photos (→ 0.18.0)
+>
+> Le premier démarrage déplacera les **539 photos** de Dave. C'est éprouvé sur une copie
+> complète (aller ET retour, 0 fichier perdu, 0 altéré), mais **ça n'a jamais tourné sur les
+> vraies données**. `package.json` est à **0.17.0** ; l'entrée en tête de `VERSIONS` porte
+> `'0.18.0'`. Détail dans « Le chantier photos » plus bas.
 >
 > Quatre versions sont sorties le 2026-09-04 : la **0.16.0** en a livré trois d'un coup
 > (0.14.0 retours d'usage, 0.15.0 Expositions + certificat EN, 0.16.0 catalogue bilingue,
@@ -42,6 +47,49 @@ Essayée dans l'app par Dave, poussée, publiée sur GitHub Releases avec `lates
 > **Recommandation pour la suite : le chantier des PHOTOS** — dernier vrai manque au
 > quotidien, et le plus risqué (voir plus bas). À faire à tête reposée, pas en fin de
 > session.
+
+### Le chantier photos (→ 0.18.0) — ce qu'il faut savoir pour y revenir
+
+**⚠ LE CONSTAT QUI A TOUT CHANGÉ.** La note de reprise disait « tout est à plat » : **c'était
+faux**. Les photos d'œuvres étaient déjà classées par artiste, et base et disque se
+répondaient parfaitement (506 œuvres, 506 photos, 0 manquante, 2 orphelins). **Mesurer avant
+de concevoir** a évité de bâtir une migration pour un problème inexistant.
+
+**⚠ POURQUOI LE CLASSEMENT PAR STATUT EST NON NÉGOCIABLE.** J'avais recommandé de ne PAS
+classer sur le disque (coût d'entretien : chaque vente déplace un fichier). Dave a tranché :
+**la méthode de suivi actuelle des parents repose sur l'emplacement des photos** — un fichier
+rangé dans « vendu » est leur façon de savoir qu'une toile est vendue. Ce n'est pas
+décoratif. Ne pas « simplifier » ça un jour.
+
+**Arborescence** (`src/photos-chemins.js`, source unique de la règle) :
+`Photos\<Artiste>\Oeuvres\<disponible|en exposition|vendu|retiré>\`, `\Portraits\originaux\`,
+`\Divers\`, plus `Photos\_non-rattachés\`. Un seul dossier par artiste — Dave a explicitement
+refusé les deux racines `artistes\` + `oeuvres\` (« il y a des doublons »).
+
+**Décisions de Dave :** « réservé » va dans `disponible` (la toile est encore là) ; `retiré`
+(archive) l'emporte sur le statut ; **`Divers` n'est pas un fourre-tout pour orphelins** mais
+un endroit où déposer d'autres photos de l'artiste (vernissage, atelier) — créé pour tous,
+même vide ; les sept sous-dossiers sont créés même vides.
+
+**Migration** (`src/db/migrer-photos.js`, `user_version = 4`) : plan calculé avant toute
+modification → copie → vérification SHA-256 → suppression → **base réécrite en dernier**, en
+une transaction → journal `photos-migration-<ts>.json` + `annulerMigrationPhotos()`.
+Éprouvée sur copie : 542 fichiers, 0 perdu, 0 altéré, **aller et retour**.
+
+**⚠ RÉCONCILIATION, PAS CROCHETS** (`src/db/photos-ranger.js`) : le statut change à
+**quatorze endroits**. Plutôt que d'en brancher quatorze — en oublier un ne se verrait
+jamais —, on compare l'emplacement réel à l'emplacement attendu. Lancé **à chaque démarrage**
+(filet) et après chaque action (immédiateté). Appelé depuis les **gestionnaires** de
+`main.js`, donc **hors transaction** : un déplacement n'est pas annulable par un `ROLLBACK`.
+**Jamais bloquant** : un fichier verrouillé ne doit pas faire échouer une vente.
+
+**Section Photos** (`src/photos-artiste.js` + `artiste-fiche.js`) : lister, ajouter dans
+Divers, copier dans le presse-papier (`nativeImage`, pas le chemin), enregistrer ailleurs,
+ouvrir le dossier. **Pas de suppression** — Dave n'en a pas demandé, et un bouton destructeur
+à côté d'un bouton de copie sur des vignettes identiques est une mauvaise idée.
+
+**Maquette** : `demos/photos-organisation.html` — ⚠ elle porte un bandeau de correction :
+sa recommandation initiale (option B) a été écartée.
 
 ### Les documents en anglais (0.17.0) — ce qu'il faut savoir pour y revenir
 
@@ -107,10 +155,11 @@ seul fichier dont seul le nom suit la langue.
 
 ### ▶ Prochaine étape
 
+0. **LANCER L'APP** — le premier démarrage exécute la migration des photos (539 fichiers). Puis vérifier dans l'Explorateur qu'une **vente déplace bien la photo** de `disponible\` vers `vendu\`, et essayer la section Photos (ajouter dans Divers, copier, enregistrer).
 1. **Vérifications sur PAPIER, pas encore faites** : une page de **cartels avec photos** imprimée et découpée (l'image tient-elle à six par page ? les QR se scannent-ils à 20 mm ?) et un **certificat estampé** (les 4 mm gagnés suffisent-ils ?). Claude ne peut ni l'un ni l'autre.
 2. ~~**La présentation et le catalogue en anglais**~~ — **FAIT et PUBLIÉ dans la 0.17.0.** Le **chantier bilingue est refermé** : le certificat (0.15.0), les fiches et l'import (0.16.0), la présentation, le catalogue et toute la pochette (0.17.0). Voir la section dédiée plus haut. Maquette : `demos/documents-en-anglais.html`.
 3. **Reste de la liste de retours des parents du 2026-08-25** :
-   - **Photos — gros chantier à risque, à faire dans sa propre session.** Classer par artiste puis par statut + dossier « divers », section Photos sur la fiche d'artiste. Tout est à plat aujourd'hui et **les chemins sont en base** → migration de fichiers, sauvegarde obligatoire, chemin de retour. Démo avant tout code.
+   - ~~**Photos**~~ — **FAIT (2026-09-04)**, commité, non publié, **jamais lancé**. Voir « Le chantier photos » ci-dessous.
    - **Copie expurgée** pour le soutien technique (décidée) : catalogue sans clients ni ventes.
    - **Bouton « Signaler un problème »** : dossier de diagnostic montré avant envoi, jamais d'envoi automatique.
    - ~~**Filtrer par numéro**~~ — **CLARIFIÉ ET FAIT (2026-09-04).** La demande n'était pas un filtre mais un **ordre d'affichage** : voir les toiles d'un artiste dans l'ordre de leurs numéros d'inventaire, pour suivre une liste facilement. Voir le point 4 ci-dessous.

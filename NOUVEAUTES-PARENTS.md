@@ -11,6 +11,44 @@
 
 ---
 
+## Vos photos rangées par artiste
+
+Le dossier **Photos** a été réorganisé. Il y a maintenant **un seul dossier par
+artiste**, et tout ce qui le concerne est dedans :
+
+```
+Photos\
+└─ Clarence Bourgoin\
+   ├─ Oeuvres\
+   │  ├─ disponible\
+   │  ├─ en exposition\
+   │  ├─ vendu\
+   │  └─ retiré\
+   ├─ Portraits\
+   └─ Divers\
+```
+
+**La photo suit la toile.** Quand vous vendez une œuvre, sa photo passe
+d'elle-même de `disponible` à `vendu`. Une œuvre qui part en exposition rejoint
+`en exposition`, et revient à sa place au retour. Vous n'avez rien à déplacer.
+
+**Le dossier « Divers »** est là pour tout ce qui n'appartient à aucune œuvre :
+photos de vernissage, d'atelier, portraits supplémentaires. Chaque artiste a le
+sien, même vide.
+
+**Une section « Photos » sur la fiche.** Elle montre toutes les photos de
+l'artiste, groupées comme sur le disque — les vendues en gris pâle, pour les
+distinguer d'un coup d'œil. Vous pouvez y **ajouter** des photos (elles vont
+dans Divers), **copier** une image pour la coller dans un courriel, en
+**enregistrer** une copie ailleurs, ou **ouvrir le dossier** dans l'Explorateur.
+Un clic sur une œuvre ouvre sa fiche.
+
+**Rien ne s'est perdu.** Le rangement s'est fait une seule fois, après une
+sauvegarde, en vérifiant chaque fichier copié avant d'effacer l'ancien. Vos
+539 photos sont toutes là, et aucune n'a été modifiée.
+
+---
+
 ## Vos documents en anglais
 
 Les textes anglais entrés dans Galeria servent maintenant à produire de vrais

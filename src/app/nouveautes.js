@@ -17,9 +17,34 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
-    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.17.0 :
+    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.18.0 :
     // `npm run release` refuse de publier si elle ne correspond pas à
     // package.json.
+    version: '0.18.0',
+    diapos: [
+      {
+        titre: 'Vos photos rangées par artiste',
+        texte: "Le dossier <b>Photos</b> a été réorganisé : <b>un seul dossier par artiste</b>, contenant <b>Oeuvres</b>, <b>Portraits</b> et <b>Divers</b>. Tout ce qui concerne un artiste est enfin au même endroit.",
+      },
+      {
+        titre: 'La photo suit la toile',
+        texte: "Dans <b>Oeuvres</b>, les photos sont classées par statut — <b>disponible</b>, <b>en exposition</b>, <b>vendu</b>, <b>retiré</b>. Et quand vous vendez une toile, <b>sa photo change de dossier toute seule</b>. Plus besoin d'y penser.",
+      },
+      {
+        titre: 'Un dossier « Divers » pour chaque artiste',
+        texte: "Déposez-y ce qui n'appartient à aucune œuvre&nbsp;: photos de vernissage, d'atelier, portraits supplémentaires. Le bouton <b>+ Ajouter</b> de la fiche le fait pour vous.",
+      },
+      {
+        titre: 'Une section Photos sur la fiche',
+        texte: "La fiche d'un artiste montre maintenant <b>toutes ses photos</b>, groupées comme sur le disque. Vous pouvez <b>copier</b> une image pour la coller dans un courriel, en <b>enregistrer</b> une copie ailleurs, ou <b>ouvrir le dossier</b> d'un clic.",
+      },
+      {
+        titre: 'Rien ne se perd',
+        texte: "Le rangement s'est fait <b>une seule fois</b>, après une sauvegarde, en vérifiant chaque fichier copié avant d'effacer l'ancien. Vos <b>539 photos</b> sont toutes là.",
+      },
+    ],
+  },
+  {
     version: '0.17.0',
     diapos: [
       {
