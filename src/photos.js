@@ -3,9 +3,34 @@ const path = require('node:path');
 const { dialog, BrowserWindow } = require('electron');
 const { openDatabase } = require('./db/database');
 const { getPhotosDir } = require('./db/paths');
+const C = require('./photos-chemins');
 
 const EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
-const DOSSIER_ORIGINAUX = 'originaux';
+const DOSSIER_ORIGINAUX = C.DOSSIER_ORIGINAUX;
+
+// Où déposer une NOUVELLE photo. Depuis 2026-09-04, tout ce qui concerne un
+// artiste vit sous son nom : <Artiste>\Oeuvres\<statut>\ pour une œuvre,
+// <Artiste>\Portraits\ pour son portrait. Avant, les fichiers atterrissaient à
+// plat dans Photos\oeuvres\ ou Photos\artistes\ — ce qui aurait recréé le
+// désordre dès la première photo ajoutée après la migration.
+// La règle vit dans src/photos-chemins.js : ne pas la réécrire ici.
+function dossiersCible(table, id) {
+  const db = openDatabase();
+  if (table === 'artistes') {
+    const a = db.prepare('SELECT id, prenom, nom FROM artistes WHERE id = ?').get(id);
+    if (!a) throw new Error('Artiste introuvable');
+    const portraits = C.dossierPortraits(a);
+    return { dir: portraits, dirOriginaux: `${portraits}/${C.DOSSIER_ORIGINAUX}` };
+  }
+  const o = db.prepare(`
+    SELECT o.id, o.statut, o.archive, a.prenom, a.nom
+    FROM oeuvres o JOIN artistes a ON a.id = o.artiste_id WHERE o.id = ?
+  `).get(id);
+  if (!o) throw new Error('Œuvre introuvable');
+  // `o` porte à la fois le nom de l'artiste et le statut de l'œuvre : les deux
+  // fonctions y lisent ce qui les concerne.
+  return { dir: C.dossierOeuvres(o, C.dossierStatut(o)), dirOriginaux: null };
+}
 
 const TABLES = {
   artistes: {
@@ -54,11 +79,12 @@ async function choisirPhoto(senderWebContents, { table, id }) {
     throw new Error(`Format non supporté : .${ext}. Utilise JPG, PNG, GIF, WebP ou BMP.`);
   }
 
-  const dirCible = path.join(getPhotosDir(), table);
+  const { dir } = dossiersCible(table, id);
+  const dirCible = path.join(getPhotosDir(), dir);
   fs.mkdirSync(dirCible, { recursive: true });
   const nom = `${meta.singulier}-${id}-${Date.now()}.${ext}`;
   const destAbsolu = path.join(dirCible, nom);
-  const cheminRelatif = `${table}/${nom}`;
+  const cheminRelatif = `${dir}/${nom}`;
 
   fs.copyFileSync(source, destAbsolu);
 
@@ -118,20 +144,21 @@ function enregistrerImageRecadree({ table, id, cropDataUrl, originaleDataUrl }) 
 
   const { buf: cropBuf, ext: cropExt } = dataUrlVersBuffer(cropDataUrl);
 
-  const dirCible = path.join(getPhotosDir(), table);
+  const { dir, dirOriginaux } = dossiersCible(table, id);
+  const dirCible = path.join(getPhotosDir(), dir);
   fs.mkdirSync(dirCible, { recursive: true });
   const ts = Date.now();
   const nomCrop = `${meta.singulier}-${id}-${ts}.${cropExt}`;
-  const cheminCropRel = `${table}/${nomCrop}`;
+  const cheminCropRel = `${dir}/${nomCrop}`;
   fs.writeFileSync(path.join(dirCible, nomCrop), cropBuf);
 
   let cheminOrigRel = null;
   if (originaleDataUrl && meta.colonneOriginale) {
     const { buf: origBuf, ext: origExt } = dataUrlVersBuffer(originaleDataUrl);
-    const dirOrig = path.join(getPhotosDir(), table, DOSSIER_ORIGINAUX);
+    const dirOrig = path.join(getPhotosDir(), dirOriginaux);
     fs.mkdirSync(dirOrig, { recursive: true });
     const nomOrig = `${meta.singulier}-${id}-${ts}-orig.${origExt}`;
-    cheminOrigRel = `${table}/${DOSSIER_ORIGINAUX}/${nomOrig}`;
+    cheminOrigRel = `${dirOriginaux}/${nomOrig}`;
     fs.writeFileSync(path.join(dirOrig, nomOrig), origBuf);
   }
 

@@ -174,6 +174,153 @@ export async function rendreArtisteFiche(contenu, params) {
     mode === 'lecture' ? dessinerLecture() : dessinerEdition();
   }
 
+  // ---- Section « Photos » de la fiche ---------------------------------
+  // Elle montre le dossier de l'artiste tel qu'il est sur le disque : les
+  // œuvres groupées par statut, le portrait, et ce qui a été déposé dans
+  // Divers. C'est la contrepartie à l'écran de la méthode de suivi des
+  // parents, qui lisent l'emplacement d'un fichier pour savoir où en est une
+  // toile.
+  const LIB_GROUPE = {
+    disponible: 'Disponibles',
+    'en exposition': 'En exposition',
+    vendu: 'Vendues',
+    'retiré': 'Retirées',
+  };
+
+  function poidsLisible(octets) {
+    const n = Number(octets) || 0;
+    if (n < 1024) return `${n} o`;
+    if (n < 1048576) return `${Math.round(n / 1024)} ko`;
+    return `${(n / 1048576).toFixed(n < 10485760 ? 1 : 0)} Mo`;
+  }
+
+  function vignettePhoto(p) {
+    // Une œuvre mène à sa fiche : c'est presque toujours ce qu'on cherche en
+    // cliquant. Un portrait ou un fichier Divers n'a nulle part où mener.
+    const cliquable = p.type === 'oeuvre' ? ` data-oeuvre-id="${p.oeuvre_id}"` : '';
+    const legende = p.type === 'oeuvre'
+      ? [p.inventaire, p.titre].filter(Boolean).join(' · ')
+      : p.titre;
+    return `
+      <figure class="photo-vign${p.type === 'oeuvre' ? ' photo-vign-oeuvre' : ''}"
+              data-chemin="${ech(p.chemin)}"${cliquable} title="${ech(legende)}">
+        <img src="${urlPhoto(p.chemin)}" alt="" loading="lazy">
+        <figcaption>${ech(legende)}</figcaption>
+        <span class="photo-actions">
+          <button type="button" class="photo-mini" data-copier title="Copier l'image">Copier</button>
+          <button type="button" class="photo-mini" data-exporter title="Enregistrer une copie">Enregistrer</button>
+        </span>
+      </figure>`;
+  }
+
+  function rendreGroupesPhotos(donnees) {
+    const blocs = [];
+    for (const [cle, lib] of Object.entries(LIB_GROUPE)) {
+      const liste = (donnees.groupes && donnees.groupes[cle]) || [];
+      if (!liste.length) continue;
+      blocs.push(`
+        <div class="photos-groupe" data-groupe="${cle}">
+          <h4 class="photos-groupe-titre">${lib} <span>${liste.length}</span></h4>
+          <div class="photos-grille">${liste.map(vignettePhoto).join('')}</div>
+        </div>`);
+    }
+    if (donnees.portraits.length) {
+      blocs.push(`
+        <div class="photos-groupe" data-groupe="portrait">
+          <h4 class="photos-groupe-titre">Portrait <span>${donnees.portraits.length}</span></h4>
+          <div class="photos-grille">${donnees.portraits.map(vignettePhoto).join('')}</div>
+        </div>`);
+    }
+    blocs.push(`
+      <div class="photos-groupe" data-groupe="divers">
+        <h4 class="photos-groupe-titre">Divers <span>${donnees.divers.length}</span></h4>
+        ${donnees.divers.length
+          ? `<div class="photos-grille">${donnees.divers.map(vignettePhoto).join('')}</div>`
+          : `<p class="aide-champ photos-divers-vide">Rien pour l'instant. « + Ajouter » dépose ici des photos liées à l'artiste — vernissage, atelier, portraits supplémentaires — sans qu'elles soient rattachées à une œuvre.</p>`}
+      </div>`);
+    return blocs.join('');
+  }
+
+  async function brancherPhotos(artisteId) {
+    const zone = contenu.querySelector('#zone-photos-artiste');
+    if (!zone) return;
+    const corps = zone.querySelector('#photos-corps');
+    const compte = zone.querySelector('#photos-compte');
+
+    const charger = async () => {
+      try {
+        const d = await window.api.photosArtisteListe(artisteId);
+        compte.textContent = `${pluriel(d.total, 'photo')} · ${poidsLisible(d.octets)}`;
+        corps.innerHTML = rendreGroupesPhotos(d);
+      } catch (err) {
+        compte.textContent = '';
+        corps.innerHTML = `<p class="aide-champ">Les photos n'ont pas pu être lues : ${ech(nettoyerErreur(err))}</p>`;
+      }
+    };
+    await charger();
+
+    zone.querySelector('#btn-photos-dossier')?.addEventListener('click', async () => {
+      try { await window.api.photosArtisteOuvrirDossier(artisteId); }
+      catch (err) { await confirmer({ type: 'error', title: 'Dossier introuvable', message: nettoyerErreur(err), buttons: ['OK'] }); }
+    });
+
+    zone.querySelector('#btn-photos-ajouter')?.addEventListener('click', async () => {
+      try {
+        const r = await window.api.photosArtisteAjouter(artisteId);
+        if (r?.cancelled) return;
+        await charger();
+        const refuses = (r.refuses || []).length;
+        await confirmer({
+          type: refuses ? 'warning' : 'succes',
+          title: 'Photos ajoutées',
+          message: `${pluriel((r.ajoutes || []).length, 'photo ajoutée', 'photos ajoutées')} dans le dossier Divers.`,
+          detail: refuses ? `Non copiées :\n${r.refuses.join('\n')}` : undefined,
+          buttons: ['OK'],
+        });
+      } catch (err) {
+        await confirmer({ type: 'error', title: 'Ajout impossible', message: nettoyerErreur(err), buttons: ['OK'] });
+      }
+    });
+
+    // Un seul écouteur pour toute la grille : les vignettes sont redessinées à
+    // chaque chargement, en rebrancher une par une les multiplierait.
+    corps.addEventListener('click', async (e) => {
+      const vign = e.target.closest('.photo-vign');
+      if (!vign) return;
+      const chemin = vign.dataset.chemin;
+      if (e.target.closest('[data-copier]')) {
+        try {
+          await window.api.photosArtisteCopier(chemin);
+          signalerPhoto(vign, 'Copiée');
+        } catch (err) {
+          await confirmer({ type: 'error', title: 'Copie impossible', message: nettoyerErreur(err), buttons: ['OK'] });
+        }
+        return;
+      }
+      if (e.target.closest('[data-exporter]')) {
+        try {
+          const r = await window.api.photosArtisteExporter([chemin]);
+          if (!r?.cancelled) signalerPhoto(vign, 'Enregistrée');
+        } catch (err) {
+          await confirmer({ type: 'error', title: 'Enregistrement impossible', message: nettoyerErreur(err), buttons: ['OK'] });
+        }
+        return;
+      }
+      const id = Number(vign.dataset.oeuvreId);
+      if (Number.isFinite(id) && id > 0) naviguer('oeuvre-fiche', { id });
+    });
+  }
+
+  // Confirmation discrète sur la vignette : une fenêtre pour dire « copié »
+  // serait un clic de plus pour rien.
+  function signalerPhoto(vign, texte) {
+    const bulle = document.createElement('span');
+    bulle.className = 'photo-signal';
+    bulle.textContent = texte;
+    vign.appendChild(bulle);
+    setTimeout(() => bulle.remove(), 1400);
+  }
+
   function dessinerLecture() {
     const nomCompletA = nomComplet(a) || a.nom || '';
 
@@ -459,6 +606,21 @@ export async function rendreArtisteFiche(contenu, params) {
         <div class="contenu-artiste">
           ${zonePresentation}
           ${zoneCatalogue}
+        </div>
+        <!-- Section « Photos » : demandée par les parents, dont la méthode de
+             suivi repose sur l'emplacement des fichiers. Elle montre ce que
+             contient le dossier de l'artiste, exactement comme sur le disque.
+             Chargée APRÈS le rendu (lecture de disque) — voir plus bas. -->
+        <div class="carte zone-photos-artiste" id="zone-photos-artiste">
+          <div class="entete-bloc-bento">
+            <h3>Photos</h3>
+            <span class="photos-compte" id="photos-compte">chargement…</span>
+            <div class="entete-bloc-actions">
+              <button class="btn-action" id="btn-photos-dossier">Ouvrir le dossier</button>
+              <button class="btn-action btn-principal" id="btn-photos-ajouter">+ Ajouter</button>
+            </div>
+          </div>
+          <div id="photos-corps"></div>
         </div>
         <h2 class="gestion-artiste-titre">Informations de gestion</h2>
         <div class="gestion-artiste">
@@ -789,6 +951,11 @@ export async function rendreArtisteFiche(contenu, params) {
         overlay.querySelector('#presentation-fermer').addEventListener('click', fermer);
       });
     }
+
+    // --- Section « Photos » ---------------------------------------------
+    // Chargée après le rendu : elle lit le dossier Divers sur le disque, ce
+    // qui n'a pas sa place dans le chemin critique d'affichage de la fiche.
+    if (!estNouveau && a.id) brancherPhotos(a.id);
 
     // Vignettes du catalogue : clic = ouvrir la fiche d'œuvre.
     contenu.querySelectorAll('.vignette-bento').forEach((v) => {

@@ -138,6 +138,11 @@ contextBridge.exposeInMainWorld('api', {
   photoEffacer: (table, id) => ipcRenderer.invoke('photo:effacer', { table, id }),
   photoLireFichier: () => ipcRenderer.invoke('photo:lire-fichier'),
   photoLirePourRecadrage: (table, id) => ipcRenderer.invoke('photo:lire-pour-recadrage', { table, id }),
+  photosArtisteListe: (artisteId) => ipcRenderer.invoke('photos-artiste:liste', artisteId),
+  photosArtisteAjouter: (artisteId) => ipcRenderer.invoke('photos-artiste:ajouter', artisteId),
+  photosArtisteCopier: (chemin) => ipcRenderer.invoke('photos-artiste:copier', chemin),
+  photosArtisteExporter: (chemins) => ipcRenderer.invoke('photos-artiste:exporter', chemins),
+  photosArtisteOuvrirDossier: (artisteId) => ipcRenderer.invoke('photos-artiste:ouvrir-dossier', artisteId),
   photoEnregistrerRecadree: (table, id, cropDataUrl, originaleDataUrl) =>
     ipcRenderer.invoke('photo:enregistrer-recadree', { table, id, cropDataUrl, originaleDataUrl }),
   configGet: () => ipcRenderer.invoke('config:get'),

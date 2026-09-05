@@ -4,6 +4,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { openDatabase, closeDatabase, lireCatalogueId } = require('./db/database');
+const { migrerPhotos } = require('./db/migrer-photos');
+const { rangerPhotos, renommerDossierArtiste, preparerDossiers } = require('./db/photos-ranger');
+const { dossierArtiste } = require('./photos-chemins');
+const { listerPhotosArtiste, ajouterPhotosDivers, copierPhoto, exporterPhotos, ouvrirDossierArtiste } = require('./photos-artiste');
 const { getPhotosDir, getDataDir, getDocumentsDirAnnee, getDbPath, getSeedPath, getBackupsDir, ensureDirectories, ecrireEmplacementConfigure, lireDeplacementEnAttente, ecrireDeplacementEnAttente, effacerDeplacementEnAttente } = require('./db/paths');
 const { deplacerDossierDonnees, verifierDestination, estDossierGaleriaValide, estSousOneDrive } = require('./db/deplacer-donnees');
 const { recupererTauxChange, tauxMemorises } = require('./taux-change');
@@ -1098,6 +1102,36 @@ async function demarrerApplication() {
   }
 
   openDatabase();
+
+  // Rangement du dossier Photos par artiste — une seule fois par base.
+  // Placé APRÈS la copie de sauvegarde ci-dessus et après les migrations de
+  // schéma. Il déplace de vrais fichiers : copie, vérification par empreinte,
+  // puis suppression, et la base n'est réécrite qu'une fois tous les fichiers
+  // arrivés. Voir src/db/migrer-photos.js.
+  try {
+    await progres(16, 'Rangement des photos…');
+    const rangement = migrerPhotos(openDatabase());
+    if (rangement.fait) {
+      console.log(`Photos rangées par artiste : ${rangement.deplaces} déplacées, `
+        + `${rangement.orphelins} non rattachées. Journal : ${rangement.journal}`);
+    } else if (rangement.problemes) {
+      journaliserErreur('Rangement des photos reporté',
+        new Error(rangement.problemes.slice(0, 5).join(' | ')));
+    }
+    // Filet de sécurité : à chaque démarrage, on repasse tout le catalogue et
+    // on remet à leur place les photos dont l'emplacement ne correspond plus
+    // au statut. C'est ce qui rend inoffensif un rangement qui aurait échoué
+    // (fichier verrouillé) ou une action dont on aurait oublié de le déclencher.
+    const suivi = rangerPhotos(openDatabase());
+    if (suivi.deplacees || suivi.echecs) {
+      console.log(`Photos remises à leur place : ${suivi.deplacees} déplacée(s), ${suivi.echecs} échec(s) sur ${suivi.verifiees} vérifiée(s).`);
+    }
+  } catch (err) {
+    // Jamais bloquant : l'app doit démarrer même si le rangement échoue, et
+    // les fichiers sont alors restés en place.
+    journaliserErreur('Rangement des photos échoué', err);
+  }
+
   try {
     if ((obtenirConfig().derniere_version_app || '') !== app.getVersion()) {
       mettreAJourConfig({ derniere_version_app: app.getVersion() });
@@ -1192,10 +1226,28 @@ async function demarrerApplication() {
     await shell.openPath(chemin);
     return { path: chemin };
   });
-  ipcMain.handle('oeuvres:retrait', (_e, id, data) => definirRetraitOeuvre(id, data));
-  ipcMain.handle('oeuvres:retrait-lot', (_e, ids, data) => definirRetraitOeuvresLot(ids, data));
-  ipcMain.handle('oeuvres:reserver', (_e, id, data) => reserverOeuvre(id, data));
-  ipcMain.handle('oeuvres:liberer', (_e, id) => libererOeuvre(id));
+  // Après toute action qui peut changer le statut d'une œuvre, on remet sa
+  // photo dans le bon dossier — c'est la méthode de suivi des parents, qui
+  // lisent l'emplacement d'un fichier pour savoir où en est une toile.
+  //
+  // Appelé ICI, dans les gestionnaires, et non dans les mutations : on est
+  // alors HORS TRANSACTION. Un déplacement de fichier n'est pas annulable par
+  // un ROLLBACK ; le faire à l'intérieur laisserait une photo déplacée pour
+  // une vente qui n'a finalement pas eu lieu.
+  //
+  // `ids` limite la vérification aux œuvres touchées ; sans lui, tout le
+  // catalogue est repassé — une comparaison de chaîne par œuvre, imperceptible.
+  // Jamais bloquant : un fichier verrouillé ne doit pas faire échouer une
+  // vente, et le rangement du prochain démarrage rattrapera.
+  const rangerApres = (resultat, ids = null) => {
+    try { rangerPhotos(openDatabase(), ids ? { ids } : {}); } catch { /* silencieux */ }
+    return resultat;
+  };
+
+  ipcMain.handle('oeuvres:retrait', (_e, id, data) => rangerApres(definirRetraitOeuvre(id, data), [id]));
+  ipcMain.handle('oeuvres:retrait-lot', (_e, ids, data) => rangerApres(definirRetraitOeuvresLot(ids, data)));
+  ipcMain.handle('oeuvres:reserver', (_e, id, data) => rangerApres(reserverOeuvre(id, data), [id]));
+  ipcMain.handle('oeuvres:liberer', (_e, id) => rangerApres(libererOeuvre(id), [id]));
   ipcMain.handle('suivi:donnees', () => ({
     preparation: oeuvresAPreparer(),
     ventes: ventesSuivi(),
@@ -1306,9 +1358,9 @@ async function demarrerApplication() {
   ipcMain.handle('expos:modifier', (_e, id, data) => modifierExposition(id, data || {}));
   ipcMain.handle('expos:supprimer', (_e, id) => supprimerExposition(id));
   ipcMain.handle('expos:eligibles', () => oeuvresEligiblesExposition());
-  ipcMain.handle('expos:ajouter-oeuvres', (_e, id, ids) => ajouterOeuvresExposition(id, ids));
-  ipcMain.handle('expos:retirer-oeuvre', (_e, id, oeuvreId) => retirerOeuvreExposition(id, oeuvreId));
-  ipcMain.handle('expos:terminer', (_e, id) => terminerExposition(id));
+  ipcMain.handle('expos:ajouter-oeuvres', (_e, id, ids) => rangerApres(ajouterOeuvresExposition(id, ids)));
+  ipcMain.handle('expos:retirer-oeuvre', (_e, id, oeuvreId) => rangerApres(retirerOeuvreExposition(id, oeuvreId), [oeuvreId]));
+  ipcMain.handle('expos:terminer', (_e, id) => rangerApres(terminerExposition(id)));
   ipcMain.handle('expos:cartels', (_e, id, options) => genererCartelsPdf(id, options || {}));
 
   ipcMain.handle('web:recuperer-adresses', async () => {
@@ -1558,7 +1610,19 @@ async function demarrerApplication() {
   ipcMain.handle('fiche:archiver', (_e, table, id, archive) => definirArchive(table, id, archive));
   ipcMain.handle('artistes:get', (_e, id) => obtenirArtiste(id));
   ipcMain.handle('artistes:fiche-bundle', (_e, id) => obtenirFicheArtisteBundle(id));
-  ipcMain.handle('artistes:modifier', (_e, id, data) => modifierArtiste(id, data));
+  // Un artiste renommé emporte son dossier de photos. Sans ça, corriger une
+  // faute de frappe créerait un SECOND dossier et séparerait ses photos en
+  // deux endroits — l'app continuerait de fonctionner, mais la méthode de
+  // suivi des parents, elle, serait cassée.
+  ipcMain.handle('artistes:modifier', (_e, id, data) => {
+    let ancienDossier = null;
+    try { ancienDossier = dossierArtiste(obtenirArtiste(id)); } catch {}
+    const resultat = modifierArtiste(id, data);
+    try {
+      if (ancienDossier) renommerDossierArtiste(openDatabase(), id, ancienDossier);
+    } catch { /* silencieux : la base reste juste, le prochain rangement suivra */ }
+    return resultat;
+  });
   ipcMain.handle('artistes:creer', (_e, data) => creerArtiste(data));
   ipcMain.handle('artistes:supprimer', (_e, id) => supprimerArtiste(id));
   ipcMain.handle('oeuvres:liste', (_e, filtres) => listerOeuvres(filtres));
@@ -1566,8 +1630,8 @@ async function demarrerApplication() {
   ipcMain.handle('oeuvres:detail-artiste', (_e, artisteId) => oeuvresDetailArtiste(artisteId));
   ipcMain.handle('oeuvres:par-ids', (_e, ids) => oeuvresParIds(ids));
   ipcMain.handle('oeuvres:fiche-bundle', (_e, id) => obtenirFicheOeuvreBundle(id));
-  ipcMain.handle('oeuvres:modifier', (_e, id, data) => modifierOeuvre(id, data));
-  ipcMain.handle('oeuvres:modifier-lot', (_e, modifs) => modifierOeuvresLot(modifs));
+  ipcMain.handle('oeuvres:modifier', (_e, id, data) => rangerApres(modifierOeuvre(id, data), [id]));
+  ipcMain.handle('oeuvres:modifier-lot', (_e, modifs) => rangerApres(modifierOeuvresLot(modifs)));
   ipcMain.handle('oeuvres:creer', (_e, data) => creerOeuvre(data));
   ipcMain.handle('oeuvres:supprimer', (_e, id) => supprimerOeuvre(id));
   ipcMain.handle('oeuvres:maj-preparation', (_e, id, data) => majPreparationOeuvre(id, data));
@@ -1580,6 +1644,13 @@ async function demarrerApplication() {
   ipcMain.handle('photo:lire-fichier', (e) => lireFichierImage(e.sender));
   ipcMain.handle('photo:lire-pour-recadrage', (_e, opts) => lirePourRecadrage(opts));
   ipcMain.handle('photo:enregistrer-recadree', (_e, opts) => enregistrerImageRecadree(opts));
+
+  // Section « Photos » de la fiche d'artiste (lot 3 du chantier photos).
+  ipcMain.handle('photos-artiste:liste', (_e, artisteId) => listerPhotosArtiste(artisteId));
+  ipcMain.handle('photos-artiste:ajouter', (e, artisteId) => ajouterPhotosDivers(e.sender, artisteId));
+  ipcMain.handle('photos-artiste:copier', (_e, chemin) => copierPhoto(chemin));
+  ipcMain.handle('photos-artiste:exporter', (e, chemins) => exporterPhotos(e.sender, chemins));
+  ipcMain.handle('photos-artiste:ouvrir-dossier', (_e, artisteId) => ouvrirDossierArtiste(artisteId));
   ipcMain.handle('config:get', () => {
     // Ne jamais exposer l'empreinte du code de verrouillage au renderer.
     // Ni l'empreinte du code, ni celle de la réponse de secours.
@@ -1765,10 +1836,10 @@ async function demarrerApplication() {
   ipcMain.handle('clients:supprimer', (_e, id) => supprimerClient(id));
   ipcMain.handle('ventes:liste', () => listerVentes());
   ipcMain.handle('ventes:fiche-bundle', (_e, id) => obtenirFicheVenteBundle(id));
-  ipcMain.handle('ventes:creer', (_e, data) => creerVente(data));
-  ipcMain.handle('ventes:modifier', (_e, id, data) => modifierVente(id, data));
-  ipcMain.handle('ventes:maj-cycle', (_e, id, data) => majCycleVente(id, data));
-  ipcMain.handle('ventes:supprimer', (_e, id) => supprimerVente(id));
+  ipcMain.handle('ventes:creer', (_e, data) => rangerApres(creerVente(data)));
+  ipcMain.handle('ventes:modifier', (_e, id, data) => rangerApres(modifierVente(id, data)));
+  ipcMain.handle('ventes:maj-cycle', (_e, id, data) => rangerApres(majCycleVente(id, data)));
+  ipcMain.handle('ventes:supprimer', (_e, id) => rangerApres(supprimerVente(id)));
   ipcMain.handle('ventes:apercu-numero-facture', () => apercuProchainNumeroFacture());
   ipcMain.handle('oeuvres:apercu-numero-inventaire', (_e, artisteId) => apercuProchainNumeroInventaire(artisteId));
   ipcMain.handle('oeuvres:reserver-numero-inventaire', (_e, artisteId) => reserverProchainNumeroInventaire(artisteId));
