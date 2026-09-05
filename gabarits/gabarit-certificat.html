@@ -38,14 +38,22 @@ body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
 
 /* ═══════════════════════════════════════════════
    CERTIFICAT (Lettre paysage, 11 × 8,5 po)
+
+   Marge de la feuille : 8mm (elle était de 12mm jusqu'en septembre 2026).
+   Élargie parce que l'estampe en relief, appliquée à la main EN BAS À DROITE
+   après l'impression, mordait sur le filet rouge. Le cadre gagne 4mm de chaque
+   côté — 8mm de largeur et de hauteur utiles.
+   ⚠ Ne pas descendre sous 6mm : beaucoup d'imprimantes coupent au-delà, et le
+   cadre sortirait de la page.
+
    Zones de hauteur disponible :
-     feuille 215.9mm - 24mm(pad) = 191.9mm
-     cadres  191.9 - 7.4mm(bords+gap) = 184.5mm
-     cadre-int 184.5 - 16mm(pad top+bot) = 168.5mm
+     feuille 215.9mm - 16mm(pad) = 199.9mm
+     cadres  199.9 - 7.4mm(bords+gap) = 192.5mm
+     cadre-int 192.5 - 16mm(pad top+bot) = 176.5mm
      cert-top ~26mm + corps flex:1 + bas ~9mm
-     corps disponible : 168.5 - 26 - 9 = 133.5mm
+     corps disponible : 176.5 - 26 - 9 = 141.5mm
    ═══════════════════════════════════════════════ */
-.feuille{width:11in;height:8.5in;padding:12mm;background:#fdfcf8;
+.feuille{width:11in;height:8.5in;padding:8mm;background:#fdfcf8;
          font-family:'G',serif;color:#1c1a17;
          box-shadow:0 4px 24px rgba(0,0,0,.18);}
 .cadre{height:100%;border:2px solid #900001;padding:3mm;}
