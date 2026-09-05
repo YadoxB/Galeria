@@ -19,6 +19,7 @@ body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;background:#e8e
    réguliers ; le contenu est CENTRÉ dedans, sinon tout l'espace inutilisé
    s'accumule d'un seul côté. */
 .grille{display:grid;gap:0;height:calc(11in - 24mm);}
+.p2  .grille{grid-template-columns:1fr;grid-template-rows:repeat(2,1fr);}
 .p4  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,1fr);}
 .p6  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);}
 .p8  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);}
@@ -52,6 +53,41 @@ body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;background:#e8e
 .p10 .cartel-pied{font-size:8pt;}
 .p10 .cartel-prix{font-size:10.5pt;}
 .p10 .cartel-qr{width:22mm;height:22mm;}
+
+/* ---------------------------------------------------------------------------
+   Avec photo : disposition VERTICALE — l'image prend le haut, le texte et le
+   code QR se rangent dessous.
+   Pourquoi pas la photo à gauche : à six par page une case fait 96 mm de large,
+   trois colonnes y laissent 24 mm d'image et cassent le titre en trois lignes
+   (comparaison faite dans demos/ajouts-photos-et-cadre.html).
+   Les formats 8 et 10 ne sont pas proposés avec photo : une case de 96 × 51 mm
+   ne contient pas d'image lisible — l'interface les retire quand la case
+   « photo » est cochée.
+--------------------------------------------------------------------------- */
+.avec-photo .cartel{flex-direction:column;align-items:stretch;justify-content:flex-start;
+                    gap:0;padding:3.5mm 4mm;}
+.cartel-photo{flex:1 1 auto;min-height:0;margin-bottom:2mm;
+              display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.cartel-photo img{max-width:100%;max-height:100%;width:auto;height:auto;
+                  object-fit:contain;display:block;}
+/* Œuvre sans photo : on laisse le blanc plutôt qu'un cadre vide, pour que la
+   case garde exactement la même hauteur de texte que ses voisines. */
+.cartel-photo-vide{flex:1 1 auto;min-height:0;margin-bottom:2mm;}
+.cartel-bas{display:flex;align-items:flex-end;justify-content:space-between;gap:3mm;}
+.avec-photo .cartel-texte{flex:1;}
+.avec-photo .cartel-qr{width:20mm;height:20mm;}
+.avec-photo.p4 .cartel-qr{width:26mm;height:26mm;}
+.avec-photo.p2 .cartel-qr{width:32mm;height:32mm;}
+.avec-photo.p6 .cartel-artiste{font-size:9.5pt;margin-bottom:.6mm;}
+.avec-photo.p6 .cartel-titre{font-size:11.5pt;margin-bottom:1mm;}
+.avec-photo.p6 .cartel-tech{font-size:8pt;margin-bottom:1.2mm;}
+.avec-photo.p6 .cartel-pied{font-size:8pt;}
+.avec-photo.p6 .cartel-prix{font-size:10.5pt;}
+.avec-photo.p2 .cartel{padding:6mm 7mm;}
+.avec-photo.p2 .cartel-artiste{font-size:13pt;}
+.avec-photo.p2 .cartel-titre{font-size:19pt;}
+.avec-photo.p2 .cartel-tech{font-size:11pt;}
+.avec-photo.p2 .cartel-prix{font-size:15pt;}
 </style></head>
 <body>
 <div id="doc"></div>
@@ -62,14 +98,20 @@ function escHtml(s){
   });
 }
 
-// data = { format: 4|6|8|10, afficherPrix: bool, cartels: [
-//   { artiste, titre, technique, inventaire, prix, qr } ] }
-// `qr` est déjà un <svg> produit côté application (src/qr.js) : le gabarit ne
-// calcule rien, il met en page — comme les autres gabarits du projet.
+// data = { format, afficherPrix, avecPhoto, afficherQr, cartels: [
+//   { artiste, titre, technique, dimensions, inventaire, prix, qr, photo } ] }
+// `qr` est déjà un <svg> et `photo` une image en data URL, produits côté
+// application (src/qr.js, photoEnDataUrl) : le gabarit ne calcule rien, il met
+// en page — comme les autres gabarits du projet.
 function remplir(data){
   data = data || {};
-  var parPage = [4,6,8,10].indexOf(data.format) >= 0 ? data.format : 10;
+  var avecPhoto = !!data.avecPhoto;
+  // Avec photo : 2, 4 ou 6. Sans : 4, 6, 8 ou 10. Un format hors liste retombe
+  // sur le défaut de son mode plutôt que de casser la grille.
+  var permis = avecPhoto ? [2,4,6] : [4,6,8,10];
+  var parPage = permis.indexOf(data.format) >= 0 ? data.format : (avecPhoto ? 6 : 10);
   var avecPrix = !!data.afficherPrix;
+  var avecQr = data.afficherQr !== false; // absent = oui (anciens appels)
   var cartels = data.cartels || [];
 
   var html = '';
@@ -79,8 +121,7 @@ function remplir(data){
     for (var i = 0; i < lot.length; i++) {
       var c = lot[i];
       var tech = [c.technique, c.dimensions].filter(Boolean).join(' · ');
-      cases += '<div class="cartel">'
-        + '<div class="cartel-texte">'
+      var bloc = '<div class="cartel-texte">'
           + '<p class="cartel-artiste">' + escHtml(c.artiste) + '</p>'
           + '<p class="cartel-titre">' + escHtml(c.titre) + '</p>'
           + (tech ? '<p class="cartel-tech">' + escHtml(tech) + '</p>' : '')
@@ -88,13 +129,26 @@ function remplir(data){
             + '<span class="cartel-inv">' + escHtml(c.inventaire || '') + '</span>'
             + (avecPrix && c.prix ? '<span class="cartel-prix">' + escHtml(c.prix) + '</span>' : '')
           + '</p>'
-        + '</div>'
-        + '<div class="cartel-qr">' + (c.qr || '<div class="cartel-qr-vide"></div>') + '</div>'
         + '</div>';
+      var qr = avecQr
+        ? '<div class="cartel-qr">' + (c.qr || '<div class="cartel-qr-vide"></div>') + '</div>'
+        : '';
+
+      if (avecPhoto) {
+        var img = c.photo
+          ? '<div class="cartel-photo"><img src="' + c.photo + '" alt=""></div>'
+          : '<div class="cartel-photo-vide"></div>';
+        cases += '<div class="cartel">' + img
+          + '<div class="cartel-bas">' + bloc + qr + '</div>'
+          + '</div>';
+      } else {
+        cases += '<div class="cartel">' + bloc + qr + '</div>';
+      }
     }
     // Cases vides pour que la dernière page garde la même grille de découpe.
     for (var v = lot.length; v < parPage; v++) cases += '<div class="cartel cartel-vide"></div>';
-    html += '<div class="page p' + parPage + '"><div class="grille">' + cases + '</div></div>';
+    html += '<div class="page p' + parPage + (avecPhoto ? ' avec-photo' : '')
+          + '"><div class="grille">' + cases + '</div></div>';
   }
   document.getElementById('doc').innerHTML = html || '<div class="page"></div>';
 }

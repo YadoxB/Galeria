@@ -671,12 +671,20 @@ async function genererCataloguePdf(artisteId) {
 // Prépare les cartels d'une exposition. Le code QR mène à la fiche de l'œuvre
 // sur le site (colonne `url_site`, remplie par « Récupérer les adresses du
 // site »). Une œuvre sans adresse reçoit un cartel sans code — voir src/qr.js.
-function preparerDonneesCartels(expo, { format = 10, afficherPrix = true } = {}) {
+function preparerDonneesCartels(expo, opts = {}) {
   const { qrSvg } = require('./qr');
+  const avecPhoto = !!opts.avecPhoto;
+  const afficherQr = opts.afficherQr !== false;
+  const afficherPrix = opts.afficherPrix !== false;
+  // Le défaut dépend du mode : une case de 96 × 51 mm (10 par page) ne contient
+  // pas d'image lisible, donc avec photo on part de 6.
+  const format = opts.format != null ? opts.format : (avecPhoto ? 6 : 10);
   const presentes = (expo.oeuvres || []).filter((o) => !o.retire_le);
   return {
     format,
-    afficherPrix: !!afficherPrix,
+    afficherPrix,
+    avecPhoto,
+    afficherQr,
     cartels: presentes.map((o) => ({
       artiste: [o.artiste_prenom, o.artiste_nom].filter((x) => x && String(x).trim()).join(' ') || o.artiste_nom || '',
       titre: o.titre || '',
@@ -687,7 +695,11 @@ function preparerDonneesCartels(expo, { format = 10, afficherPrix = true } = {})
       prix: (o.prix != null && o.prix !== '')
         ? Math.round(Number(o.prix) || 0).toLocaleString('fr-CA') + ' $'
         : '',
-      qr: qrSvg(o.url_site),
+      // Le code QR n'est calculé que s'il doit être imprimé, et la photo n'est
+      // lue sur le disque que si elle doit l'être : inutile d'embarquer trente
+      // images en data URL dans un PDF qui n'en montre aucune.
+      qr: afficherQr ? qrSvg(o.url_site) : '',
+      photo: avecPhoto ? photoEnDataUrl(o.image_path) : '',
     })),
   };
 }
@@ -706,11 +718,16 @@ async function genererCartelsPdf(expositionId, options = {}) {
     dossier,
     nomDocument(`Cartels ${dateJour()}`, expo.nom),
   );
-  const sansQr = donnees.cartels.filter((c) => !c.qr).length;
+  // Comptes rendus : on ne signale un manque que s'il se voit sur le papier.
+  // Sans code QR demandé, une adresse absente n'est pas un problème ; sans
+  // photo demandée, une photo absente non plus.
+  const sansQr = donnees.afficherQr ? donnees.cartels.filter((c) => !c.qr).length : 0;
+  const sansPhoto = donnees.avecPhoto ? donnees.cartels.filter((c) => !c.photo).length : 0;
   return {
     pdf_path: sortie,
     nb_cartels: donnees.cartels.length,
     nb_sans_qr: sansQr,
+    nb_sans_photo: sansPhoto,
     pages: Math.ceil(donnees.cartels.length / donnees.format),
   };
 }

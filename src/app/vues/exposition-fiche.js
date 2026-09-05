@@ -308,31 +308,54 @@ export async function rendreExpositionFiche(contenu, params = {}) {
   }
 
   // ---- Imprimer les cartels ----
-  // Deux réglages seulement : le nombre par page et l'affichage du prix.
-  // Le reste (contenu, code QR) est fixe — voir gabarit-cartels.html.
+  // Quatre réglages : nombre par page, prix, photo, code QR. Cocher « photo »
+  // change la liste des formats — une case de 96 × 51 mm (10 par page) ne
+  // contient pas d'image lisible, donc avec photo on ne propose que 2, 4 ou 6.
+  // Le reste du contenu est fixe — voir gabarit-cartels.html.
+  const FORMATS_CARTELS = {
+    sans: [
+      { v: 10, lib: '10 par page — compact (défaut)' },
+      { v: 8, lib: '8 par page' },
+      { v: 6, lib: '6 par page' },
+      { v: 4, lib: '4 par page — grand, lisible de loin' },
+    ],
+    avec: [
+      { v: 6, lib: '6 par page — recommandé avec photo' },
+      { v: 4, lib: '4 par page — grand, lisible de loin' },
+      { v: 2, lib: '2 par page — pleine page' },
+    ],
+  };
+
   function ouvrirCartels() {
     const presentes = expo.oeuvres.filter((x) => !x.retire_le);
     const sansAdresse = presentes.filter((x) => !x.url_site).length;
+    const sansPhoto = presentes.filter((x) => !x.image_path).length;
     const overlay = document.createElement('div');
     overlay.className = 'overlay-modale overlay-dialogue';
     overlay.innerHTML = `
       <div class="dialogue" role="dialog" aria-modal="true">
         <div class="dialogue-entete"><h3 class="dialogue-titre">Imprimer les cartels</h3></div>
         <p class="dialogue-message">${pluriel(presentes.length, 'cartel sera produit', 'cartels seront produits')}, en format Lettre, avec traits de découpe.</p>
+        <div class="form-champ form-champ-checkbox">
+          <input type="checkbox" id="c-photo">
+          <label for="c-photo">Ajouter la photo de l'œuvre</label>
+        </div>
         <div class="form-champ">
           <label for="c-format">Cartels par page</label>
           <select id="c-format">
-            <option value="10" selected>10 par page — compact (défaut)</option>
-            <option value="8">8 par page</option>
-            <option value="6">6 par page</option>
-            <option value="4">4 par page — grand, lisible de loin</option>
+            ${FORMATS_CARTELS.sans.map((f, i) => `<option value="${f.v}" ${i === 0 ? 'selected' : ''}>${f.lib}</option>`).join('')}
           </select>
         </div>
         <div class="form-champ form-champ-checkbox">
           <input type="checkbox" id="c-prix" checked>
           <label for="c-prix">Afficher le prix sur les cartels</label>
         </div>
-        ${sansAdresse ? `<p class="aide-champ" style="margin-top:10px;">${pluriel(sansAdresse, 'œuvre n\u2019a', 'œuvres n\u2019ont')} pas d'adresse sur le site : ${sansAdresse > 1 ? 'leurs cartels sortiront' : 'son cartel sortira'} sans code QR. Le bouton « Récupérer les adresses du site » peut y remédier.</p>` : ''}
+        <div class="form-champ form-champ-checkbox">
+          <input type="checkbox" id="c-qr" checked>
+          <label for="c-qr">Afficher le code QR vers la fiche du site</label>
+        </div>
+        ${sansAdresse ? `<p class="aide-champ" id="c-avert-qr" style="margin-top:10px;">${pluriel(sansAdresse, 'œuvre n\u2019a', 'œuvres n\u2019ont')} pas d'adresse sur le site : ${sansAdresse > 1 ? 'leurs cartels sortiront' : 'son cartel sortira'} sans code QR. Le bouton « Récupérer les adresses du site » peut y remédier.</p>` : ''}
+        ${sansPhoto ? `<p class="aide-champ" id="c-avert-photo" style="margin-top:6px;display:none;">${pluriel(sansPhoto, 'œuvre n’a', 'œuvres n’ont')} pas de photo : ${sansPhoto > 1 ? 'leurs cartels sortiront' : 'son cartel sortira'} sans image, le texte gardant sa place.</p>` : ''}
         <div class="dialogue-actions">
           <button type="button" class="btn-action btn-secondaire-action" id="c-annuler">Annuler</button>
           <button type="button" class="btn-action btn-principal" id="c-ok">Produire le PDF</button>
@@ -345,6 +368,28 @@ export async function rendreExpositionFiche(contenu, params = {}) {
     document.addEventListener('keydown', onKey);
     overlay.querySelector('#c-annuler').addEventListener('click', fermer);
 
+    // La case « photo » refait la liste des formats. On conserve le choix
+    // courant s'il existe dans le nouveau mode (6 et 4 sont communs aux deux),
+    // sinon on retombe sur le premier — le recommandé.
+    const selFormat = overlay.querySelector('#c-format');
+    const casePhoto = overlay.querySelector('#c-photo');
+    const caseQr = overlay.querySelector('#c-qr');
+    const avertQr = overlay.querySelector('#c-avert-qr');
+    const avertPhoto = overlay.querySelector('#c-avert-photo');
+    const majFormats = () => {
+      const liste = casePhoto.checked ? FORMATS_CARTELS.avec : FORMATS_CARTELS.sans;
+      const avant = Number(selFormat.value);
+      selFormat.innerHTML = liste.map((f) => `<option value="${f.v}">${f.lib}</option>`).join('');
+      selFormat.value = liste.some((f) => f.v === avant) ? String(avant) : String(liste[0].v);
+      if (avertPhoto) avertPhoto.style.display = casePhoto.checked ? '' : 'none';
+    };
+    casePhoto.addEventListener('change', majFormats);
+    // Sans code QR demandé, une adresse manquante n'a plus d'importance.
+    const majAvertQr = () => {
+      if (avertQr) avertQr.style.display = caseQr.checked ? '' : 'none';
+    };
+    caseQr.addEventListener('change', majAvertQr);
+
     const ok = overlay.querySelector('#c-ok');
     ok.addEventListener('click', async () => {
       ok.disabled = true;
@@ -352,12 +397,15 @@ export async function rendreExpositionFiche(contenu, params = {}) {
       ok.textContent = 'Production…';
       try {
         const r = await window.api.exposCartels(id, {
-          format: Number(overlay.querySelector('#c-format').value),
+          format: Number(selFormat.value),
           afficherPrix: overlay.querySelector('#c-prix').checked,
+          avecPhoto: casePhoto.checked,
+          afficherQr: caseQr.checked,
         });
         fermer();
         const details = [`${pluriel(r.pages, 'page', 'pages')} à imprimer.`];
         if (r.nb_sans_qr) details.push(`${pluriel(r.nb_sans_qr, 'cartel est sorti', 'cartels sont sortis')} sans code QR (adresse du site manquante).`);
+        if (r.nb_sans_photo) details.push(`${pluriel(r.nb_sans_photo, 'cartel est sorti', 'cartels sont sortis')} sans photo (aucune image sur la fiche).`);
         const rep = await confirmer({
           type: 'succes',
           title: 'Cartels produits',
