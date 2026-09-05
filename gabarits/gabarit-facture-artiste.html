@@ -28,7 +28,14 @@
   .oe-label{font-size:8.5pt;letter-spacing:1.5px;text-transform:uppercase;color:#8a8170;}
   .oe-desc{font-size:15pt;font-style:italic;margin-top:1mm;}
   .oe-sub{font-size:10.5pt;color:#4a443a;margin-top:1mm;}
-  .calc{width:92mm;margin-left:auto;margin-top:9mm;}
+  .bas-facture{display:flex;align-items:flex-start;gap:10mm;margin-top:9mm;}
+  .photo-oeuvre{flex:0 0 auto;max-width:62mm;}
+  .photo-oeuvre img{max-width:62mm;max-height:52mm;width:auto;height:auto;display:block;
+                    border:.5px solid #d8cfb6;padding:1.5mm;background:#fff;}
+  /* Sans photo, la colonne est retirée du flux : la facture retrouve
+     exactement sa mise en page d'origine. */
+  .photo-oeuvre.vide{display:none;}
+  .calc{width:92mm;margin-left:auto;}
   .crow{display:flex;justify-content:space-between;padding:2mm 0;font-size:11pt;}
   .crow .cl{color:#3a352c;}.crow .ca{font-variant-numeric:tabular-nums;}
   .crow.sub{border-top:.5px solid #ddd5c2;font-weight:600;}
@@ -85,6 +92,13 @@
     <div class="oe-sub" id="p_inv_format"></div>
   </div>
 
+  <!-- La photo occupe la moitié gauche, en face du bloc de calcul aligné à
+       droite : un espace déjà vide, donc rien ne descend et la facture ne
+       risque pas de passer sur une deuxième page. Sans photo, la colonne
+       disparaît et la mise en page redevient exactement celle d'avant. -->
+  <div class="bas-facture">
+  <div class="photo-oeuvre" id="r_photo"><img id="p_photo" alt=""></div>
+
   <div class="calc">
     <div class="crow"><span class="cl">Prix régulier</span><span class="ca" id="p_prixreg"></span></div>
     <div class="crow muted" id="r_rabart"><span class="cl">Rabais artiste</span><span class="ca" id="p_rabart"></span></div>
@@ -97,6 +111,7 @@
     <div class="crow" id="r_tps"><span class="cl" id="p_tps_label">TPS</span><span class="ca" id="p_tps"></span></div>
     <div class="crow" id="r_tvq"><span class="cl" id="p_tvq_label">TVQ</span><span class="ca" id="p_tvq"></span></div>
     <div class="crow total"><span class="cl">Montant payé à l'artiste</span><span class="ca" id="p_total"></span></div>
+  </div>
   </div>
 
   <div class="paiement">
@@ -182,6 +197,11 @@ function remplir(d){
   set('p_titre', o.titre||"");
   var inv=o.inventaire||"", fmt=o.format||"";
   set('p_inv_format', [inv?('N° '+inv):'', fmt].filter(Boolean).join('     ·     '));
+  // Photo de l'œuvre vendue (data URL préparée par src/pdf.js). Absente, la
+  // colonne est retirée : la facture retrouve sa mise en page d'origine.
+  var zonePhoto=document.getElementById('r_photo');
+  if (o.photo) { document.getElementById('p_photo').src=o.photo; zonePhoto.classList.remove('vide'); }
+  else { zonePhoto.classList.add('vide'); }
   set('p_mode', pmt.mode||"");
   set('p_comm', pmt.commentaire||"");
   show('r_comm', (pmt.commentaire||"").trim()!=='');

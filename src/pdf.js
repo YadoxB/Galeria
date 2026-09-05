@@ -285,6 +285,11 @@ function preparerDonneesFactureArtiste(vente, artiste, cfg, numeroFactureArtiste
       titre: vente.oeuvre_titre || '',
       inventaire: vente.numero_inventaire || '',
       format: vente.dimensions || '',
+      // La photo se range en face du bloc de calcul, dans un espace déjà vide :
+      // rien ne descend, donc aucun risque de pousser la facture sur une
+      // deuxième page. Une œuvre sans photo produit la facture d'avant, sans
+      // trou ni cadre vide.
+      photo: photoEnDataUrl(vente.image_path),
     },
     montants: {
       // Le gabarit recalcule prix_vente = prix_regulier - rabais.
