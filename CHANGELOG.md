@@ -10,8 +10,11 @@ identifiants.
 
 ## [Non publié]
 
+## [0.17.0] — 2026-09-04
+
 > **Les documents en anglais.** La présentation, le catalogue et toute la pochette de
-> vente suivent maintenant la langue choisie.
+> vente suivent maintenant la langue choisie. Le chantier bilingue est refermé :
+> certificat (0.15.0) → fiches et import des textes du site (0.16.0) → documents (0.17.0).
 
 ### Ajouté
 

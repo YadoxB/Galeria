@@ -9,26 +9,41 @@
 
 ## ▶ Reprise — par où commencer (préparé le 2026-09-04)
 
-**✅ Dernière version PUBLIÉE : v0.16.0 (2026-09-04).** `origin/master` = tag `v0.16.0` = `9b34106`.
-Testée dans l'app par Dave, poussée, publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
+**✅ Dernière version PUBLIÉE : v0.17.0 (2026-09-04).** `origin/master` = tag `v0.17.0` = `a89d0d1`.
+Essayée dans l'app par Dave, poussée, publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
 
-> ### 🟨 Un lot commité, non publié : les documents en anglais (→ 0.17.0)
+> ### ✅ Rien n'attend d'être publié
 >
-> Essayé dans l'app par Dave. `package.json` est encore à **0.16.0** ; l'entrée en tête de
-> `VERSIONS` (`nouveautes.js`) porte déjà `'0.17.0'`, à corriger si le numéro publié
-> diffère, sinon `npm run release` refuse. Détail dans la section « Les documents en
-> anglais » plus bas.
+> Quatre versions sont sorties le 2026-09-04 : la **0.16.0** en a livré trois d'un coup
+> (0.14.0 retours d'usage, 0.15.0 Expositions + certificat EN, 0.16.0 catalogue bilingue,
+> ordre des numéros, quatre ajustements), puis la **0.17.0** (documents en anglais). Les
+> tags intermédiaires n'existent pas, c'est voulu.
 >
-> La 0.16.0 avait publié **trois versions d'un coup** : 0.14.0 (retours d'usage), 0.15.0
-> (Expositions + certificat EN) et 0.16.0 (catalogue bilingue, ordre des numéros, quatre
-> ajustements). Les tags intermédiaires n'existent pas, c'est voulu.
+> **Le chantier bilingue est REFERMÉ** : certificat (0.15.0) → fiches et import des textes
+> anglais du site (0.16.0) → présentation, catalogue et pochette de vente (0.17.0).
 >
 > **Deux vérifications sur PAPIER n'ont toujours pas été faites** et ne peuvent l'être que
 > par Dave : une page de **cartels avec photos** imprimée et découpée (l'image tient-elle à
 > six par page ? les QR se scannent-ils à 20 mm ?), et un **certificat estampé** (les 4 mm
-> gagnés suffisent-ils ?).
+> gagnés suffisent-ils ?). Les deux sont chez les parents depuis la 0.16.0.
 
-### Les documents en anglais (→ 0.17.0) — ce qu'il faut savoir pour y revenir
+> ### ▶ Où en est le plan de `CLAUDE.md`
+>
+> | Phase | État |
+> |---|---|
+> | 1 — Fondations | ✅ en service |
+> | 2 — Catalogue | ✅ en service |
+> | 3 — Ventes et documents | ✅ en service (sauf la **facture au client**, sans gabarit) |
+> | 4 — **Sage 50** | ❌ **jamais commencée** — la seule phase entière qui reste |
+> | 5 — Site web | ✅ depuis la 0.13.0, étendue à l'import des textes anglais |
+>
+> Hors plan, nés de l'usage : les **expositions** et tout le **bilingue**.
+>
+> **Recommandation pour la suite : le chantier des PHOTOS** — dernier vrai manque au
+> quotidien, et le plus risqué (voir plus bas). À faire à tête reposée, pas en fin de
+> session.
+
+### Les documents en anglais (0.17.0) — ce qu'il faut savoir pour y revenir
 
 **Décisions de Dave (2026-09-04) :** prix au format québécois **dans les deux langues**
 (`2 400 $`), pour la cohérence entre documents ; **annexes A en français** (consignation
@@ -93,7 +108,7 @@ seul fichier dont seul le nom suit la langue.
 ### ▶ Prochaine étape
 
 1. **Vérifications sur PAPIER, pas encore faites** : une page de **cartels avec photos** imprimée et découpée (l'image tient-elle à six par page ? les QR se scannent-ils à 20 mm ?) et un **certificat estampé** (les 4 mm gagnés suffisent-ils ?). Claude ne peut ni l'un ni l'autre.
-2. ~~**La présentation et le catalogue en anglais**~~ — **FAIT (2026-09-04)**, commité, non publié. Le **chantier bilingue est refermé** : le certificat (0.15.0), les fiches et l'import (0.16.0), la présentation, le catalogue et toute la pochette (→ 0.17.0). Voir la section dédiée plus haut. Maquette : `demos/documents-en-anglais.html`.
+2. ~~**La présentation et le catalogue en anglais**~~ — **FAIT et PUBLIÉ dans la 0.17.0.** Le **chantier bilingue est refermé** : le certificat (0.15.0), les fiches et l'import (0.16.0), la présentation, le catalogue et toute la pochette (0.17.0). Voir la section dédiée plus haut. Maquette : `demos/documents-en-anglais.html`.
 3. **Reste de la liste de retours des parents du 2026-08-25** :
    - **Photos — gros chantier à risque, à faire dans sa propre session.** Classer par artiste puis par statut + dossier « divers », section Photos sur la fiche d'artiste. Tout est à plat aujourd'hui et **les chemins sont en base** → migration de fichiers, sauvegarde obligatoire, chemin de retour. Démo avant tout code.
    - **Copie expurgée** pour le soutien technique (décidée) : catalogue sans clients ni ventes.
