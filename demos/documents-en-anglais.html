@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Présentation et catalogue en anglais</title>
+<style>
+  :root {
+    --soft-ivory:#FCFAF4; --porcelain:#FFFFFF; --warm-gold:#C99A3D; --gallery-navy:#071A2F;
+    --ink:#111827; --slate:#5D6875; --stone:#A79E91; --mist:#D8D2C8; --cloud:#EFE8DE;
+    --rouge:#900001;
+    --font-titre:'Cormorant Garamond',Georgia,serif;
+    --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r-carte:14px; --ombre-carte:0 4px 14px rgba(7,26,47,.06);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--soft-ivory); font-family:var(--font-ui); color:var(--ink); padding:32px; }
+  h1 { font-family:var(--font-titre); font-weight:600; font-size:28px; margin:0 0 6px; }
+  .sous { color:var(--slate); margin:0 0 10px; font-size:14px; max-width:860px; line-height:1.6; }
+  .lot-titre { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone);
+               margin:44px 0 6px; font-weight:600; }
+  .lot-note { font-size:13.5px; color:var(--slate); max-width:860px; line-height:1.6; margin:0 0 16px; }
+  .etiq { font-size:11px; text-transform:uppercase; letter-spacing:.07em; font-weight:700;
+          margin:0 0 10px; color:var(--stone); }
+  .etiq.reco { color:var(--warm-gold); }
+  .rangee { display:flex; gap:26px; align-items:flex-start; flex-wrap:wrap; }
+  .legende { font-size:12px; color:var(--slate); margin:10px 0 0; max-width:330px; line-height:1.5; }
+  .legende b { color:var(--ink); }
+
+  .journal { max-width:1060px; margin-top:20px; background:var(--porcelain); border:1px solid var(--mist);
+             border-radius:var(--r-carte); padding:16px 20px; }
+  .journal h4 { font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone);
+                margin:0 0 8px; font-weight:700; }
+  .journal ul { margin:0; padding-left:18px; font-size:13.5px; color:var(--slate); line-height:1.75; }
+  .journal em { color:var(--ink); font-style:normal; font-weight:600; }
+
+  /* ---------- menu Documents ---------- */
+  .zone-menu { background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte);
+               box-shadow:var(--ombre-carte); padding:22px; width:420px; }
+  .btn-docs { font-family:var(--font-ui); font-size:13.5px; border:1px solid var(--mist);
+              background:var(--porcelain); border-radius:9px; padding:9px 15px; cursor:pointer; }
+  .menu-pop { margin-top:8px; border:1px solid var(--mist); border-radius:11px; background:var(--porcelain);
+              box-shadow:0 10px 26px rgba(7,26,47,.13); padding:6px; width:280px; }
+  .menu-pop button { display:block; width:100%; text-align:left; border:0; background:transparent;
+                     font-family:var(--font-ui); font-size:13.5px; color:var(--ink);
+                     padding:8px 10px; border-radius:7px; cursor:pointer; }
+  .menu-pop button:hover { background:var(--cloud); }
+  .menu-sep { height:1px; background:var(--mist); margin:5px 8px; }
+  .menu-langue { display:flex; align-items:center; gap:10px; padding:6px 10px 9px; }
+  .menu-langue .l { font-size:10.5px; text-transform:uppercase; letter-spacing:.07em;
+                    color:var(--stone); font-weight:600; }
+  .bascule { display:inline-flex; border:1px solid var(--mist); border-radius:999px;
+             overflow:hidden; background:var(--soft-ivory); margin-left:auto; }
+  .bascule button { width:auto; border:0; background:transparent; cursor:pointer;
+    font-size:11.5px; font-weight:700; letter-spacing:.06em; color:var(--stone);
+    padding:5px 12px; border-radius:0; }
+  .bascule button.actif { background:var(--gallery-navy); color:#fff; }
+  .bascule button.actif:hover { background:var(--gallery-navy); }
+
+  /* ---------- feuilles à l'échelle (1mm ≈ 2,6px) ---------- */
+  .feuille { background:#fff; box-shadow:0 4px 20px rgba(0,0,0,.13); width:561px; height:727px; padding:44px; }
+
+  /* présentation */
+  .pres { font-family:Georgia,'Times New Roman',serif; color:#1c1a17; height:100%;
+          display:flex; flex-direction:column; }
+  .pres-bandeau { display:flex; gap:18px; align-items:flex-start; padding-bottom:16px;
+                  border-bottom:1px solid #e0d8c6; }
+  .pres-photo { width:74px; height:92px; background:linear-gradient(135deg,#dfd6c4,#c9bda6);
+                border:1px solid #d8cfb6; }
+  .pres-nom { font-size:23px; font-weight:600; margin:0 0 3px; }
+  .pres-titre { font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+                color:var(--rouge); font-family:var(--font-ui); font-weight:600; }
+  .pres-cit { font-style:italic; font-size:12px; color:#5a5346; margin-top:9px; line-height:1.5; }
+  .pres-sec { margin-top:22px; }
+  .pres-sec h4 { font-family:var(--font-ui); font-size:9.5px; text-transform:uppercase;
+                 letter-spacing:.13em; color:var(--rouge); font-weight:700; margin:0 0 8px; }
+  .pres-sec p { font-size:11px; line-height:1.62; margin:0 0 8px; text-align:justify; }
+  .pres-pied { margin-top:auto; padding-top:12px; border-top:1px solid #e0d8c6;
+               font-family:var(--font-ui); font-size:7.5px; color:#8a8170; text-align:center; }
+
+  /* catalogue */
+  .cat { font-family:Georgia,'Times New Roman',serif; color:#1c1a17; height:100%;
+         display:flex; flex-direction:column; }
+  .cat-tete { display:flex; justify-content:space-between; align-items:flex-end;
+              padding-bottom:10px; border-bottom:1.5px solid var(--rouge); }
+  .cat-logo { width:88px; height:22px; background:var(--rouge); opacity:.85; }
+  .cat-artiste { font-size:17px; font-weight:600; }
+  .cat-label { font-family:var(--font-ui); font-size:8px; text-transform:uppercase;
+               letter-spacing:.13em; color:#8a8170; margin-top:2px; }
+  .cat-page { font-family:var(--font-ui); font-size:8px; color:#8a8170; }
+  .cat-grille { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:16px; }
+  .cat-carte .im { width:100%; height:78px; background:linear-gradient(135deg,#dfd6c4,#c9bda6);
+                   border:1px solid #d8cfb6; }
+  .cat-inv { font-family:var(--font-ui); font-size:7px; letter-spacing:.05em; color:#8a8170; margin-top:5px; }
+  .cat-titre { font-size:11px; font-style:italic; line-height:1.25; margin:1px 0 2px; }
+  .cat-det { font-family:var(--font-ui); font-size:7.5px; color:#6b6253; line-height:1.35; }
+  .cat-dispo { font-family:var(--font-ui); font-size:8.5px; font-weight:700; margin-top:3px; }
+  .dispo-prix { color:#1c1a17; }
+  .dispo-indispo { color:#9a9184; font-weight:600; }
+
+  table.trad { width:100%; max-width:1060px; border-collapse:collapse; font-size:13.5px; margin-top:10px;
+    background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte); overflow:hidden; }
+  table.trad th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--stone); font-weight:700; padding:11px 14px; background:var(--soft-ivory); }
+  table.trad td { padding:9px 14px; border-top:1px solid var(--cloud); vertical-align:top; }
+  table.trad td.en { font-weight:600; color:var(--gallery-navy); }
+  code { font-family:ui-monospace,Consolas,monospace; font-size:12px; background:var(--cloud);
+         padding:1px 5px; border-radius:4px; }
+
+  .alerte { max-width:1060px; background:#FFF8F8; border:1px solid #E9D2D2; border-left:3px solid var(--rouge);
+            border-radius:10px; padding:16px 20px; margin-top:24px; }
+  .alerte h4 { margin:0 0 8px; font-size:14px; color:var(--rouge); }
+  .alerte p { margin:0 0 8px; font-size:13.5px; color:var(--slate); line-height:1.6; }
+  .alerte p:last-child { margin-bottom:0; }
+
+  .repli { background:#FDF8EE; border:1px solid #E8DCC0; border-radius:9px; padding:11px 14px;
+           font-size:12.5px; color:#6b5c34; line-height:1.5; max-width:520px; margin-top:12px; }
+  .repli b { color:#4a3f1e; }
+</style>
+</head>
+<body>
+
+<h1>La présentation et le catalogue en anglais</h1>
+<p class="sous">Les textes anglais sont dans la base depuis la 0.16.0, mais aucun document ne les
+utilise. Le certificat, lui, est déjà bilingue — c'est son modèle qu'on reprend ici.</p>
+
+<!-- ================= LOT 1 ================= -->
+<p class="lot-titre">Lot 1 &middot; Où se choisit la langue</p>
+<p class="lot-note">Le certificat demande sa langue dans une fenêtre, parce qu'on en crée un à la
+fois. La présentation et le catalogue, eux, se produisent d'un clic depuis le menu <em>Documents</em>
+de la fiche d'artiste — une fenêtre de plus à chaque fois serait une friction pour le cas courant,
+qui restera le français.</p>
+
+<div class="rangee">
+  <div class="zone-menu">
+    <p class="etiq reco">Variante A · une bascule en tête du menu &nbsp;— recommandée</p>
+    <button class="btn-docs">Documents ▾</button>
+    <div class="menu-pop">
+      <div class="menu-langue">
+        <span class="l">Langue</span>
+        <span class="bascule">
+          <button class="actif" data-la="fr">FR</button>
+          <button data-la="en">EN</button>
+        </span>
+      </div>
+      <div class="menu-sep"></div>
+      <button>Présentation PDF</button>
+      <button>Catalogue PDF</button>
+      <div class="menu-sep"></div>
+      <button>Annexe A — dépôt…</button>
+      <button>Annexe A — retrait…</button>
+    </div>
+    <p class="legende">Un clic pour le français, comme aujourd'hui. La bascule ne touche
+    <b>que les deux PDF du haut</b> — les annexes A sont des documents de consignation qui
+    restent en français.</p>
+  </div>
+
+  <div class="zone-menu">
+    <p class="etiq">Variante B · quatre entrées</p>
+    <button class="btn-docs">Documents ▾</button>
+    <div class="menu-pop">
+      <button>Présentation PDF — français</button>
+      <button>Présentation PDF — anglais</button>
+      <button>Catalogue PDF — français</button>
+      <button>Catalogue PDF — anglais</button>
+      <div class="menu-sep"></div>
+      <button>Annexe A — dépôt…</button>
+      <button>Annexe A — retrait…</button>
+    </div>
+    <p class="legende">Rien à comprendre, tout est écrit. Mais le menu double de longueur, et
+    l'anglais servira <b>rarement</b> — il occupe alors la moitié de la place.</p>
+  </div>
+</div>
+
+<div class="journal">
+  <h4>Ce qui départage</h4>
+  <ul>
+    <li><em>A</em> garde le geste actuel intact : ouvrir le menu, cliquer, le PDF sort en français.</li>
+    <li><em>B</em> est plus explicite mais fait passer un menu de 4 à 6 entrées pour une fonction
+      d'appoint.</li>
+    <li>La bascule de <em>A</em> est <em>la même</em> que celle des fiches, déjà en place depuis la
+      0.16.0 : rien de nouveau à apprendre.</li>
+    <li>Elle revient au français à chaque ouverture du menu — on ne veut pas qu'un choix oublié
+      produise un document anglais par surprise trois jours plus tard.</li>
+  </ul>
+</div>
+
+<!-- ================= LOT 2 ================= -->
+<p class="lot-titre">Lot 2 &middot; La présentation en anglais</p>
+<p class="lot-note">Mêmes pages, même mise en forme : seuls les textes et les trois intitulés de
+section changent.</p>
+
+<div class="rangee">
+  <div>
+    <p class="etiq">Français — aujourd'hui</p>
+    <div class="feuille">
+      <div class="pres">
+        <div class="pres-bandeau">
+          <div class="pres-photo"></div>
+          <div>
+            <p class="pres-nom">Louise Potvin</p>
+            <div class="pres-titre">Artiste peintre</div>
+            <p class="pres-cit">« La lumière est le seul sujet que j'aie jamais eu. »</p>
+          </div>
+        </div>
+        <div class="pres-sec">
+          <h4>Biographie</h4>
+          <p>Née à Montréal en 1961, Louise Potvin partage son temps entre l'atelier et
+          l'enseignement. Sa peinture, d'abord figurative, s'est peu à peu dépouillée jusqu'à ne
+          garder que la lumière et le geste.</p>
+        </div>
+        <div class="pres-sec">
+          <h4>Démarche</h4>
+          <p>Je peins ce qui reste quand le motif s'efface : une intensité, une direction, la
+          trace d'un mouvement. L'atelier est un lieu d'attente autant que de travail.</p>
+        </div>
+        <div class="pres-pied">La Galerie du Vieux Saint-Jean &middot; 000 rue Richelieu, Saint-Jean-sur-Richelieu</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="etiq reco">Anglais</p>
+    <div class="feuille">
+      <div class="pres">
+        <div class="pres-bandeau">
+          <div class="pres-photo"></div>
+          <div>
+            <p class="pres-nom">Louise Potvin</p>
+            <div class="pres-titre">Painter</div>
+            <p class="pres-cit">“Light is the only subject I have ever had.”</p>
+          </div>
+        </div>
+        <div class="pres-sec">
+          <h4>Biography</h4>
+          <p>Born in Montreal in 1961, Louise Potvin divides her time between the studio and
+          teaching. Her painting, figurative at first, gradually pared itself down to light and
+          gesture alone.</p>
+        </div>
+        <div class="pres-sec">
+          <h4>Artist's statement</h4>
+          <p>I paint what remains once the motif fades: an intensity, a direction, the trace of a
+          movement. The studio is a place of waiting as much as of work.</p>
+        </div>
+        <div class="pres-pied">La Galerie du Vieux Saint-Jean &middot; 000 rue Richelieu, Saint-Jean-sur-Richelieu</div>
+      </div>
+    </div>
+    <p class="legende">Les trois intitulés reprennent ceux de <b>votre site</b> —
+    <i>Biography</i>, <i>Artist's statement</i>, <i>C.V.</i> — pour qu'un lecteur retrouve les mêmes
+    mots d'un support à l'autre.</p>
+  </div>
+</div>
+
+<!-- ================= LOT 3 ================= -->
+<p class="lot-titre">Lot 3 &middot; Le catalogue en anglais</p>
+<p class="lot-note">Le catalogue ne contient pas de texte rédigé : rien que des titres d'œuvres, qui
+ne se traduisent pas, et des étiquettes.</p>
+
+<div class="rangee">
+  <div>
+    <p class="etiq reco">Anglais</p>
+    <div class="feuille">
+      <div class="cat">
+        <div class="cat-tete">
+          <div>
+            <div class="cat-artiste">Louise Potvin</div>
+            <div class="cat-label">Catalogue of works</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="cat-logo"></div>
+            <div class="cat-page" style="margin-top:5px;">Page 1 of 3</div>
+          </div>
+        </div>
+        <div class="cat-grille">
+          <div class="cat-carte"><div class="im"></div>
+            <div class="cat-inv">HUP912</div>
+            <div class="cat-titre">Marée basse, fin d'août</div>
+            <div class="cat-det">24 × 36 in · Oil on canvas</div>
+            <div class="cat-dispo dispo-prix">$2,400</div></div>
+          <div class="cat-carte"><div class="im"></div>
+            <div class="cat-inv">HUP914</div>
+            <div class="cat-titre">Le quai, novembre</div>
+            <div class="cat-det">18 × 24 in · Acrylic on panel</div>
+            <div class="cat-dispo dispo-indispo">Not available</div></div>
+          <div class="cat-carte"><div class="im"></div>
+            <div class="cat-inv">HUP915</div>
+            <div class="cat-titre">Étude n° 4</div>
+            <div class="cat-det">12 × 12 in · Oil on canvas</div>
+            <div class="cat-dispo dispo-prix">Price on request</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="legende">Les <b>titres d'œuvres restent en français</b> : un tableau garde son titre,
+    ici comme sur votre site.</p>
+  </div>
+
+  <div style="flex:1;min-width:340px;">
+    <p class="etiq">Ce qui change, mot à mot</p>
+    <table class="trad">
+      <thead><tr><th style="width:46%;">Français</th><th>Anglais</th></tr></thead>
+      <tbody>
+        <tr><td>Catalogue des œuvres</td><td class="en">Catalogue of works</td></tr>
+        <tr><td>Page 1 / 3</td><td class="en">Page 1 of 3</td></tr>
+        <tr><td>Non disponible</td><td class="en">Not available</td></tr>
+        <tr><td>Prix sur demande</td><td class="en">Price on request</td></tr>
+        <tr><td>Huile <b>sur</b> toile</td><td class="en">Oil <b>on</b> canvas</td></tr>
+        <tr><td>24 × 36 <b>po</b></td><td class="en">24 × 36 <b>in</b></td></tr>
+        <tr><td>2 400 $</td><td class="en">$2,400</td></tr>
+        <tr><td>Biographie</td><td class="en">Biography</td></tr>
+        <tr><td>Démarche</td><td class="en">Artist's statement</td></tr>
+        <tr><td>Curriculum</td><td class="en">C.V.</td></tr>
+        <tr><td>Artiste peintre</td><td class="en">Painter</td></tr>
+        <tr><td>Sculpteur</td><td class="en">Sculptor</td></tr>
+        <tr><td>Photographe</td><td class="en">Photographer</td></tr>
+      </tbody>
+    </table>
+    <p class="legende" style="max-width:none;">Deux lignes méritent votre avis : les <b>médiums</b>
+    (« Huile », « Acrylique ») sont saisis à la main et ne sont donc pas traduisibles
+    automatiquement — je propose une petite table pour les plus courants, et de laisser le mot tel
+    quel s'il n'y figure pas. Et le <b>prix</b> : <code>$2,400</code> à l'anglaise, ou
+    <code>2 400 $</code> comme en français ?</p>
+  </div>
+</div>
+
+<!-- ================= LOT 4 ================= -->
+<p class="lot-titre">Lot 4 &middot; Quand l'anglais manque</p>
+<p class="lot-note">Huit œuvres et quelques sections n'ont pas d'équivalent anglais. Un document ne
+peut pas sortir avec un trou.</p>
+
+<div class="repli">
+  <b>Règle proposée : repli silencieux sur le français, et compte rendu à la fin.</b><br>
+  Une section sans version anglaise sort <b>en français</b>, sous son intitulé anglais — un lecteur
+  anglophone voit un texte français, ce qui est désagréable mais compréhensible ; un blanc, non.
+</div>
+
+<div class="repli" style="margin-top:10px;">
+  Et après la production, Galeria le dit :<br>
+  <i>« Présentation produite. <b>La démarche et le curriculum sont sortis en français</b> — leur
+  version anglaise n'existe pas encore. Vous pouvez les traduire depuis la fiche de l'artiste. »</i>
+</div>
+
+<div class="journal">
+  <h4>Un piège à ne pas manquer</h4>
+  <ul>
+    <li>La présentation française est <em>mise en cache</em> : Galeria garde le PDF et sa signature
+      (<code>presentation_path</code>, <code>presentation_sig</code>) pour ne pas le refaire
+      inutilement.</li>
+    <li>La version anglaise ne doit <em>jamais</em> écraser ce cache — sinon la prochaine
+      présentation « française » demandée ressortirait le PDF anglais.</li>
+    <li>Elle produit donc toujours un <em>fichier distinct</em>, nommé
+      <code>Présentation (anglais) — Louise Potvin.pdf</code>, sans toucher au cache. C'est déjà ce
+      que fait la « version modifiée » d'une présentation.</li>
+  </ul>
+</div>
+
+<div class="alerte">
+  <h4>Deux questions</h4>
+  <p><b>Le prix dans le catalogue anglais</b> : <code>$2,400</code> ou <code>2 400 $</code> ?
+  La première forme parle à un acheteur anglophone, la seconde garde vos documents cohérents entre
+  eux.</p>
+  <p><b>Les annexes A</b> (dépôt et retrait) restent-elles en français ? Ce sont des documents de
+  consignation signés avec vos artistes, qui sont québécois — je les laisse de côté sauf avis
+  contraire.</p>
+</div>
+
+<script>
+  document.querySelectorAll('.bascule').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      var btn = e.target.closest('button');
+      if (!btn) return;
+      b.querySelectorAll('button').forEach(function (x) { x.classList.remove('actif'); });
+      btn.classList.add('actif');
+    });
+  });
+</script>
+</body></html>

@@ -17,9 +17,30 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
-    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.16.0 :
+    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.17.0 :
     // `npm run release` refuse de publier si elle ne correspond pas à
     // package.json.
+    version: '0.17.0',
+    diapos: [
+      {
+        titre: 'Vos documents en anglais',
+        texte: "Dans le menu <b>Documents</b> d'une fiche d'artiste, une petite bascule <b>FR&nbsp;/&nbsp;EN</b>. Choisissez <b>EN</b> et la <b>présentation</b> ou le <b>catalogue</b> sortent en anglais. Elle revient au français à chaque fois que vous ouvrez le menu.",
+      },
+      {
+        titre: 'La pochette de vente vous demande la langue',
+        texte: "Au moment de produire une pochette, Galeria demande maintenant&nbsp;: <b>français ou anglais&nbsp;?</b> La réponse s'applique à <b>tous</b> les documents — lettre, certificat, présentation — et même au nom des fichiers.",
+      },
+      {
+        titre: "Ce qui n'était anglais qu'à moitié",
+        texte: "Jusqu'ici, une vente en anglais ne donnait que la lettre en anglais&nbsp;: le certificat et la présentation sortaient en français, et la page de l'œuvre gardait ses lignes françaises sous un titre anglais. C'est réglé.",
+      },
+      {
+        titre: 'Quand un texte anglais manque',
+        texte: "Le document sort quand même, avec le texte français à la place — un blanc serait pire. Galeria vous dit ensuite <b>quelles sections</b> étaient concernées, pour que vous puissiez les traduire depuis la fiche de l'artiste.",
+      },
+    ],
+  },
+  {
     version: '0.16.0',
     diapos: [
       {

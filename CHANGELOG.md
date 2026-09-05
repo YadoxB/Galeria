@@ -10,6 +10,52 @@ identifiants.
 
 ## [Non publié]
 
+> **Les documents en anglais.** La présentation, le catalogue et toute la pochette de
+> vente suivent maintenant la langue choisie.
+
+### Ajouté
+
+- **Présentation et catalogue d'artiste en anglais.** Une bascule **FR / EN** en tête du
+  menu *Documents* de la fiche d'artiste. Un clic pour le français, comme avant ; la
+  bascule **revient au français à chaque ouverture du menu**, pour qu'un choix oublié ne
+  produise pas un document anglais par surprise.
+  - La présentation prend les textes `_en` de l'artiste et **replie sur le français**
+    quand ils manquent — un lecteur anglophone comprend un texte français, pas un blanc.
+    Les sections repliées sont **nommées dans le compte rendu**.
+  - Intitulés repris du site : *Biography*, *Artist's statement*, *C.V.*
+  - Le catalogue traduit ses libellés (*Catalogue of works*, *Page 1 of 3*,
+    *Not available*, *Price on request*), le médium, le support et l'unité des dimensions
+    (`po` → `in`). **Les titres d'œuvres restent en français** : un tableau garde son titre.
+  - **Le prix garde le format québécois dans les deux langues** (`2 400 $`), pour que les
+    documents de la galerie restent cohérents entre eux.
+  - Médiums et supports traduits par **correspondance sur la chaîne entière, jamais mot à
+    mot** : sans correspondance, le français est conservé. Mesuré sur le catalogue réel :
+    **supports 409/409 (100 %), médiums 477/495 (96 %)**.
+  - Les **annexes A** restent en français : documents de consignation signés avec des
+    artistes québécois.
+- **Choix de la langue à la production de la pochette de vente** : une fenêtre
+  *Français / Anglais*, préréglée sur la langue enregistrée de la vente. Le choix vaut pour
+  tous les documents et ne modifie pas la vente.
+- **Noms de fichiers de la pochette en anglais** quand elle l'est : `Thank-you letter`,
+  `Artist presentation`, `Buyer's guide.pdf`.
+
+### Corrigé
+
+- **La pochette de vente n'était anglaise qu'à moitié.** Seule la lettre suivait la langue.
+  - Le **certificat d'authenticité** était créé sans langue et retombait sur le français.
+    Un certificat déjà délivré garde la sienne — c'est une pièce officielle numérotée — mais
+    la discordance est désormais signalée.
+  - La **présentation de l'artiste** était toujours produite en français.
+  - La **fiche de l'œuvre** (page 2 de la lettre) s'intitulait *The artwork* mais gardait
+    toutes ses lignes en français : Titre, Artiste, Année, Médium, Support, Valeur,
+    N° de délivrance.
+  - Les **« versions modifiées »** d'un document avaient le même angle mort.
+
+### Modifié
+
+- Le **guide de l'acheteur** étant rédigé bilingue, un seul fichier sert dans les deux
+  langues ; seul son nom suit celle de la pochette.
+
 ## [0.16.0] — 2026-09-04
 
 > **Le catalogue en anglais.** Les textes anglais qui existent déjà sur le site

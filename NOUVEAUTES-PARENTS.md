@@ -11,6 +11,41 @@
 
 ---
 
+## Vos documents en anglais
+
+Les textes anglais entrés dans Galeria servent maintenant à produire de vrais
+documents.
+
+**La présentation et le catalogue d'un artiste.** Ouvrez le menu **Documents**
+de sa fiche : une petite bascule **FR / EN** est apparue en haut. Laissez-la
+sur FR et rien ne change — c'est le même clic qu'avant. Choisissez **EN** et le
+document sort en anglais.
+
+La bascule **revient au français chaque fois que vous rouvrez le menu**, pour
+qu'un choix oublié ne vous fasse pas sortir un document anglais par surprise.
+
+**La pochette de vente.** Quand vous la produisez, Galeria demande désormais la
+langue. Le bouton proposé par défaut est celui de la vente, donc un simple
+*Entrée* fait ce que vous attendez. La réponse s'applique à **tous** les
+documents de la pochette — lettre, certificat, présentation — et même au nom
+des fichiers, pour qu'un client anglophone reçoive un dossier qui se lit.
+
+**Ce qui ne fonctionnait qu'à moitié.** Jusqu'ici, une vente en anglais ne vous
+donnait que la lettre en anglais : le certificat et la présentation sortaient
+en français, et la page décrivant l'œuvre s'intitulait *The artwork* mais
+gardait toutes ses lignes en français. C'est corrigé.
+
+**Quand un texte anglais n'existe pas.** Le document sort quand même, avec le
+français à la place — un blanc serait pire. Galeria vous dit ensuite quelles
+sections étaient concernées, pour que vous puissiez les traduire depuis la
+fiche de l'artiste.
+
+**Deux choses qui ne changent pas.** Les **titres des œuvres** restent en
+français : un tableau garde son titre. Et les **prix** gardent leur forme
+habituelle (2 400 $), pour que tous vos documents se ressemblent.
+
+---
+
 ## Le catalogue en anglais
 
 Votre site affiche déjà, en anglais, les biographies et les démarches de vos

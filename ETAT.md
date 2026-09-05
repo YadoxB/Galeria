@@ -12,18 +12,51 @@
 **✅ Dernière version PUBLIÉE : v0.16.0 (2026-09-04).** `origin/master` = tag `v0.16.0` = `9b34106`.
 Testée dans l'app par Dave, poussée, publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
 
-> ### ✅ Tout est livré, rien n'attend
+> ### 🟨 Un lot commité, non publié : les documents en anglais (→ 0.17.0)
 >
-> La 0.16.0 a publié **trois versions d'un coup** : 0.14.0 (retours d'usage), 0.15.0
+> Essayé dans l'app par Dave. `package.json` est encore à **0.16.0** ; l'entrée en tête de
+> `VERSIONS` (`nouveautes.js`) porte déjà `'0.17.0'`, à corriger si le numéro publié
+> diffère, sinon `npm run release` refuse. Détail dans la section « Les documents en
+> anglais » plus bas.
+>
+> La 0.16.0 avait publié **trois versions d'un coup** : 0.14.0 (retours d'usage), 0.15.0
 > (Expositions + certificat EN) et 0.16.0 (catalogue bilingue, ordre des numéros, quatre
-> ajustements). Les tags `v0.14.0` n'existent pas, c'est voulu. Les parents étaient à la
-> **0.13.0** : la fenêtre « Quoi de neuf » leur empile les nouveautés des trois versions
-> dans l'ordre — 19 diapos.
+> ajustements). Les tags intermédiaires n'existent pas, c'est voulu.
 >
-> **Deux vérifications sur PAPIER n'ont pas été faites** et ne peuvent l'être que par
-> Dave : une page de **cartels avec photos** imprimée et découpée (l'image tient-elle à
+> **Deux vérifications sur PAPIER n'ont toujours pas été faites** et ne peuvent l'être que
+> par Dave : une page de **cartels avec photos** imprimée et découpée (l'image tient-elle à
 > six par page ? les QR se scannent-ils à 20 mm ?), et un **certificat estampé** (les 4 mm
-> gagnés suffisent-ils ?). À faire avant de s'appuyer dessus.
+> gagnés suffisent-ils ?).
+
+### Les documents en anglais (→ 0.17.0) — ce qu'il faut savoir pour y revenir
+
+**Décisions de Dave (2026-09-04) :** prix au format québécois **dans les deux langues**
+(`2 400 $`), pour la cohérence entre documents ; **annexes A en français** (consignation
+signée avec des artistes québécois) ; **guide de l'acheteur déjà rédigé bilingue**, donc un
+seul fichier dont seul le nom suit la langue.
+
+- **Où se choisit la langue** : bascule FR/EN en tête du menu *Documents* de la fiche
+  d'artiste (présentation + catalogue seulement), et **fenêtre de choix** à la production
+  d'une pochette de vente, préréglée sur la langue de la vente. La bascule du menu **revient
+  au français à chaque ouverture** ; le choix de la pochette **ne modifie pas la vente**.
+- **Dictionnaires** dans `src/pdf.js` : `LIB_DOC` (libellés), `MEDIUMS_EN`, `SUPPORTS_EN`,
+  `traduireTerme`, `dimensionsSelonLangue`, `titreDArtiste(type, langue)`.
+  ⚠ **Correspondance sur la chaîne ENTIÈRE, jamais mot à mot** : les valeurs sont saisies à
+  la main et composées (« Bauxite/acrylique et coke (charbon) »). Sans correspondance, le
+  français est conservé. Mesuré : **supports 409/409 (100 %), médiums 477/495 (96 %)**.
+- **Repli** : une section sans version anglaise sort en français ;
+  `preparerDonneesPresentation` remonte la liste dans `replis`, affichée après coup.
+- ⚠ **Piège du cache** : `presentation_path` / `presentation_sig` ne concernent QUE le
+  français. La version anglaise produit toujours un fichier distinct et n'y touche jamais,
+  sinon la prochaine présentation « française » ressortirait le PDF anglais.
+- ⚠ **Piège des noms de fichiers** : `nomFichierPochette()` sert **à la fois** à écrire les
+  fichiers et à les retrouver (`cheminPochetteSiExiste`). Les deux côtés doivent toujours
+  passer par elle avec la même langue, sinon le lien « ouvrir la présentation de la
+  pochette » se casse. Les pochettes anglaises produites avant gardent les anciens noms
+  français : les régénérer suffit.
+- **La pochette n'était anglaise qu'à moitié** (corrigé) : le certificat était créé sans
+  langue, la présentation toujours produite en français, et la fiche de l'œuvre (page 2 de
+  la lettre) gardait ses libellés français sous le titre *The artwork*.
 
 > **⚠ Piège de publication, vécu le 2026-09-04.** `npm run release` lancé depuis un
 > worktree `.claude/worktrees/` échoue avec *« Cannot compute electron version from
@@ -60,7 +93,7 @@ Testée dans l'app par Dave, poussée, publiée sur GitHub Releases avec `latest
 ### ▶ Prochaine étape
 
 1. **Vérifications sur PAPIER, pas encore faites** : une page de **cartels avec photos** imprimée et découpée (l'image tient-elle à six par page ? les QR se scannent-ils à 20 mm ?) et un **certificat estampé** (les 4 mm gagnés suffisent-ils ?). Claude ne peut ni l'un ni l'autre.
-2. **Chantier suivant recommandé : la présentation et le catalogue en anglais.** Les champs `_en` existent et sont remplis ; il ne reste que le rendu, avec **repli sur le français** quand l'anglais manque. C'est du pur affichage — le moins risqué de ce qui reste, et ça referme le chantier bilingue. (Le certificat, lui, est **FAIT** : colonne `certificats.langue` ('FR'|'EN'), sélecteur à la création, dictionnaires `LIB` / `ATT_EN` et marqueurs `data-lib` dans `gabarit-certificat.html` ; la langue est conservée pour qu'une régénération reste identique.)
+2. ~~**La présentation et le catalogue en anglais**~~ — **FAIT (2026-09-04)**, commité, non publié. Le **chantier bilingue est refermé** : le certificat (0.15.0), les fiches et l'import (0.16.0), la présentation, le catalogue et toute la pochette (→ 0.17.0). Voir la section dédiée plus haut. Maquette : `demos/documents-en-anglais.html`.
 3. **Reste de la liste de retours des parents du 2026-08-25** :
    - **Photos — gros chantier à risque, à faire dans sa propre session.** Classer par artiste puis par statut + dossier « divers », section Photos sur la fiche d'artiste. Tout est à plat aujourd'hui et **les chemins sont en base** → migration de fichiers, sauvegarde obligatoire, chemin de retour. Démo avant tout code.
    - **Copie expurgée** pour le soutien technique (décidée) : catalogue sans clients ni ventes.
