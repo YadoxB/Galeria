@@ -227,6 +227,18 @@ export async function rendreArtisteFiche(contenu, params) {
                 Documents <span class="menu-docs-chev" aria-hidden="true">▾</span>
               </button>
               <div class="menu-docs-pop" id="menu-docs-pop" role="menu" hidden>
+                <!-- La bascule ne vaut QUE pour les deux PDF qui suivent. Les
+                     annexes A sont des documents de consignation signés avec
+                     des artistes québécois : elles restent en français
+                     (décision de Dave, 2026-09-04). -->
+                <div class="menu-docs-langue">
+                  <span class="menu-docs-langue-lib">Langue</span>
+                  <span class="bascule-langue" id="bascule-docs" role="group" aria-label="Langue des documents">
+                    <button type="button" class="actif" data-langue="FR">FR</button>
+                    <button type="button" data-langue="EN">EN</button>
+                  </span>
+                </div>
+                <div class="menu-docs-sep"></div>
                 <button type="button" role="menuitem" id="btn-presentation-pdf">Présentation PDF</button>
                 <button type="button" role="menuitem" id="btn-catalogue-pdf">Catalogue PDF</button>
                 <div class="menu-docs-sep"></div>
@@ -508,11 +520,14 @@ export async function rendreArtisteFiche(contenu, params) {
         btnCatalogue.disabled = true;
         btnCatalogue.textContent = 'Génération…';
         try {
-          const res = await window.api.pdfCatalogueGenerer(a.id);
+          const res = await window.api.pdfCatalogueGenerer(a.id, { langue: langueDocs });
           const rep = await confirmer({
             type: 'succes',
-            title: 'Catalogue produit',
+            title: res.langue === 'EN' ? 'Catalogue produit (anglais)' : 'Catalogue produit',
             message: `Catalogue de ${res.nb_oeuvres} œuvre(s) généré en PDF.`,
+            detail: res.langue === 'EN'
+              ? "Les titres des œuvres restent en français : un tableau garde son titre."
+              : undefined,
             buttons: ['Ouvrir le PDF', 'Fermer'],
             defaultId: 0,
             cancelId: 1,
@@ -539,13 +554,21 @@ export async function rendreArtisteFiche(contenu, params) {
         btnPresentation.disabled = true;
         btnPresentation.textContent = 'Génération…';
         try {
-          const res = await window.api.pdfPresentationGenerer(a.id);
+          const res = await window.api.pdfPresentationGenerer(a.id, { langue: langueDocs });
+          // Sections sorties en français faute de version anglaise : on le dit
+          // plutôt que de laisser découvrir la surprise à l'impression.
+          const replis = res.replis || [];
+          const detailReplis = replis.length
+            ? `${replis.length > 1 ? 'Ces sections sont sorties' : 'Cette section est sortie'} en français, faute de version anglaise : ${replis.join(', ')}.\n`
+              + "Le bouton « Traduire avec l'assistant » de la fiche peut y remédier."
+            : undefined;
           const rep = await confirmer({
             type: 'succes',
-            title: 'Présentation produite',
+            title: res.langue === 'EN' ? 'Présentation produite (anglais)' : 'Présentation produite',
             message: res.reutilise
               ? 'Profil inchangé — la dernière présentation a été réutilisée.'
               : 'Présentation générée en PDF.',
+            detail: detailReplis,
             buttons: ['Ouvrir le PDF', 'Fermer'],
             defaultId: 0,
             cancelId: 1,
@@ -584,6 +607,26 @@ export async function rendreArtisteFiche(contenu, params) {
     const btnAnnexeRetrait = contenu.querySelector('#btn-annexe-retrait');
     if (btnAnnexeRetrait) btnAnnexeRetrait.addEventListener('click', () => ouvrirAnnexe('retrait'));
 
+    // --- Langue des documents (présentation et catalogue seulement) ---
+    let langueDocs = 'FR';
+    const basculeDocs = contenu.querySelector('#bascule-docs');
+    const reinitialiserLangueDocs = () => {
+      langueDocs = 'FR';
+      if (!basculeDocs) return;
+      basculeDocs.querySelectorAll('button').forEach((b) => {
+        b.classList.toggle('actif', b.dataset.langue === 'FR');
+      });
+    };
+    if (basculeDocs) {
+      basculeDocs.querySelectorAll('button').forEach((b) => {
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          langueDocs = b.dataset.langue === 'EN' ? 'EN' : 'FR';
+          basculeDocs.querySelectorAll('button').forEach((x) => x.classList.toggle('actif', x === b));
+        });
+      });
+    }
+
     // --- Menu « Documents » : ouverture, fermeture, accessibilité ---
     const menuBtn = contenu.querySelector('#btn-menu-docs');
     const menuPop = contenu.querySelector('#menu-docs-pop');
@@ -598,12 +641,21 @@ export async function rendreArtisteFiche(contenu, params) {
         menuPop.hidden = ouvert;
         menuBtn.setAttribute('aria-expanded', ouvert ? 'false' : 'true');
         if (!ouvert) {
-          const premier = menuPop.querySelector('button');
+          // La langue revient au français à CHAQUE ouverture : un choix
+          // oublié ne doit pas produire un document anglais par surprise
+          // trois jours plus tard.
+          reinitialiserLangueDocs();
+          // Le premier élément de MENU, pas le premier bouton — la bascule
+          // FR/EN est en tête et ne doit pas prendre le focus.
+          const premier = menuPop.querySelector('[role="menuitem"]');
           if (premier) premier.focus();
         }
       });
       // Un clic sur une entrée déclenche son propre handler, puis referme.
+      // La bascule de langue est un réglage, pas une entrée : elle ne ferme
+      // rien, sinon on ne pourrait jamais choisir l'anglais.
       menuPop.addEventListener('click', (e) => {
+        if (e.target.closest('.bascule-langue')) return;
         if (e.target.closest('button')) fermerMenu();
       });
       // Clic ailleurs, ou Échap : on referme. Écouteurs posés sur le contenu de

@@ -1780,10 +1780,10 @@ async function demarrerApplication() {
   ipcMain.handle('certificats:apercu', (_e, oeuvreId) => apercuNumeroCertificat(oeuvreId));
   ipcMain.handle('pdf:certificat-generer', (_e, id) => genererCertificatPdf(id));
   ipcMain.handle('pdf:facture-artiste-generer', (_e, venteId) => genererFactureArtistePdf(venteId));
-  ipcMain.handle('pdf:catalogue-generer', (_e, artisteId) => genererCataloguePdf(artisteId));
+  ipcMain.handle('pdf:catalogue-generer', (_e, artisteId, options) => genererCataloguePdf(artisteId, options || {}));
   ipcMain.handle('pdf:annexe-generer', (_e, payload) => genererAnnexePdf(payload));
-  ipcMain.handle('pdf:presentation-generer', (_e, artisteId) => genererPresentationPdf(artisteId));
-  ipcMain.handle('pdf:pochette-generer', (_e, venteId) => genererPochette(venteId));
+  ipcMain.handle('pdf:presentation-generer', (_e, artisteId, options) => genererPresentationPdf(artisteId, options || {}));
+  ipcMain.handle('pdf:pochette-generer', (_e, venteId, options) => genererPochette(venteId, options || {}));
   ipcMain.handle('pdf:editer-document', (_e, spec) => editerDocument(spec));
   ipcMain.handle('pdf:pochette-fichier', (_e, venteId, type) => cheminPochetteSiExiste(venteId, type));
   ipcMain.handle('pdf:pochette-dossier-infos', (_e, venteId) => infosDossierPochette(venteId));

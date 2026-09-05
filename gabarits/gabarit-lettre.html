@@ -252,15 +252,25 @@ function remplir(data){
     .filter(Boolean).join('<br>');
 
   const titreOeuvreItal = o.titre ? '<em>'+escHtml(o.titre)+'</em>' : '';
+  // Les libellés de la fiche suivent la langue de la lettre. Ils restaient en
+  // français jusqu'au 2026-09-04 : le client anglophone recevait une page
+  // intitulée « The artwork » dont toutes les lignes étaient en français.
+  const LIB_FICHE = (langue === 'EN')
+    ? { titre:'Title', artiste:'Artist', annee:'Year', medium:'Medium',
+        support:'Support', dimensions:'Dimensions', valeur:'Value',
+        numero:'Certificate no.' }
+    : { titre:'Titre', artiste:'Artiste', annee:'Année', medium:'Médium',
+        support:'Support', dimensions:'Dimensions', valeur:'Valeur',
+        numero:'N° de délivrance' };
   const ficheOeuvre =
-    ligneOeuvre('Titre', titreOeuvreItal) +
-    ligneOeuvre('Artiste', escHtml((data.artiste && data.artiste.nom) || '')) +
-    ligneOeuvre('Année', escHtml(o.annee)) +
-    ligneOeuvre('Médium', escHtml(o.medium)) +
-    ligneOeuvre('Support', escHtml(o.support)) +
-    ligneOeuvre('Dimensions', escHtml(o.dimensions)) +
-    ligneOeuvre('Valeur', escHtml(o.valeur)) +
-    ligneOeuvre('N° de délivrance', escHtml(o.numero_delivrance));
+    ligneOeuvre(LIB_FICHE.titre, titreOeuvreItal) +
+    ligneOeuvre(LIB_FICHE.artiste, escHtml((data.artiste && data.artiste.nom) || '')) +
+    ligneOeuvre(LIB_FICHE.annee, escHtml(o.annee)) +
+    ligneOeuvre(LIB_FICHE.medium, escHtml(o.medium)) +
+    ligneOeuvre(LIB_FICHE.support, escHtml(o.support)) +
+    ligneOeuvre(LIB_FICHE.dimensions, escHtml(o.dimensions)) +
+    ligneOeuvre(LIB_FICHE.valeur, escHtml(o.valeur)) +
+    ligneOeuvre(LIB_FICHE.numero, escHtml(o.numero_delivrance));
 
   document.getElementById('doc').innerHTML =
     // PAGE 1 — lettre

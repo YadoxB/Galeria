@@ -73,6 +73,11 @@ function remplir(data){
   const oeuvres = (data && data.oeuvres) || [];
   const artiste = (data && data.artiste_nom) || '';
   const logo = (data && data.logo) || 'actifs/logo-gvsj.png';
+  // Libellés fournis par l'application (src/pdf.js, LIB_DOC) : le gabarit ne
+  // traduit rien lui-même. Sans eux — anciens appels — on reste en français.
+  const lib = (data && data.libelles) || {};
+  const libCatalogue = lib.catalogue || 'Catalogue des œuvres';
+  const libPageDe = lib.pageDe || '/';
   const root = document.getElementById('doc');
   root.innerHTML = '';
 
@@ -100,9 +105,9 @@ function remplir(data){
           <img class="logo" src="${logo}" alt="">
           <div class="head-centre">
             <div class="artist-name">${escHtml(artiste)}</div>
-            <div class="cat-label">Catalogue des œuvres</div>
+            <div class="cat-label">${escHtml(libCatalogue)}</div>
           </div>
-          <div class="page-num">Page ${p + 1} / ${nbPages}</div>
+          <div class="page-num">Page ${p + 1} ${escHtml(libPageDe)} ${nbPages}</div>
         </div>
         <div class="grid">${cellules.join('')}</div>
       </div>`);

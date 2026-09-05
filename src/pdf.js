@@ -618,31 +618,141 @@ async function genererRapportPdf(dateISO) {
   return sortie;
 }
 
+// ===========================================================================
+// Documents en anglais (présentation et catalogue d'artiste)
+//
+// Ce qui se traduit : les LIBELLÉS du document et, pour la présentation, les
+// textes de l'artiste s'ils ont une version anglaise (colonnes `_en`).
+// Ce qui NE se traduit PAS :
+//   — les titres d'œuvres (un tableau garde son titre, ici comme sur le site) ;
+//   — les annexes A, documents de consignation signés avec des artistes
+//     québécois (décision de Dave, 2026-09-04) ;
+//   — le format des prix : « 2 400 $ » dans les deux langues, pour que les
+//     documents de la galerie restent cohérents entre eux (idem).
+// ===========================================================================
+
+const LIB_DOC = {
+  FR: {
+    biographie: 'Biographie',
+    demarche: 'Démarche',
+    curriculum: 'Curriculum',
+    catalogue: 'Catalogue des œuvres',
+    page: (n, t) => `Page ${n} / ${t}`,
+    indisponible: 'Non disponible',
+    prixSurDemande: 'Prix sur demande',
+    sur: 'sur',
+  },
+  EN: {
+    // Intitulés repris du site de la galerie, pour qu'un lecteur retrouve les
+    // mêmes mots d'un support à l'autre.
+    biographie: 'Biography',
+    demarche: "Artist's statement",
+    curriculum: 'C.V.',
+    catalogue: 'Catalogue of works',
+    page: (n, t) => `Page ${n} of ${t}`,
+    indisponible: 'Not available',
+    prixSurDemande: 'Price on request',
+    sur: 'on',
+  },
+};
+
+function libelles(langue) {
+  return langue === 'EN' ? LIB_DOC.EN : LIB_DOC.FR;
+}
+
+// Médiums et supports : correspondance sur la chaîne ENTIÈRE, jamais mot à
+// mot. Les valeurs sont saisies à la main et souvent composées
+// (« Bauxite/acrylique et coke (charbon) ») : une substitution mot à mot
+// produirait du charabia. Sans correspondance, on garde le français — même
+// règle que le repli des textes.
+const MEDIUMS_EN = {
+  'acrylique': 'Acrylic',
+  'huile': 'Oil',
+  'techniques mixtes': 'Mixed media',
+  'encaustique': 'Encaustic',
+  'impression': 'Print',
+  'giclée': 'Giclée',
+  'fusain': 'Charcoal',
+  'aquarelle': 'Watercolour',
+  'pastel': 'Pastel',
+  'bronze': 'Bronze',
+  'béton': 'Concrete',
+  'cuivre': 'Copper',
+  'acier': 'Steel',
+  'acier inox': 'Stainless steel',
+  'aluminium': 'Aluminium',
+  'laiton': 'Brass',
+  'chrome': 'Chrome',
+  'verre': 'Glass',
+  'granite': 'Granite',
+  'argile': 'Clay',
+  'résines polymères': 'Polymer resin',
+  'bois': 'Wood',
+  // Libellés composés relevés tels quels dans le catalogue. Ils font passer la
+  // couverture de 76 % à 96 % des œuvres. Ce sont des rendus proposés, à
+  // corriger librement — « Pixélisme » notamment est un mot d'artiste.
+  'encaustique sur bois, feuilles d\'or 24k': 'Encaustic on wood, 24k gold leaf',
+  'acrylique sur toile - pixélisme': 'Acrylic on canvas — Pixelism',
+  'bauxite/acrylique et coke (charbon)': 'Bauxite/acrylic and coke (charcoal)',
+  'fragments d\'acrylique': 'Acrylic fragments',
+  'bauxite/acrylique': 'Bauxite/acrylic',
+  'œuvre numérique laminée': 'Laminated digital work',
+};
+
+const SUPPORTS_EN = {
+  'toile': 'Canvas',
+  'bois': 'Wood',
+  'papier': 'Paper',
+  'papier beaux-arts': 'Fine art paper',
+  "feuille d'acrylique": 'Acrylic sheet',
+  'masonite': 'Masonite',
+};
+
+function traduireTerme(valeur, table, langue) {
+  const v = (valeur == null ? '' : String(valeur)).trim();
+  if (!v || langue !== 'EN') return v;
+  return table[v.toLowerCase()] || v;
+}
+
+// Les dimensions sont stockées avec leur unité (« 30 × 36 × 0.75 po ») : on ne
+// remplace que le « po » final, sans toucher aux nombres.
+function dimensionsSelonLangue(dimensions, langue) {
+  const d = (dimensions == null ? '' : String(dimensions)).trim();
+  if (!d || langue !== 'EN') return d;
+  return d.replace(/\bpo\b\s*$/i, 'in');
+}
+
 // ===== Orchestrateur : catalogue d'artiste =====
 
-function dispoCatalogue(o) {
+function dispoCatalogue(o, langue) {
+  const L = libelles(langue);
   const s = (o.statut || '').toLowerCase();
   // Vendue ou réservée → non disponible à la vente.
   if (s.includes('vend') || s.includes('réserv') || s.includes('reserv')) {
-    return { label: 'Non disponible', classe: 'dispo-indispo' };
+    return { label: L.indisponible, classe: 'dispo-indispo' };
   }
   // Disponible → on affiche le prix (ou « Prix sur demande » si absent).
+  // Le prix garde le format québécois dans les deux langues : décision de
+  // Dave (2026-09-04), pour que les documents restent cohérents entre eux.
   const prix = formaterValeurCa(o.prix);
-  return { label: prix || 'Prix sur demande', classe: 'dispo-prix' };
+  return { label: prix || L.prixSurDemande, classe: 'dispo-prix' };
 }
 
-function preparerDonneesCatalogue(artiste, oeuvres) {
+function preparerDonneesCatalogue(artiste, oeuvres, langue = 'FR') {
+  const L = libelles(langue);
   const nom = [artiste.prenom, artiste.nom].filter((x) => x && String(x).trim()).join(' ') || artiste.nom || '';
   return {
     artiste_nom: nom,
     logo: 'actifs/logo-gvsj.png',
+    langue,
+    libelles: { catalogue: L.catalogue, pageDe: langue === 'EN' ? 'of' : '/' },
     oeuvres: oeuvres.map((o) => {
-      const dims = o.dimensions || '';
-      const med = o.medium || '';
-      const sup = o.support || '';
-      const medSup = med ? (sup ? `${med} sur ${sup}` : med) : (sup || '');
+      const dims = dimensionsSelonLangue(o.dimensions, langue);
+      const med = traduireTerme(o.medium, MEDIUMS_EN, langue);
+      const sup = traduireTerme(o.support, SUPPORTS_EN, langue);
+      const medSup = med ? (sup ? `${med} ${L.sur} ${sup}` : med) : (sup || '');
       const details = [dims, medSup].filter(Boolean).join(' · ');
-      const d = dispoCatalogue(o);
+      const d = dispoCatalogue(o, langue);
       return {
         inv: o.numero_inventaire || '',
         titre: o.titre || '',
@@ -655,20 +765,23 @@ function preparerDonneesCatalogue(artiste, oeuvres) {
   };
 }
 
-async function genererCataloguePdf(artisteId) {
+async function genererCataloguePdf(artisteId, { langue = 'FR' } = {}) {
+  const lg = langue === 'EN' ? 'EN' : 'FR';
   const artiste = obtenirArtiste(artisteId);
   if (!artiste) throw new Error('Artiste introuvable.');
   const oeuvres = oeuvresPourCatalogue(artisteId);
-  const donnees = preparerDonneesCatalogue(artiste, oeuvres);
+  const donnees = preparerDonneesCatalogue(artiste, oeuvres, lg);
 
   const dossier = path.join(getDocumentsDirAnnee(new Date().getFullYear()), 'Catalogues');
   const artisteNom = [artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom || '';
+  // Le nom de fichier distingue la langue : sinon deux catalogues du même
+  // artiste, produits le même jour, se recouvriraient.
   const sortie = await genererPdfTolerant(
     { gabaritNom: 'gabarit-catalogue.html', donnees, paysage: false },
     dossier,
-    nomDocument(`Catalogue ${dateJour()}`, artisteNom),
+    nomDocument(`Catalogue${lg === 'EN' ? ' (anglais)' : ''} ${dateJour()}`, artisteNom),
   );
-  return { pdf_path: sortie, nb_oeuvres: oeuvres.length };
+  return { pdf_path: sortie, nb_oeuvres: oeuvres.length, langue: lg };
 }
 
 // ===== Orchestrateur : cartels d'exposition =====
@@ -802,11 +915,14 @@ async function genererAnnexePdf({ type, artiste_id, artisteId, oeuvres = [], oeu
 
 // ===== Orchestrateur : présentation d'artiste (avec cache par signature) =====
 
-function titreDArtiste(type) {
+function titreDArtiste(type, langue = 'FR') {
   const t = (type || '').toLowerCase();
-  if (t.includes('peintre')) return 'Artiste peintre';
-  if (t.includes('sculpteur')) return 'Sculpteur';
-  if (t.includes('photo')) return 'Photographe';
+  const en = langue === 'EN';
+  if (t.includes('peintre')) return en ? 'Painter' : 'Artiste peintre';
+  if (t.includes('sculpteur')) return en ? 'Sculptor' : 'Sculpteur';
+  if (t.includes('photo')) return en ? 'Photographer' : 'Photographe';
+  // Type libre (les menus acceptent n'importe quelle valeur depuis la
+  // 0.14.0) : on le laisse tel quel plutôt que d'inventer une traduction.
   return type || '';
 }
 
@@ -831,36 +947,76 @@ function signaturePresentation(artiste) {
   return crypto.createHash('sha1').update(payload).digest('hex');
 }
 
-function preparerDonneesPresentation(artiste, cfg) {
+// En anglais, chaque section prend sa version `_en` si elle existe, et REPLIE
+// sur le français sinon : un lecteur anglophone qui tombe sur un texte
+// français comprend ; devant un blanc, non. Les sections repliées sont
+// remontées à l'appelant pour être dites à l'utilisateur après coup.
+function preparerDonneesPresentation(artiste, cfg, langue = 'FR') {
+  const lg = langue === 'EN' ? 'EN' : 'FR';
+  const L = libelles(lg);
   const nom = [artiste.prenom, artiste.nom].filter((x) => x && String(x).trim()).join(' ') || artiste.nom || '';
+  const rempli = (t) => !!(t && String(t).trim());
+  const replis = [];
+
+  const texte = (champ, libelle) => {
+    const fr = artiste[champ] || '';
+    if (lg !== 'EN') return fr;
+    const en = artiste[`${champ}_en`] || '';
+    if (rempli(en)) return en;
+    if (rempli(fr)) replis.push(libelle);
+    return fr;
+  };
+
   return {
     galerie: donneesGalerie(cfg),
-    artiste: { nom, titre: titreDArtiste(artiste.type), photo: photoEnDataUrl(artiste.photo_path) },
+    langue: lg,
+    // Sections sorties en français faute de version anglaise : pas une erreur,
+    // un compte rendu.
+    replis,
+    artiste: {
+      nom,
+      titre: titreDArtiste(artiste.type, lg),
+      photo: photoEnDataUrl(artiste.photo_path),
+    },
     sections: [
-      { titre: 'Biographie', contenu: artiste.biographie || '' },
+      { titre: L.biographie, contenu: texte('biographie', L.biographie) },
       // Démarche et Curriculum commencent chacun sur une nouvelle page
       // (demande de Dave, 2026-07-19). Le gabarit n'applique le saut qu'aux
       // sections d'indice > 0 : si la Biographie est vide et retirée, la
       // Démarche devient la 1re section et ne crée pas de page blanche.
-      { titre: 'Démarche', contenu: artiste.demarche || '', sautAvant: true },
-      { titre: 'Curriculum', contenu: artiste.curriculum || '', cv: true, sautAvant: true },
+      { titre: L.demarche, contenu: texte('demarche', L.demarche), sautAvant: true },
+      { titre: L.curriculum, contenu: texte('curriculum', L.curriculum), cv: true, sautAvant: true },
     ],
   };
 }
 
 // Génère (ou réutilise) la présentation PDF d'un artiste. Réutilise le PDF
 // existant tant que la signature du profil n'a pas changé.
-async function genererPresentationPdf(artisteId, { forcer = false } = {}) {
+//
+// ⚠ Le cache (`presentation_path` + `presentation_sig`) ne concerne QUE la
+// version française. La version anglaise produit toujours un fichier distinct
+// et n'y touche jamais : sinon la prochaine présentation « française »
+// demandée ressortirait le PDF anglais. Même principe que la « version
+// modifiée » plus bas.
+async function genererPresentationPdf(artisteId, { forcer = false, langue = 'FR' } = {}) {
+  const lg = langue === 'EN' ? 'EN' : 'FR';
   const artiste = obtenirArtiste(artisteId);
   if (!artiste) throw new Error('Artiste introuvable.');
   const sig = signaturePresentation(artiste);
-  if (!forcer && artiste.presentation_sig === sig && artiste.presentation_path && fs.existsSync(artiste.presentation_path)) {
-    return { pdf_path: artiste.presentation_path, reutilise: true };
+  if (lg === 'FR' && !forcer && artiste.presentation_sig === sig && artiste.presentation_path && fs.existsSync(artiste.presentation_path)) {
+    return { pdf_path: artiste.presentation_path, reutilise: true, langue: lg, replis: [] };
   }
   const cfg = obtenirConfig();
-  const donnees = preparerDonneesPresentation(artiste, cfg);
+  const donnees = preparerDonneesPresentation(artiste, cfg, lg);
   const dossier = path.join(getDocumentsDirAnnee(new Date().getFullYear()), 'Présentations');
   const artisteNom = [artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom || '';
+
+  if (lg === 'EN') {
+    const sortieEn = cheminUnique(dossier, nomDocument('Présentation (anglais)', artisteNom));
+    await genererPdf({ gabaritNom: 'gabarit-presentation.html', donnees, sortie: sortieEn });
+    return { pdf_path: sortieEn, reutilise: false, langue: 'EN', replis: donnees.replis };
+  }
+
   const ancien = artiste.presentation_path;
   const sortie = await genererPdfTolerant(
     { gabaritNom: 'gabarit-presentation.html', donnees },
@@ -869,7 +1025,7 @@ async function genererPresentationPdf(artisteId, { forcer = false } = {}) {
   );
   supprimerSiAutre(ancien, sortie);
   majPresentationArtiste(artisteId, sortie, sig);
-  return { pdf_path: sortie, reutilise: false };
+  return { pdf_path: sortie, reutilise: false, langue: 'FR', replis: [] };
 }
 
 // Présentation « version modifiée » : applique des textes édités (biographie /
@@ -926,9 +1082,11 @@ function preparerDonneesLettre(vente, cert, cfg) {
       titre: vente.oeuvre_titre || '',
       photo: photoEnDataUrl(vente.image_path),
       annee: vente.annee || '',
-      medium: vente.medium || '',
-      support: vente.support || '',
-      dimensions: vente.dimensions || '',
+      // Médium, support et unité suivent la langue de la vente, comme dans le
+      // catalogue. Le titre, lui, ne se traduit pas.
+      medium: traduireTerme(vente.medium, MEDIUMS_EN, vente.langue),
+      support: traduireTerme(vente.support, SUPPORTS_EN, vente.langue),
+      dimensions: dimensionsSelonLangue(vente.dimensions, vente.langue),
       valeur: formaterValeurCa(vente.prix_vente != null ? vente.prix_vente : vente.oeuvre_prix),
       numero_delivrance: cert ? cert.numero_delivrance : '',
     },
@@ -1004,13 +1162,21 @@ function supprimerDossierPochette(chemin) {
 // Nom de fichier (convivial) d'un document dans la pochette, par type. Doit
 // rester identique à ce que produit genererPochette pour que la « version
 // modifiée » remplace bien le bon fichier. Retourne null si hors pochette.
-function nomFichierPochette(type, vente) {
+// Les noms suivent la langue de la vente : un client anglophone reçoit un
+// dossier dont les noms de fichiers se lisent.
+// ⚠ Cette fonction sert À LA FOIS à écrire les fichiers et à les retrouver
+// (cheminPochetteSiExiste) : les deux côtés doivent toujours passer par elle,
+// sinon le lien « ouvrir la présentation de la pochette » se casse. Les
+// pochettes anglaises produites AVANT ce changement gardent les anciens noms
+// français ; les régénérer suffit.
+function nomFichierPochette(type, vente, langue) {
+  const en = (langue || vente.langue) === 'EN';
   if (type === 'lettre') {
     const cli = `${vente.client_prenom || ''} ${vente.client_nom || ''}`.trim();
-    return nomDocument('Lettre de remerciement', cli);
+    return nomDocument(en ? 'Thank-you letter' : 'Lettre de remerciement', cli);
   }
   if (type === 'presentation') {
-    return nomDocument('Présentation', vente.artiste_nom || '');
+    return nomDocument(en ? 'Artist presentation' : 'Présentation', vente.artiste_nom || '');
   }
   return null;
 }
@@ -1036,17 +1202,23 @@ async function genererLettrePochettePdf(venteId, dossier, nomFichier) {
 }
 
 // Assemble tous les documents de la pochette dans un dossier par vente.
-async function genererPochette(venteId) {
+async function genererPochette(venteId, { langue: langueChoisie } = {}) {
   const vente = obtenirVente(venteId);
   if (!vente) throw new Error('Vente introuvable.');
   const cfg = obtenirConfig();
   const dossier = dossierPochetteVente(vente);
   fs.mkdirSync(dossier, { recursive: true });
 
+  // La langue choisie sur la vente vaut pour TOUTE la pochette, pas seulement
+  // pour la lettre — c'était le cas jusqu'au 2026-09-04, et le client
+  // anglophone recevait un certificat et une présentation en français.
+  // La langue vient du choix fait au moment de produire ; à défaut, de celle
+  // enregistrée sur la vente.
+  const langue = (langueChoisie || vente.langue) === 'EN' ? 'EN' : 'FR';
   const fichiers = [];
 
   // 1. Lettre + fiche de l'œuvre.
-  const lettre = await genererLettrePochettePdf(venteId, dossier, nomFichierPochette('lettre', vente));
+  const lettre = await genererLettrePochettePdf(venteId, dossier, nomFichierPochette('lettre', vente, langue));
   fichiers.push({ label: "Lettre de remerciement + fiche de l'œuvre", path: lettre.pdf_path, present: true });
 
   // 2. Certificat d'authenticité — produit dans le workflow s'il n'existe pas
@@ -1069,6 +1241,7 @@ async function genererPochette(venteId) {
       particularite: null,
       numero_sage: sage,
       pdf_path: null,
+      langue,
     });
   }
   if (cert && (!cert.pdf_path || !fs.existsSync(cert.pdf_path))) {
@@ -1076,26 +1249,52 @@ async function genererPochette(venteId) {
     cert.pdf_path = gen.pdf_path;
   }
   if (cert && cert.pdf_path && fs.existsSync(cert.pdf_path)) {
-    fichiers.push({ label: "Certificat d'authenticité", path: cert.pdf_path, present: true });
+    // Un certificat déjà délivré garde SA langue : c'est une pièce officielle
+    // numérotée, on ne la refait pas dans le dos de l'utilisateur. On le dit.
+    const certLangue = cert.langue === 'EN' ? 'EN' : 'FR';
+    const discordance = certLangue !== langue;
+    fichiers.push({
+      label: "Certificat d'authenticité",
+      path: cert.pdf_path,
+      present: true,
+      note: discordance
+        ? `déjà délivré en ${certLangue === 'EN' ? 'anglais' : 'français'} — la pochette est en ${langue === 'EN' ? 'anglais' : 'français'}`
+        : undefined,
+    });
   } else {
     fichiers.push({ label: "Certificat d'authenticité", path: null, present: false, note: 'à produire' });
   }
 
-  // 3. Présentation de l'artiste (réutilisée via le cache) → copie.
+  // 3. Présentation de l'artiste → copie. En anglais, elle n'est jamais tirée
+  //    du cache (qui ne garde que la version française) : voir
+  //    genererPresentationPdf.
   try {
-    const pres = await genererPresentationPdf(vente.artiste_id);
-    const dest = path.join(dossier, nomFichierPochette('presentation', vente));
+    const pres = await genererPresentationPdf(vente.artiste_id, { langue });
+    const dest = path.join(dossier, nomFichierPochette('presentation', vente, langue));
     fs.copyFileSync(pres.pdf_path, dest);
-    fichiers.push({ label: "Présentation de l'artiste", path: dest, present: true });
+    const replis = pres.replis || [];
+    fichiers.push({
+      label: "Présentation de l'artiste",
+      path: dest,
+      present: true,
+      note: replis.length
+        ? `${replis.join(', ')} : sorti${replis.length > 1 ? 's' : ''} en français, faute de version anglaise`
+        : undefined,
+    });
   } catch (e) {
     fichiers.push({ label: "Présentation de l'artiste", path: null, present: false, note: e.message });
   }
 
   // 4. Guide de l'acheteur (actif fixe) → copie.
+  //    Ce PDF est rédigé BILINGUE : un seul fichier sert dans les deux
+  //    langues, seul son nom suit celle de la pochette.
   const guideSrc = path.join(__dirname, '..', 'gabarits', 'actifs', 'guide_certificat.pdf');
   if (fs.existsSync(guideSrc)) {
-    const dest = path.join(dossier, "Guide de l'acheteur.pdf");
+    const dest = path.join(dossier, langue === 'EN' ? "Buyer's guide.pdf" : "Guide de l'acheteur.pdf");
     fs.copyFileSync(guideSrc, dest);
+    // Le libellé reste français : c'est le compte rendu affiché dans l'app,
+    // dont l'interface est française. Seul le NOM DU FICHIER suit la langue
+    // de la pochette, puisque c'est lui que le client verra.
     fichiers.push({ label: "Guide de l'acheteur", path: dest, present: true });
   }
 
@@ -1122,7 +1321,9 @@ async function editerDocument(spec) {
     if (!artiste) throw new Error('Artiste introuvable.');
     const artisteNom = [artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom || '';
     gabaritNom = 'gabarit-presentation.html';
-    donnees = preparerDonneesPresentation(artiste, cfg);
+    // La version modifiée suit la langue de la vente quand elle en vient
+    // (pochette), sinon celle demandée, sinon le français.
+    donnees = preparerDonneesPresentation(artiste, cfg, spec.langue || (venteCtx && venteCtx.langue) || 'FR');
     sortie = cheminUnique(path.join(dossierAnnee, 'Présentations'), nomDocument('Présentation', artisteNom, { modifie: true }));
     titre = 'Présentation — version modifiée';
   } else if (spec.type === 'catalogue') {
@@ -1130,7 +1331,7 @@ async function editerDocument(spec) {
     if (!artiste) throw new Error('Artiste introuvable.');
     const artisteNom = [artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom || '';
     gabaritNom = 'gabarit-catalogue.html';
-    donnees = preparerDonneesCatalogue(artiste, oeuvresPourCatalogue(spec.artiste_id));
+    donnees = preparerDonneesCatalogue(artiste, oeuvresPourCatalogue(spec.artiste_id), spec.langue || 'FR');
     sortie = cheminUnique(path.join(dossierAnnee, 'Catalogues'), nomDocument(`Catalogue ${dateJour()}`, artisteNom, { modifie: true }));
     titre = 'Catalogue — version modifiée';
   } else if (spec.type === 'lettre') {

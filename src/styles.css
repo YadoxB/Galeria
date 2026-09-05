@@ -2536,6 +2536,23 @@ details.bloc.pliable > .bloc-corps {
 .menu-docs-pop button:hover { background: var(--soft-ivory); }
 .menu-docs-pop button:focus-visible { outline: 2px solid var(--warm-gold); outline-offset: -2px; }
 .menu-docs-sep { height: 1px; background: var(--mist); margin: 5px 4px; }
+/* Langue des documents : un réglage en tête du menu, pas une entrée. Il ne
+   vaut que pour la présentation et le catalogue — les annexes A restent en
+   français. */
+.menu-docs-langue { display: flex; align-items: center; gap: var(--s2); padding: 4px 8px 7px; }
+.menu-docs-langue-lib {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--stone);
+  font-weight: 600;
+}
+.menu-docs-langue .bascule-langue { margin-left: auto; }
+/* Le menu met tous ses boutons en pleine largeur : la bascule y échappe. */
+.menu-docs-pop .bascule-langue button { width: auto; border-radius: 0; padding: 5px 12px; }
+.menu-docs-pop .bascule-langue button:hover { background: var(--cloud); }
+.menu-docs-pop .bascule-langue button.actif,
+.menu-docs-pop .bascule-langue button.actif:hover { background: var(--gallery-navy); color: #fff; }
 
 /* Niveau 2 : contenu (présentation + aperçu du catalogue) */
 .contenu-artiste { display: grid; grid-template-columns: 1.25fr 1fr; gap: var(--s3); margin-bottom: var(--s4); align-items: start; }

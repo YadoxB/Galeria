@@ -94,8 +94,32 @@ export async function rendreVenteFiche(contenu, params) {
   }
 
   // Produit la pochette d'une vente et propose d'ouvrir son dossier.
-  async function produirePochette(venteId, { recharger = true } = {}) {
-    const res = await window.api.pdfPochetteGenerer(venteId);
+  //
+  // La langue est demandée à chaque production, préréglée sur celle
+  // enregistrée au moment de la vente. Elle vaut pour TOUS les documents —
+  // lettre, certificat, présentation — et pour le nom des fichiers. Le choix
+  // ne modifie pas la vente : c'est une décision d'impression, pas une
+  // correction de la fiche.
+  async function produirePochette(venteId, { recharger = true, langueSource } = {}) {
+    // langueSource : la vente venant d'être enregistrée n'est pas encore dans
+    // `v`, il faut donc pouvoir passer sa langue explicitement.
+    const langueVente = (langueSource || v.langue) === 'EN' ? 'EN' : 'FR';
+    const choix = await confirmer({
+      type: 'question',
+      title: 'Langue de la pochette',
+      message: 'Dans quelle langue produire les documents de cette vente ?',
+      detail: `Cette vente est enregistrée en ${langueVente === 'EN' ? 'anglais' : 'français'}.\n`
+        + "La langue s'applique à la lettre, au certificat, à la présentation de l'artiste et au nom des fichiers.",
+      // Le bouton par défaut est celui de la vente : un simple Entrée fait ce
+      // qu'on attend, sans avoir à relire.
+      buttons: ['Français', 'Anglais', 'Annuler'],
+      defaultId: langueVente === 'EN' ? 1 : 0,
+      cancelId: 2,
+    });
+    if (choix !== 0 && choix !== 1) return null;
+    const langue = choix === 1 ? 'EN' : 'FR';
+
+    const res = await window.api.pdfPochetteGenerer(venteId, { langue });
     const lignes = res.fichiers
       .map((f) => (f.present ? '✓ ' : '— ') + f.label + (f.note ? ' (' + f.note + ')' : ''))
       .join('\n');
@@ -1034,7 +1058,7 @@ export async function rendreVenteFiche(contenu, params) {
             defaultId: 0, cancelId: 1,
           });
           if (repPochette === 0) {
-            try { await produirePochette(resultat.id, { recharger: false }); }
+            try { await produirePochette(resultat.id, { recharger: false, langueSource: resultat.langue }); }
             catch (err) { await alerter({ type: 'error', title: 'Génération échouée', message: nettoyerErreur(err) }); }
           }
           // Remplacer la pile par la fiche en lecture
