@@ -58,7 +58,7 @@ export async function rendreArtisteFiche(contenu, params) {
     } catch { mediumsArtiste = []; }
   }
 
-  let stats = { catalogue: 0, disponibles: 0, retirees: 0, valeurDispo: 0, ventes: 0 };
+  let stats = { catalogue: 0, disponibles: 0, exposees: 0, retirees: 0, valeurDispo: 0, ventes: 0 };
   let apercu = [];
 
   if (estNouveau) {
@@ -203,6 +203,10 @@ export async function rendreArtisteFiche(contenu, params) {
           <div class="hero-artiste-stats">
             <div class="hero-stat"><span class="v">${stats.catalogue}</span><span class="l">Au catalogue</span></div>
             <div class="hero-stat"><span class="v accent">${stats.disponibles}</span><span class="l">Disponibles</span></div>
+            <!-- Toujours affiché, même à zéro : une rangée dont le nombre de
+                 cases change d'un artiste à l'autre est déroutante. En rouge
+                 quand il y en a — c'est un état temporaire, pas un total. -->
+            <div class="hero-stat"><span class="v${stats.exposees ? ' expo' : ''}">${stats.exposees || 0}</span><span class="l">En exposition</span></div>
             <div class="hero-stat"><span class="v">${stats.retirees || 0}</span><span class="l">Retirées</span></div>
             <div class="hero-stat"><span class="v">${stats.ventes}</span><span class="l">Ventes</span></div>
             <div class="hero-stat hero-stat-valeur" id="stat-valeur-dispo" data-valeur="${ech(formaterMontant(stats.valeurDispo))}" title="Cliquer pour afficher">

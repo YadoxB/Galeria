@@ -99,6 +99,14 @@ function obtenirFicheArtisteBundle(id) {
               WHERE o.artiste_id = ?`)
     .get(id).n;
 
+  // Œuvres actuellement parties en exposition. Elles ne sont ni disponibles
+  // ni retirées : le statut « exposee » les exclut déjà du compte des
+  // disponibles, et elles restent au catalogue (archive = 0).
+  const exposeesNb = db
+    .prepare(`SELECT COUNT(*) AS n FROM oeuvres
+              WHERE artiste_id = ? AND archive = 0 AND statut = 'exposee'`)
+    .get(id).n;
+
   const apercu = db
     .prepare(`SELECT id, titre, image_path, statut
               FROM oeuvres
@@ -116,6 +124,7 @@ function obtenirFicheArtisteBundle(id) {
       // reste au catalogue : pas de requête de plus.
       retirees: artiste.nb_oeuvres - artiste.nb_oeuvres_catalogue,
       disponibles: dispoRow.n,
+      exposees: exposeesNb,
       valeurDispo: dispoRow.v,
       ventes: ventesNb,
     },

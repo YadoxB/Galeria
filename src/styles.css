@@ -2502,6 +2502,9 @@ details.bloc.pliable > .bloc-corps {
 .hero-artiste-stats .hero-stat { display: flex; flex-direction: column; }
 .hero-artiste-stats .v { font-family: var(--font-titre); font-size: 24px; color: var(--gallery-navy); }
 .hero-artiste-stats .v.accent { color: var(--warm-gold); }
+/* Œuvres parties en exposition : un état temporaire, pas un total — d'où le
+   rouge de la galerie plutôt que l'or des disponibles. */
+.hero-artiste-stats .v.expo { color: #900001; }
 .hero-artiste-stats .l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--stone); }
 .hero-stat-valeur { cursor: pointer; user-select: none; }
 .hero-stat-valeur .v { color: var(--stone); letter-spacing: 1px; }
