@@ -66,13 +66,18 @@ body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;background:#e8e
 --------------------------------------------------------------------------- */
 .avec-photo .cartel{flex-direction:column;align-items:stretch;justify-content:flex-start;
                     gap:0;padding:3.5mm 4mm;}
-.cartel-photo{flex:1 1 auto;min-height:0;margin-bottom:2mm;
-              display:flex;align-items:center;justify-content:center;overflow:hidden;}
-.cartel-photo img{max-width:100%;max-height:100%;width:auto;height:auto;
-                  object-fit:contain;display:block;}
+/* ⚠ `flex:1 1 0` et non `1 1 auto` : avec `auto`, la hauteur de base de la
+   case est celle de l'IMAGE, donc indéfinie tant que l'image n'est pas
+   mesurée. À l'écran le navigateur s'en sortait ; à l'IMPRESSION, l'image
+   sortait à sa taille naturelle et une page de six cartels s'étalait sur
+   QUATRE feuilles (signalé par les parents, 2026-09-06).
+   Avec `0`, la hauteur vient uniquement du partage de l'espace : elle est
+   définie, et le `height:100%` de l'image ci-dessous s'y résout. */
+.cartel-photo{flex:1 1 0;min-height:0;margin-bottom:2mm;overflow:hidden;}
+.cartel-photo img{width:100%;height:100%;object-fit:contain;display:block;}
 /* Œuvre sans photo : on laisse le blanc plutôt qu'un cadre vide, pour que la
    case garde exactement la même hauteur de texte que ses voisines. */
-.cartel-photo-vide{flex:1 1 auto;min-height:0;margin-bottom:2mm;}
+.cartel-photo-vide{flex:1 1 0;min-height:0;margin-bottom:2mm;}
 .cartel-bas{display:flex;align-items:flex-end;justify-content:space-between;gap:3mm;}
 .avec-photo .cartel-texte{flex:1;}
 .avec-photo .cartel-qr{width:20mm;height:20mm;}

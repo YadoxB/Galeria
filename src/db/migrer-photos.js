@@ -18,9 +18,11 @@
 //
 //   1. Ne s'exécute qu'UNE FOIS (PRAGMA user_version), et seulement si
 //      l'ancienne arborescence est reconnue.
-//   2. Un ESSAI À BLANC calcule tout le plan avant de toucher au disque : si
-//      deux photos veulent le même chemin, ou si un fichier manque, on
-//      s'arrête sans rien avoir modifié.
+//   2. Un ESSAI À BLANC calcule tout le plan avant de toucher au disque. Si
+//      deux photos veulent le MÊME chemin, on s'arrête sans rien modifier :
+//      une collision ferait perdre une photo. En revanche un fichier ABSENT
+//      du disque n'arrête rien — c'est un état déjà cassé, que la migration
+//      ne peut ni réparer ni aggraver ; on le saute et on le compte.
 //   3. COPIE, puis VÉRIFICATION (taille + empreinte), puis seulement
 //      suppression de l'original. Jamais un déplacement sec.
 //   4. La base n'est réécrite qu'APRÈS que tous les fichiers sont arrivés, en
@@ -63,13 +65,24 @@ function construirePlan(db) {
   const parId = new Map(artistes.map((a) => [a.id, a]));
 
   const deplacements = []; // { de, vers, table, id, colonne }
-  const problemes = [];
+  const problemes = []; // BLOQUANTS : la migration n'aura pas lieu
+  const absents = [];   // signalés seulement : rien à déplacer, rien à casser
   const cibles = new Map(); // vers → source, pour détecter les collisions
 
   const ajouter = (de, vers, table, id, colonne) => {
     const source = path.join(racine, de);
     if (!fs.existsSync(source)) {
-      problemes.push(`Fichier introuvable : ${de}`);
+      // ⚠ NON BLOQUANT — corrigé le 2026-09-06 après un signalement des
+      // parents. Leur base référençait des portraits d'artistes absents du
+      // disque : la migration se refusait à CHAQUE démarrage, donc leurs
+      // photos n'ont jamais été rangées, et l'erreur s'empilait dans le
+      // journal sans que personne la voie.
+      //
+      // Un fichier manquant est un état DÉJÀ cassé, que la migration ne peut
+      // ni réparer ni aggraver : on le saute et on le signale. Seules les
+      // COLLISIONS restent bloquantes, parce qu'elles, elles feraient perdre
+      // une photo.
+      absents.push(de);
       return;
     }
     // Déjà à la bonne place (migration relancée après un échec partiel).
@@ -118,7 +131,7 @@ function construirePlan(db) {
   parcourir('artistes');
   parcourir('oeuvres');
 
-  return { deplacements, orphelins, problemes, artistes };
+  return { deplacements, orphelins, problemes, absents, artistes };
 }
 
 // ---------------------------------------------------------------------------
@@ -221,6 +234,7 @@ function migrerPhotos(db) {
       fait: true,
       deplaces: journal.deplacements.length,
       orphelins: journal.orphelins.length,
+      absents: plan.absents.length,
       journal: cheminJournal,
     };
   } catch (err) {
