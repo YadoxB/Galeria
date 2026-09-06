@@ -5,6 +5,8 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { openDatabase, closeDatabase, lireCatalogueId } = require('./db/database');
 const { migrerPhotos } = require('./db/migrer-photos');
+const { apercuCopieSoutien, produireCopieSoutien } = require('./db/copie-soutien');
+const { construireRapport, rapportEnTexte } = require('./soutien-rapport');
 const { rangerPhotos, renommerDossierArtiste, preparerDossiers } = require('./db/photos-ranger');
 const { dossierArtiste } = require('./photos-chemins');
 const { listerPhotosArtiste, ajouterPhotosDivers, copierPhoto, exporterPhotos, ouvrirDossierArtiste } = require('./photos-artiste');
@@ -1557,6 +1559,73 @@ async function demarrerApplication() {
   });
   ipcMain.handle('import:choisir-fichier', (event) => importChoisirFichier(event.sender));
   ipcMain.handle('import:executer', (_e, filePath, mode) => importExecuter(filePath, mode));
+  // ---- Copie pour le soutien technique -------------------------------
+  // Un exemplaire du catalogue à envoyer à Dave, SANS aucune donnée de
+  // client. Ce qui est gardé et ce qui est vidé se décide dans
+  // src/db/copie-soutien.js — pas ici.
+  ipcMain.handle('soutien:apercu', () => apercuCopieSoutien());
+  // Rapport de problème : on CONSTRUIT et on RENVOIE le texte, on n envoie
+  // rien. L envoi reste un geste des parents, dans leur logiciel de courriel.
+  ipcMain.handle('soutien:rapport', (_e, opts) => {
+    const r = construireRapport(opts || {});
+    return { rapport: r, texte: rapportEnTexte(r) };
+  });
+  ipcMain.handle('soutien:enregistrer-rapport', async (e, texte) => {
+    const win = BrowserWindow.fromWebContents(e.sender);
+    const d = new Date();
+    const q = (x) => String(x).padStart(2, '0');
+    const { canceled, filePath } = await dialog.showSaveDialog(win, {
+      title: 'Enregistrer le signalement',
+      defaultPath: `signalement-${d.getFullYear()}-${q(d.getMonth()+1)}-${q(d.getDate())}.txt`,
+      filters: [{ name: 'Texte', extensions: ['txt'] }],
+    });
+    if (canceled || !filePath) return { cancelled: true };
+    fs.writeFileSync(filePath, String(texte || ''), 'utf-8');
+    shell.showItemInFolder(filePath);
+    return { chemin: filePath };
+  });
+  ipcMain.handle('soutien:produire', async (e, opts) => {
+    const avecPhotos = !!(opts && opts.avecPhotos);
+    const win = BrowserWindow.fromWebContents(e.sender);
+    const d = new Date();
+    const p2 = (x) => String(x).padStart(2, '0');
+    const jour = `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+
+    // Sans photos : un seul fichier, qu'on peut joindre à un courriel.
+    // Avec photos : un dossier — 200 Mo ne passent pas par courriel de toute
+    // façon, autant assumer la copie sur clé USB.
+    if (!avecPhotos) {
+      const { canceled, filePath } = await dialog.showSaveDialog(win, {
+        title: 'Enregistrer la copie pour le soutien',
+        defaultPath: `Galeria-soutien-${jour}.db`,
+        filters: [{ name: 'Base Galeria', extensions: ['db'] }],
+      });
+      if (canceled || !filePath) return { cancelled: true };
+      return { ...produireCopieSoutien(filePath), avecPhotos: false };
+    }
+
+    const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+      title: 'Choisir où déposer le dossier de la copie',
+      properties: ['openDirectory', 'createDirectory'],
+    });
+    if (canceled || !filePaths.length) return { cancelled: true };
+    const dossier = path.join(filePaths[0], `Galeria-soutien-${jour}`);
+    fs.mkdirSync(dossier, { recursive: true });
+    const r = produireCopieSoutien(path.join(dossier, 'galerie.db'));
+    let photos = 0;
+    const srcPhotos = getPhotosDir();
+    if (fs.existsSync(srcPhotos)) {
+      fs.cpSync(srcPhotos, path.join(dossier, 'Photos'), { recursive: true });
+      const compter = (abs) => {
+        for (const ent of fs.readdirSync(abs, { withFileTypes: true })) {
+          if (ent.isDirectory()) compter(path.join(abs, ent.name)); else photos++;
+        }
+      };
+      compter(path.join(dossier, 'Photos'));
+    }
+    return { ...r, chemin: dossier, avecPhotos: true, photos };
+  });
+
   ipcMain.handle('backup:now', () => sauvegarderEtRetourner());
   ipcMain.handle('backup:etat', () => obtenirEtatSauvegardes());
   ipcMain.handle('backup:liste', () => listerSauvegardes());

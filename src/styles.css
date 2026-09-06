@@ -2752,6 +2752,35 @@ details.bloc.pliable > .bloc-corps {
 .champ-traduisible .form-champ { margin-bottom: 6px; }
 .btn-traduire-champ { font-size: 12.5px; padding: 5px 11px; }
 
+/* Bouton « Signaler un problème », dans le panneau d aide. */
+.aide-btn-signaler {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--gallery-navy);
+  border: 0;
+  border-radius: var(--r-btn);
+  padding: 11px 22px;
+  cursor: pointer;
+}
+.aide-btn-signaler:hover { background: #0d2947; }
+
+/* --- Copie pour le soutien technique (Réglages → Données) ---
+   Le bilan est le cœur de la carte : c'est ce qui permet d'envoyer un fichier
+   en sachant ce qu'il contient. */
+.soutien-bilan {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.85;
+  background: var(--soft-ivory);
+  border: 1px solid var(--cloud);
+  border-radius: var(--r-btn);
+  padding: 11px 13px;
+}
+.soutien-ok { color: #2E6B4F; font-weight: 700; }
+.soutien-non { color: #900001; font-weight: 700; }
+
 /* --- Section « Photos » de la fiche d'artiste ---
    Reflète à l'écran ce que contient le dossier de l'artiste sur le disque :
    les œuvres groupées par statut, le portrait, et le contenu de Divers. */
@@ -4867,6 +4896,42 @@ details.bloc.pliable > .bloc-corps {
   transition: transform .12s, box-shadow .12s;
 }
 .aide-fab:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(7,26,47,.34); }
+/* Déplié : la croix est plus petite que le « ? », qui est en Garamond 28 px. */
+.aide-fab.ouvert { font-family: var(--font-ui); font-size: 19px; font-weight: 600; }
+
+/* Les deux choix du bouton « ? » : consulter l'aide, ou signaler un problème.
+   Ils sont au MÊME niveau — le signalement n'est pas un sous-produit de
+   l'aide, et personne ne va chercher dans l'aide pour dire qu'elle ne sert à
+   rien. */
+.aide-pile {
+  position: fixed; right: 26px; bottom: 88px; z-index: 900;
+  display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+}
+/* ⚠ Indispensable : `display: flex` ci-dessus écrase la règle `[hidden]` du
+   navigateur, et le menu resterait déplié en permanence. Même précaution que
+   `.menu-docs-pop[hidden]` sur la fiche d'artiste. */
+.aide-pile[hidden] { display: none; }
+.aide-pile-btn {
+  display: flex; align-items: center; gap: 9px;
+  border: 1px solid var(--mist); background: var(--porcelain);
+  border-radius: 999px; padding: 9px 16px 9px 10px; cursor: pointer;
+  font-family: var(--font-ui); font-size: 13.5px; font-weight: 600; color: var(--ink);
+  box-shadow: 0 6px 18px rgba(7, 26, 47, .16);
+  white-space: nowrap;
+  animation: aide-pile-apparait .13s ease-out;
+}
+.aide-pile-btn:hover { background: var(--soft-ivory); border-color: var(--warm-gold); }
+.aide-pile-ic {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; flex: 0 0 auto;
+}
+.aide-pile-ic.ic-aide { background: #EAF0F6; color: var(--gallery-navy); }
+.aide-pile-ic.ic-pb { background: #FBEDED; color: #900001; }
+@keyframes aide-pile-apparait {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
 
 .overlay-modale.aide { align-items: stretch; justify-content: flex-end; }
 .aide-panneau {

@@ -372,6 +372,16 @@ const ARTICLES = [
     `<p>Document signé artiste + galeriste confirmant la <b>consignation</b> (dépôt) ou la <b>reprise</b> (retrait) d'œuvres.</p>`),
 
   // ═══════ SOUTIEN ═══════
+  A('soutien', 'Signaler un problème', 'signaler probleme bug bogue rapport erreur envoyer dave ne fonctionne pas',
+    `<p>Quelque chose ne fonctionne pas ? Le bouton ci-dessous prépare un message pour Dave avec
+     les informations techniques dont il a besoin — <b>vous n'avez rien à chercher</b>.</p>
+     <p style="text-align:center;margin:18px 0;">
+       <button type="button" class="aide-btn-signaler" data-signaler>Signaler un problème…</button>
+     </p>
+     <p>Galeria y joint la version, la page que vous aviez à l'écran, la taille de votre catalogue et
+     les dernières erreurs enregistrées. <b>Jamais le nom d'un client, jamais un montant, jamais votre
+     code de verrouillage.</b> Vous pouvez tout lire avant d'envoyer.</p>
+     <div class="astuce">Le message s'ouvre dans <b>Outlook</b>, déjà rempli : il ne vous reste qu'à cliquer sur <b>Envoyer</b>.</div>`),
   A('soutien', 'Contacter le soutien', 'soutien contact aide courriel support version dossier données',
     `<p>Pour toute question que cette aide ne couvre pas :</p>
      <ul><li><b>Courriel :</b> <a data-mail>belisledave@gmail.com</a></li>
@@ -468,7 +478,116 @@ function rendreArticle() {
   if (elMail) elMail.addEventListener('click', (e) => { e.preventDefault(); window.api.ouvrirUrl('mailto:' + COURRIEL_SOUTIEN); });
   const elDossier = elArticle.querySelector('[data-dossier]');
   if (elDossier) elDossier.addEventListener('click', (e) => { e.preventDefault(); if (infosApp.dataDir) window.api.ouvrirDossier(infosApp.dataDir); });
+  const elSignaler = elArticle.querySelector('[data-signaler]');
+  if (elSignaler) elSignaler.addEventListener('click', ouvrirSignalement);
   elArticle.scrollTop = 0;
+}
+
+// ── Signaler un problème ───────────────────────────────────────────────────
+// Le rapport est CONSTRUIT ici, MONTRÉ, puis remis à Outlook. Galeria n'envoie
+// rien elle-même : l'envoi reste un geste de l'utilisateur, ce qui vaut à la
+// fois consentement et vérification.
+//
+// Contrainte technique : un lien `mailto:` passe par la ligne de commande de
+// Windows, qui a une longueur limite. Au-delà, Outlook s'ouvre vide ou pas du
+// tout. On plafonne donc le corps du message, et l'utilisateur garde le texte
+// entier dans le presse-papier.
+const TAILLE_MAX_MAILTO = 1800;
+
+async function ouvrirSignalement() {
+  const { routeCourante } = await import('./router.js');
+  const { confirmer, alerter, demanderTexte } = await import('./dialogue.js');
+
+  const route = routeCourante();
+  // `demanderTexte` offre un champ d'une ligne : on s'en tient à une phrase,
+  // ce qui est de toute façon ce qu'on obtient de quelqu'un qui signale un
+  // problème en pleine journée de travail.
+  const description = await demanderTexte({
+    title: 'Signaler un problème',
+    message: "En une phrase, qu'est-ce qui s'est passé ? Par exemple : « j'ai cliqué sur Produire la pochette et rien ne s'est passé ».",
+    placeholder: 'Ce qui ne fonctionne pas…',
+    okLabel: 'Continuer',
+  });
+  if (description == null) return; // annulé
+
+  let texte = '';
+  try {
+    const r = await window.api.soutienRapport({
+      description,
+      contexte: {
+        page: route ? `${route.nom}${route.id != null ? ` (n° ${route.id})` : ''}` : '(inconnue)',
+        ecran: `${window.screen.width}×${window.screen.height}`,
+      },
+    });
+    texte = r.texte;
+  } catch (err) {
+    await alerter({ type: 'error', title: 'Rapport impossible', message: String(err && err.message || err) });
+    return;
+  }
+
+  const rep = await confirmer({
+    type: 'question',
+    title: 'Envoyer ce signalement ?',
+    message: 'Voici exactement ce qui sera envoyé à Dave. Rien d\'autre ne partira.',
+    detail: texte,
+    buttons: ['Ouvrir le courriel', 'Enregistrer le fichier', 'Annuler'],
+    defaultId: 0,
+    cancelId: 2,
+  });
+  if (rep === 2 || rep == null) return;
+
+  if (rep === 1) {
+    try {
+      const r = await window.api.soutienEnregistrerRapport(texte);
+      if (!r?.cancelled) {
+        await alerter({
+          type: 'succes',
+          title: 'Signalement enregistré',
+          message: 'Le fichier est prêt. Joignez-le à un courriel pour Dave.',
+          detail: r.chemin,
+        });
+      }
+    } catch (err) {
+      await alerter({ type: 'error', title: 'Enregistrement impossible', message: String(err && err.message || err) });
+    }
+    return;
+  }
+
+  // Outlook. Le texte entier va aussi dans le presse-papier : si le message
+  // ressort tronqué, un simple collage le complète.
+  const objet = `Galeria ${infosApp.version || ''} — signalement`;
+  let corps = texte;
+  let tronque = false;
+  if (corps.length > TAILLE_MAX_MAILTO) {
+    corps = corps.slice(0, TAILLE_MAX_MAILTO)
+      + '\n\n[…] Message raccourci. Le texte complet est dans le presse-papier : collez-le ici (Ctrl+V).';
+    tronque = true;
+  }
+  try { await navigator.clipboard.writeText(texte); } catch { /* sans conséquence */ }
+  const url = `mailto:${COURRIEL_SOUTIEN}?subject=${encodeURIComponent(objet)}&body=${encodeURIComponent(corps)}`;
+  try {
+    // `ouvrirUrl` ne renvoie pas d'erreur si aucun logiciel de courriel n'est
+    // installé — Windows ouvre alors une fenêtre vide, ou rien. D'où le texte
+    // systématiquement mis dans le presse-papier juste au-dessus : c'est le
+    // filet, pas un extra.
+    const r = await window.api.ouvrirUrl(url);
+    if (r && r.ok === false) throw new Error(r.erreur || 'URL refusée');
+    if (tronque) {
+      await alerter({
+        type: 'info',
+        title: 'Message ouvert',
+        message: 'Le message était long : il a été raccourci.',
+        detail: 'Le texte complet est dans le presse-papier — collez-le dans le courriel avec Ctrl+V avant d\'envoyer.',
+      });
+    }
+  } catch {
+    await alerter({
+      type: 'warning',
+      title: "Le logiciel de courriel n'a pas répondu",
+      message: 'Le texte du signalement est dans le presse-papier.',
+      detail: `Collez-le dans un courriel à ${COURRIEL_SOUTIEN} (Ctrl+V).`,
+    });
+  }
 }
 
 function rendre() { rendreNav(); rendreArticle(); }
@@ -534,14 +653,34 @@ function construirePanneau() {
 }
 
 export function initialiserAide() {
-  // Bouton « ? » flottant, présent sur toutes les pages.
+  // Bouton « ? » flottant, présent sur toutes les pages. Il ne mène plus
+  // directement à l'aide : il déplie DEUX choix, parce que le signalement de
+  // problème y était enterré parmi quarante articles et que personne ne va
+  // chercher dans l'aide pour dire que l'aide ne sert à rien.
+  //
+  // Le « ? » est conservé : c'est ce que les parents ont appris à chercher.
   const fab = document.createElement('button');
   fab.className = 'aide-fab';
   fab.id = 'aide-fab';
   fab.type = 'button';
-  fab.title = 'Aide';
-  fab.setAttribute('aria-label', 'Aide');
+  fab.title = 'Aide et soutien';
+  fab.setAttribute('aria-label', 'Aide et soutien');
+  fab.setAttribute('aria-expanded', 'false');
   fab.textContent = '?';
+
+  const pile = document.createElement('div');
+  pile.className = 'aide-pile';
+  pile.id = 'aide-pile';
+  pile.hidden = true;
+  pile.innerHTML = `
+    <button type="button" class="aide-pile-btn" data-action="signaler">
+      <span class="aide-pile-ic ic-pb">!</span>Signaler un problème
+    </button>
+    <button type="button" class="aide-pile-btn" data-action="aide">
+      <span class="aide-pile-ic ic-aide">?</span>Consulter l'aide
+    </button>`;
+
+  document.body.appendChild(pile);
   document.body.appendChild(fab);
 
   construirePanneau();
@@ -550,6 +689,33 @@ export function initialiserAide() {
   // Récupère version + dossier de données (pour l'article Soutien).
   window.api.appInfos().then((i) => { if (i) { infosApp = i; if (overlay.style.display !== 'none') rendreArticle(); } }).catch(() => {});
 
-  fab.addEventListener('click', () => ouvrir(true));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay.style.display !== 'none') ouvrir(false); });
+  const deplier = (ouvert) => {
+    pile.hidden = !ouvert;
+    fab.classList.toggle('ouvert', ouvert);
+    fab.setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+    // La croix dit comment refermer ; le « ? » seul laisserait croire qu'un
+    // second clic ouvrirait autre chose.
+    fab.textContent = ouvert ? '✕' : '?';
+  };
+
+  fab.addEventListener('click', (e) => {
+    e.stopPropagation();
+    deplier(pile.hidden);
+  });
+
+  pile.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    deplier(false);
+    if (btn.dataset.action === 'aide') ouvrir(true);
+    else ouvrirSignalement();
+  });
+
+  // Un clic ailleurs referme, comme les autres menus de Galeria.
+  document.addEventListener('click', () => { if (!pile.hidden) deplier(false); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (overlay.style.display !== 'none') { ouvrir(false); return; }
+    if (!pile.hidden) deplier(false);
+  });
 }

@@ -332,6 +332,22 @@ export async function rendreReglages(contenu, params) {
                     <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-restaurer-sauvegarde">Restaurer une sauvegarde…</button>
                   </div>
                 </div>
+                <!-- Copie pour le soutien : elle SORT du dossier de données.
+                     L'écran doit donc dire noir sur blanc ce qu'elle contient
+                     et ce qu'elle ne contient pas, AVANT de la produire. -->
+                <div class="carte zone-soutien">
+                  <h3>Copie pour le soutien technique</h3>
+                  <p class="aide-champ" style="margin-top:0;">
+                    Prépare une copie de votre catalogue à envoyer à Dave, pour qu'il puisse
+                    reproduire un problème depuis chez lui. <strong>Aucune donnée de client n'en fait partie.</strong>
+                  </p>
+                  <div class="soutien-bilan" id="soutien-bilan">Lecture du catalogue…</div>
+                  <div class="form-champ form-champ-checkbox" style="margin-top: var(--s3);">
+                    <input type="checkbox" id="f-soutien-photos">
+                    <label for="f-soutien-photos">Joindre aussi les photos — inutile la plupart du temps, et trop lourd pour un courriel</label>
+                  </div>
+                  <button type="button" class="btn-action btn-secondaire-action btn-gros-bento" id="btn-soutien-copie">Préparer la copie…</button>
+                </div>
                 <div class="carte zone-import">
                   <h3>Import de données</h3>
                   <p class="aide-champ" style="margin-top:0;">
@@ -767,6 +783,60 @@ export async function rendreReglages(contenu, params) {
     }
   }
   rafraichirEtatBackup();
+
+  // ---- Copie pour le soutien technique ----
+  // Le bilan est affiché AVANT toute production : personne ne doit envoyer un
+  // fichier sans savoir ce qu'il y a dedans.
+  const bilanSoutien = contenu.querySelector('#soutien-bilan');
+  if (bilanSoutien) {
+    window.api.soutienApercu().then((a) => {
+      const ligne = (etat, txt) => `<span class="soutien-${etat}">${etat === 'ok' ? '✓ inclus' : '✕ retiré'}</span> ${txt}`;
+      const LIB = { clients: 'client', ventes: 'vente', certificats: 'certificat', annexes: 'annexe' };
+      const gardees = a.gardees.map((g) => `${g.n} ${g.table}`).join(', ');
+      const videes = a.videes
+        .map((v) => `${v.n} ${LIB[v.table] || v.table}${v.n > 1 ? 's' : ''}`)
+        .join(', ');
+      bilanSoutien.innerHTML = [
+        ligne('ok', gardees),
+        ligne('ok', 'les réglages de la galerie et des documents'),
+        ligne('non', videes),
+        ligne('non', 'le code du verrou et les clés (Anthropic, site web)'),
+      ].join('<br>');
+    }).catch((err) => {
+      bilanSoutien.textContent = nettoyerErreur(err);
+    });
+  }
+  contenu.querySelector('#btn-soutien-copie')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const avecPhotos = contenu.querySelector('#f-soutien-photos')?.checked || false;
+    btn.disabled = true;
+    const libelle = btn.textContent;
+    btn.textContent = 'Préparation…';
+    try {
+      const r = await window.api.soutienProduire({ avecPhotos });
+      if (r?.cancelled) return;
+      const mo = (r.octets / 1048576).toFixed(1);
+      const retire = Object.entries(r.vides || {})
+        .filter(([, n]) => n > 0)
+        .map(([t, n]) => `${n} ${t}`)
+        .join(', ');
+      await alerter({
+        type: 'succes',
+        title: 'Copie prête',
+        message: r.avecPhotos
+          ? `Dossier créé avec le catalogue et ${r.photos} photo(s).`
+          : `Fichier créé (${mo} Mo) — vous pouvez le joindre à un courriel.`,
+        detail: `${r.chemin}\n\n`
+          + `Retiré de la copie : ${retire || 'rien à retirer'}.\n`
+          + 'Aucune donnée de client ne s\'y trouve.',
+      });
+    } catch (err) {
+      await alerter({ type: 'error', title: 'Copie impossible', message: nettoyerErreur(err) });
+    } finally {
+      btn.disabled = false;
+      btn.textContent = libelle;
+    }
+  });
 
   contenu.querySelector('#btn-sauvegarder-maintenant').addEventListener('click', async (e) => {
     const btn = e.currentTarget;

@@ -17,6 +17,14 @@ export function leverGardien() {
   gardien = null;
 }
 
+// La page ouverte en ce moment. Sert au signalement de problème : c'est elle
+// qui répond à « une demande concernant un problème à CET endroit ».
+export function routeCourante() {
+  if (!pile.length) return null;
+  const { nom, params } = pile[pile.length - 1];
+  return { nom, id: params && params.id != null ? params.id : null };
+}
+
 export function modifierParamsCourants(params) {
   if (pile.length > 0) {
     pile[pile.length - 1].params = { ...pile[pile.length - 1].params, ...params };
