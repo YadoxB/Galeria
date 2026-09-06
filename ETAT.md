@@ -7,28 +7,31 @@
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-09-05)
+## ▶ Reprise — par où commencer (préparé le 2026-09-06)
 
-**✅ Dernière version PUBLIÉE : v0.18.0 (2026-09-05).** `origin/master` = tag `v0.18.0` = `92ec651`.
+**✅ Dernière version PUBLIÉE : v0.19.0 (2026-09-06).** `origin/master` = tag `v0.19.0` = `1513b34`.
 Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
 
 > ### 🟥 LA MIGRATION DES PHOTOS N'A JAMAIS TOURNÉ SUR DES DONNÉES RÉELLES
 >
-> La 0.18.0 est **publiée**, donc elle partira chez les parents à leur prochain démarrage et
-> y déplacera leurs photos. Elle est éprouvée sur une **copie** complète des données de Dave
-> (aller ET retour, 542 fichiers, 0 perdu, 0 altéré) — mais une copie reste une copie, et
-> **Dave n'avait pas encore lancé l'app** au moment de publier. Premier réflexe en cas de
-> souci : le journal `photos-migration-<horodatage>.json`, déposé à côté de la base, et
-> `annulerMigrationPhotos()`.
+> Publiée depuis la **0.18.0**, elle partira donc chez les parents à leur prochain démarrage
+> et y déplacera leurs photos. Elle est éprouvée sur une **copie** complète des données de
+> Dave (aller ET retour, 542 fichiers, 0 perdu, 0 altéré) — mais une copie reste une copie, et
+> **Dave n'a toujours pas lancé l'app**. Premier réflexe en cas de souci : le journal
+> `photos-migration-<horodatage>.json`, déposé à côté de la base, et `annulerMigrationPhotos()`.
+>
+> Même chose, plus bénin, pour les **outils de soutien (0.19.0)** : éprouvés au banc, jamais
+> cliqués dans l'application.
 >
 > ⚠ **`npm run release`, jamais `node scripts/release.js`** : lancé directement, le script
 > échoue sur *« electron-builder is not recognized »* — npm est ce qui met `node_modules/.bin`
 > dans le chemin.
 >
-> Cinq versions sont sorties les 4 et 5 septembre : la **0.16.0** en a livré trois d'un coup
+> Six versions sont sorties du 4 au 6 septembre : la **0.16.0** en a livré trois d'un coup
 > (0.14.0 retours d'usage, 0.15.0 Expositions + certificat EN, 0.16.0 catalogue bilingue,
 > ordre des numéros, quatre ajustements), puis la **0.17.0** (documents en anglais) et la
-> **0.18.0** (photos rangées par artiste). Les tags intermédiaires n'existent pas, c'est voulu.
+> **0.18.0** (photos rangées par artiste) et la **0.19.0** (outils de soutien). Les tags
+> intermédiaires n'existent pas, c'est voulu.
 >
 > **Le chantier bilingue est REFERMÉ** : certificat (0.15.0) → fiches et import des textes
 > anglais du site (0.16.0) → présentation, catalogue et pochette de vente (0.17.0).
@@ -54,7 +57,7 @@ Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif
 > quotidien, et le plus risqué (voir plus bas). À faire à tête reposée, pas en fin de
 > session.
 
-### Les outils de soutien (→ 0.19.0) — ce qu'il faut savoir pour y revenir
+### Les outils de soutien (0.19.0) — ce qu'il faut savoir pour y revenir
 
 **Le besoin de Dave, dans ses mots (2026-08-24) :** « me synchroniser sur leur DB, pour
 troubleshooter et voir ce qu'ils voient, mais de chez moi » et « un bouton sur la page, qui
@@ -204,13 +207,13 @@ seul fichier dont seul le nom suit la langue.
 
 ### ▶ Prochaine étape
 
-0. **LANCER L'APP — le plus urgent.** Le premier démarrage exécute la migration des photos (539 fichiers), déjà publiée chez les parents. Puis vérifier dans l'Explorateur qu'une **vente déplace bien la photo** de `disponible\` vers `vendu\`, et essayer la section Photos (ajouter dans Divers, copier, enregistrer).
+0. **LANCER L'APP — le plus urgent.** Le premier démarrage exécute la migration des photos (539 fichiers), déjà publiée chez les parents. Puis, dans l'ordre : vérifier dans l'Explorateur qu'une **vente déplace bien la photo** de `disponible\` vers `vendu\` ; essayer la **section Photos** (ajouter dans Divers, copier, enregistrer) ; cliquer sur le bouton **?** pour voir le menu à deux choix ; produire une **copie pour le soutien** (Réglages → Données) et vérifier le bilan affiché.
 1. **Vérifications sur PAPIER, pas encore faites** : une page de **cartels avec photos** imprimée et découpée (l'image tient-elle à six par page ? les QR se scannent-ils à 20 mm ?) et un **certificat estampé** (les 4 mm gagnés suffisent-ils ?). Claude ne peut ni l'un ni l'autre.
 2. ~~**La présentation et le catalogue en anglais**~~ — **FAIT et PUBLIÉ dans la 0.17.0.** Le **chantier bilingue est refermé** : le certificat (0.15.0), les fiches et l'import (0.16.0), la présentation, le catalogue et toute la pochette (0.17.0). Voir la section dédiée plus haut. Maquette : `demos/documents-en-anglais.html`.
 3. **Reste de la liste de retours des parents du 2026-08-25** :
    - ~~**Photos**~~ — **FAIT et PUBLIÉ dans la 0.18.0**, mais **jamais lancé sur des données réelles**. Voir « Le chantier photos » ci-dessous.
-   - ~~**Copie expurgée**~~ — **FAIT (2026-09-06)**, commité, non publié. Voir « Les outils de soutien » ci-dessous.
-   - ~~**Bouton « Signaler un problème »**~~ — **FAIT (2026-09-06)**, commité, non publié. **La liste de retours des parents du 2026-08-25 est entièrement livrée.**
+   - ~~**Copie expurgée**~~ — **FAIT et PUBLIÉ dans la 0.19.0.** Voir « Les outils de soutien » ci-dessous.
+   - ~~**Bouton « Signaler un problème »**~~ — **FAIT et PUBLIÉ dans la 0.19.0.** ✅ **La liste de retours des parents du 2026-08-25 est ENTIÈREMENT LIVRÉE.**
    - ~~**Filtrer par numéro**~~ — **CLARIFIÉ ET FAIT (2026-09-04).** La demande n'était pas un filtre mais un **ordre d'affichage** : voir les toiles d'un artiste dans l'ordre de leurs numéros d'inventaire, pour suivre une liste facilement. Voir le point 4 ci-dessous.
 4. **Ordre naturel des numéros d'inventaire — FAIT et PUBLIÉ dans la 0.16.0.** Les numéros mêlent lettres et chiffres de longueur variable (`CLB565`, `CLB1236`, `HUP99`, `HUP1069`) ; un tri de texte plaçait `CLB565` **après** `CLB1236`. **Mesuré : 6 artistes sur 20 avaient une liste mal ordonnée.** SQLite ne sait pas trier ainsi (`COLLATE NOCASE` reste alphabétique) → tri en JavaScript après la requête, via `Intl.Collator(numeric:true)`.
    - `trierParInventaire()` + `comparerInventaire()` dans `requetes.js`, appliqués aux **5 requêtes** qui prétendaient trier par numéro : catalogue imprimé, Annexe A (par artiste et par ids), œuvres d'une exposition (donc **l'ordre des cartels**), œuvres éligibles à une exposition.

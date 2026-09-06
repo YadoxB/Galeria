@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.19.0] — 2026-09-06
+
 > **Deux outils pour dépanner à distance.** Les parents peuvent envoyer une copie de leur
 > catalogue sans données de client, et signaler un problème en une phrase.
 
