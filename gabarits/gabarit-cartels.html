@@ -19,7 +19,6 @@ body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;background:#e8e
    réguliers ; le contenu est CENTRÉ dedans, sinon tout l'espace inutilisé
    s'accumule d'un seul côté. */
 .grille{display:grid;gap:0;height:calc(11in - 24mm);}
-.p2  .grille{grid-template-columns:1fr;grid-template-rows:repeat(2,1fr);}
 .p4  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,1fr);}
 .p6  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);}
 .p8  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);}
@@ -55,44 +54,33 @@ body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;background:#e8e
 .p10 .cartel-qr{width:22mm;height:22mm;}
 
 /* ---------------------------------------------------------------------------
-   Avec photo : disposition VERTICALE — l'image prend le haut, le texte et le
-   code QR se rangent dessous.
-   Pourquoi pas la photo à gauche : à six par page une case fait 96 mm de large,
-   trois colonnes y laissent 24 mm d'image et cassent le titre en trois lignes
-   (comparaison faite dans demos/ajouts-photos-et-cadre.html).
-   Les formats 8 et 10 ne sont pas proposés avec photo : une case de 96 × 51 mm
-   ne contient pas d'image lisible — l'interface les retire quand la case
-   « photo » est cochée.
+   Avec photo : une VIGNETTE CARRÉE à gauche, pas une illustration.
+
+   « Ces images ne servent qu'à associer plus rapidement quel cartel va avec
+   quelle toile. Ça ne sert pas vraiment à montrer les toiles. » (Dave,
+   2026-09-06). La photo est donc un repère, et le TEXTE reste le sujet du
+   cartel.
+
+   Deux conséquences :
+   — le cartel garde la même structure que sans photo (texte à gauche, code QR
+     à droite), avec juste un repère de plus. Un seul gabarit mental ;
+   — la vignette tenant dans n'importe quelle case, TOUS les formats restent
+     possibles. La restriction « avec photo, seulement 2, 4 ou 6 » disparaît,
+     et le format 2 par page avec.
+
+   ⚠ La vignette a une taille FIXE, en millimètres. C'est ce qui rend
+   impossible le défaut du 2026-09-06 : une photo en hauteur qui poussait la
+   case et étalait une page sur quatre feuilles. Aucune dimension d'image ne
+   peut plus influencer la hauteur d'un cartel.
+   (Comparaison des tailles : demos/cartels-vignette.html)
 --------------------------------------------------------------------------- */
-.avec-photo .cartel{flex-direction:column;align-items:stretch;justify-content:flex-start;
-                    gap:0;padding:3.5mm 4mm;}
-/* ⚠ `flex:1 1 0` et non `1 1 auto` : avec `auto`, la hauteur de base de la
-   case est celle de l'IMAGE, donc indéfinie tant que l'image n'est pas
-   mesurée. À l'écran le navigateur s'en sortait ; à l'IMPRESSION, l'image
-   sortait à sa taille naturelle et une page de six cartels s'étalait sur
-   QUATRE feuilles (signalé par les parents, 2026-09-06).
-   Avec `0`, la hauteur vient uniquement du partage de l'espace : elle est
-   définie, et le `height:100%` de l'image ci-dessous s'y résout. */
-.cartel-photo{flex:1 1 0;min-height:0;margin-bottom:2mm;overflow:hidden;}
+.cartel-photo{flex:0 0 auto;width:18mm;height:18mm;align-self:flex-start;overflow:hidden;}
 .cartel-photo img{width:100%;height:100%;object-fit:contain;display:block;}
-/* Œuvre sans photo : on laisse le blanc plutôt qu'un cadre vide, pour que la
-   case garde exactement la même hauteur de texte que ses voisines. */
-.cartel-photo-vide{flex:1 1 0;min-height:0;margin-bottom:2mm;}
-.cartel-bas{display:flex;align-items:flex-end;justify-content:space-between;gap:3mm;}
-.avec-photo .cartel-texte{flex:1;}
-.avec-photo .cartel-qr{width:20mm;height:20mm;}
-.avec-photo.p4 .cartel-qr{width:26mm;height:26mm;}
-.avec-photo.p2 .cartel-qr{width:32mm;height:32mm;}
-.avec-photo.p6 .cartel-artiste{font-size:9.5pt;margin-bottom:.6mm;}
-.avec-photo.p6 .cartel-titre{font-size:11.5pt;margin-bottom:1mm;}
-.avec-photo.p6 .cartel-tech{font-size:8pt;margin-bottom:1.2mm;}
-.avec-photo.p6 .cartel-pied{font-size:8pt;}
-.avec-photo.p6 .cartel-prix{font-size:10.5pt;}
-.avec-photo.p2 .cartel{padding:6mm 7mm;}
-.avec-photo.p2 .cartel-artiste{font-size:13pt;}
-.avec-photo.p2 .cartel-titre{font-size:19pt;}
-.avec-photo.p2 .cartel-tech{font-size:11pt;}
-.avec-photo.p2 .cartel-prix{font-size:15pt;}
+/* Œuvre sans photo : un carré vide de MÊME taille, pour que les cartels d'une
+   page restent alignés entre eux. */
+.cartel-photo-vide{flex:0 0 auto;width:18mm;height:18mm;align-self:flex-start;}
+.p8 .cartel-photo,.p8 .cartel-photo-vide{width:14mm;height:14mm;}
+.p10 .cartel-photo,.p10 .cartel-photo-vide{width:14mm;height:14mm;}
 </style></head>
 <body>
 <div id="doc"></div>
@@ -111,10 +99,11 @@ function escHtml(s){
 function remplir(data){
   data = data || {};
   var avecPhoto = !!data.avecPhoto;
-  // Avec photo : 2, 4 ou 6. Sans : 4, 6, 8 ou 10. Un format hors liste retombe
-  // sur le défaut de son mode plutôt que de casser la grille.
-  var permis = avecPhoto ? [2,4,6] : [4,6,8,10];
-  var parPage = permis.indexOf(data.format) >= 0 ? data.format : (avecPhoto ? 6 : 10);
+  // La vignette tenant dans n'importe quelle case, la photo ne restreint plus
+  // les formats : 4, 6, 8 ou 10 dans les deux modes. Un format hors liste
+  // retombe sur 10 plutôt que de casser la grille.
+  var permis = [4,6,8,10];
+  var parPage = permis.indexOf(data.format) >= 0 ? data.format : 10;
   var avecPrix = !!data.afficherPrix;
   var avecQr = data.afficherQr !== false; // absent = oui (anciens appels)
   var cartels = data.cartels || [];
@@ -143,9 +132,9 @@ function remplir(data){
         var img = c.photo
           ? '<div class="cartel-photo"><img src="' + c.photo + '" alt=""></div>'
           : '<div class="cartel-photo-vide"></div>';
-        cases += '<div class="cartel">' + img
-          + '<div class="cartel-bas">' + bloc + qr + '</div>'
-          + '</div>';
+        // La vignette entre dans la MÊME ligne que le texte et le code QR :
+        // le cartel garde la structure qu'il a sans photo.
+        cases += '<div class="cartel">' + img + bloc + qr + '</div>';
       } else {
         cases += '<div class="cartel">' + bloc + qr + '</div>';
       }

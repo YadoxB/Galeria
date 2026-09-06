@@ -17,9 +17,30 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
-    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.19.1 :
+    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.20.0 :
     // `npm run release` refuse de publier si elle ne correspond pas à
     // package.json.
+    version: '0.20.0',
+    diapos: [
+      {
+        titre: 'Des cartels plus lisibles',
+        texte: "La photo sur les cartels devient une <b>petite vignette</b> à gauche, juste assez grande pour reconnaître la toile. Le <b>texte reprend toute la place</b> — c'est lui qu'on lit sur un mur.",
+      },
+      {
+        titre: 'Et tous les formats redeviennent possibles',
+        texte: "Avec la photo, vous pouviez seulement choisir 2, 4 ou 6 cartels par page. Vous avez maintenant le choix habituel&nbsp;: <b>4, 6, 8 ou 10</b>, avec ou sans photo. Deux fois moins de papier.",
+      },
+      {
+        titre: 'Revoir les nouveautés quand vous voulez',
+        texte: "Dans l'aide, une nouvelle catégorie <b>Nouveautés par version</b> garde la trace de tout ce qui a changé, version par version. Un bouton <b>Revoir en grand</b> rejoue cette fenêtre-ci autant de fois que vous le souhaitez.",
+      },
+      {
+        titre: 'Le courriel de signalement s’ouvre enfin',
+        texte: "Votre signalement n'ouvrait pas Outlook&nbsp;: le message était trop long pour Windows, et Galeria ne s'en apercevait même pas. Les deux sont réglés.",
+      },
+    ],
+  },
+  {
     version: '0.19.1',
     diapos: [
       {
@@ -211,9 +232,15 @@ function comparerVersions(a, b) {
 // Diapos à montrer à quelqu'un qui en était resté à la version `vue` : toutes
 // les versions strictement plus récentes, de la plus ancienne à la plus
 // récente — on raconte les choses dans l'ordre où elles sont arrivées.
-export function construireDiapos(vue) {
+//
+// `jusqua` borne l'autre bout : sert au bouton « Revoir en grand » de l'aide,
+// qui rejoue UNE version précise. Sans lui, revoir la 0.17.0 afficherait aussi
+// tout ce qui l'a suivie — correct après une mise à jour, absurde quand on
+// clique sur un article intitulé « Version 0.17.0 ».
+export function construireDiapos(vue, { jusqua = null } = {}) {
   const aMontrer = VERSIONS
-    .filter((v) => comparerVersions(vue, v.version) < 0)
+    .filter((v) => comparerVersions(vue, v.version) < 0
+      && (!jusqua || comparerVersions(v.version, jusqua) <= 0))
     .sort((x, y) => comparerVersions(x.version, y.version));
   if (!aMontrer.length) return [];
 
@@ -278,9 +305,9 @@ function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); fermer(); } }
 
 // `vue` = la version que l'utilisateur avait déjà vue. Sans argument, on
 // montre tout (utile pour revoir les nouveautés depuis un bouton).
-export function lancerNouveautes(vue = null) {
+export function lancerNouveautes(vue = null, options = {}) {
   if (racine) return;
-  DIAPOS = construireDiapos(vue);
+  DIAPOS = construireDiapos(vue, options);
   if (!DIAPOS.length) return;
   racine = document.createElement('div');
   racine.className = 'overlay-modale nouv-overlay';

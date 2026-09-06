@@ -308,23 +308,21 @@ export async function rendreExpositionFiche(contenu, params = {}) {
   }
 
   // ---- Imprimer les cartels ----
-  // Quatre réglages : nombre par page, prix, photo, code QR. Cocher « photo »
-  // change la liste des formats — une case de 96 × 51 mm (10 par page) ne
-  // contient pas d'image lisible, donc avec photo on ne propose que 2, 4 ou 6.
-  // Le reste du contenu est fixe — voir gabarit-cartels.html.
-  const FORMATS_CARTELS = {
-    sans: [
-      { v: 10, lib: '10 par page — compact (défaut)' },
-      { v: 8, lib: '8 par page' },
-      { v: 6, lib: '6 par page' },
-      { v: 4, lib: '4 par page — grand, lisible de loin' },
-    ],
-    avec: [
-      { v: 6, lib: '6 par page — recommandé avec photo' },
-      { v: 4, lib: '4 par page — grand, lisible de loin' },
-      { v: 2, lib: '2 par page — pleine page' },
-    ],
-  };
+  // Quatre réglages : nombre par page, prix, photo, code QR — indépendants les
+  // uns des autres.
+  //
+  // La photo ne change plus la liste des formats. Elle l'a fait un temps,
+  // quand elle occupait la moitié de la case ; depuis qu'elle est réduite à
+  // une VIGNETTE DE REPÉRAGE à taille fixe (Dave, 2026-09-06 : « ces images ne
+  // servent qu'à associer quel cartel va avec quelle toile »), elle tient dans
+  // n'importe quelle case. Le format « 2 par page » a disparu avec : il
+  // n'existait que pour loger une grande image.
+  const FORMATS_CARTELS = [
+    { v: 10, lib: '10 par page — compact (défaut)' },
+    { v: 8, lib: '8 par page' },
+    { v: 6, lib: '6 par page' },
+    { v: 4, lib: '4 par page — grand, lisible de loin' },
+  ];
 
   function ouvrirCartels() {
     const presentes = expo.oeuvres.filter((x) => !x.retire_le);
@@ -343,7 +341,7 @@ export async function rendreExpositionFiche(contenu, params = {}) {
         <div class="form-champ">
           <label for="c-format">Cartels par page</label>
           <select id="c-format">
-            ${FORMATS_CARTELS.sans.map((f, i) => `<option value="${f.v}" ${i === 0 ? 'selected' : ''}>${f.lib}</option>`).join('')}
+            ${FORMATS_CARTELS.map((f, i) => `<option value="${f.v}" ${i === 0 ? 'selected' : ''}>${f.lib}</option>`).join('')}
           </select>
         </div>
         <div class="form-champ form-champ-checkbox">
@@ -368,22 +366,16 @@ export async function rendreExpositionFiche(contenu, params = {}) {
     document.addEventListener('keydown', onKey);
     overlay.querySelector('#c-annuler').addEventListener('click', fermer);
 
-    // La case « photo » refait la liste des formats. On conserve le choix
-    // courant s'il existe dans le nouveau mode (6 et 4 sont communs aux deux),
-    // sinon on retombe sur le premier — le recommandé.
+    // La case « photo » n'agit plus que sur l'avertissement des œuvres sans
+    // image : la liste des formats ne dépend plus d'elle.
     const selFormat = overlay.querySelector('#c-format');
     const casePhoto = overlay.querySelector('#c-photo');
     const caseQr = overlay.querySelector('#c-qr');
     const avertQr = overlay.querySelector('#c-avert-qr');
     const avertPhoto = overlay.querySelector('#c-avert-photo');
-    const majFormats = () => {
-      const liste = casePhoto.checked ? FORMATS_CARTELS.avec : FORMATS_CARTELS.sans;
-      const avant = Number(selFormat.value);
-      selFormat.innerHTML = liste.map((f) => `<option value="${f.v}">${f.lib}</option>`).join('');
-      selFormat.value = liste.some((f) => f.v === avant) ? String(avant) : String(liste[0].v);
+    casePhoto.addEventListener('change', () => {
       if (avertPhoto) avertPhoto.style.display = casePhoto.checked ? '' : 'none';
-    };
-    casePhoto.addEventListener('change', majFormats);
+    });
     // Sans code QR demandé, une adresse manquante n'a plus d'importance.
     const majAvertQr = () => {
       if (avertQr) avertQr.style.display = caseQr.checked ? '' : 'none';

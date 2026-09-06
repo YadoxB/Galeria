@@ -1528,13 +1528,22 @@ async function demarrerApplication() {
       return { ok: false, erreur: err.message };
     }
   });
-  ipcMain.handle('app:ouvrir-url', (_e, url) => {
+  ipcMain.handle('app:ouvrir-url', async (_e, url) => {
     // http(s) pour les liens web, mailto: pour « Écrire au soutien ».
     if (typeof url !== 'string' || !/^(https?:\/\/|mailto:)/i.test(url)) {
       return { ok: false, erreur: 'URL invalide' };
     }
-    shell.openExternal(url);
-    return { ok: true };
+    // ⚠ ATTENDRE le résultat. Sans le `await`, un échec de Windows — adresse
+    // trop longue, aucun logiciel de courriel associé — passait inaperçu : la
+    // fonction répondait « ok » et l'utilisateur voyait simplement qu'il ne se
+    // passait rien. Corrigé le 2026-09-06.
+    try {
+      await shell.openExternal(url);
+      return { ok: true };
+    } catch (err) {
+      journaliserErreur('Ouverture de lien échouée', err);
+      return { ok: false, erreur: err && err.message ? err.message : String(err) };
+    }
   });
   ipcMain.handle('app:ouvrir-dossier', async (_e, dossier) => {
     if (typeof dossier !== 'string' || !dossier) {

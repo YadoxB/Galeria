@@ -794,9 +794,10 @@ function preparerDonneesCartels(expo, opts = {}) {
   const avecPhoto = !!opts.avecPhoto;
   const afficherQr = opts.afficherQr !== false;
   const afficherPrix = opts.afficherPrix !== false;
-  // Le défaut dépend du mode : une case de 96 × 51 mm (10 par page) ne contient
-  // pas d'image lisible, donc avec photo on part de 6.
-  const format = opts.format != null ? opts.format : (avecPhoto ? 6 : 10);
+  // La photo est une VIGNETTE de repérage à taille fixe (18 mm, 14 mm sur les
+  // formats compacts) : elle tient dans n'importe quelle case et ne restreint
+  // donc plus les formats. Défaut : 10 par page, avec ou sans photo.
+  const format = opts.format != null ? opts.format : 10;
   const presentes = (expo.oeuvres || []).filter((o) => !o.retire_le);
   return {
     format,

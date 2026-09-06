@@ -2752,6 +2752,20 @@ details.bloc.pliable > .bloc-corps {
 .champ-traduisible .form-champ { margin-bottom: 6px; }
 .btn-traduire-champ { font-size: 12.5px; padding: 5px 11px; }
 
+/* Bouton « Revoir en grand » des articles de nouveautés. */
+.aide-btn-revoir {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--gallery-navy);
+  background: var(--porcelain);
+  border: 1px solid var(--mist);
+  border-radius: var(--r-btn);
+  padding: 7px 14px;
+  cursor: pointer;
+}
+.aide-btn-revoir:hover { background: var(--soft-ivory); border-color: var(--warm-gold); }
+
 /* Bouton « Signaler un problème », dans le panneau d aide. */
 .aide-btn-signaler {
   font-family: var(--font-ui);

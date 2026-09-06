@@ -5,6 +5,7 @@
 // Le bouton « Revoir le tutoriel » relance la visite guidée de bienvenue.
 
 import { lancerTutoriel } from './tutoriel.js';
+import { VERSIONS, lancerNouveautes } from './nouveautes.js';
 
 const CATS = [
   ['demarrage', 'Premiers pas'], ['artistes', 'Artistes'], ['oeuvres', 'Œuvres & catalogue'],
@@ -12,7 +13,8 @@ const CATS = [
   ['documents', 'Documents'], ['suivi', 'Suivi & cycle de vie'],
   ['web', 'Site web & synchronisation'], ['sauvegardes', 'Sauvegardes & données'],
   ['reglages', 'Réglages & profil'], ['securite', 'Sécurité & confidentialité'],
-  ['depannage', 'Problèmes courants'], ['glossaire', 'Glossaire'], ['soutien', 'Soutien'],
+  ['depannage', 'Problèmes courants'], ['glossaire', 'Glossaire'],
+  ['nouveautes', 'Nouveautés par version'], ['soutien', 'Soutien'],
 ];
 const CAT_LIB = Object.fromEntries(CATS);
 
@@ -398,6 +400,31 @@ const ARTICLES = [
      <div class="astuce">Pour ne plus jamais avoir à faire ça : définis une <b>question de secours</b> dans Réglages → Sécurité.</div>`),
 ];
 
+// ── Nouveautés : un article par version, ENGENDRÉ à partir de VERSIONS ──
+//
+// Rien n'est recopié : la source reste `src/app/nouveautes.js`, celle qui
+// alimente la fenêtre affichée après une mise à jour. Une nouvelle version
+// apparaît donc ici toute seule, et ne peut pas se désynchroniser.
+//
+// Un article PAR VERSION plutôt qu'un seul article-liste : la recherche de
+// l'aide trouve alors « exposition » ou « cartel » dans la version qui l'a
+// apportée.
+for (let i = 0; i < VERSIONS.length; i++) {
+  const v = VERSIONS[i];
+  // Pour rejouer la fenêtre de CETTE version seulement, on se présente comme
+  // quelqu'un qui en était resté à la version précédente.
+  const precedente = VERSIONS[i + 1] ? VERSIONS[i + 1].version : '0.0.0';
+  const corps = v.diapos.map((d) => `<h4>${d.titre}</h4><p>${d.texte}</p>`).join('');
+  ARTICLES.push(A(
+    'nouveautes',
+    `Version ${v.version}`,
+    `nouveautés version ${v.version} mise à jour changements ${v.diapos.map((d) => d.titre).join(' ')}`,
+    `<p style="margin-bottom:14px;">
+       <button type="button" class="aide-btn-revoir" data-revoir="${precedente}" data-jusqua="${v.version}">Revoir en grand</button>
+     </p>${corps}`
+  ));
+}
+
 // ── Outils ──
 const COURRIEL_SOUTIEN = 'belisledave@gmail.com';
 const sansAccents = (s) => String(s || '').normalize('NFD').replace(/\p{Mn}/gu, '').toLowerCase();
@@ -480,6 +507,18 @@ function rendreArticle() {
   if (elDossier) elDossier.addEventListener('click', (e) => { e.preventDefault(); if (infosApp.dataDir) window.api.ouvrirDossier(infosApp.dataDir); });
   const elSignaler = elArticle.querySelector('[data-signaler]');
   if (elSignaler) elSignaler.addEventListener('click', ouvrirSignalement);
+  // « Revoir en grand » : rejoue la fenêtre de nouveautés de cette version,
+  // exactement comme elle est apparue après la mise à jour. On ferme l'aide
+  // d'abord, sinon les deux fenêtres se superposeraient.
+  const elRevoir = elArticle.querySelector('[data-revoir]');
+  if (elRevoir) {
+    elRevoir.addEventListener('click', () => {
+      const depuis = elRevoir.dataset.revoir;
+      const jusqua = elRevoir.dataset.jusqua;
+      ouvrir(false);
+      lancerNouveautes(depuis, { jusqua });
+    });
+  }
   elArticle.scrollTop = 0;
 }
 
@@ -492,7 +531,34 @@ function rendreArticle() {
 // Windows, qui a une longueur limite. Au-delà, Outlook s'ouvre vide ou pas du
 // tout. On plafonne donc le corps du message, et l'utilisateur garde le texte
 // entier dans le presse-papier.
-const TAILLE_MAX_MAILTO = 1800;
+// ⚠ La limite porte sur l'ADRESSE ENCODÉE, pas sur le texte.
+// Erreur commise et corrigée le 2026-09-06 : je plafonnais le texte brut à
+// 1800 caractères. Le premier vrai signalement des parents en faisait 1713 —
+// donc non tronqué — mais 2450 une fois encodé, au-dessus de la limite de
+// Windows. Le lien échouait en SILENCE et le courriel ne s'ouvrait pas.
+// L'encodage multiplie la longueur par ~1,4 sur du français (accents en
+// %C3%A9, sauts de ligne en %0A) : on ne peut donc pas la deviner, il faut la
+// mesurer sur l'URL finale.
+const TAILLE_MAX_URL = 1900;
+
+// Construit l'adresse mailto en RÉDUISANT le corps jusqu'à ce que l'URL tienne.
+function construireMailto(objet, corps) {
+  const base = `mailto:${COURRIEL_SOUTIEN}?subject=${encodeURIComponent(objet)}&body=`;
+  const suffixe = '\n\n[…] Message raccourci. Le texte complet est dans le presse-papier : collez-le ici (Ctrl+V).';
+  let url = base + encodeURIComponent(corps);
+  if (url.length <= TAILLE_MAX_URL) return { url, tronque: false };
+
+  // On coupe par dichotomie plutôt qu'en devinant un ratio : l'encodage
+  // dépend du texte, et une phrase pleine d'accents coûte plus qu'une autre.
+  let bas = 0;
+  let haut = corps.length;
+  while (bas < haut) {
+    const milieu = Math.ceil((bas + haut) / 2);
+    const essai = base + encodeURIComponent(corps.slice(0, milieu) + suffixe);
+    if (essai.length <= TAILLE_MAX_URL) bas = milieu; else haut = milieu - 1;
+  }
+  return { url: base + encodeURIComponent(corps.slice(0, bas) + suffixe), tronque: true };
+}
 
 async function ouvrirSignalement() {
   const { routeCourante } = await import('./router.js');
@@ -554,17 +620,16 @@ async function ouvrirSignalement() {
   }
 
   // Outlook. Le texte entier va aussi dans le presse-papier : si le message
-  // ressort tronqué, un simple collage le complète.
+  // ressort raccourci, un simple collage le complète.
   const objet = `Galeria ${infosApp.version || ''} — signalement`;
-  let corps = texte;
-  let tronque = false;
-  if (corps.length > TAILLE_MAX_MAILTO) {
-    corps = corps.slice(0, TAILLE_MAX_MAILTO)
-      + '\n\n[…] Message raccourci. Le texte complet est dans le presse-papier : collez-le ici (Ctrl+V).';
-    tronque = true;
-  }
   try { await navigator.clipboard.writeText(texte); } catch { /* sans conséquence */ }
-  const url = `mailto:${COURRIEL_SOUTIEN}?subject=${encodeURIComponent(objet)}&body=${encodeURIComponent(corps)}`;
+
+  // Les lignes « at ... » des traces d'appel sont retirées du COURRIEL : elles
+  // occupent l'essentiel de la place et ne disent presque rien de plus que le
+  // message d'erreur qui les précède. Elles restent dans le presse-papier et
+  // dans le fichier enregistré.
+  const allege = texte.split('\n').filter((l) => !/^\s+at\s/.test(l)).join('\n');
+  const { url, tronque } = construireMailto(objet, allege);
   try {
     // `ouvrirUrl` ne renvoie pas d'erreur si aucun logiciel de courriel n'est
     // installé — Windows ouvre alors une fenêtre vide, ou rien. D'où le texte
