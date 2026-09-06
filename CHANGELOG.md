@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.20.0] — 2026-09-06
+
 ### Ajouté
 
 - **Catégorie « Nouveautés par version » dans l'aide**, avec un article par version et un

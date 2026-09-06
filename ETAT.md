@@ -9,19 +9,35 @@
 
 ## ▶ Reprise — par où commencer (préparé le 2026-09-06)
 
-**✅ Dernière version PUBLIÉE : v0.19.0 (2026-09-06).** `origin/master` = tag `v0.19.0` = `1513b34`.
+**✅ Dernière version PUBLIÉE : v0.20.0 (2026-09-06).** `origin/master` = tag `v0.20.0` = `8aaaafe`.
 Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
 
-> ### 🟥 LA MIGRATION DES PHOTOS N'A JAMAIS TOURNÉ SUR DES DONNÉES RÉELLES
+> ### 🟨 CE QUE LE PREMIER SIGNALEMENT DES PARENTS A APPRIS (2026-09-06)
 >
-> Publiée depuis la **0.18.0**, elle partira donc chez les parents à leur prochain démarrage
-> et y déplacera leurs photos. Elle est éprouvée sur une **copie** complète des données de
-> Dave (aller ET retour, 542 fichiers, 0 perdu, 0 altéré) — mais une copie reste une copie, et
-> **Dave n'a toujours pas lancé l'app**. Premier réflexe en cas de souci : le journal
-> `photos-migration-<horodatage>.json`, déposé à côté de la base, et `annulerMigrationPhotos()`.
+> Les outils de soutien de la 0.19.0 ont payé leur écriture **dès leur première
+> utilisation**. Le message des parents décrivait un problème ; il en contenait **deux**, dont
+> un qu'ils ne voyaient pas.
 >
-> Même chose, plus bénin, pour les **outils de soutien (0.19.0)** : éprouvés au banc, jamais
-> cliqués dans l'application.
+> 1. **Les cartels avec photo s'étalaient sur quatre feuilles.** `flex: 1 1 auto` laissait
+>    l'image imposer sa taille naturelle **à l'impression** (pas à l'écran). Corrigé en
+>    0.19.1, puis rendu impossible en 0.20.0 : la photo est devenue une **vignette à taille
+>    fixe**, aucune image ne peut plus influencer la hauteur d'un cartel.
+> 2. **La migration des photos refusait de s'exécuter à chaque démarrage**, en silence — une
+>    ligne dans `erreurs.log`, que personne ne lit. Leur base référence des portraits absents
+>    du disque, et mon garde-fou bloquait tout. ⚠ Il confondait deux choses : une
+>    **collision** (deux photos pour un même chemin) fait perdre une photo et reste
+>    bloquante ; un **fichier absent** est un état déjà cassé, désormais sauté et compté.
+>
+> ⚠ **Il reste des portraits d'artistes absents du disque chez les parents** (au moins
+> quatre). La migration les saute, mais les fichiers manquent toujours : à renvoyer, ou à
+> nettoyer en base. **Cause non élucidée.**
+>
+> ⚠ **LEÇON : un gabarit PDF se teste en produisant un VRAI PDF** (Electron + `printToPDF`).
+> Le navigateur rend en média « screen » ; le défaut n'existait qu'en média « print ». Banc de
+> référence : voir le commit `72794a0`.
+>
+> La migration des photos a tourné chez Dave (ses chemins sont dans la nouvelle arborescence),
+> mais **pas encore chez les parents** — la 0.20.0 sera son premier vrai passage là-bas.
 >
 > ⚠ **`npm run release`, jamais `node scripts/release.js`** : lancé directement, le script
 > échoue sur *« electron-builder is not recognized »* — npm est ce qui met `node_modules/.bin`
