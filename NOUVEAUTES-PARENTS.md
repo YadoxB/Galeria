@@ -11,6 +11,30 @@
 
 ---
 
+## Des cartels plus lisibles
+
+La photo sur les cartels devient une **petite vignette carrée** à gauche du
+texte, juste assez grande pour reconnaître de quelle toile il s'agit. Le texte
+reprend toute la place — c'est lui qu'on lit sur un mur.
+
+**Tous les formats redeviennent possibles.** Quand vous cochiez « photo », on
+ne vous proposait plus que 2, 4 ou 6 cartels par page. Vous avez maintenant le
+choix habituel — **4, 6, 8 ou 10** — avec ou sans photo. Deux fois moins de
+papier pour une même exposition.
+
+---
+
+## Revoir les nouveautés quand vous voulez
+
+Dans l'aide, une nouvelle catégorie **Nouveautés par version** garde la trace
+de tout ce qui a changé, version par version, depuis le début.
+
+Chaque version a un bouton **Revoir en grand** qui rejoue la fenêtre de
+nouveautés telle qu'elle est apparue après la mise à jour. Autant de fois que
+vous le voulez, et sans attendre la prochaine.
+
+---
+
 ## Corrections — merci pour votre signalement
 
 Votre message sur les cartels était le tout premier envoyé avec le nouveau

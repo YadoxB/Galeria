@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — La photo des cartels réduite à une vignette</title>
+<style>
+  :root {
+    --soft-ivory:#FCFAF4; --porcelain:#FFFFFF; --warm-gold:#C99A3D; --gallery-navy:#071A2F;
+    --ink:#111827; --slate:#5D6875; --stone:#A79E91; --mist:#D8D2C8; --cloud:#EFE8DE;
+    --rouge:#900001; --filet:#c8bfa8; --gris:#6b6459;
+    --font-titre:'Cormorant Garamond',Georgia,serif;
+    --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r-carte:14px;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--soft-ivory); font-family:var(--font-ui); color:var(--ink); padding:32px; }
+  h1 { font-family:var(--font-titre); font-weight:600; font-size:28px; margin:0 0 6px; }
+  .sous { color:var(--slate); margin:0 0 10px; font-size:14px; max-width:880px; line-height:1.6; }
+  .lot-titre { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone);
+               margin:40px 0 6px; font-weight:600; }
+  .lot-note { font-size:13.5px; color:var(--slate); max-width:880px; line-height:1.6; margin:0 0 16px; }
+  .etiq { font-size:11px; text-transform:uppercase; letter-spacing:.07em; font-weight:700;
+          margin:0 0 10px; color:var(--stone); }
+  .etiq.reco { color:var(--warm-gold); }
+  .rangee { display:flex; gap:26px; align-items:flex-start; flex-wrap:wrap; }
+  .legende { font-size:12px; color:var(--slate); margin:10px 0 0; max-width:300px; line-height:1.5; }
+  .legende b { color:var(--ink); }
+
+  .journal { max-width:1060px; margin-top:20px; background:var(--porcelain); border:1px solid var(--mist);
+             border-radius:var(--r-carte); padding:16px 20px; }
+  .journal h4 { font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone);
+                margin:0 0 8px; font-weight:700; }
+  .journal ul { margin:0; padding-left:18px; font-size:13.5px; color:var(--slate); line-height:1.75; }
+  .journal em { color:var(--ink); font-style:normal; font-weight:600; }
+
+  /* feuille Lettre à l'échelle : 1mm = 2,6px */
+  .feuille { background:#fff; box-shadow:0 4px 20px rgba(0,0,0,.13); width:561px; height:727px; padding:31px; }
+  .grille { display:grid; height:100%; }
+  .g6  { grid-template-columns:1fr 1fr; grid-template-rows:repeat(3,1fr); }
+  .g10 { grid-template-columns:1fr 1fr; grid-template-rows:repeat(5,1fr); }
+
+  .cartel { border:1px dashed var(--filet); overflow:hidden; font-family:Georgia,'Times New Roman',serif;
+            display:flex; align-items:center; gap:8px; padding:8px 10px; }
+  .c-txt { min-width:0; flex:1; }
+  .c-art { font-size:9.5px; font-weight:600; color:var(--rouge); margin:0 0 1px; }
+  .c-tit { font-size:11px; font-style:italic; line-height:1.2; margin:0 0 3px; }
+  .c-tec { font-size:7.5px; color:var(--gris); font-family:var(--font-ui); margin:0 0 3px; }
+  .c-pied { display:flex; align-items:baseline; gap:6px; font-size:7.5px; font-family:var(--font-ui); }
+  .c-inv { color:var(--gris); letter-spacing:.04em; }
+  .c-prix { font-size:10px; font-weight:600; margin-left:auto; font-family:Georgia,serif; }
+  .qr { flex:0 0 auto; background:repeating-conic-gradient(#1c1a17 0 25%, #fff 0 50%) 0 0/5px 5px;
+        outline:1px solid #ddd; }
+  .qr-20 { width:52px; height:52px; }
+  .qr-16 { width:42px; height:42px; }
+
+  .ph { flex:0 0 auto; background:linear-gradient(135deg,#dfd6c4 0%,#c9bda6 45%,#e6ded0 100%);
+        border:1px solid #d8cfb6; }
+  .ph-18 { width:47px; height:47px; }
+  .ph-14 { width:36px; height:36px; }
+
+  /* option B : bandeau en haut, hauteur fixe */
+  .c-vert { flex-direction:column; align-items:stretch; gap:0; padding:7px 9px; }
+  .c-vert .bandeau { width:100%; height:62px; margin-bottom:5px;
+                     background:linear-gradient(135deg,#dfd6c4,#c9bda6); border:1px solid #d8cfb6; }
+  .c-vert .bas { display:flex; align-items:flex-end; gap:8px; }
+
+  /* l'actuel, pour comparer */
+  .c-actuel { flex-direction:column; align-items:stretch; gap:0; padding:7px 9px; }
+  .c-actuel .grande { flex:1 1 0; min-height:0; margin-bottom:5px;
+                      background:linear-gradient(135deg,#dfd6c4,#c9bda6); border:1px solid #d8cfb6; }
+  .c-actuel .bas { display:flex; align-items:flex-end; gap:8px; }
+
+  table.t { width:100%; max-width:1060px; border-collapse:collapse; font-size:13.5px; margin-top:10px;
+    background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte); overflow:hidden; }
+  table.t th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--stone); font-weight:700; padding:11px 14px; background:var(--soft-ivory); }
+  table.t td { padding:10px 14px; border-top:1px solid var(--cloud); }
+  .oui { color:#2E6B4F; font-weight:600; }
+  .non { color:var(--rouge); font-weight:600; }
+</style>
+</head>
+<body>
+
+<h1>La photo des cartels, réduite à une vignette</h1>
+<p class="sous">« Ces images ne servent qu'à associer plus rapidement quel cartel va avec quelle
+toile. Ça ne sert pas vraiment à montrer les toiles. » — la conception change en conséquence :
+la photo devient un <b>repère</b>, pas une illustration.</p>
+
+<p class="lot-titre">Trois tailles, à six par page</p>
+
+<div class="rangee">
+  <div>
+    <p class="etiq">Aujourd'hui &middot; la photo prend tout l'espace libre</p>
+    <div class="feuille"><div class="grille g6">
+      <div class="cartel c-actuel">
+        <div class="grande"></div>
+        <div class="bas">
+          <div class="c-txt">
+            <p class="c-art">Louise Potvin</p>
+            <p class="c-tit">Marée basse, fin d'août</p>
+            <p class="c-tec">Huile sur toile · 24 × 36 po</p>
+            <p class="c-pied"><span class="c-inv">HUP912</span><span class="c-prix">2 400 $</span></p>
+          </div>
+          <div class="qr qr-16"></div>
+        </div>
+      </div>
+      <div class="cartel c-actuel">
+        <div class="grande"></div>
+        <div class="bas">
+          <div class="c-txt">
+            <p class="c-art">Jean Simard</p>
+            <p class="c-tit">Bois de grève III</p>
+            <p class="c-tec">Bois flotté · 18 × 9 po</p>
+            <p class="c-pied"><span class="c-inv">JES204</span><span class="c-prix">950 $</span></p>
+          </div>
+          <div class="qr qr-16"></div>
+        </div>
+      </div>
+      <div class="cartel"></div><div class="cartel"></div>
+      <div class="cartel"></div><div class="cartel"></div>
+    </div></div>
+    <p class="legende">La photo occupe ~45 mm de haut. Le texte est repoussé en bas, en petit.</p>
+  </div>
+
+  <div>
+    <p class="etiq reco">Proposé &middot; vignette carrée de 18 mm à gauche</p>
+    <div class="feuille"><div class="grille g6">
+      <div class="cartel">
+        <div class="ph ph-18"></div>
+        <div class="c-txt">
+          <p class="c-art">Louise Potvin</p>
+          <p class="c-tit">Marée basse, fin d'août</p>
+          <p class="c-tec">Huile sur toile · 24 × 36 po</p>
+          <p class="c-pied"><span class="c-inv">HUP912</span><span class="c-prix">2 400 $</span></p>
+        </div>
+        <div class="qr qr-20"></div>
+      </div>
+      <div class="cartel">
+        <div class="ph ph-18"></div>
+        <div class="c-txt">
+          <p class="c-art">Jean Simard</p>
+          <p class="c-tit">Bois de grève III</p>
+          <p class="c-tec">Bois flotté · 18 × 9 po</p>
+          <p class="c-pied"><span class="c-inv">JES204</span><span class="c-prix">950 $</span></p>
+        </div>
+        <div class="qr qr-20"></div>
+      </div>
+      <div class="cartel"></div><div class="cartel"></div>
+      <div class="cartel"></div><div class="cartel"></div>
+    </div></div>
+    <p class="legende">Le <b>texte redevient le sujet</b>, en plus gros. La vignette suffit
+    largement à reconnaître une toile qu'on a devant soi.</p>
+  </div>
+
+  <div>
+    <p class="etiq">Variante &middot; bandeau de 24 mm en haut</p>
+    <div class="feuille"><div class="grille g6">
+      <div class="cartel c-vert">
+        <div class="bandeau"></div>
+        <div class="bas">
+          <div class="c-txt">
+            <p class="c-art">Louise Potvin</p>
+            <p class="c-tit">Marée basse, fin d'août</p>
+            <p class="c-tec">Huile sur toile · 24 × 36 po</p>
+            <p class="c-pied"><span class="c-inv">HUP912</span><span class="c-prix">2 400 $</span></p>
+          </div>
+          <div class="qr qr-16"></div>
+        </div>
+      </div>
+      <div class="cartel c-vert">
+        <div class="bandeau"></div>
+        <div class="bas">
+          <div class="c-txt">
+            <p class="c-art">Jean Simard</p>
+            <p class="c-tit">Bois de grève III</p>
+            <p class="c-tec">Bois flotté · 18 × 9 po</p>
+            <p class="c-pied"><span class="c-inv">JES204</span><span class="c-prix">950 $</span></p>
+          </div>
+          <div class="qr qr-16"></div>
+        </div>
+      </div>
+      <div class="cartel"></div><div class="cartel"></div>
+      <div class="cartel"></div><div class="cartel"></div>
+    </div></div>
+    <p class="legende">Le bandeau montre la toile en entier, mais <b>coupe l'image en largeur</b>
+    et mange encore le tiers de la case.</p>
+  </div>
+</div>
+
+<p class="lot-titre">La conséquence : tous les formats redeviennent possibles</p>
+<p class="lot-note">Une vignette de 18 mm tient dans n'importe quelle case, y compris les
+96 × 51 mm du format le plus compact. La restriction « avec photo, seulement 2, 4 ou 6 par
+page » n'a donc plus de raison d'être.</p>
+
+<div class="rangee">
+  <div>
+    <p class="etiq reco">Dix par page, avec vignette de 14 mm</p>
+    <div class="feuille"><div class="grille g10">
+      <div class="cartel" style="padding:6px 8px;gap:6px;">
+        <div class="ph ph-14"></div>
+        <div class="c-txt">
+          <p class="c-art" style="font-size:8.5px;">Louise Potvin</p>
+          <p class="c-tit" style="font-size:9.5px;">Marée basse, fin d'août</p>
+          <p class="c-tec" style="font-size:7px;">Huile sur toile · 24 × 36 po</p>
+          <p class="c-pied" style="font-size:7px;"><span class="c-inv">HUP912</span><span class="c-prix" style="font-size:9px;">2 400 $</span></p>
+        </div>
+        <div class="qr qr-16"></div>
+      </div>
+      <div class="cartel" style="padding:6px 8px;gap:6px;">
+        <div class="ph ph-14"></div>
+        <div class="c-txt">
+          <p class="c-art" style="font-size:8.5px;">Jean Simard</p>
+          <p class="c-tit" style="font-size:9.5px;">Bois de grève III</p>
+          <p class="c-tec" style="font-size:7px;">Bois flotté · 18 × 9 po</p>
+          <p class="c-pied" style="font-size:7px;"><span class="c-inv">JES204</span><span class="c-prix" style="font-size:9px;">950 $</span></p>
+        </div>
+        <div class="qr qr-16"></div>
+      </div>
+      <div class="cartel"></div><div class="cartel"></div>
+      <div class="cartel"></div><div class="cartel"></div>
+      <div class="cartel"></div><div class="cartel"></div>
+      <div class="cartel"></div><div class="cartel"></div>
+    </div></div>
+    <p class="legende">Dix cartels, chacun avec sa vignette. <b>Deux fois moins de papier</b>
+    qu'à cinq par page.</p>
+  </div>
+
+  <div style="flex:1;min-width:340px;">
+    <p class="etiq">Ce qui change dans la fenêtre d'impression</p>
+    <table class="t">
+      <thead><tr><th style="width:34%;">Case « photo »</th><th style="width:30%;">Avant</th><th>Après</th></tr></thead>
+      <tbody>
+        <tr><td class="non">Décochée</td><td>4, 6, 8, 10 · défaut 10</td><td>inchangé</td></tr>
+        <tr><td class="oui">Cochée</td><td>2, 4, 6 · défaut 6</td><td><b>4, 6, 8, 10 · défaut 10</b></td></tr>
+      </tbody>
+    </table>
+    <div class="journal" style="margin-top:16px;">
+      <h4>Ce que ça simplifie</h4>
+      <ul>
+        <li>La case « photo » ne <em>change plus</em> la liste des formats : cocher ou décocher
+          n'a plus d'effet de bord surprenant.</li>
+        <li>Le format <em>2 par page</em> disparaît : il n'existait que pour donner de la place à
+          une grande image.</li>
+        <li>La vignette est un <em>carré</em> : quelle que soit la forme de la toile, tous les
+          cartels s'alignent. Une photo en hauteur ne déforme plus la case — c'est aussi ce qui
+          avait causé les cartels étalés sur quatre feuilles.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="journal">
+  <h4>Pourquoi la vignette à gauche plutôt que le bandeau</h4>
+  <ul>
+    <li>À taille égale, un <em>carré</em> montre plus de la toile qu'un bandeau large et bas, qui
+      la coupe en haut et en bas.</li>
+    <li>Le cartel retrouve la même structure que sans photo — texte à gauche, code QR à droite —
+      avec juste un repère de plus. <em>Un seul gabarit mental</em> au lieu de deux.</li>
+    <li>La vignette est <em>alignée en haut</em>, à côté du nom de l'artiste : l'œil part du même
+      endroit dans les deux cas.</li>
+  </ul>
+</div>
+
+</body></html>

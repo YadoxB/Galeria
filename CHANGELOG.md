@@ -10,6 +10,47 @@ identifiants.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Catégorie « Nouveautés par version » dans l'aide**, avec un article par version et un
+  bouton **« Revoir en grand »** qui rejoue la fenêtre de nouveautés de cette version-là.
+  - Les articles sont **engendrés à partir de `src/app/nouveautes.js`** : rien n'est recopié,
+    une nouvelle version y apparaît d'elle-même et ne peut pas se désynchroniser.
+  - Un article **par version** plutôt qu'une liste unique : la recherche de l'aide trouve
+    alors « exposition » ou « cartel » dans la version qui l'a apportée.
+  - `construireDiapos()` accepte une borne haute `jusqua`. Sans elle, revoir la 0.17.0
+    affichait aussi tout ce qui l'a suivie — correct après une mise à jour, absurde sous un
+    article intitulé *Version 0.17.0*.
+
+### Modifié
+
+- **La photo des cartels devient une vignette de repérage.** « Ces images ne servent qu'à
+  associer quel cartel va avec quelle toile ; ça ne sert pas vraiment à montrer les toiles »
+  (Dave). Carré de **18 mm** à gauche du texte (14 mm sur les formats compacts), au lieu de
+  la moitié de la case. Le texte redevient le sujet du cartel.
+  - **La photo ne restreint plus les formats** : 4, 6, 8 ou 10 par page dans les deux modes,
+    défaut 10. Cocher la case n'a plus d'effet de bord. Le format *2 par page* est retiré —
+    il n'existait que pour loger une grande image.
+  - La vignette ayant une **taille fixe en millimètres**, aucune dimension d'image ne peut
+    plus influencer la hauteur d'un cartel : le défaut corrigé en 0.19.1 devient
+    structurellement impossible.
+  - Vérifié en produisant de **vrais PDF** (Electron + `printToPDF`) sur six combinaisons de
+    format, avec des proportions extrêmes (1:5, 5:1, 4000 × 5000) et une œuvre sans photo.
+
+### Corrigé
+
+- **Le courriel de signalement ne s'ouvrait pas.** Deux défauts superposés, trouvés en
+  reprenant le rapport réellement envoyé par les parents.
+  - Le plafond de longueur portait sur le **texte brut** (1800 caractères). Leur rapport en
+    faisait 1713 — donc non tronqué — mais **2450 une fois encodé**, au-dessus de la limite
+    de Windows. L'encodage multiplie la longueur par ~1,4 sur du français ; elle est
+    désormais mesurée sur **l'adresse finale**, réduite par dichotomie jusqu'à ce qu'elle
+    tienne. Les lignes `at …` des traces d'appel sont retirées du courriel (elles restent
+    dans le presse-papier et dans le fichier).
+  - `app:ouvrir-url` n'attendait pas `shell.openExternal` et répondait « ok » quoi qu'il
+    arrive : un échec passait inaperçu, et le repli « le logiciel de courriel n'a pas
+    répondu » ne pouvait jamais se déclencher.
+
 ## [0.19.1] — 2026-09-06
 
 > **Deux corrections, trouvées grâce au premier signalement envoyé par les parents.**
