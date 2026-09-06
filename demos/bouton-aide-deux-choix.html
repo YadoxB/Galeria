@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Le bouton « ? » à deux choix</title>
+<style>
+  :root {
+    --soft-ivory:#FCFAF4; --porcelain:#FFFFFF; --warm-gold:#C99A3D; --gallery-navy:#071A2F;
+    --ink:#111827; --slate:#5D6875; --stone:#A79E91; --mist:#D8D2C8; --cloud:#EFE8DE;
+    --rouge:#900001;
+    --font-titre:'Cormorant Garamond',Georgia,serif;
+    --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r-carte:14px; --r-btn:10px;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--soft-ivory); font-family:var(--font-ui); color:var(--ink); padding:32px; }
+  h1 { font-family:var(--font-titre); font-weight:600; font-size:28px; margin:0 0 6px; }
+  .sous { color:var(--slate); margin:0 0 10px; font-size:14px; max-width:860px; line-height:1.6; }
+  .lot-titre { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone);
+               margin:40px 0 6px; font-weight:600; }
+  .lot-note { font-size:13.5px; color:var(--slate); max-width:860px; line-height:1.6; margin:0 0 16px; }
+  .etiq { font-size:11px; text-transform:uppercase; letter-spacing:.07em; font-weight:700;
+          margin:0 0 12px; color:var(--stone); }
+  .etiq.reco { color:var(--warm-gold); }
+  .rangee { display:flex; gap:30px; align-items:flex-end; flex-wrap:wrap; }
+  .legende { font-size:12px; color:var(--slate); margin:12px 0 0; max-width:280px; line-height:1.5; }
+  .legende b { color:var(--ink); }
+
+  /* le coin de l'écran, pour situer */
+  .coin { position:relative; width:300px; height:230px; background:var(--porcelain);
+          border:1px solid var(--mist); border-radius:var(--r-carte); overflow:hidden;
+          box-shadow:0 4px 14px rgba(7,26,47,.06); }
+  .faux-contenu { padding:16px; }
+  .faux-ligne { height:8px; background:var(--cloud); border-radius:4px; margin-bottom:9px; }
+  .faux-ligne.court { width:55%; }
+
+  .fab { position:absolute; right:16px; bottom:16px; width:46px; height:46px; border-radius:50%;
+         border:0; background:var(--gallery-navy); color:#fff; font-size:21px; font-weight:600;
+         cursor:pointer; box-shadow:0 4px 14px rgba(7,26,47,.28); }
+
+  /* Variante A — menu au-dessus */
+  .menu { position:absolute; right:16px; bottom:72px; width:238px; background:var(--porcelain);
+          border:1px solid var(--mist); border-radius:12px; padding:6px;
+          box-shadow:0 12px 30px rgba(7,26,47,.18); }
+  .menu button { display:flex; align-items:flex-start; gap:10px; width:100%; text-align:left;
+                 border:0; background:transparent; border-radius:8px; padding:10px 11px;
+                 cursor:pointer; font-family:var(--font-ui); }
+  .menu button:hover { background:var(--soft-ivory); }
+  .menu .ic { flex:0 0 auto; width:26px; height:26px; border-radius:7px; display:flex;
+              align-items:center; justify-content:center; font-size:14px; font-weight:700; }
+  .ic-aide { background:#EAF0F6; color:var(--gallery-navy); }
+  .ic-pb { background:#FBEDED; color:var(--rouge); }
+  .menu .t { font-size:13.5px; font-weight:600; color:var(--ink); line-height:1.25; }
+  .menu .d { font-size:11.5px; color:var(--slate); line-height:1.35; margin-top:2px; }
+
+  /* Variante B — deux boutons dépliés */
+  .pile { position:absolute; right:16px; bottom:72px; display:flex; flex-direction:column;
+          gap:8px; align-items:flex-end; }
+  .pile button { display:flex; align-items:center; gap:8px; border:1px solid var(--mist);
+                 background:var(--porcelain); border-radius:999px; padding:8px 14px 8px 10px;
+                 cursor:pointer; font-family:var(--font-ui); font-size:13px; font-weight:600;
+                 box-shadow:0 4px 12px rgba(7,26,47,.12); white-space:nowrap; }
+  .pile .ic { width:22px; height:22px; border-radius:50%; display:flex; align-items:center;
+              justify-content:center; font-size:12px; }
+
+  /* Variante C — bandeau dans le panneau */
+  .panneau { width:300px; background:var(--porcelain); border:1px solid var(--mist);
+             border-radius:var(--r-carte); overflow:hidden; box-shadow:0 4px 14px rgba(7,26,47,.06); }
+  .panneau-tete { padding:14px 16px; border-bottom:1px solid var(--cloud); display:flex;
+                  align-items:center; gap:10px; }
+  .panneau-tete h4 { margin:0; font-family:var(--font-titre); font-size:19px; font-weight:600; }
+  .panneau-tete button { margin-left:auto; border:1px solid var(--mist); background:var(--porcelain);
+                         border-radius:8px; padding:6px 11px; font-size:12px; cursor:pointer;
+                         font-family:var(--font-ui); font-weight:600; color:var(--rouge); }
+  .panneau-corps { padding:14px 16px; }
+
+  .journal { max-width:1060px; margin-top:20px; background:var(--porcelain); border:1px solid var(--mist);
+             border-radius:var(--r-carte); padding:16px 20px; }
+  .journal h4 { font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone);
+                margin:0 0 8px; font-weight:700; }
+  .journal ul { margin:0; padding-left:18px; font-size:13.5px; color:var(--slate); line-height:1.75; }
+  .journal em { color:var(--ink); font-style:normal; font-weight:600; }
+</style>
+</head>
+<body>
+
+<h1>Le bouton « ? » à deux choix</h1>
+<p class="sous">Aujourd'hui, le bouton flottant ouvre l'aide, et le signalement est un article parmi
+quarante — il faut le chercher pour le trouver. Trois façons de le remonter à la surface.</p>
+
+<div class="rangee">
+
+  <div>
+    <p class="etiq reco">A · un petit menu au-dessus &nbsp;— recommandée</p>
+    <div class="coin">
+      <div class="faux-contenu">
+        <div class="faux-ligne"></div><div class="faux-ligne court"></div>
+      </div>
+      <div class="menu">
+        <button>
+          <span class="ic ic-aide">?</span>
+          <span><span class="t">Consulter l'aide</span>
+          <span class="d">Comment faire quelque chose</span></span>
+        </button>
+        <button>
+          <span class="ic ic-pb">!</span>
+          <span><span class="t">Signaler un problème</span>
+          <span class="d">Quelque chose ne fonctionne pas</span></span>
+        </button>
+      </div>
+      <button class="fab">?</button>
+    </div>
+    <p class="legende">Un clic ouvre, un clic choisit. Les deux lignes disent <b>quand</b> s'en
+    servir, pas seulement où elles mènent — c'est ce qui évite d'ouvrir l'aide pour signaler un
+    bogue.</p>
+  </div>
+
+  <div>
+    <p class="etiq">B · deux boutons dépliés</p>
+    <div class="coin">
+      <div class="faux-contenu">
+        <div class="faux-ligne"></div><div class="faux-ligne court"></div>
+      </div>
+      <div class="pile">
+        <button><span class="ic ic-pb">!</span> Signaler un problème</button>
+        <button><span class="ic ic-aide">?</span> Consulter l'aide</button>
+      </div>
+      <button class="fab">✕</button>
+    </div>
+    <p class="legende">Plus léger visuellement, mais sans la phrase qui explique <b>quand</b> choisir
+    quoi — et les libellés seuls ne suffisent pas toujours.</p>
+  </div>
+
+  <div>
+    <p class="etiq">C · un bouton dans l'en-tête du panneau</p>
+    <div class="panneau">
+      <div class="panneau-tete">
+        <h4>Aide</h4>
+        <button>Signaler un problème</button>
+      </div>
+      <div class="panneau-corps">
+        <div class="faux-ligne"></div><div class="faux-ligne"></div>
+        <div class="faux-ligne court"></div>
+      </div>
+    </div>
+    <p class="legende">Le moins de changement, mais il faut <b>d'abord ouvrir l'aide</b> pour
+    signaler qu'elle ne sert à rien. C'est un détour de trop.</p>
+  </div>
+
+</div>
+
+<div class="journal">
+  <h4>Pourquoi A</h4>
+  <ul>
+    <li>Les deux gestes sont <em>au même endroit</em> et <em>au même niveau</em> : le signalement
+      cesse d'être un sous-produit de l'aide.</li>
+    <li>La ligne de description tranche le vrai doute. « Consulter l'aide » et « Signaler un
+      problème » se ressemblent quand on est bloqué ; <em>« comment faire quelque chose »</em> et
+      <em>« quelque chose ne fonctionne pas »</em>, non.</li>
+    <li>Le menu se referme au clic à côté ou avec Échap, comme les autres menus de Galeria.</li>
+    <li>Le bouton garde son <em>« ? »</em> : c'est ce que vos parents ont appris à chercher.</li>
+  </ul>
+</div>
+
+<div class="journal">
+  <h4>Ce qui change dans le code</h4>
+  <ul>
+    <li>Le clic sur le bouton n'ouvre plus l'aide directement : il ouvre le menu.</li>
+    <li><em>Consulter l'aide</em> ouvre le panneau existant, sans rien y changer.</li>
+    <li><em>Signaler un problème</em> lance la fenêtre de signalement — la même que celle déjà
+      bâtie.</li>
+    <li>L'article « Signaler un problème » <em>reste</em> dans l'aide : quelqu'un qui cherche
+      « bogue » ou « rapport » doit le trouver là aussi.</li>
+  </ul>
+</div>
+
+</body></html>

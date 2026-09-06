@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Outils de soutien technique</title>
+<style>
+  :root {
+    --soft-ivory:#FCFAF4; --porcelain:#FFFFFF; --warm-gold:#C99A3D; --gallery-navy:#071A2F;
+    --ink:#111827; --slate:#5D6875; --stone:#A79E91; --mist:#D8D2C8; --cloud:#EFE8DE;
+    --rouge:#900001; --vert:#2E6B4F;
+    --font-titre:'Cormorant Garamond',Georgia,serif;
+    --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r-carte:14px; --ombre-carte:0 4px 14px rgba(7,26,47,.06);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--soft-ivory); font-family:var(--font-ui); color:var(--ink); padding:32px; }
+  h1 { font-family:var(--font-titre); font-weight:600; font-size:28px; margin:0 0 6px; }
+  .sous { color:var(--slate); margin:0 0 10px; font-size:14px; max-width:900px; line-height:1.6; }
+  .lot-titre { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone);
+               margin:44px 0 6px; font-weight:600; }
+  .lot-note { font-size:13.5px; color:var(--slate); max-width:900px; line-height:1.6; margin:0 0 16px; }
+  .etiq { font-size:11px; text-transform:uppercase; letter-spacing:.07em; font-weight:700;
+          margin:0 0 10px; color:var(--stone); }
+  .etiq.reco { color:var(--warm-gold); }
+  .rangee { display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap; }
+  .legende { font-size:12px; color:var(--slate); margin:10px 0 0; max-width:400px; line-height:1.5; }
+  .legende b { color:var(--ink); }
+
+  .journal { max-width:1060px; margin-top:20px; background:var(--porcelain); border:1px solid var(--mist);
+             border-radius:var(--r-carte); padding:16px 20px; }
+  .journal h4 { font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--stone);
+                margin:0 0 8px; font-weight:700; }
+  .journal ul { margin:0; padding-left:18px; font-size:13.5px; color:var(--slate); line-height:1.75; }
+  .journal em { color:var(--ink); font-style:normal; font-weight:600; }
+
+  .fen { background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte);
+         box-shadow:0 10px 30px rgba(7,26,47,.14); width:520px; overflow:hidden; }
+  .fen-tete { padding:16px 20px 12px; border-bottom:1px solid var(--cloud); }
+  .fen-tete h3 { font-family:var(--font-titre); font-size:20px; font-weight:600; margin:0 0 3px; }
+  .fen-tete p { margin:0; font-size:13px; color:var(--slate); line-height:1.5; }
+  .fen-corps { padding:16px 20px; }
+  .fen-actions { padding:12px 20px 16px; display:flex; gap:8px; justify-content:flex-end;
+                 border-top:1px solid var(--cloud); background:var(--soft-ivory); }
+  .btn { font-family:var(--font-ui); font-size:13px; border:1px solid var(--mist);
+         background:var(--porcelain); border-radius:8px; padding:8px 14px; cursor:pointer; }
+  .btn:hover { background:var(--cloud); }
+  .btn-pri { background:var(--gallery-navy); border-color:var(--gallery-navy); color:#fff; }
+  .btn-pri:hover { background:#0d2947; }
+
+  .champ { margin-bottom:14px; }
+  .champ label { display:block; font-size:11.5px; text-transform:uppercase; letter-spacing:.05em;
+                 color:var(--stone); font-weight:600; margin-bottom:5px; }
+  textarea, input[type=text] { width:100%; font-family:var(--font-ui); font-size:13.5px; color:var(--ink);
+    background:var(--porcelain); border:1px solid var(--mist); border-radius:8px; padding:9px 10px;
+    line-height:1.5; resize:vertical; }
+  .case { display:flex; align-items:flex-start; gap:9px; font-size:13px; color:var(--slate);
+          margin-bottom:10px; line-height:1.45; }
+  .case input { margin-top:2px; }
+
+  .bilan { font-family:ui-monospace,Consolas,monospace; font-size:12px; line-height:1.7;
+           background:var(--soft-ivory); border:1px solid var(--cloud); border-radius:9px;
+           padding:12px 14px; white-space:pre; overflow-x:auto; }
+  .bilan .part { color:var(--vert); font-weight:600; }
+  .bilan .exclu { color:var(--rouge); font-weight:600; }
+  .bilan .cmt { color:var(--stone); }
+
+  table.t { width:100%; max-width:1060px; border-collapse:collapse; font-size:13.5px; margin-top:10px;
+    background:var(--porcelain); border:1px solid var(--mist); border-radius:var(--r-carte); overflow:hidden; }
+  table.t th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--stone); font-weight:700; padding:11px 14px; background:var(--soft-ivory); }
+  table.t td { padding:10px 14px; border-top:1px solid var(--cloud); vertical-align:top; }
+  .part2 { color:var(--vert); font-weight:600; }
+  .exclu2 { color:var(--rouge); font-weight:600; }
+
+  .alerte { max-width:1060px; background:#FFF8F8; border:1px solid #E9D2D2; border-left:3px solid var(--rouge);
+            border-radius:10px; padding:16px 20px; margin-top:24px; }
+  .alerte h4 { margin:0 0 8px; font-size:14px; color:var(--rouge); }
+  .alerte p { margin:0 0 8px; font-size:13.5px; color:var(--slate); line-height:1.6; }
+  .alerte p:last-child { margin-bottom:0; }
+
+  code { font-family:ui-monospace,Consolas,monospace; font-size:12px; background:var(--cloud);
+         padding:1px 5px; border-radius:4px; }
+</style>
+</head>
+<body>
+
+<h1>Deux outils pour vous dépanner à distance</h1>
+<p class="sous">Vous venez de livrer cinq versions en deux jours à des gens qui ne peuvent pas vous
+décrire un bug, et vous n'avez aucun moyen de voir ce qu'ils voient. Voici ce que je propose,
+sous une contrainte non négociable : <b>aucune donnée de client ne quitte leur ordinateur</b>
+(Loi 25, <code>CLAUDE.md</code> §3 et §9).</p>
+
+<!-- ============ OUTIL 1 ============ -->
+<p class="lot-titre">Outil 1 &middot; La copie pour le soutien</p>
+<p class="lot-note">Votre demande d'origine : « me synchroniser sur leur DB, pour troubleshooter et
+voir ce qu'ils voient, mais de chez moi ». Une synchronisation permanente ferait sortir des données
+en continu — on fait plutôt une <b>copie ponctuelle et expurgée</b>, qu'ils vous envoient.</p>
+
+<div class="rangee">
+  <div class="fen">
+    <div class="fen-tete">
+      <h3>Préparer une copie pour le soutien</h3>
+      <p>Une copie de votre catalogue, <b>sans aucune donnée de client</b>, à envoyer à Dave pour
+      qu'il puisse reproduire un problème.</p>
+    </div>
+    <div class="fen-corps">
+      <div class="bilan"><span class="part">✓ inclus</span>   20 artistes, 506 œuvres, 3 expositions
+<span class="part">✓ inclus</span>   les réglages de la galerie et des documents
+<span class="part">✓ inclus</span>   le journal d'erreurs (200 dernières lignes)
+
+<span class="exclu">✕ retiré</span>    12 clients          <span class="cmt">noms, adresses, courriels</span>
+<span class="exclu">✕ retiré</span>    14 ventes           <span class="cmt">prix payés, modes de paiement</span>
+<span class="exclu">✕ retiré</span>    5 certificats       <span class="cmt">portent le nom de l'acheteur</span>
+<span class="exclu">✕ retiré</span>    2 annexes
+<span class="exclu">✕ retiré</span>    le code du verrou et la clé Anthropic
+<span class="exclu">✕ retiré</span>    les clés du site web</div>
+      <div class="case" style="margin-top:14px;">
+        <input type="checkbox" id="c-photos">
+        <label for="c-photos" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--slate);font-weight:400;">
+          Joindre aussi les photos <b>(209 Mo)</b> — inutile dans la plupart des cas,
+          et trop lourd pour un courriel.</label>
+      </div>
+    </div>
+    <div class="fen-actions">
+      <button class="btn">Annuler</button>
+      <button class="btn btn-pri">Préparer la copie</button>
+    </div>
+  </div>
+
+  <div style="flex:1;min-width:330px;">
+    <p class="etiq">Ce que le fichier contient, table par table</p>
+    <table class="t">
+      <thead><tr><th style="width:38%;">Table</th><th style="width:20%;"></th><th>Pourquoi</th></tr></thead>
+      <tbody>
+        <tr><td>artistes</td><td class="part2">gardée</td><td>Le catalogue est le sujet de presque tous les problèmes.</td></tr>
+        <tr><td>oeuvres</td><td class="part2">gardée</td><td>Statuts compris — vous voyez ce qu'ils voient.</td></tr>
+        <tr><td>expositions</td><td class="part2">gardée</td><td>Aucune donnée personnelle.</td></tr>
+        <tr><td>clients</td><td class="exclu2">vidée</td><td>Noms, adresses, courriels, consentements.</td></tr>
+        <tr><td>ventes</td><td class="exclu2">vidée</td><td>Qui a acheté quoi, à quel prix.</td></tr>
+        <tr><td>certificats</td><td class="exclu2">vidée</td><td>Le nom de l'acheteur y figure.</td></tr>
+        <tr><td>annexes</td><td class="exclu2">vidée</td><td>Documents signés.</td></tr>
+      </tbody>
+    </table>
+    <p class="legende" style="max-width:none;">Une œuvre <b>vendue</b> reste marquée vendue : son
+    statut vient de la table des œuvres, pas de la vente. Vous retrouvez donc le catalogue dans
+    l'état exact où ils le voient, sans savoir <b>à qui</b> quoi que ce soit a été vendu.</p>
+  </div>
+</div>
+
+<div class="journal">
+  <h4>Trois décisions à valider</h4>
+  <ul>
+    <li><em>Une copie, pas une synchronisation.</em> Un lien permanent vers leur base ferait sortir
+      des données en continu, sans qu'ils sachent quand. Ici, c'est un geste conscient, à leur
+      initiative, dont ils voient le contenu avant l'envoi.</li>
+    <li><em>Les réservations sont détachées.</em> Une œuvre réservée pointe vers un client ; le
+      lien est effacé, l'œuvre reste réservée.</li>
+    <li><em>Le fichier s'ouvre dans votre Galeria à vous.</em> C'est une base complète, seulement
+      vidée — vous la déposez dans votre dossier de données et vous naviguez normalement.</li>
+  </ul>
+</div>
+
+<!-- ============ OUTIL 2 ============ -->
+<p class="lot-titre">Outil 2 &middot; Signaler un problème</p>
+<p class="lot-note">Votre idée : « un bouton sur la page, qui permet de m'envoyer une demande
+concernant un problème à cet endroit ». Le bouton <b>?</b> existe déjà en bas à droite, avec un
+article « Soutien » — c'est là qu'il se loge, plutôt que d'ajouter un deuxième bouton flottant.</p>
+
+<div class="rangee">
+  <div class="fen">
+    <div class="fen-tete">
+      <h3>Signaler un problème</h3>
+      <p>Décrivez ce qui s'est passé. Galeria ajoute des informations techniques
+      et vous montre le tout <b>avant</b> que quoi que ce soit ne parte.</p>
+    </div>
+    <div class="fen-corps">
+      <div class="champ">
+        <label>Que s'est-il passé ?</label>
+        <textarea rows="3" placeholder="Ex. : j'ai cliqué sur « Produire la pochette » et rien ne s'est passé."></textarea>
+      </div>
+      <div class="champ">
+        <label>Informations jointes automatiquement</label>
+        <div class="bilan">Galeria 0.18.0 · Windows 11 (26200) · écran 1920×1080
+Page ouverte : Fiche de vente n° 30
+Catalogue : 20 artistes, 506 œuvres
+Dernière sauvegarde : aujourd'hui 14 h 02
+Journal d'erreurs : 3 lignes récentes
+<span class="cmt">— aucun nom de client, aucun montant, aucun mot de passe —</span></div>
+      </div>
+    </div>
+    <div class="fen-actions">
+      <button class="btn">Annuler</button>
+      <button class="btn">Voir le détail</button>
+      <button class="btn btn-pri">Enregistrer le rapport</button>
+    </div>
+  </div>
+
+  <div style="flex:1;min-width:320px;">
+    <p class="etiq reco">Ce qui se passe ensuite</p>
+    <div class="journal" style="margin-top:0;">
+      <ul>
+        <li>Galeria enregistre un fichier <code>probleme-2026-09-05.txt</code> et <em>ouvre le
+          dossier</em> dessus, fichier sélectionné.</li>
+        <li>Une phrase leur dit quoi faire : <em>« Envoyez ce fichier à Dave par courriel. »</em>
+          avec un bouton qui ouvre leur logiciel de courriel, destinataire et objet déjà
+          remplis.</li>
+        <li><em>Rien ne part tout seul.</em> Aucun envoi automatique, aucun service en nuage —
+          c'est la règle du projet, et c'est aussi ce qui rend l'outil acceptable pour eux.</li>
+        <li><em>« Voir le détail »</em> ouvre le contenu exact du fichier. Quelqu'un qui se
+          demande ce qu'il envoie doit pouvoir le lire, en entier, avant.</li>
+      </ul>
+    </div>
+    <p class="legende" style="max-width:none;">Le bouton connaît <b>la page ouverte</b> au moment
+    du clic : c'est ce que vous demandiez par « une demande concernant un problème à cet
+    endroit ».</p>
+  </div>
+</div>
+
+<div class="journal">
+  <h4>Ce qui est retiré du rapport, et pourquoi</h4>
+  <ul>
+    <li><em>Le code du verrou</em> (<code>securite.code_hash</code>, <code>code_sel</code>) et la
+      <em>question de secours</em> : même sous forme d'empreinte, ça n'a rien à faire dans un
+      fichier qui circule par courriel.</li>
+    <li><em>La clé Anthropic</em> (<code>ia.cle_anthropic</code>) et les <em>clés du site web</em> :
+      chiffrées dans le coffre Windows, elles ne doivent jamais en ressortir.</li>
+    <li><em>Aucun nom de client, aucun montant.</em> Les compteurs disent « 12 clients », jamais
+      qui.</li>
+    <li>Le <em>journal d'erreurs</em> est joint parce que c'est lui qui sert vraiment — mais coupé
+      aux dernières lignes, pour rester lisible.</li>
+  </ul>
+</div>
+
+<div class="alerte">
+  <h4>Trois questions</h4>
+  <p><b>Où loger la « copie pour le soutien » ?</b> Je propose <b>Réglages → Données</b>, à côté des
+  sauvegardes et du dossier de données — c'est là qu'on va quand on manipule le fichier de base.
+  L'autre candidat est la page <b>Outils</b>, mais elle regroupe des calculatrices.</p>
+  <p><b>Le fichier doit-il vous parvenir par courriel ?</b> Le rapport de problème tient dans un
+  courriel ; la copie du catalogue fait <b>quelques mégaoctets</b> (sans photos) — ça passe encore.
+  Avec les photos, non : il faudrait une clé USB ou un partage, ce qui sort du cadre « tout reste
+  local ».</p>
+  <p><b>Faut-il un mot de passe sur la copie ?</b> Elle ne contient aucune donnée de client, mais
+  elle contient tout votre catalogue et vos prix. Je peux la laisser en clair (simple) ou la
+  compresser avec un mot de passe que vous connaissez tous les deux.</p>
+</div>
+
+</body></html>

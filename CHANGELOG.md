@@ -10,6 +10,50 @@ identifiants.
 
 ## [Non publié]
 
+> **Deux outils pour dépanner à distance.** Les parents peuvent envoyer une copie de leur
+> catalogue sans données de client, et signaler un problème en une phrase.
+
+### Ajouté
+
+- **Copie pour le soutien technique** (*Réglages → Données*). Un exemplaire du catalogue à
+  envoyer à Dave pour reproduire un problème. **Aucune donnée de client n'en fait partie** :
+  `clients`, `ventes`, `certificats` et `annexes` sont vidées, les réservations détachées.
+  - Le **bilan est affiché avant** la production, lu dans la vraie base — on n'envoie pas un
+    fichier sans savoir ce qu'il contient.
+  - Ce qui rend la copie utile malgré l'expurgation : le **statut** d'une œuvre vit dans la
+    table des œuvres, pas dans la vente. Une toile vendue reste marquée vendue.
+  - Sans photos : **un seul fichier d'environ 1 Mo**, joignable à un courriel. Avec photos :
+    un dossier, puisque 200 Mo ne passent pas par courriel.
+- **Signaler un problème.** Le bouton **?** flottant déplie maintenant **deux choix** —
+  *Signaler un problème* et *Consulter l'aide* — au lieu d'ouvrir l'aide directement. Le
+  signalement y était un article parmi quarante.
+  - Une phrase de description, puis **le rapport complet est montré** avant tout envoi.
+  - **Outlook s'ouvre pré-rempli** (destinataire, objet, corps) : il ne reste qu'à cliquer
+    sur *Envoyer*. Le texte est aussi mis dans le presse-papier, et un bouton *Enregistrer
+    le fichier* reste offert.
+  - Le rapport porte la version, le système, **la page ouverte au moment du clic**, la
+    taille du catalogue, la date de la dernière sauvegarde et les dernières lignes du
+    journal d'erreurs.
+
+### Sécurité
+
+- Le rapport ne contient **jamais** de nom de client, d'adresse, de courriel ni de montant —
+  seulement des **comptes** (« 12 clients »), jamais qui. La configuration **n'est pas jointe
+  du tout** : plus sûr qu'une liste de champs à exclure, qu'un ajout futur rendrait
+  incomplète sans prévenir. Le code du verrou et les clés (Anthropic, site web) restent donc
+  hors du rapport.
+- La copie pour le soutien a trois garde-fous : une **table non classée fait échouer la
+  copie** (une table ajoutée plus tard serait sinon gardée par défaut) ; les **clés
+  étrangères restent actives** pendant l'expurgation ; et un **`VACUUM` suivi d'un contrôle
+  du fichier produit** — sans lui, les lignes supprimées resteraient lisibles dans les pages
+  libérées du fichier.
+
+### Corrigé
+
+- Le menu du bouton **?** restait déplié en permanence : `display: flex` écrasait la règle
+  `[hidden]` du navigateur. Ajout de `.aide-pile[hidden] { display: none; }`, comme
+  `.menu-docs-pop[hidden]` ailleurs dans le projet.
+
 ## [0.18.0] — 2026-09-05
 
 > **Les photos rangées par artiste.** Le dossier Photos suit désormais la méthode de

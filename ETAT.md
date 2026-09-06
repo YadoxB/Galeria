@@ -54,6 +54,49 @@ Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif
 > quotidien, et le plus risqué (voir plus bas). À faire à tête reposée, pas en fin de
 > session.
 
+### Les outils de soutien (→ 0.19.0) — ce qu'il faut savoir pour y revenir
+
+**Le besoin de Dave, dans ses mots (2026-08-24) :** « me synchroniser sur leur DB, pour
+troubleshooter et voir ce qu'ils voient, mais de chez moi » et « un bouton sur la page, qui
+permet de m'envoyer une demande concernant un problème à cet endroit ».
+
+**⚠ Décisions à ne pas défaire :**
+- **Une copie ponctuelle, PAS une synchronisation.** Un lien permanent ferait sortir des
+  données en continu, sans que les parents sachent quand. Ici, c'est un geste conscient, à
+  leur initiative, dont ils voient le contenu avant l'envoi.
+- **Pas d'envoi automatique par courriel.** Ça exigerait d'embarquer un mot de passe dans
+  l'installateur, extractible par quiconque a le `.exe`. Refusé, et Dave l'a accepté.
+- **Pas d'écran « Signalements reçus » dans Galeria** : Dave **n'utilise pas l'application**.
+  Une première conception le prévoyait — abandonnée pour cette raison.
+- Piste écartée mais valable si le courriel déçoit : un **dossier partagé** (OneDrive est
+  actif sur les deux machines). L'app n'écrirait que dans un chemin configuré — aucun secret,
+  aucun serveur. Elle demanderait d'assouplir `CLAUDE.md` §3, ce qui se défend : la ligne
+  réelle du projet est « aucune donnée PERSONNELLE ne sort », comme pour la synchro du site
+  et l'API Claude.
+
+**Copie pour le soutien** (`src/db/copie-soutien.js`, *Réglages → Données*). Trois garde-fous,
+tous éprouvés : ⚠ une **table non classée fait échouer la copie** (`verifierCouverture`) —
+sans lui, une table ajoutée plus tard partirait par défaut ; les **clés étrangères restent
+actives** (elles ont attrapé un ordre de suppression erroné de ma part — voir
+`ORDRE_SUPPRESSION`, les enfants d'abord) ; et un **`VACUUM` + contrôle du fichier produit**,
+sans quoi les lignes supprimées resteraient **lisibles dans les pages libérées**.
+Vérifié par **témoins** : des chaînes uniques plantées dans un client et une vente, absentes
+des octets du fichier produit — avec un contrôle qu'elles étaient bien présentes à la source.
+
+**Signalement** (`src/soutien-rapport.js`, `src/app/aide.js`). Le bouton **?** déplie deux
+choix (variante B, choisie par Dave). La **configuration n'est pas jointe du tout** : plus sûr
+qu'une liste d'exclusions qu'un ajout futur rendrait incomplète. Rapport ≈ 350 caractères,
+sous la limite d'un `mailto`. Filets : texte systématiquement dans le presse-papier, bouton
+« Enregistrer le fichier », troncature annoncée au-delà de 1800 caractères.
+
+**⚠ LEÇON DE MÉTHODE.** Le menu du bouton **?** est sorti déplié en permanence :
+`display: flex` écrasait la règle `[hidden]` du navigateur. Mon banc ne l'avait pas vu parce
+qu'il définissait **sa propre feuille de styles** (`[hidden]{display:none!important}`) au lieu
+de charger celle de l'app. **Un banc d'interface doit charger `theme.css` et `styles.css` et
+mesurer `getComputedStyle`**, pas l'état d'une propriété JavaScript.
+
+**Maquettes** : `demos/outils-soutien.html`, `demos/bouton-aide-deux-choix.html`.
+
 ### Le chantier photos (0.18.0) — ce qu'il faut savoir pour y revenir
 
 **⚠ LE CONSTAT QUI A TOUT CHANGÉ.** La note de reprise disait « tout est à plat » : **c'était
@@ -166,8 +209,8 @@ seul fichier dont seul le nom suit la langue.
 2. ~~**La présentation et le catalogue en anglais**~~ — **FAIT et PUBLIÉ dans la 0.17.0.** Le **chantier bilingue est refermé** : le certificat (0.15.0), les fiches et l'import (0.16.0), la présentation, le catalogue et toute la pochette (0.17.0). Voir la section dédiée plus haut. Maquette : `demos/documents-en-anglais.html`.
 3. **Reste de la liste de retours des parents du 2026-08-25** :
    - ~~**Photos**~~ — **FAIT et PUBLIÉ dans la 0.18.0**, mais **jamais lancé sur des données réelles**. Voir « Le chantier photos » ci-dessous.
-   - **Copie expurgée** pour le soutien technique (décidée) : catalogue sans clients ni ventes.
-   - **Bouton « Signaler un problème »** : dossier de diagnostic montré avant envoi, jamais d'envoi automatique.
+   - ~~**Copie expurgée**~~ — **FAIT (2026-09-06)**, commité, non publié. Voir « Les outils de soutien » ci-dessous.
+   - ~~**Bouton « Signaler un problème »**~~ — **FAIT (2026-09-06)**, commité, non publié. **La liste de retours des parents du 2026-08-25 est entièrement livrée.**
    - ~~**Filtrer par numéro**~~ — **CLARIFIÉ ET FAIT (2026-09-04).** La demande n'était pas un filtre mais un **ordre d'affichage** : voir les toiles d'un artiste dans l'ordre de leurs numéros d'inventaire, pour suivre une liste facilement. Voir le point 4 ci-dessous.
 4. **Ordre naturel des numéros d'inventaire — FAIT et PUBLIÉ dans la 0.16.0.** Les numéros mêlent lettres et chiffres de longueur variable (`CLB565`, `CLB1236`, `HUP99`, `HUP1069`) ; un tri de texte plaçait `CLB565` **après** `CLB1236`. **Mesuré : 6 artistes sur 20 avaient une liste mal ordonnée.** SQLite ne sait pas trier ainsi (`COLLATE NOCASE` reste alphabétique) → tri en JavaScript après la requête, via `Intl.Collator(numeric:true)`.
    - `trierParInventaire()` + `comparerInventaire()` dans `requetes.js`, appliqués aux **5 requêtes** qui prétendaient trier par numéro : catalogue imprimé, Annexe A (par artiste et par ids), œuvres d'une exposition (donc **l'ordre des cartels**), œuvres éligibles à une exposition.

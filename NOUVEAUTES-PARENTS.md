@@ -11,6 +11,53 @@
 
 ---
 
+## Quand quelque chose ne fonctionne pas
+
+Jusqu'ici, si Galeria faisait quelque chose d'inattendu, il fallait nous
+l'expliquer au téléphone. Deux nouveautés pour que ce soit plus simple.
+
+**Le bouton « ? » propose maintenant deux choix.** En bas à droite, comme
+avant, mais un clic déplie deux boutons :
+
+- **Consulter l'aide** — quand vous cherchez *comment faire* quelque chose ;
+- **Signaler un problème** — quand *quelque chose ne fonctionne pas*.
+
+**Signaler prend une phrase.** Vous écrivez ce qui s'est passé — par exemple
+« j'ai cliqué sur Produire la pochette et rien ne s'est passé ». Galeria ajoute
+les informations techniques dont Dave a besoin, **vous les montre à l'écran**,
+puis ouvre un courriel **déjà rempli** dans Outlook. Il ne vous reste qu'à
+cliquer sur **Envoyer**.
+
+Galeria sait sur quelle page vous étiez au moment du clic : c'est souvent ce
+qui permet de comprendre le problème.
+
+**Ce qui ne part jamais.** Le signalement ne contient **aucun nom de client**,
+**aucun montant** et **aucun mot de passe** — seulement des nombres, comme
+« 12 clients ». Vous pouvez tout lire avant d'envoyer, et rien ne part sans
+votre clic.
+
+---
+
+## Envoyer votre catalogue à Dave
+
+Dans **Réglages → Données**, un nouveau bouton prépare une **copie de votre
+catalogue** à lui envoyer, pour qu'il puisse reproduire un problème chez lui.
+
+**Vos clients et vos ventes n'y sont pas.** Avant de la préparer, Galeria vous
+montre la liste exacte de ce qui est inclus et de ce qui est retiré :
+
+```
+✓ inclus   20 artistes, 506 oeuvres, 3 expositions
+✕ retiré   1 client, 2 ventes, 5 certificats, 3 annexes
+✕ retiré   le code du verrou et les clés
+```
+
+Le fichier fait environ 1 Mo — il se joint à un courriel sans difficulté. Une
+case permet d'ajouter les photos, mais elles sont rarement utiles et bien trop
+lourdes pour un envoi.
+
+---
+
 ## Vos photos rangées par artiste
 
 Le dossier **Photos** a été réorganisé. Il y a maintenant **un seul dossier par

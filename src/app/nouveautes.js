@@ -17,9 +17,30 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
-    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.18.0 :
+    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.19.0 :
     // `npm run release` refuse de publier si elle ne correspond pas à
     // package.json.
+    version: '0.19.0',
+    diapos: [
+      {
+        titre: 'Un bouton pour dire que ça ne marche pas',
+        texte: "Le bouton <b>?</b> en bas à droite propose maintenant <b>deux choix</b>&nbsp;: <b>Consulter l'aide</b> quand vous cherchez comment faire quelque chose, et <b>Signaler un problème</b> quand quelque chose ne fonctionne pas.",
+      },
+      {
+        titre: 'Signaler prend une phrase',
+        texte: "Vous décrivez ce qui s'est passé en une phrase. Galeria ajoute les informations techniques dont Dave a besoin, <b>vous les montre</b>, puis ouvre un courriel <b>déjà rempli</b>. Il ne vous reste qu'à cliquer sur <b>Envoyer</b>.",
+      },
+      {
+        titre: 'Ce qui ne part jamais',
+        texte: "Le signalement ne contient <b>aucun nom de client</b>, <b>aucun montant</b> et <b>aucun mot de passe</b> — seulement des nombres, comme « 12 clients ». Vous pouvez tout lire avant d'envoyer.",
+      },
+      {
+        titre: 'Envoyer votre catalogue à Dave',
+        texte: "Dans <b>Réglages → Données</b>, un bouton prépare une <b>copie de votre catalogue</b> pour qu'il puisse reproduire un problème chez lui. <b>Vos clients et vos ventes n'y sont pas</b> — Galeria vous montre la liste de ce qui est retiré avant de la préparer.",
+      },
+    ],
+  },
+  {
     version: '0.18.0',
     diapos: [
       {
