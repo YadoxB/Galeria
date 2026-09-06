@@ -11,6 +11,24 @@
 
 ---
 
+## Corrections — merci pour votre signalement
+
+Votre message sur les cartels était le tout premier envoyé avec le nouveau
+bouton. Il a permis de trouver **deux** problèmes, pas un.
+
+**Les cartels tiennent maintenant sur une seule page.** Une page de six
+cartels avec photo s'imprimait en réalité sur quatre feuilles, ce qui coupait
+les cartels en deux — d'où l'impression qu'ils se superposaient.
+
+**Vos photos vont enfin se ranger par artiste.** Le rangement annoncé dans la
+mise à jour précédente ne s'était jamais fait chez vous : quelques photos
+d'artistes manquaient sur le disque, et Galeria refusait de continuer plutôt
+que de prendre le moindre risque. Au prochain démarrage, le rangement aura
+lieu — les photos manquantes sont simplement laissées de côté, et rien
+d'autre n'est touché.
+
+---
+
 ## Quand quelque chose ne fonctionne pas
 
 Jusqu'ici, si Galeria faisait quelque chose d'inattendu, il fallait nous

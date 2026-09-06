@@ -10,6 +10,32 @@ identifiants.
 
 ## [Non publié]
 
+## [0.19.1] — 2026-09-06
+
+> **Deux corrections, trouvées grâce au premier signalement envoyé par les parents.**
+> L'outil de soutien a payé son écriture dès sa première utilisation.
+
+### Corrigé
+
+- **Les cartels avec photo s'étalaient sur quatre feuilles au lieu d'une.** D'où les cartels
+  « superposés » signalés : ils étaient coupés en travers des pages.
+  - Cause : `flex: 1 1 auto` sur la case photo. Avec `auto`, la hauteur de base est celle de
+    l'**image**, donc indéfinie tant qu'elle n'est pas mesurée, et le `max-height: 100%` de
+    l'image ne se résolvait sur rien. **À l'écran le navigateur s'en sortait ; à l'impression,
+    l'image sortait à sa taille naturelle.**
+  - Corrigé par `flex: 1 1 0` (hauteur issue du seul partage de l'espace, donc définie) et
+    `height: 100%` + `object-fit: contain` sur l'image.
+  - Vérifié en produisant de **vrais PDF** via Electron et `printToPDF` : 6/page → 1 page,
+    4/page → 2 pages, 2/page → 3 pages ; sans photo, inchangé.
+- **La migration des photos refusait de s'exécuter et se rejouait à chaque démarrage.** La
+  base des parents référence des portraits d'artistes **absents du disque** ; le garde-fou
+  bloquait tout, et leurs photos n'ont jamais été rangées depuis la 0.18.0 — en silence, sauf
+  une ligne dans le journal d'erreurs.
+  - Le garde-fou confondait deux choses. Une **collision** (deux photos qui veulent le même
+    chemin) reste bloquante : elle ferait perdre une photo. Un **fichier absent** est un état
+    déjà cassé, que la migration ne peut ni réparer ni aggraver — il est désormais **sauté et
+    compté**, sans arrêter le rangement. Le chemin enregistré en base est laissé intact.
+
 ## [0.19.0] — 2026-09-06
 
 > **Deux outils pour dépanner à distance.** Les parents peuvent envoyer une copie de leur

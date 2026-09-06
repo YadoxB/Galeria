@@ -17,9 +17,26 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
-    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.19.0 :
+    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.19.1 :
     // `npm run release` refuse de publier si elle ne correspond pas à
     // package.json.
+    version: '0.19.1',
+    diapos: [
+      {
+        titre: 'Merci pour le signalement',
+        texte: "Votre message sur les cartels nous est bien parvenu — c'était le tout premier. Les <b>deux problèmes</b> qu'il a permis de trouver sont corrigés dans cette mise à jour.",
+      },
+      {
+        titre: 'Les cartels tiennent sur une page',
+        texte: "Une page de six cartels avec photo s'imprimait en réalité sur <b>quatre feuilles</b>, ce qui coupait les cartels en deux. C'est réglé : six cartels, une feuille.",
+      },
+      {
+        titre: 'Vos photos vont enfin se ranger',
+        texte: "Le rangement des photos par artiste ne s'était jamais fait chez vous : quelques photos d'artistes manquaient sur le disque, et Galeria refusait de continuer. Au <b>prochain démarrage</b>, le rangement aura lieu — les photos manquantes sont simplement laissées de côté.",
+      },
+    ],
+  },
+  {
     version: '0.19.0',
     diapos: [
       {
