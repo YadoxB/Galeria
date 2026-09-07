@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.21.0] — 2026-09-07
+
 ### Ajouté
 
 - **Bandeau de statistiques en tête de la liste des œuvres** : affichées, disponibles, en

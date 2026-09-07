@@ -9,13 +9,12 @@
 
 ## ▶ Reprise — par où commencer (préparé le 2026-09-07)
 
-**✅ Dernière version PUBLIÉE : v0.20.0 (2026-09-06).** `origin/master` = tag `v0.20.0` = `8aaaafe`.
-Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
+**✅ Dernière version PUBLIÉE : v0.21.0 (2026-09-07).** Poussée et publiée sur GitHub Releases
+avec `latest.yml` — auto-update actif.
 
-> ### 🟩 EN ATTENTE DE PUBLICATION — cartels en paysage (2026-09-07)
+> ### ✅ CE QUE LA 0.21.0 A LIVRÉ (2026-09-07)
 >
-> Deux ajustements demandés par Dave après avoir vu les cartels de la 0.20.0, prêts en local,
-> **pas encore publiés** :
+> Quatre ajustements demandés par Dave après avoir vu les cartels de la 0.20.0 :
 >
 > 1. **L'orientation de la feuille suit le nombre par page.** 10 → portrait (inchangé) ;
 >    4, 6 et 8 → **paysage**. Un cartel est large et bas ; en portrait, moins il y en a par
