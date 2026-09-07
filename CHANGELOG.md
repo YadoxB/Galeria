@@ -10,7 +10,38 @@ identifiants.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Bandeau de statistiques en tête de la liste des œuvres** : affichées, disponibles, en
+  exposition, vendues, retirées, et la valeur totale. Même vocabulaire visuel que l'en-tête
+  d'une fiche d'artiste, dans une bande basse plutôt qu'une carte — la page a déjà un titre,
+  une recherche et une barre de contrôles.
+  - Les nombres **se recalculent sur la liste réellement affichée** : statuts, artiste, type,
+    format, style, « inclure les retirées », et jusqu'au texte tapé dans la recherche. Ils
+    sont dérivés de la liste que `dessiner()` vient de filtrer — aucune requête de plus, et
+    aucun moyen qu'ils racontent autre chose que ce qu'on voit.
+  - D'où **« Affichées »** en tête et non « Au catalogue » : ce ne sont pas des totaux. Un
+    rappel discret des filtres actifs est posé à droite, sans quoi un nombre bas ressemble à
+    un catalogue qui a fondu plutôt qu'à un filtre resté en place.
+  - La **valeur reste masquée** par défaut et se révèle au clic, comme sur la fiche d'artiste
+    (l'ordinateur peut se trouver dans un lieu de passage). Elle se re-masque quand la souris
+    quitte **et dès que la liste change** : autrement, un filtre appliqué après coup afficherait
+    un montant que personne n'a demandé à voir.
+  - Remplace le compteur « 506 œuvres », qui disait moins en prenant la même place.
+  - Vérifié en montant la vraie vue dans un Chromium avec les vraies feuilles de style : sur
+    cinq combinaisons de filtres, la somme des cases égale toujours le nombre affiché, qui
+    égale toujours le nombre de cartes rendues. Maquette : `demos/entete-stats-oeuvres.html`.
+
+- **« Vendues » dans l'en-tête d'une fiche d'artiste** — le nombre de ses œuvres marquées
+  vendues.
+
 ### Modifié
+
+- **La case « Ventes » de la fiche d'artiste devient « Ventes saisies ».** ⚠ Œuvres vendues et
+  ventes enregistrées sont **deux nombres différents**, et l'écart est énorme : au 2026-09-07,
+  la base compte **165 œuvres au statut « vendu » pour 2 lignes dans `ventes`**, le catalogue
+  ayant été importé avec son historique. Les deux sont justes ; côte à côte sous des libellés
+  qui se ressemblent, ils seraient incompréhensibles.
 
 - **L'orientation des feuilles de cartels suit le nombre par page.** Dix par page reste en
   portrait ; **4, 6 et 8 passent en paysage**. Un cartel est un objet large et bas — une

@@ -35,6 +35,24 @@ Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif
 > compte pour rien dans le calcul des hauteurs. Vérifié en produisant de **vrais PDF** sur les
 > huit combinaisons format × photo (pages exactes, `MediaBox` conforme au sens attendu, écart
 > vignette/texte de 0,00 mm, zéro débordement). Maquette : `demos/cartels-paysage.html`.
+>
+> S'y ajoutent deux ajouts demandés le même jour :
+>
+> 3. **« Vendues » dans l'en-tête d'un artiste**, et « Ventes » renommée **« Ventes saisies »**.
+>    ⚠ Ce sont deux nombres différents : au 2026-09-07 la base compte **165 œuvres au statut
+>    « vendu » pour 2 lignes dans `ventes`** (catalogue importé avec son historique). Ne jamais
+>    les présenter sous des libellés qui se ressemblent.
+> 4. **Bandeau de statistiques en tête de la liste des œuvres**, recalculé sur ce qui est
+>    affiché (filtres + recherche), valeur masquée par défaut. Il est dérivé de la liste que
+>    `dessiner()` vient de filtrer : pas de requête, pas de recomptage parallèle, donc pas de
+>    désynchronisation possible avec ce qu'on voit. Maquette :
+>    `demos/entete-stats-oeuvres.html`.
+>
+> Vérifiés en **montant la vraie vue** dans un Chromium avec les vraies feuilles de style :
+> sur cinq combinaisons de filtres, somme des cases = nombre affiché = nombre de cartes
+> rendues, et la valeur reste masquée tant qu'on ne clique pas. L'en-tête d'artiste à sept
+> cases passe à deux rangées sous 1540 px de fenêtre (contre 1400 px avec six) : c'est la
+> case « Valeur dispo » qui descend seule, ce qui reste lisible.
 
 > ### 🟨 CE QUE LE PREMIER SIGNALEMENT DES PARENTS A APPRIS (2026-09-06)
 >

@@ -30,6 +30,14 @@ export const VERSIONS = [
         titre: 'La vignette suit la taille du texte',
         texte: "La petite image de la toile n'a plus une taille fixe&nbsp;: elle est exactement <b>aussi haute que le texte à côté d'elle</b>. Elle grandit donc sur les grands cartels, rapetisse sur les petits, et se retrouve toujours bien en face du titre.",
       },
+      {
+        titre: 'Les toiles vendues d’un artiste',
+        texte: "L'en-tête d'une fiche d'artiste compte maintenant ses <b>toiles vendues</b>. L'ancienne case « Ventes » devient <b>« Ventes saisies »</b>&nbsp;: elle ne compte que les ventes enregistrées dans Galeria, ce qui n'est pas du tout le même nombre pour un catalogue repris de vos anciens dossiers.",
+      },
+      {
+        titre: 'Un tableau de bord au-dessus des œuvres',
+        texte: "La page <b>Œuvres</b> s'ouvre sur une rangée de chiffres&nbsp;: affichées, disponibles, en exposition, vendues, retirées, et la valeur totale. Ils se <b>recalculent à chaque filtre et à chaque recherche</b> — ils décrivent toujours ce que vous avez sous les yeux. La valeur reste masquée tant que vous ne cliquez pas dessus.",
+      },
     ],
   },
   {

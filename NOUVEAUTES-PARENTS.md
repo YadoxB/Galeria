@@ -11,6 +11,35 @@
 
 ---
 
+## Un tableau de bord au-dessus de vos œuvres
+
+La page **Œuvres** commence maintenant par une rangée de chiffres : combien sont
+affichées, combien sont disponibles, en exposition, vendues, retirées, et
+quelle valeur elles représentent en tout.
+
+Ces chiffres ne sont pas figés : ils **suivent vos filtres et votre
+recherche**. Si vous filtrez sur un artiste, ils décrivent cet artiste. Si vous
+cherchez un mot, ils décrivent ce que la recherche a trouvé. Ils décrivent
+toujours exactement ce que vous avez sous les yeux, et un rappel à droite vous
+dit quels filtres sont actifs.
+
+La valeur totale reste **masquée** tant que vous ne cliquez pas dessus, comme
+sur la fiche d'un artiste — l'écran peut être vu par quelqu'un de passage.
+
+---
+
+## Les toiles vendues d'un artiste
+
+L'en-tête d'une fiche d'artiste compte désormais ses **toiles vendues**.
+
+L'ancienne case « Ventes » s'appelle maintenant **« Ventes saisies »**, parce
+qu'elle ne compte que les ventes enregistrées dans Galeria. Comme votre
+catalogue a été repris de vos anciens dossiers, la plupart des toiles vendues
+n'ont pas de vente enregistrée : les deux chiffres sont justes, mais ils ne
+racontent pas la même chose, et leurs noms le disent enfin.
+
+---
+
 ## Des feuilles de cartels qui gaspillent moins de papier
 
 Sauf si vous demandez dix cartels par page, la feuille sort maintenant

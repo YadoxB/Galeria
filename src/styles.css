@@ -2506,6 +2506,32 @@ details.bloc.pliable > .bloc-corps {
    rouge de la galerie plutôt que l'or des disponibles. */
 .hero-artiste-stats .v.expo { color: #900001; }
 .hero-artiste-stats .l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--stone); }
+
+/* ----- Bandeau de statistiques de la liste des œuvres -----
+   Même vocabulaire que l'en-tête d'un artiste (mêmes tailles, mêmes
+   couleurs) pour qu'on reconnaisse la lecture d'un coup d'œil, mais dans une
+   bande basse plutôt qu'une grande carte : la page a déjà un titre, une
+   recherche et une barre de contrôles.
+   ⚠ Ce bloc doit rester AVANT les règles .hero-stat-valeur ci-dessous, qui
+   grisent la valeur masquée. À égalité de spécificité, c'est la dernière
+   déclarée qui l'emporte : passer devant les rendrait sans effet. */
+.stats-liste {
+  display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-end;
+  background: #fff; border: 1px solid var(--mist); border-radius: 14px;
+  padding: 12px 18px; margin-bottom: var(--s3);
+}
+.stats-liste .hero-stat { display: flex; flex-direction: column; }
+.stats-liste .v { font-family: var(--font-titre); font-size: 24px; color: var(--gallery-navy); line-height: 1.1; }
+.stats-liste .v.accent { color: var(--warm-gold); }
+.stats-liste .v.expo { color: #900001; }
+.stats-liste .l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--stone); }
+/* Rappel des filtres actifs, poussé à droite : sans lui, un nombre bas
+   ressemble à un catalogue qui a fondu plutôt qu'à un filtre resté en place. */
+.stats-liste .stats-filtrees {
+  margin-left: auto; align-self: center; text-align: right;
+  font-size: 11.5px; color: var(--stone); max-width: 260px; line-height: 1.4;
+}
+
 .hero-stat-valeur { cursor: pointer; user-select: none; }
 .hero-stat-valeur .v { color: var(--stone); letter-spacing: 1px; }
 .hero-stat-valeur.visible .v { color: var(--gallery-navy); letter-spacing: normal; }

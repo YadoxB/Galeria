@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette — Vendues dans l'en-tête artiste, et en-tête de la section Œuvres</title>
+<!-- Les VRAIES feuilles de style de l'application : la maquette montre ce que
+     l'écran donnera, elle ne l'imite pas. -->
+<link rel="stylesheet" href="../src/theme.css">
+<link rel="stylesheet" href="../src/styles.css">
+<style>
+  body{padding:30px 34px;overflow:auto;height:auto;user-select:text;}
+  .doc{max-width:1180px;margin:0 auto;}
+  h1{font-family:var(--font-titre);font-weight:500;font-size:30px;margin:0 0 8px;}
+  .sous{color:var(--slate);font-size:14px;line-height:1.65;margin:0 0 6px;max-width:900px;}
+  .lot-titre{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+             margin:44px 0 6px;font-weight:600;}
+  .lot-note{font-size:13.5px;color:var(--slate);line-height:1.65;margin:0 0 16px;max-width:900px;}
+  .etiq{font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;
+        margin:22px 0 8px;color:var(--stone);}
+  .etiq.reco{color:var(--warm-gold);}
+  .journal{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:16px 21px;margin-top:22px;}
+  .journal h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+              margin:0 0 9px;font-weight:700;}
+  .journal ul{margin:0;padding-left:19px;font-size:13.5px;color:var(--slate);line-height:1.8;}
+  .journal em{color:var(--ink);font-style:normal;font-weight:600;}
+  .maquette{background:var(--soft-ivory);border:1px dashed var(--mist);border-radius:16px;padding:20px;}
+  .faux-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+  .faux-chips .t{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+                 font-weight:700;margin-right:4px;}
+  .faux-chips button{font-family:var(--font-ui);font-size:12.5px;border:1px solid var(--mist);
+    background:#fff;border-radius:999px;padding:5px 13px;cursor:pointer;color:var(--slate);}
+  .faux-chips button.on{background:var(--gallery-navy);border-color:var(--gallery-navy);color:#fff;}
+  .faux-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:16px;}
+  .faux-carte{background:#fff;border:1px solid var(--mist);border-radius:12px;overflow:hidden;}
+  .faux-carte .im{height:88px;background:linear-gradient(135deg,#e6ded0,#cdc2ad);}
+  .faux-carte .tx{padding:8px 10px;font-size:11.5px;color:var(--slate);line-height:1.35;}
+  .faux-carte .tx b{display:block;color:var(--ink);font-weight:500;font-family:var(--font-titre);font-size:14px;}
+
+/* =====================================================================
+   PROPOSITION — bandeau de statistiques de la section Œuvres.
+   Reprend le vocabulaire visuel de l'en-tête d'artiste (mêmes tailles,
+   mêmes couleurs), mais posé à plat sur la page plutôt que dans une
+   grande carte blanche : la page a déjà un titre, une recherche et une
+   barre de contrôles, une deuxième grosse carte les écraserait.
+   ===================================================================== */
+  .stats-liste{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-end;
+               background:#fff;border:1px solid var(--mist);border-radius:14px;
+               padding:12px 18px;margin-bottom:var(--s3);}
+  .stats-liste .hero-stat{display:flex;flex-direction:column;}
+  .stats-liste .v{font-family:var(--font-titre);font-size:24px;color:var(--gallery-navy);line-height:1.1;}
+  .stats-liste .v.accent{color:var(--warm-gold);}
+  .stats-liste .v.expo{color:#900001;}
+  .stats-liste .l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--stone);}
+  .stats-liste .stats-filtrees{margin-left:auto;font-size:11.5px;color:var(--stone);
+                               align-self:center;text-align:right;max-width:230px;line-height:1.4;}
+
+  /* Variante B : la même information, en une ligne discrète à la place du
+     compteur actuel. */
+  .stats-ligne{display:flex;gap:6px;flex-wrap:wrap;align-items:baseline;
+               font-size:13px;color:var(--slate);margin-bottom:var(--s3);}
+  .stats-ligne b{font-family:var(--font-titre);font-size:16px;color:var(--gallery-navy);font-weight:500;}
+  .stats-ligne .sep{color:var(--mist);}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<h1>Le nombre de toiles vendues, et un en-tête pour la section Œuvres</h1>
+<p class="sous">Deux demandes du 7 septembre 2026 : « afficher le nombre de toiles vendues dans l'en-tête d'un
+artiste » et « une en-tête similaire dans le haut de la section œuvre, avec des infos mises à jour en fonction
+des filtres ». Les blocs ci-dessous utilisent les <b>vraies feuilles de style de Galeria</b>.</p>
+
+<p class="lot-titre">Lot 1 — « Vendues » dans l'en-tête d'un artiste</p>
+<p class="lot-note">Il y a déjà une case <b>Ventes</b> : elle compte les ventes <em>enregistrées dans Galeria</em>.
+Ce n'est pas le même nombre que les toiles marquées vendues, et l'écart est énorme — dans la base actuelle,
+<b>165 œuvres portent le statut « Vendue » pour 2 ventes saisies</b>, parce que le catalogue a été importé avec
+son historique. Deux cases voisines affichant 165 et 2 seraient incompréhensibles si elles s'appelaient toutes
+les deux « ventes ».</p>
+
+<p class="etiq">Aujourd'hui</p>
+<div class="maquette">
+  <div class="hero-artiste-stats" style="margin:0;">
+    <div class="hero-stat"><span class="v">38</span><span class="l">Au catalogue</span></div>
+    <div class="hero-stat"><span class="v accent">21</span><span class="l">Disponibles</span></div>
+    <div class="hero-stat"><span class="v expo">3</span><span class="l">En exposition</span></div>
+    <div class="hero-stat"><span class="v">5</span><span class="l">Retirées</span></div>
+    <div class="hero-stat"><span class="v">2</span><span class="l">Ventes</span></div>
+    <div class="hero-stat hero-stat-valeur"><span class="v">••• ••• $</span><span class="l">Valeur dispo <span class="oeil">afficher</span></span></div>
+  </div>
+</div>
+
+<p class="etiq reco">Proposé — une case « Vendues », et « Ventes » devient « Ventes saisies »</p>
+<div class="maquette">
+  <div class="hero-artiste-stats" style="margin:0;">
+    <div class="hero-stat"><span class="v">38</span><span class="l">Au catalogue</span></div>
+    <div class="hero-stat"><span class="v accent">21</span><span class="l">Disponibles</span></div>
+    <div class="hero-stat"><span class="v expo">3</span><span class="l">En exposition</span></div>
+    <div class="hero-stat"><span class="v">14</span><span class="l">Vendues</span></div>
+    <div class="hero-stat"><span class="v">5</span><span class="l">Retirées</span></div>
+    <div class="hero-stat"><span class="v">2</span><span class="l">Ventes saisies</span></div>
+    <div class="hero-stat hero-stat-valeur"><span class="v">••• ••• $</span><span class="l">Valeur dispo <span class="oeil">afficher</span></span></div>
+  </div>
+</div>
+<p class="lot-note" style="margin-top:12px;">Les quatre premières cases se recomposent alors toutes seules :
+<b>21 disponibles + 3 en exposition + 14 vendues = 38 au catalogue</b>. Un compte qui se vérifie à l'œil, ce qui
+rend une anomalie visible sans rien chercher.</p>
+
+<p class="lot-titre">Lot 2 — Un en-tête pour la section Œuvres, qui suit les filtres</p>
+<p class="lot-note">Les nombres se recalculent sur ce qui est <b>réellement affiché</b> : filtres de statut,
+d'artiste, de type, de format, de style, case « inclure les retirées », et jusqu'au texte tapé dans la recherche.
+Essayez les filtres ci-dessous — les cases réagissent.</p>
+
+<div class="faux-chips" id="chips">
+  <span class="t">Filtres</span>
+  <button data-f="tous" class="on">Tous</button>
+  <button data-f="disponible">Disponible</button>
+  <button data-f="exposee">En exposition</button>
+  <button data-f="vendu">Vendue</button>
+  <button data-f="archive">Retirées seulement</button>
+  <button data-f="lortie">Artiste : M.-C. Lortie</button>
+</div>
+
+<p class="etiq reco">Variante A — un bandeau, dans le même vocabulaire que l'en-tête d'artiste</p>
+<div class="maquette">
+  <div class="stats-liste" id="bandeau">
+    <div class="hero-stat"><span class="v" id="a-tot">—</span><span class="l">Affichées</span></div>
+    <div class="hero-stat"><span class="v accent" id="a-dispo">—</span><span class="l">Disponibles</span></div>
+    <div class="hero-stat"><span class="v expo" id="a-expo">—</span><span class="l">En exposition</span></div>
+    <div class="hero-stat"><span class="v" id="a-vendu">—</span><span class="l">Vendues</span></div>
+    <div class="hero-stat"><span class="v" id="a-retire">—</span><span class="l">Retirées</span></div>
+    <div class="hero-stat hero-stat-valeur" id="a-valeur" title="Cliquer pour afficher">
+      <span class="v" id="a-valeur-v">••• ••• $</span>
+      <span class="l">Valeur affichée <span class="oeil" id="a-valeur-oeil">afficher</span></span>
+    </div>
+    <div class="stats-filtrees" id="a-mention"></div>
+  </div>
+  <div class="faux-grille" id="grille"></div>
+</div>
+
+<p class="etiq">Variante B — une seule ligne, à la place du compteur actuel</p>
+<div class="maquette">
+  <p class="stats-ligne" id="ligne"></p>
+</div>
+
+<div class="journal">
+  <h4>Les choix qui méritent un mot</h4>
+  <ul>
+    <li><em>« Affichées » plutôt que « Au catalogue ».</em> Sur la fiche d'un artiste, les nombres sont des
+      totaux. Ici ils dépendent des filtres : le premier mot doit le dire, sinon on lit un total là où il n'y en
+      a pas. Une mention discrète rappelle à droite quels filtres sont actifs.</li>
+    <li><em>La valeur reste masquée par défaut</em>, comme sur la fiche d'artiste — l'ordinateur peut se trouver
+      dans un lieu de passage. Un clic l'affiche, et elle se remasque en changeant de page.</li>
+    <li><em>« Valeur affichée » et non « valeur dispo ».</em> Puisque tout suit les filtres, la somme suit aussi :
+      filtrer sur les vendues donne la valeur des toiles vendues, ce qui est justement l'intérêt.</li>
+    <li><em>Une case à zéro reste affichée.</em> Filtrer sur « Disponible » met les autres à zéro : c'est une
+      confirmation que le filtre agit, pas un trou. Une rangée dont le nombre de cases change à chaque clic est
+      déroutante — même raison que sur la fiche d'artiste.</li>
+    <li><em>Rien de nouveau à calculer côté base.</em> Les nombres se déduisent de la liste déjà chargée et déjà
+      filtrée à l'écran ; aucune requête de plus, et ils ne peuvent pas se désynchroniser de ce qu'on voit.</li>
+  </ul>
+</div>
+
+</div>
+<script>
+// Jeu d'essai ressemblant à la vraie base : beaucoup de vendues, quelques
+// exposées, une poignée de retirées.
+const ARTISTES = ['Marie-Claude Lortie', 'Jean-Pierre Rousseau', 'Hélène Béliveau', 'Marc Thériault'];
+const TITRES = ['Le fleuve au petit matin', 'Sous-bois, fin d’octobre', 'Nature morte aux pivoines',
+  'Vieux-Québec, rue Saint-Louis', 'Marée basse à Kamouraska', 'Champ de canola', 'L’atelier, le soir',
+  'Brume sur la rivière', 'Retour de pêche', 'Éclat', 'Fin de journée', 'Sentier d’hiver'];
+const OEUVRES = [];
+for (let i = 0; i < 48; i++) {
+  const r = i % 12;
+  const statut = r < 6 ? 'disponible' : (r < 8 ? 'exposee' : 'vendu');
+  OEUVRES.push({
+    id: i + 1,
+    titre: TITRES[i % TITRES.length],
+    artiste: ARTISTES[i % ARTISTES.length],
+    statut,
+    archive: i % 17 === 0 && statut !== 'vendu',
+    prix: 800 + ((i * 373) % 5200),
+  });
+}
+
+const LIB = { disponible: 'Disponible', exposee: 'En exposition', vendu: 'Vendue' };
+let filtre = 'tous';
+let valeurVisible = false;
+
+function filtrer() {
+  return OEUVRES.filter((o) => {
+    if (filtre === 'archive') return o.archive;
+    if (o.archive) return false; // « inclure les retirées » décochée
+    if (filtre === 'lortie') return o.artiste === 'Marie-Claude Lortie';
+    if (filtre === 'tous') return true;
+    return o.statut === filtre;
+  });
+}
+
+const montant = (n) => n.toLocaleString('fr-CA') + ' $';
+
+function dessiner() {
+  const vues = filtrer();
+  const n = (s) => vues.filter((o) => o.statut === s && !o.archive).length;
+  const stats = {
+    total: vues.length,
+    dispo: n('disponible'),
+    expo: n('exposee'),
+    vendu: n('vendu'),
+    retire: vues.filter((o) => o.archive).length,
+    valeur: vues.reduce((s, o) => s + (o.prix || 0), 0),
+  };
+
+  document.getElementById('a-tot').textContent = stats.total;
+  document.getElementById('a-dispo').textContent = stats.dispo;
+  document.getElementById('a-expo').textContent = stats.expo;
+  document.getElementById('a-vendu').textContent = stats.vendu;
+  document.getElementById('a-retire').textContent = stats.retire;
+  document.getElementById('a-valeur-v').textContent = valeurVisible ? montant(stats.valeur) : '••• ••• $';
+  document.getElementById('a-valeur').classList.toggle('visible', valeurVisible);
+  document.getElementById('a-valeur-oeil').textContent = valeurVisible ? 'masquer' : 'afficher';
+
+  const mentions = {
+    tous: '', disponible: 'Filtre : statut Disponible', exposee: 'Filtre : statut En exposition',
+    vendu: 'Filtre : statut Vendue', archive: 'Filtre : retirées seulement',
+    lortie: 'Filtre : Marie-Claude Lortie',
+  };
+  document.getElementById('a-mention').textContent = mentions[filtre] || '';
+
+  document.getElementById('ligne').innerHTML =
+    `<b>${stats.total}</b> affichées <span class="sep">·</span> `
+    + `<b>${stats.dispo}</b> disponibles <span class="sep">·</span> `
+    + `<b>${stats.expo}</b> en exposition <span class="sep">·</span> `
+    + `<b>${stats.vendu}</b> vendues <span class="sep">·</span> `
+    + `<b>${stats.retire}</b> retirées <span class="sep">·</span> `
+    + `valeur affichée <b>${valeurVisible ? montant(stats.valeur) : '••• ••• $'}</b>`;
+
+  document.getElementById('grille').innerHTML = vues.slice(0, 12).map((o) => `
+    <div class="faux-carte"><div class="im"></div>
+      <div class="tx"><b>${o.titre}</b>${o.artiste}<br>${LIB[o.statut]}${o.archive ? ' · retirée' : ''}</div>
+    </div>`).join('');
+}
+
+document.getElementById('chips').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  filtre = b.dataset.f;
+  document.querySelectorAll('#chips button').forEach((x) => x.classList.toggle('on', x === b));
+  dessiner();
+});
+document.getElementById('a-valeur').addEventListener('click', () => { valeurVisible = !valeurVisible; dessiner(); });
+dessiner();
+</script>
+</body></html>

@@ -138,6 +138,26 @@ export async function rendreOeuvresListe(contenu, params = {}) {
       })}
       ${filtreActif}
 
+      <!-- Bandeau de statistiques. Même vocabulaire visuel que l'en-tête d'une
+           fiche d'artiste, mais les nombres ne sont PAS des totaux : ils se
+           recalculent sur ce qui est réellement affiché (statuts, artiste,
+           type, format, style, retirées, et jusqu'au texte cherché). D'où
+           « Affichées » en tête plutôt que « Au catalogue », et le rappel des
+           filtres actifs à droite. Il remplace l'ancien compteur « 506 œuvres ».
+           Maquette : demos/entete-stats-oeuvres.html -->
+      <div class="stats-liste">
+        <div class="hero-stat"><span class="v" id="stat-affichees">0</span><span class="l">Affichées</span></div>
+        <div class="hero-stat"><span class="v accent" id="stat-dispo">0</span><span class="l">Disponibles</span></div>
+        <div class="hero-stat"><span class="v" id="stat-expo">0</span><span class="l">En exposition</span></div>
+        <div class="hero-stat"><span class="v" id="stat-vendues">0</span><span class="l">Vendues</span></div>
+        <div class="hero-stat"><span class="v" id="stat-retirees">0</span><span class="l">Retirées</span></div>
+        <div class="hero-stat hero-stat-valeur" id="stat-valeur" title="Cliquer pour afficher">
+          <span class="v" id="stat-valeur-val">••• ••• $</span>
+          <span class="l">Valeur affichée <span class="oeil" id="stat-valeur-oeil">afficher</span></span>
+        </div>
+        <div class="stats-filtrees" id="stats-filtres"></div>
+      </div>
+
       <div class="controles-vue">
         <div class="toggle-vue" role="tablist" aria-label="Mode d'affichage">
           <button id="btn-vue-grille" class="${vueCourante === 'grille' ? 'actif' : ''}" title="Grille" aria-label="Grille">
@@ -179,9 +199,6 @@ export async function rendreOeuvresListe(contenu, params = {}) {
           <button type="button" class="btn-action btn-principal" id="sel-retirer" disabled>Retirer la sélection</button>
         </div>
       </div>
-      <div class="barre-recherche">
-        <span class="compteur" id="compteur"></span>
-      </div>
       <div id="conteneur-oeuvres"></div>
     </div>
   `;
@@ -202,7 +219,6 @@ export async function rendreOeuvresListe(contenu, params = {}) {
 
   const recherche = contenu.querySelector('#recherche');
   const conteneur = contenu.querySelector('#conteneur-oeuvres');
-  const compteur = contenu.querySelector('#compteur');
   const btnVueGrille = contenu.querySelector('#btn-vue-grille');
   const btnVueListe = contenu.querySelector('#btn-vue-liste');
   const selecteurTaille = contenu.querySelector('.taille-vue');
@@ -589,6 +605,73 @@ export async function rendreOeuvresListe(contenu, params = {}) {
     overlay.querySelector('#lot-date').focus();
   }
 
+  // ---- Bandeau de statistiques ----
+  // Il décrit ce qui est À L'ÉCRAN, pas le catalogue : il se nourrit donc de
+  // la liste déjà filtrée par dessiner(), sans requête ni recomptage propre.
+  // Impossible, dès lors, qu'il raconte autre chose que ce qu'on voit.
+  const elStatAffichees = contenu.querySelector('#stat-affichees');
+  const elStatDispo = contenu.querySelector('#stat-dispo');
+  const elStatExpo = contenu.querySelector('#stat-expo');
+  const elStatVendues = contenu.querySelector('#stat-vendues');
+  const elStatRetirees = contenu.querySelector('#stat-retirees');
+  const elStatFiltres = contenu.querySelector('#stats-filtres');
+  const statValeur = contenu.querySelector('#stat-valeur');
+  const elValeurVal = contenu.querySelector('#stat-valeur-val');
+  const elValeurOeil = contenu.querySelector('#stat-valeur-oeil');
+  const MASQUE_VALEUR = '••• ••• $';
+  // Masquée par défaut, comme sur la fiche d'un artiste : l'ordinateur peut se
+  // trouver dans un lieu de passage. Révélée au clic, re-masquée quand la
+  // souris quitte — et aussi dès que la liste change, sinon un filtre appliqué
+  // après coup afficherait un montant que personne n'a demandé à voir.
+  let valeurVisible = false;
+  let valeurCourante = 0;
+
+  function peindreValeur() {
+    elValeurVal.textContent = valeurVisible ? formaterPrix(valeurCourante) : MASQUE_VALEUR;
+    elValeurOeil.textContent = valeurVisible ? 'masquer en quittant' : 'afficher';
+    statValeur.classList.toggle('visible', valeurVisible);
+  }
+  statValeur.addEventListener('click', () => { valeurVisible = true; peindreValeur(); });
+  statValeur.addEventListener('mouseleave', () => {
+    if (valeurVisible) { valeurVisible = false; peindreValeur(); }
+  });
+
+  // Rappel de ce qui restreint l'affichage. Sans lui, un nombre bas ressemble
+  // à un catalogue qui a fondu plutôt qu'à un filtre resté actif.
+  function resumeFiltres(motRecherche) {
+    const bouts = [];
+    if (statutsActifs.length) {
+      bouts.push(statutsActifs.map((s) => (STATUTS[s] ? STATUTS[s].libelle : s)).join(', '));
+    }
+    if (params.artiste_id == null && artisteIdFiltre) {
+      const a = artistes.find((x) => String(x.id) === artisteIdFiltre);
+      if (a) bouts.push(nomComplet(a) || a.nom || '');
+    }
+    if (typeFiltre) bouts.push(typeFiltre);
+    if (formatsActifs.length) bouts.push(formatsActifs.join(', '));
+    if (stylesActifs.length) bouts.push(stylesActifs.join(', '));
+    if (motRecherche) bouts.push('recherche en cours');
+    if (inclureArchives) bouts.push('retirées incluses');
+    return bouts.length ? `Filtres : ${bouts.join(' · ')}` : '';
+  }
+
+  function majStats(liste, motRecherche) {
+    const compte = (statut) => liste.filter((o) => o.statut === statut && !o.archive).length;
+    elStatAffichees.textContent = liste.length;
+    elStatDispo.textContent = compte('disponible');
+    // Rouge seulement quand il y en a : c'est un état temporaire, pas un total
+    // — même convention que sur la fiche d'un artiste.
+    const nbExpo = compte('exposee');
+    elStatExpo.textContent = nbExpo;
+    elStatExpo.classList.toggle('expo', nbExpo > 0);
+    elStatVendues.textContent = compte('vendu');
+    elStatRetirees.textContent = liste.filter((o) => o.archive).length;
+    elStatFiltres.textContent = resumeFiltres(motRecherche);
+    valeurCourante = liste.reduce((s, o) => s + (Number(o.prix) || 0), 0);
+    valeurVisible = false;
+    peindreValeur();
+  }
+
   function dessiner() {
     const motRecherche = sansAccents(recherche.value);
 
@@ -609,7 +692,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
 
     const triees = trier(filtres, triCourant);
 
-    compteur.textContent = pluriel(triees.length, 'œuvre');
+    majStats(triees, motRecherche);
 
     if (triees.length === 0) {
       conteneur.innerHTML = `<p class="liste-vide">Aucune œuvre ne correspond.</p>`;

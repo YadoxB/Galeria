@@ -107,6 +107,16 @@ function obtenirFicheArtisteBundle(id) {
               WHERE artiste_id = ? AND archive = 0 AND statut = 'exposee'`)
     .get(id).n;
 
+  // ⚠ Œuvres VENDUES ≠ ventes enregistrées (`ventesNb` ci-dessus). Le
+  // catalogue a été importé avec son historique : au 2026-09-07, la base
+  // compte 165 œuvres au statut « vendu » pour 2 lignes dans `ventes`. Les
+  // deux nombres sont justes et racontent deux choses différentes — d'où
+  // deux cases distinctes dans l'en-tête, « Vendues » et « Ventes saisies ».
+  const venduesNb = db
+    .prepare(`SELECT COUNT(*) AS n FROM oeuvres
+              WHERE artiste_id = ? AND archive = 0 AND statut = 'vendu'`)
+    .get(id).n;
+
   const apercu = db
     .prepare(`SELECT id, titre, image_path, statut
               FROM oeuvres
@@ -125,6 +135,7 @@ function obtenirFicheArtisteBundle(id) {
       retirees: artiste.nb_oeuvres - artiste.nb_oeuvres_catalogue,
       disponibles: dispoRow.n,
       exposees: exposeesNb,
+      vendues: venduesNb,
       valeurDispo: dispoRow.v,
       ventes: ventesNb,
     },

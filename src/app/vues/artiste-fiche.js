@@ -58,7 +58,7 @@ export async function rendreArtisteFiche(contenu, params) {
     } catch { mediumsArtiste = []; }
   }
 
-  let stats = { catalogue: 0, disponibles: 0, exposees: 0, retirees: 0, valeurDispo: 0, ventes: 0 };
+  let stats = { catalogue: 0, disponibles: 0, exposees: 0, vendues: 0, retirees: 0, valeurDispo: 0, ventes: 0 };
   let apercu = [];
 
   if (estNouveau) {
@@ -354,8 +354,15 @@ export async function rendreArtisteFiche(contenu, params) {
                  cases change d'un artiste à l'autre est déroutante. En rouge
                  quand il y en a — c'est un état temporaire, pas un total. -->
             <div class="hero-stat"><span class="v${stats.exposees ? ' expo' : ''}">${stats.exposees || 0}</span><span class="l">En exposition</span></div>
+            <!-- Œuvres marquées vendues. À ne PAS confondre avec « Ventes
+                 saisies » plus loin : le catalogue a été importé avec son
+                 historique, si bien qu'une écrasante majorité des œuvres
+                 vendues n'a aucune ligne de vente dans Galeria. Les deux
+                 nombres sont justes ; ils ne mesurent pas la même chose, et
+                 leurs libellés doivent le dire. -->
+            <div class="hero-stat"><span class="v">${stats.vendues || 0}</span><span class="l">Vendues</span></div>
             <div class="hero-stat"><span class="v">${stats.retirees || 0}</span><span class="l">Retirées</span></div>
-            <div class="hero-stat"><span class="v">${stats.ventes}</span><span class="l">Ventes</span></div>
+            <div class="hero-stat"><span class="v">${stats.ventes}</span><span class="l">Ventes saisies</span></div>
             <div class="hero-stat hero-stat-valeur" id="stat-valeur-dispo" data-valeur="${ech(formaterMontant(stats.valeurDispo))}" title="Cliquer pour afficher">
               <span class="v" id="valeur-dispo-val">••• ••• $</span>
               <span class="l">Valeur dispo <span class="oeil" id="valeur-dispo-oeil">afficher</span></span>
