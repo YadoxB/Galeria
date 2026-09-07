@@ -6,11 +6,33 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;background:#e8e3db;color:var(--encre);}
 
-/* Page Lettre 8,5 × 11 (règle du projet : tous les PDF en Lettre). */
-.page{width:8.5in;height:11in;background:#fff;padding:12mm;margin:0 auto;}
+/* ---------------------------------------------------------------------------
+   L'ORIENTATION SUIT LE NOMBRE DE CARTELS PAR PAGE.
+
+   Un cartel est un objet large et bas : une ligne de texte flanquée d'une
+   vignette et d'un code QR. Dans une feuille portrait, moins il y a de
+   cartels, plus chaque case s'étire en hauteur, et le vide s'accumule
+   au-dessus et au-dessous du texte (Dave, 2026-09-07 : « en dehors de 10 par
+   page, formatter en paysage plutôt que portrait, comme ça on ne perd pas
+   d'espace en haut et en bas »).
+
+   Même grille à deux colonnes dans les deux cas ; seule la feuille tourne :
+     10 par page → portrait, case de 96 × 51 mm
+      8 par page → paysage,  case de 128 × 48 mm
+      6 par page → paysage,  case de 128 × 64 mm
+      4 par page → paysage,  case de 128 × 96 mm
+
+   Toujours du Lettre 8,5 × 11 (règle du projet). La règle @page correspondante
+   est posée par remplir(), qui seul connaît le format retenu ; le drapeau
+   `paysage` passé à printToPDF doit s'accorder avec elle — voir
+   genererCartelsPdf dans src/pdf.js.
+   (Comparaison des deux orientations : demos/cartels-paysage.html)
+--------------------------------------------------------------------------- */
+.page{background:#fff;padding:12mm;margin:0 auto;}
+.page.port{width:8.5in;height:11in;}
+.page.pays{width:11in;height:8.5in;}
 @media screen{ .page{box-shadow:0 4px 24px rgba(0,0,0,.14);margin:18px auto;} body{padding:12px;} }
 @media print{
-  @page{size:letter;margin:0;}
   body{background:#fff;padding:0;}
   .page{box-shadow:none;margin:0;}
 }
@@ -18,7 +40,7 @@ body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;background:#e8e
 /* Les cases sont égales pour que les traits de découpe soient droits et
    réguliers ; le contenu est CENTRÉ dedans, sinon tout l'espace inutilisé
    s'accumule d'un seul côté. */
-.grille{display:grid;gap:0;height:calc(11in - 24mm);}
+.grille{display:grid;gap:0;height:100%;}
 .p4  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,1fr);}
 .p6  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);}
 .p8  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);}
@@ -28,6 +50,10 @@ body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;background:#e8e
         padding:4mm 5mm;border:1px dashed var(--filet);
         page-break-inside:avoid;overflow:hidden;}
 .cartel-vide{border:0;}
+/* Le CORPS réunit la vignette et le texte. Le cartel étant centré, ce bloc
+   garde une hauteur libre : c'est lui qui donne à la vignette la hauteur
+   exacte du texte. */
+.cartel-corps{display:flex;align-items:stretch;gap:4mm;flex:1;min-width:0;}
 .cartel-texte{min-width:0;flex:1;}
 .cartel-artiste{font-family:Georgia,'Times New Roman',serif;font-size:10.5pt;font-weight:600;
                 color:var(--accent);letter-spacing:.02em;margin-bottom:1mm;}
@@ -46,6 +72,7 @@ body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;background:#e8e
 .p4 .cartel-titre{font-size:15pt;} .p4 .cartel-qr{width:32mm;height:32mm;}
 .p8 .cartel{padding:3.5mm 4.5mm;} .p8 .cartel-titre{font-size:12pt;} .p8 .cartel-qr{width:24mm;height:24mm;}
 .p10 .cartel{padding:3mm 4mm;gap:3mm;}
+.p10 .cartel-corps{gap:3mm;}
 .p10 .cartel-artiste{font-size:9.5pt;margin-bottom:.6mm;}
 .p10 .cartel-titre{font-size:11pt;margin-bottom:1mm;}
 .p10 .cartel-tech{font-size:8pt;margin-bottom:1.4mm;}
@@ -54,34 +81,36 @@ body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;background:#e8e
 .p10 .cartel-qr{width:22mm;height:22mm;}
 
 /* ---------------------------------------------------------------------------
-   Avec photo : une VIGNETTE CARRÉE à gauche, pas une illustration.
+   Avec photo : une VIGNETTE DE REPÉRAGE à gauche, pas une illustration.
 
    « Ces images ne servent qu'à associer plus rapidement quel cartel va avec
    quelle toile. Ça ne sert pas vraiment à montrer les toiles. » (Dave,
    2026-09-06). La photo est donc un repère, et le TEXTE reste le sujet du
    cartel.
 
-   Deux conséquences :
-   — le cartel garde la même structure que sans photo (texte à gauche, code QR
-     à droite), avec juste un repère de plus. Un seul gabarit mental ;
-   — la vignette tenant dans n'importe quelle case, TOUS les formats restent
-     possibles. La restriction « avec photo, seulement 2, 4 ou 6 » disparaît,
-     et le format 2 par page avec.
+   Sa LARGEUR est fixe et dépend du format ; sa HAUTEUR est celle du bloc de
+   texte (Dave, 2026-09-07 : « il faudrait que l'image de la toile suive la
+   taille du texte »). Elle grandit donc avec le texte, et se retrouve d'aplomb
+   en face de lui — un carré de taille fixe paraissait minuscule sur un grand
+   cartel et décalé vers le haut sur un petit.
 
-   ⚠ La vignette a une taille FIXE, en millimètres. C'est ce qui rend
-   impossible le défaut du 2026-09-06 : une photo en hauteur qui poussait la
-   case et étalait une page sur quatre feuilles. Aucune dimension d'image ne
-   peut plus influencer la hauteur d'un cartel.
-   (Comparaison des tailles : demos/cartels-vignette.html)
+   ⚠ L'image est en POSITION ABSOLUE dans sa case : elle ne compte pour rien
+   dans le calcul des hauteurs. C'est ce qui rend impossible le retour du
+   défaut du 2026-09-06, où une photo en hauteur poussait la case et étalait
+   une page de six cartels sur quatre feuilles. Aucune dimension d'image ne
+   peut influencer la hauteur d'un cartel.
+   (Comparaisons : demos/cartels-vignette.html, demos/cartels-paysage.html)
 --------------------------------------------------------------------------- */
-.cartel-photo{flex:0 0 auto;width:18mm;height:18mm;align-self:flex-start;overflow:hidden;}
-.cartel-photo img{width:100%;height:100%;object-fit:contain;display:block;}
-/* Œuvre sans photo : un carré vide de MÊME taille, pour que les cartels d'une
+.cartel-photo{flex:0 0 auto;position:relative;align-self:stretch;width:20mm;overflow:hidden;}
+.cartel-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+/* Œuvre sans photo : une case vide de MÊME largeur, pour que les cartels d'une
    page restent alignés entre eux. */
-.cartel-photo-vide{flex:0 0 auto;width:18mm;height:18mm;align-self:flex-start;}
-.p8 .cartel-photo,.p8 .cartel-photo-vide{width:14mm;height:14mm;}
-.p10 .cartel-photo,.p10 .cartel-photo-vide{width:14mm;height:14mm;}
-</style></head>
+.cartel-photo-vide{flex:0 0 auto;width:20mm;}
+.p4 .cartel-photo,.p4 .cartel-photo-vide{width:24mm;}
+.p8 .cartel-photo,.p8 .cartel-photo-vide{width:18mm;}
+.p10 .cartel-photo,.p10 .cartel-photo-vide{width:15mm;}
+</style>
+<style id="orientation">@media print{@page{size:letter portrait;margin:0;}}</style></head>
 <body>
 <div id="doc"></div>
 <script>
@@ -91,6 +120,12 @@ function escHtml(s){
   });
 }
 
+// Le format retenu commande à la fois la grille et l'orientation de la
+// feuille. Un format hors liste retombe sur 10 plutôt que de casser la grille.
+var FORMATS_PERMIS = [4, 6, 8, 10];
+function formatCartels(n){ return FORMATS_PERMIS.indexOf(n) >= 0 ? n : 10; }
+function orientationCartels(n){ return formatCartels(n) === 10 ? 'port' : 'pays'; }
+
 // data = { format, afficherPrix, avecPhoto, afficherQr, cartels: [
 //   { artiste, titre, technique, dimensions, inventaire, prix, qr, photo } ] }
 // `qr` est déjà un <svg> et `photo` une image en data URL, produits côté
@@ -99,14 +134,21 @@ function escHtml(s){
 function remplir(data){
   data = data || {};
   var avecPhoto = !!data.avecPhoto;
-  // La vignette tenant dans n'importe quelle case, la photo ne restreint plus
-  // les formats : 4, 6, 8 ou 10 dans les deux modes. Un format hors liste
-  // retombe sur 10 plutôt que de casser la grille.
-  var permis = [4,6,8,10];
-  var parPage = permis.indexOf(data.format) >= 0 ? data.format : 10;
+  var parPage = formatCartels(data.format);
+  var sens = orientationCartels(parPage);
   var avecPrix = !!data.afficherPrix;
   var avecQr = data.afficherQr !== false; // absent = oui (anciens appels)
   var cartels = data.cartels || [];
+
+  // La règle @page ne peut pas être conditionnée par une classe : on la pose
+  // ici, une fois le format connu. Elle doit s'accorder avec le drapeau
+  // `paysage` envoyé à printToPDF, sinon la feuille et le contenu tournent
+  // l'un sans l'autre.
+  var styleSens = document.getElementById('orientation');
+  if (styleSens) {
+    styleSens.textContent = '@media print{@page{size:letter '
+      + (sens === 'pays' ? 'landscape' : 'portrait') + ';margin:0;}}';
+  }
 
   var html = '';
   for (var d = 0; d < cartels.length; d += parPage) {
@@ -132,19 +174,20 @@ function remplir(data){
         var img = c.photo
           ? '<div class="cartel-photo"><img src="' + c.photo + '" alt=""></div>'
           : '<div class="cartel-photo-vide"></div>';
-        // La vignette entre dans la MÊME ligne que le texte et le code QR :
-        // le cartel garde la structure qu'il a sans photo.
-        cases += '<div class="cartel">' + img + bloc + qr + '</div>';
+        // Vignette et texte forment le CORPS du cartel ; le code QR reste à
+        // part, à droite. C'est ce qui permet à la vignette de se caler sur la
+        // hauteur du texte sans se caler sur celle du code QR.
+        cases += '<div class="cartel"><div class="cartel-corps">' + img + bloc + '</div>' + qr + '</div>';
       } else {
         cases += '<div class="cartel">' + bloc + qr + '</div>';
       }
     }
     // Cases vides pour que la dernière page garde la même grille de découpe.
     for (var v = lot.length; v < parPage; v++) cases += '<div class="cartel cartel-vide"></div>';
-    html += '<div class="page p' + parPage + (avecPhoto ? ' avec-photo' : '')
+    html += '<div class="page ' + sens + ' p' + parPage + (avecPhoto ? ' avec-photo' : '')
           + '"><div class="grille">' + cases + '</div></div>';
   }
-  document.getElementById('doc').innerHTML = html || '<div class="page"></div>';
+  document.getElementById('doc').innerHTML = html || '<div class="page port"></div>';
 }
 </script>
 </body></html>

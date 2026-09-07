@@ -786,6 +786,21 @@ async function genererCataloguePdf(artisteId, { langue = 'FR' } = {}) {
 
 // ===== Orchestrateur : cartels d'exposition =====
 
+// Formats offerts, et orientation de la feuille qui en découle. Le gabarit
+// applique exactement la même règle ; les deux doivent rester d'accord, sinon
+// la feuille et son contenu tournent l'un sans l'autre. Un format inconnu
+// retombe sur 10, comme dans le gabarit.
+const FORMATS_CARTELS = [4, 6, 8, 10];
+function formatCartels(n) {
+  return FORMATS_CARTELS.includes(Number(n)) ? Number(n) : 10;
+}
+// Un cartel est large et bas : en portrait, moins il y en a par page, plus le
+// vide s'accumule au-dessus et au-dessous du texte. Au-delà de dix par page,
+// la feuille se couche (Dave, 2026-09-07).
+function cartelsEnPaysage(n) {
+  return formatCartels(n) !== 10;
+}
+
 // Prépare les cartels d'une exposition. Le code QR mène à la fiche de l'œuvre
 // sur le site (colonne `url_site`, remplie par « Récupérer les adresses du
 // site »). Une œuvre sans adresse reçoit un cartel sans code — voir src/qr.js.
@@ -794,10 +809,10 @@ function preparerDonneesCartels(expo, opts = {}) {
   const avecPhoto = !!opts.avecPhoto;
   const afficherQr = opts.afficherQr !== false;
   const afficherPrix = opts.afficherPrix !== false;
-  // La photo est une VIGNETTE de repérage à taille fixe (18 mm, 14 mm sur les
-  // formats compacts) : elle tient dans n'importe quelle case et ne restreint
-  // donc plus les formats. Défaut : 10 par page, avec ou sans photo.
-  const format = opts.format != null ? opts.format : 10;
+  // La photo est une VIGNETTE de repérage : largeur fixe selon le format,
+  // hauteur calée sur le texte. Elle tient dans n'importe quelle case et ne
+  // restreint donc pas les formats. Défaut : 10 par page, avec ou sans photo.
+  const format = formatCartels(opts.format != null ? opts.format : 10);
   const presentes = (expo.oeuvres || []).filter((o) => !o.retire_le);
   return {
     format,
@@ -832,8 +847,11 @@ async function genererCartelsPdf(expositionId, options = {}) {
     throw new Error("Cette exposition ne contient aucune œuvre : il n'y a pas de cartel à produire.");
   }
   const dossier = path.join(getDocumentsDirAnnee(new Date().getFullYear()), 'Cartels');
+  // L'orientation vient du format retenu, et doit s'accorder avec la règle
+  // @page que le gabarit se pose lui-même.
+  const paysage = cartelsEnPaysage(donnees.format);
   const sortie = await genererPdfTolerant(
-    { gabaritNom: 'gabarit-cartels.html', donnees, paysage: false },
+    { gabaritNom: 'gabarit-cartels.html', donnees, paysage },
     dossier,
     nomDocument(`Cartels ${dateJour()}`, expo.nom),
   );
@@ -848,6 +866,7 @@ async function genererCartelsPdf(expositionId, options = {}) {
     nb_sans_qr: sansQr,
     nb_sans_photo: sansPhoto,
     pages: Math.ceil(donnees.cartels.length / donnees.format),
+    paysage,
   };
 }
 

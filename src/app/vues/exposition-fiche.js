@@ -317,12 +317,18 @@ export async function rendreExpositionFiche(contenu, params = {}) {
   // servent qu'à associer quel cartel va avec quelle toile »), elle tient dans
   // n'importe quelle case. Le format « 2 par page » a disparu avec : il
   // n'existait que pour loger une grande image.
+  //
+  // Le format commande aussi l'ORIENTATION de la feuille (10 → portrait, le
+  // reste → paysage). Ce n'est pas un réglage de plus : c'est la conséquence
+  // du nombre choisi, annoncée dans la phrase d'en-tête pour qu'on sache dans
+  // quel sens le papier sortira avant de lancer le PDF.
   const FORMATS_CARTELS = [
     { v: 10, lib: '10 par page — compact (défaut)' },
     { v: 8, lib: '8 par page' },
     { v: 6, lib: '6 par page' },
     { v: 4, lib: '4 par page — grand, lisible de loin' },
   ];
+  const cartelsEnPaysage = (n) => Number(n) !== 10;
 
   function ouvrirCartels() {
     const presentes = expo.oeuvres.filter((x) => !x.retire_le);
@@ -333,7 +339,7 @@ export async function rendreExpositionFiche(contenu, params = {}) {
     overlay.innerHTML = `
       <div class="dialogue" role="dialog" aria-modal="true">
         <div class="dialogue-entete"><h3 class="dialogue-titre">Imprimer les cartels</h3></div>
-        <p class="dialogue-message">${pluriel(presentes.length, 'cartel sera produit', 'cartels seront produits')}, en format Lettre, avec traits de découpe.</p>
+        <p class="dialogue-message" id="c-resume">${pluriel(presentes.length, 'cartel sera produit', 'cartels seront produits')}, en format Lettre portrait, avec traits de découpe.</p>
         <div class="form-champ form-champ-checkbox">
           <input type="checkbox" id="c-photo">
           <label for="c-photo">Ajouter la photo de l'œuvre</label>
@@ -369,6 +375,14 @@ export async function rendreExpositionFiche(contenu, params = {}) {
     // La case « photo » n'agit plus que sur l'avertissement des œuvres sans
     // image : la liste des formats ne dépend plus d'elle.
     const selFormat = overlay.querySelector('#c-format');
+    const resume = overlay.querySelector('#c-resume');
+    const majResume = () => {
+      const sens = cartelsEnPaysage(selFormat.value) ? 'paysage' : 'portrait';
+      resume.textContent = `${pluriel(presentes.length, 'cartel sera produit', 'cartels seront produits')}, `
+        + `en format Lettre ${sens}, avec traits de découpe.`;
+    };
+    selFormat.addEventListener('change', majResume);
+    majResume();
     const casePhoto = overlay.querySelector('#c-photo');
     const caseQr = overlay.querySelector('#c-qr');
     const avertQr = overlay.querySelector('#c-avert-qr');

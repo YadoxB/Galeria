@@ -7,10 +7,34 @@
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-09-06)
+## ▶ Reprise — par où commencer (préparé le 2026-09-07)
 
 **✅ Dernière version PUBLIÉE : v0.20.0 (2026-09-06).** `origin/master` = tag `v0.20.0` = `8aaaafe`.
 Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
+
+> ### 🟩 EN ATTENTE DE PUBLICATION — cartels en paysage (2026-09-07)
+>
+> Deux ajustements demandés par Dave après avoir vu les cartels de la 0.20.0, prêts en local,
+> **pas encore publiés** :
+>
+> 1. **L'orientation de la feuille suit le nombre par page.** 10 → portrait (inchangé) ;
+>    4, 6 et 8 → **paysage**. Un cartel est large et bas ; en portrait, moins il y en a par
+>    page, plus le vide s'accumule en haut et en bas. La case passe de 96 × 85 à
+>    **128 × 64 mm** à six par page.
+> 2. **La vignette prend la hauteur du texte** (largeur fixe selon le format). Elle grandit
+>    donc avec le texte et se retrouve d'aplomb en face de lui — ce qui règle du même coup le
+>    **centrage vertical** que Dave avait signalé juste avant.
+>
+> ⚠ **Deux endroits doivent rester d'accord sur l'orientation** : la règle `@page` que le
+> gabarit se pose lui-même dans `remplir()` — elle ne peut pas être conditionnée par une classe
+> CSS — et le drapeau `paysage` passé à `printToPDF` par `genererCartelsPdf`. S'ils divergent,
+> la feuille et son contenu tournent l'un sans l'autre. Les deux appliquent la même règle
+> « format ≠ 10 → paysage ».
+>
+> L'invariant de la 0.20.0 tient : l'image est en **position absolue** dans sa case, elle ne
+> compte pour rien dans le calcul des hauteurs. Vérifié en produisant de **vrais PDF** sur les
+> huit combinaisons format × photo (pages exactes, `MediaBox` conforme au sens attendu, écart
+> vignette/texte de 0,00 mm, zéro débordement). Maquette : `demos/cartels-paysage.html`.
 
 > ### 🟨 CE QUE LE PREMIER SIGNALEMENT DES PARENTS A APPRIS (2026-09-06)
 >

@@ -17,9 +17,22 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
-    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.20.0 :
+    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.21.0 :
     // `npm run release` refuse de publier si elle ne correspond pas à
     // package.json.
+    version: '0.21.0',
+    diapos: [
+      {
+        titre: 'Des cartels qui gaspillent moins de papier',
+        texte: "Sauf à dix par page, la feuille de cartels sort maintenant <b>couchée</b> plutôt que debout. Un cartel est large et bas&nbsp;: en couchant la feuille, il ne reste plus de grands vides au-dessus et au-dessous du texte. À six par page, chaque cartel passe de 96 × 85&nbsp;mm à <b>128 × 64&nbsp;mm</b>.",
+      },
+      {
+        titre: 'La vignette suit la taille du texte',
+        texte: "La petite image de la toile n'a plus une taille fixe&nbsp;: elle est exactement <b>aussi haute que le texte à côté d'elle</b>. Elle grandit donc sur les grands cartels, rapetisse sur les petits, et se retrouve toujours bien en face du titre.",
+      },
+    ],
+  },
+  {
     version: '0.20.0',
     diapos: [
       {

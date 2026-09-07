@@ -11,6 +11,35 @@
 
 ---
 
+## Des feuilles de cartels qui gaspillent moins de papier
+
+Sauf si vous demandez dix cartels par page, la feuille sort maintenant
+**couchée** plutôt que debout.
+
+La raison est simple : un cartel est large et bas — une ligne de texte, une
+petite image à gauche, un code QR à droite. Sur une feuille debout, moins on
+met de cartels, plus chacun s'étire en hauteur, et il reste de grands vides
+au-dessus et au-dessous du texte. En couchant la feuille, le cartel devient
+large et court, exactement comme ce qu'on découpe.
+
+À six cartels par page, chacun passe de **96 × 85 mm à 128 × 64 mm**. Les
+traits de découpe restent aussi droits et réguliers qu'avant.
+
+Rien de nouveau à cocher : le sens du papier découle du nombre de cartels que
+vous choisissez, et la fenêtre d'impression vous le dit avant de produire le
+PDF.
+
+---
+
+## La petite image suit la taille du texte
+
+La vignette de la toile n'a plus une taille fixe : elle est désormais
+exactement **aussi haute que le texte à côté d'elle**. Elle grandit donc sur
+les grands cartels, rapetisse sur les petits, et se retrouve toujours bien
+d'aplomb en face du titre — au lieu d'être collée en haut.
+
+---
+
 ## Des cartels plus lisibles
 
 La photo sur les cartels devient une **petite vignette carrée** à gauche du

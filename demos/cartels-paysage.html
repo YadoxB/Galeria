@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette — Cartels en paysage et vignette à hauteur du texte</title>
+<style>
+  :root{
+    --soft-ivory:#FCFAF4; --porcelain:#fff; --warm-gold:#C99A3D;
+    --ink:#111827; --slate:#5D6875; --stone:#A79E91; --mist:#D8D2C8; --cloud:#EFE8DE;
+    --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--soft-ivory);font-family:var(--font-ui);color:var(--ink);padding:32px;}
+  h1{font-family:Georgia,serif;font-weight:600;font-size:27px;margin:0 0 8px;}
+  .sous{color:var(--slate);margin:0 0 8px;font-size:14px;max-width:900px;line-height:1.65;}
+  .lot-titre{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+             margin:46px 0 6px;font-weight:600;}
+  .lot-note{font-size:13.5px;color:var(--slate);max-width:900px;line-height:1.65;margin:0 0 18px;}
+  .rangee{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;}
+  .etiq{font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;
+        margin:0 0 9px;color:var(--stone);}
+  .etiq.reco{color:var(--warm-gold);}
+  .legende{font-size:12.5px;color:var(--slate);margin:11px 0 0;max-width:430px;line-height:1.55;}
+  .legende b{color:var(--ink);}
+  .journal{max-width:1100px;margin-top:22px;background:var(--porcelain);border:1px solid var(--mist);
+           border-radius:14px;padding:17px 21px;}
+  .journal h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+              margin:0 0 9px;font-weight:700;}
+  .journal ul{margin:0;padding-left:19px;font-size:13.5px;color:var(--slate);line-height:1.8;}
+  .journal em{color:var(--ink);font-style:normal;font-weight:600;}
+  .mesure{display:inline-block;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;
+          background:var(--cloud);padding:1px 6px;border-radius:4px;color:#4b5563;}
+
+  /* La feuille, à l'échelle. Le CSS des cartels plus bas est le CSS RÉEL du
+     gabarit : la maquette ne recopie pas une imitation, elle montre. */
+  .cadre{background:#fff;box-shadow:0 5px 22px rgba(0,0,0,.14);overflow:hidden;}
+  .cadre>.page{transform-origin:top left;}
+  .ech40 .page{transform:scale(.40);}
+  .ech40.vport{width:327px;height:423px;}
+  .ech40.vpays{width:423px;height:327px;}
+  .ech70 .page{transform:scale(.70);}
+
+/* =====================================================================
+   CSS DU GABARIT — état proposé
+   ===================================================================== */
+  .page{background:#fff;padding:12mm;}
+  .page.port{width:8.5in;height:11in;}
+  .page.pays{width:11in;height:8.5in;}
+
+  .grille{display:grid;gap:0;height:100%;}
+  .p4  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,1fr);}
+  .p6  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);}
+  .p8  .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);}
+  .p10 .grille{grid-template-columns:1fr 1fr;grid-template-rows:repeat(5,1fr);}
+
+  .cartel{display:flex;align-items:center;justify-content:space-between;gap:4mm;
+          padding:4mm 5mm;border:1px dashed #c8bfa8;overflow:hidden;
+          font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;color:#1c1a17;}
+  .cartel-vide{border:0;}
+  /* Le CORPS (vignette + texte) est un bloc à hauteur libre dans un cartel
+     centré : c'est lui qui donne à la vignette la hauteur du texte. */
+  .cartel-corps{display:flex;align-items:stretch;gap:4mm;flex:1;min-width:0;}
+  .cartel-texte{min-width:0;flex:1;}
+  .cartel-artiste{font-family:Georgia,serif;font-size:10.5pt;font-weight:600;
+                  color:#900001;letter-spacing:.02em;margin:0 0 1mm;}
+  .cartel-titre{font-family:Georgia,serif;font-style:italic;font-size:13pt;
+                line-height:1.2;margin:0 0 1.5mm;}
+  .cartel-tech{font-size:9pt;color:#6b6459;line-height:1.35;margin:0 0 2mm;}
+  .cartel-pied{display:flex;align-items:baseline;gap:4mm;font-size:8.5pt;margin:0;}
+  .cartel-inv{color:#6b6459;letter-spacing:.04em;}
+  .cartel-prix{font-family:Georgia,serif;font-size:11.5pt;font-weight:600;margin-left:auto;}
+  .cartel-qr{flex:0 0 auto;width:26mm;height:26mm;}
+  .cartel-qr svg{width:100%;height:100%;display:block;}
+
+  /* VIGNETTE : largeur fixe, hauteur = celle du texte.
+     L'image est en position absolue : elle ne compte donc pour rien dans le
+     calcul des hauteurs et ne peut pas pousser la case, quelle que soit sa
+     forme. C'est l'invariant hérité du défaut du 6 septembre. */
+  .cartel-photo{flex:0 0 auto;position:relative;align-self:stretch;width:20mm;overflow:hidden;}
+  .cartel-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+  .cartel-photo-vide{flex:0 0 auto;width:20mm;}
+
+  .p4 .cartel-titre{font-size:15pt;} .p4 .cartel-qr{width:32mm;height:32mm;}
+  .p4 .cartel-photo,.p4 .cartel-photo-vide{width:24mm;}
+  .p8 .cartel{padding:3.5mm 4.5mm;} .p8 .cartel-titre{font-size:12pt;} .p8 .cartel-qr{width:24mm;height:24mm;}
+  .p8 .cartel-photo,.p8 .cartel-photo-vide{width:18mm;}
+  .p10 .cartel{padding:3mm 4mm;gap:3mm;}
+  .p10 .cartel-corps{gap:3mm;}
+  .p10 .cartel-artiste{font-size:9.5pt;margin-bottom:.6mm;}
+  .p10 .cartel-titre{font-size:11pt;margin-bottom:1mm;}
+  .p10 .cartel-tech{font-size:8pt;margin-bottom:1.4mm;}
+  .p10 .cartel-pied{font-size:8pt;}
+  .p10 .cartel-prix{font-size:10.5pt;}
+  .p10 .cartel-qr{width:22mm;height:22mm;}
+  .p10 .cartel-photo,.p10 .cartel-photo-vide{width:15mm;}
+
+/* =====================================================================
+   CSS DU GABARIT — état actuel, pour comparer : portrait, vignette carrée
+   de taille fixe, collée en haut.
+   ===================================================================== */
+  .avant .cartel-corps{display:contents;}
+  .avant .cartel-photo{position:static;align-self:flex-start;width:18mm;height:18mm;}
+  .avant .cartel-photo img{position:static;width:100%;height:100%;}
+  .avant .cartel-photo-vide{align-self:flex-start;width:18mm;height:18mm;}
+  .avant.p8 .cartel-photo,.avant.p8 .cartel-photo-vide,
+  .avant.p10 .cartel-photo,.avant.p10 .cartel-photo-vide{width:14mm;height:14mm;}
+</style>
+</head>
+<body>
+
+<h1>Cartels — la feuille en paysage, la vignette à hauteur du texte</h1>
+<p class="sous">Deux changements demandés le 7 septembre 2026 : « en dehors de 10 par page, formatter en paysage
+plutôt que portrait, comme ça on ne perd pas d'espace en haut et en bas » et « il faudrait que l'image de la toile
+suive la taille du texte ». Les feuilles ci-dessous sont à l'échelle, et le CSS qui les met en page est celui qui
+partira dans le gabarit — pas une imitation.</p>
+
+<p class="lot-titre">Lot 1 — L'orientation suit le nombre par page</p>
+<p class="lot-note">Un cartel est un objet <b>large et bas</b> : une ligne de texte flanquée d'une vignette et d'un
+code QR. Dans une feuille portrait, moins il y a de cartels, plus chaque case s'étire en hauteur — et le vide
+s'accumule au-dessus et au-dessous du texte. En paysage, la même case devient large et courte : le contenu la
+remplit.</p>
+
+<div class="rangee">
+  <div>
+    <p class="etiq">Aujourd'hui — 6 par page, portrait</p>
+    <div class="cadre ech40 vport"><div class="page port p6 avant" id="av6"></div></div>
+    <p class="legende">Case de <span class="mesure">96 × 85 mm</span>. Le texte en occupe une trentaine :
+    plus de la moitié de chaque cartel est du papier blanc.</p>
+  </div>
+  <div>
+    <p class="etiq reco">Proposé — 6 par page, paysage</p>
+    <div class="cadre ech40 vpays"><div class="page pays p6" id="ap6"></div></div>
+    <p class="legende">Case de <span class="mesure">128 × 64 mm</span>. Même nombre de cartels sur la feuille,
+    mais chacun est <b>plus large et moins haut</b> : le titre respire, et il reste moins de blanc à couper.</p>
+  </div>
+</div>
+
+<div class="rangee" style="margin-top:34px;">
+  <div>
+    <p class="etiq reco">4 par page, paysage — grand, lisible de loin</p>
+    <div class="cadre ech40 vpays"><div class="page pays p4" id="ap4"></div></div>
+    <p class="legende">Case de <span class="mesure">128 × 96 mm</span> au lieu de 96 × 128 : le cartel cesse
+    d'être un rectangle debout.</p>
+  </div>
+  <div>
+    <p class="etiq reco">8 par page, paysage</p>
+    <div class="cadre ech40 vpays"><div class="page pays p8" id="ap8"></div></div>
+    <p class="legende">Case de <span class="mesure">128 × 48 mm</span>. C'est ici que le paysage gagne le plus :
+    le cartel épouse presque exactement la hauteur de son texte.</p>
+  </div>
+  <div>
+    <p class="etiq">10 par page — reste en portrait</p>
+    <div class="cadre ech40 vport"><div class="page port p10" id="ap10"></div></div>
+    <p class="legende">Inchangé, comme demandé. À dix, la case portrait
+    <span class="mesure">96 × 51 mm</span> est déjà bien remplie.</p>
+  </div>
+</div>
+
+<p class="lot-titre">Lot 2 — La vignette prend la hauteur du texte</p>
+<p class="lot-note">Aujourd'hui la vignette est un carré de taille fixe (18 mm, 14 mm sur les formats compacts) collé
+en haut de la case. Elle paraît minuscule sur un grand cartel et décalée vers le haut sur un petit. Désormais elle
+<b>monte et descend avec le bloc de texte</b> : même hauteur que lui, donc d'aplomb en face de lui, et
+automatiquement plus grande quand le texte l'est.</p>
+
+<div class="rangee">
+  <div>
+    <p class="etiq">Aujourd'hui — 4 par page</p>
+    <div class="cadre ech70" style="width:353px;height:182px;">
+      <div class="page p4 avant" style="width:504px;height:260px;padding:0;">
+        <div class="grille" style="grid-template-rows:1fr;grid-template-columns:1fr;" id="av1"></div>
+      </div>
+    </div>
+    <p class="legende">Vignette de 18 mm alignée en haut : elle flotte à côté du nom de l'artiste et laisse
+    un creux sous elle.</p>
+  </div>
+  <div>
+    <p class="etiq reco">Proposé — 4 par page</p>
+    <div class="cadre ech70" style="width:353px;height:182px;">
+      <div class="page p4" style="width:504px;height:260px;padding:0;">
+        <div class="grille" style="grid-template-rows:1fr;grid-template-columns:1fr;" id="ap1"></div>
+      </div>
+    </div>
+    <p class="legende">Vignette de 24 mm de large, <b>haute comme le texte</b>. Une toile en hauteur ou en largeur
+    se loge dedans sans jamais déborder ni pousser la case.</p>
+  </div>
+</div>
+
+<div class="journal">
+  <h4>Ce que la maquette garantit</h4>
+  <ul>
+    <li><em>L'image ne peut toujours pas casser la mise en page.</em> Elle est en position absolue dans sa case :
+      elle ne compte pour rien dans le calcul des hauteurs. C'est ce qui empêche le retour du défaut du 6 septembre
+      — une feuille de six cartels qui s'imprimait en réalité sur quatre pages.</li>
+    <li><em>Les traits de découpe restent droits.</em> La grille garde des cases rigoureusement égales ;
+      seul le format de la feuille change.</li>
+    <li><em>Un seul PDF, une seule orientation.</em> L'orientation découle du nombre par page choisi :
+      10 → portrait, 4 / 6 / 8 → paysage. Rien de plus à cocher dans la fenêtre d'impression.</li>
+    <li><em>Une œuvre sans photo</em> garde une case vide de même largeur, pour que les cartels d'une page restent
+      alignés entre eux.</li>
+  </ul>
+</div>
+
+<script>
+// Fausses données, assez variées pour éprouver la mise en page : titres courts
+// et longs, toiles en hauteur et en largeur, une œuvre sans photo.
+function toile(l, h, ton){
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + l + ' ' + h + '">'
+    + '<rect width="100%" height="100%" fill="' + ton + '"/>'
+    + '<circle cx="' + (l * 0.62) + '" cy="' + (h * 0.38) + '" r="' + (Math.min(l, h) * 0.22) + '" fill="rgba(255,255,255,.45)"/>'
+    + '<path d="M0 ' + (h * 0.78) + ' L' + (l * 0.35) + ' ' + (h * 0.52) + ' L' + (l * 0.68) + ' ' + (h * 0.8)
+    + ' L' + l + ' ' + (h * 0.6) + ' L' + l + ' ' + h + ' L0 ' + h + ' Z" fill="rgba(0,0,0,.22)"/></svg>';
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+var QR = (function(){
+  var s = '', i, x, y;
+  for (i = 0; i < 441; i++) {
+    x = i % 21; y = Math.floor(i / 21);
+    if ((x * 7 + y * 5 + (x % 3) + (y % 4)) % 5 < 2) {
+      s += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="#1c1a17"/>';
+    }
+  }
+  [[0, 0], [14, 0], [0, 14]].forEach(function(p){
+    s += '<rect x="' + p[0] + '" y="' + p[1] + '" width="7" height="7" fill="#fff"/>'
+       + '<rect x="' + p[0] + '" y="' + p[1] + '" width="7" height="7" fill="none" stroke="#1c1a17" stroke-width="1"/>'
+       + '<rect x="' + (p[0] + 2) + '" y="' + (p[1] + 2) + '" width="3" height="3" fill="#1c1a17"/>';
+  });
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21" shape-rendering="crispEdges">'
+    + '<rect width="21" height="21" fill="#fff"/>' + s + '</svg>';
+})();
+
+var OEUVRES = [
+  { artiste:'Marie-Claude Lortie', titre:'Le fleuve au petit matin', tech:'Huile sur toile · 91 × 122 cm',
+    inv:'MCL-1042', prix:'3 200 $', photo:toile(400, 300, '#8a9bb0') },
+  { artiste:'Jean-Pierre Rousseau', titre:'Sous-bois, fin d’octobre', tech:'Acrylique sur panneau · 61 × 46 cm',
+    inv:'JPR-877', prix:'1 450 $', photo:toile(300, 400, '#9d8a66') },
+  { artiste:'Hélène Béliveau', titre:'Nature morte aux pivoines et au pichet de grès', tech:'Huile sur toile · 76 × 61 cm',
+    inv:'HB-2291', prix:'2 800 $', photo:toile(340, 400, '#b08a8a') },
+  { artiste:'Marc Thériault', titre:'Vieux-Québec, rue Saint-Louis', tech:'Aquarelle · 38 × 56 cm',
+    inv:'MT-514', prix:'950 $', photo:toile(420, 300, '#7f9c86') },
+  { artiste:'Suzanne Gagnon', titre:'Éclat', tech:'Bronze · 42 cm', inv:'SG-88', prix:'4 100 $', photo:'' },
+  { artiste:'Claude Lebeau', titre:'Marée basse à Kamouraska', tech:'Huile sur toile · 122 × 152 cm',
+    inv:'CLB-1236', prix:'6 500 $', photo:toile(400, 280, '#6f8aa3') },
+  { artiste:'Denise Aubry', titre:'Champ de canola', tech:'Acrylique · 51 × 76 cm',
+    inv:'DA-330', prix:'1 800 $', photo:toile(400, 270, '#c2a94e') },
+  { artiste:'Robert Fontaine', titre:'L’atelier, le soir', tech:'Huile sur bois · 30 × 40 cm',
+    inv:'RF-1907', prix:'1 100 $', photo:toile(300, 390, '#7a6d80') },
+  { artiste:'Nicole Pagé', titre:'Brume sur la rivière Richelieu', tech:'Pastel · 45 × 60 cm',
+    inv:'NP-742', prix:'1 250 $', photo:toile(410, 300, '#93a3a8') },
+  { artiste:'Yves Charbonneau', titre:'Retour de pêche', tech:'Huile sur toile · 61 × 91 cm',
+    inv:'YC-2055', prix:'2 400 $', photo:toile(400, 290, '#8a7f6b') },
+];
+
+function cartelHtml(o){
+  var img = o.photo
+    ? '<div class="cartel-photo"><img src="' + o.photo + '" alt=""></div>'
+    : '<div class="cartel-photo-vide"></div>';
+  return '<div class="cartel">'
+    + '<div class="cartel-corps">' + img
+      + '<div class="cartel-texte">'
+        + '<p class="cartel-artiste">' + o.artiste + '</p>'
+        + '<p class="cartel-titre">' + o.titre + '</p>'
+        + '<p class="cartel-tech">' + o.tech + '</p>'
+        + '<p class="cartel-pied"><span class="cartel-inv">' + o.inv + '</span>'
+        + '<span class="cartel-prix">' + o.prix + '</span></p>'
+      + '</div>'
+    + '</div>'
+    + '<div class="cartel-qr">' + QR + '</div>'
+  + '</div>';
+}
+
+function remplir(idPage, n){
+  var h = '<div class="grille">';
+  for (var i = 0; i < n; i++) h += cartelHtml(OEUVRES[i % OEUVRES.length]);
+  document.getElementById(idPage).innerHTML = h + '</div>';
+}
+remplir('av6', 6);
+remplir('ap6', 6);
+remplir('ap4', 4);
+remplir('ap8', 8);
+remplir('ap10', 10);
+document.getElementById('av1').innerHTML = cartelHtml(OEUVRES[1]);
+document.getElementById('ap1').innerHTML = cartelHtml(OEUVRES[1]);
+</script>
+</body></html>

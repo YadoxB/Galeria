@@ -10,6 +10,45 @@ identifiants.
 
 ## [Non publié]
 
+### Modifié
+
+- **L'orientation des feuilles de cartels suit le nombre par page.** Dix par page reste en
+  portrait ; **4, 6 et 8 passent en paysage**. Un cartel est un objet large et bas — une
+  ligne de texte flanquée d'une vignette et d'un code QR — et en portrait, moins il y en a
+  par page, plus le vide s'accumule au-dessus et au-dessous du texte (Dave, 2026-09-07 :
+  « on ne perd pas d'espace en haut et en bas »).
+  - Même grille à deux colonnes dans les deux sens ; seule la feuille tourne. Les cases
+    restent rigoureusement égales, donc les traits de découpe restent droits.
+  - Cases obtenues : **128 × 96 mm** à 4 par page (au lieu de 96 × 128), **128 × 64** à 6
+    (au lieu de 96 × 85), **128 × 48** à 8 (au lieu de 96 × 64), **96 × 51** à 10 (inchangé).
+  - Le gabarit pose lui-même sa règle `@page` — elle ne peut pas être conditionnée par une
+    classe CSS — et `genererCartelsPdf` en déduit le drapeau `paysage` de `printToPDF`. Les
+    deux appliquent la même fonction `cartelsEnPaysage()` : s'ils divergeaient, la feuille et
+    son contenu tourneraient l'un sans l'autre.
+  - `preparerDonneesCartels` **borne maintenant le format** à la liste permise, comme le fait
+    le gabarit depuis toujours. Un format inconnu donnait auparavant un nombre de pages faux
+    dans le compte rendu.
+  - La fenêtre d'impression **annonce le sens du papier** (« en format Lettre paysage ») et le
+    met à jour quand on change de format : rien de plus à cocher, mais rien de surprenant non
+    plus au moment d'imprimer.
+
+- **La vignette d'une œuvre prend la hauteur de son texte.** Largeur fixe selon le format
+  (24 mm à 4 par page, 15 mm à 10), hauteur exactement celle du bloc de texte voisin (Dave,
+  2026-09-07 : « il faudrait que l'image de la toile suive la taille du texte »). Un carré de
+  taille fixe paraissait minuscule sur un grand cartel et décalé vers le haut sur un petit ;
+  la vignette est désormais d'aplomb en face du texte, ce qui règle aussi le défaut de
+  centrage vertical signalé le même jour.
+  - Vignette et texte forment un **corps** à hauteur libre, le code QR restant à part : c'est
+    ce qui permet à la vignette de se caler sur le texte et non sur le code.
+  - L'image reste en **position absolue** dans sa case : elle ne compte pour rien dans le
+    calcul des hauteurs. L'invariant de la 0.20.0 tient — aucune dimension d'image ne peut
+    influencer la hauteur d'un cartel.
+  - Vérifié en produisant de **vrais PDF** (Electron + `printToPDF`, donc en média *print*) sur
+    les huit combinaisons format × photo, avec une toile 1:4 en hauteur, une 5:1 en largeur et
+    une œuvre sans photo : nombre de pages exact, `MediaBox` conforme au sens attendu, écart
+    vignette/texte de 0,00 mm, aucun débordement.
+  - Maquette : `demos/cartels-paysage.html`.
+
 ## [0.20.0] — 2026-09-06
 
 ### Ajouté
