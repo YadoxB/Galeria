@@ -10,6 +10,24 @@ identifiants.
 
 ## [Non publié]
 
+### Corrigé
+
+- **« Comparer avec le site » : reprendre un texte du site échouait toujours**, avec
+  « Erreur imprévue — Cannot set properties of null (setting 'disabled') », et le texte que
+  l'on venait de relire était **perdu en silence** (signalé par Dave le 2026-09-07).
+  - Cause : `e.currentTarget` est remis à `null` dès la fin de la propagation de l'événement.
+    Le gestionnaire ouvrait la fenêtre d'édition du texte (`await`), puis touchait
+    `e.currentTarget.disabled` — sur `null`. Le geste échouait donc **avant** l'appel d'import.
+  - Le même piège rendait muets les rattrapages d'erreur de « Appliquer le statut » et
+    « Garder la version de l'app » : un échec réseau y aurait laissé le bouton désactivé
+    derrière la même alerte.
+  - Correction : le bouton est capturé **avant tout `await`** dans les quatre gestionnaires,
+    comme c'était déjà le cas ailleurs dans le projet (`web-sync.js`, `web-sync-artistes.js`).
+  - Le reste du code a été audité : c'était le seul endroit où `currentTarget` était lu après
+    un `await`.
+  - Reproduit puis vérifié au banc (le vrai module monté dans un Chromium) sur quatre gestes :
+    reprise d'un texte édité, annulation de l'édition, import en échec, « garder » en échec.
+
 ## [0.21.0] — 2026-09-07
 
 ### Ajouté

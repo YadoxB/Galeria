@@ -11,6 +11,17 @@
 
 ---
 
+## Réparé : reprendre un texte du site
+
+Sur une fiche d'artiste ou d'œuvre, le bouton **Comparer avec le site** vous
+propose de reprendre ce que le site contient. Pour les textes — biographie,
+démarche, description — le bouton **Reprendre la valeur du site** affichait une
+« erreur imprévue », et le texte que vous veniez de relire était perdu.
+
+C'est réparé : le texte s'enregistre maintenant dans la fiche, comme prévu.
+
+---
+
 ## Un tableau de bord au-dessus de vos œuvres
 
 La page **Œuvres** commence maintenant par une rangée de chiffres : combien sont

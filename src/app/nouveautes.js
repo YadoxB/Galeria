@@ -17,9 +17,18 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
-    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.21.0 :
+    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.21.1 :
     // `npm run release` refuse de publier si elle ne correspond pas à
     // package.json.
+    version: '0.21.1',
+    diapos: [
+      {
+        titre: 'Reprendre un texte du site fonctionne',
+        texte: "Sur une fiche, « Comparer avec le site » puis <b>Reprendre la valeur du site</b> affichait une <b>erreur imprévue</b> pour les textes — et le texte que vous veniez de relire était perdu. C'est réparé&nbsp;: le texte s'enregistre bel et bien dans la fiche.",
+      },
+    ],
+  },
+  {
     version: '0.21.0',
     diapos: [
       {

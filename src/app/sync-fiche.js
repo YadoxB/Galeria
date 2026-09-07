@@ -114,16 +114,23 @@ function ouvrirModale({ type, id, titre, diffs, apresMaj }) {
       const champ = bloc.dataset.champ;
       const c = diffs.find((d) => d.champ === champ);
       if (!c) return;
+      // ⚠ `e.currentTarget` est mis à null dès que la propagation de
+      // l'événement est terminée : après le moindre `await`, il ne vaut plus
+      // rien. Le bouton se capture donc AVANT tout await, sans exception —
+      // c'est ce qui manquait ici, et « Reprendre la valeur du site » sur un
+      // champ de texte échouait toujours, le texte édité étant perdu en
+      // silence derrière un « Erreur imprévue » (Dave, 2026-09-07).
       bloc.querySelector('[data-reprendre]')?.addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
         let valeur = c.site;
         if (CHAMPS_TEXTE.has(champ)) {
           const edite = await editerTexteImport(c.libelle || champ, c.site == null ? '' : String(c.site));
           if (edite == null) return;
           valeur = edite;
         }
-        e.currentTarget.disabled = true;
+        btn.disabled = true;
         try { await importerTexte(champ, valeur); retirer(champ); }
-        catch (err) { e.currentTarget.disabled = false; await alerter({ type: 'error', title: 'Import échoué', message: nettoyerErreur(err) }); }
+        catch (err) { btn.disabled = false; await alerter({ type: 'error', title: 'Import échoué', message: nettoyerErreur(err) }); }
       });
       bloc.querySelector('[data-photo]')?.addEventListener('click', async (e) => {
         const btn = e.currentTarget; btn.disabled = true; btn.textContent = 'Téléchargement…';
@@ -135,16 +142,18 @@ function ouvrirModale({ type, id, titre, diffs, apresMaj }) {
         } catch (err) { btn.disabled = false; btn.textContent = 'Télécharger la photo du site →'; await alerter({ type: 'error', title: 'Photo non ajoutée', message: nettoyerErreur(err) }); }
       });
       bloc.querySelector('[data-statut-ok]')?.addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
         const sel = bloc.querySelector('.sf-statut-select');
-        e.currentTarget.disabled = true;
+        btn.disabled = true;
         try { await window.api.webDefinirStatut(id, sel.value); retirer('statut'); }
-        catch (err) { e.currentTarget.disabled = false; await alerter({ type: 'error', title: 'Statut non modifié', message: nettoyerErreur(err) }); }
+        catch (err) { btn.disabled = false; await alerter({ type: 'error', title: 'Statut non modifié', message: nettoyerErreur(err) }); }
       });
       bloc.querySelector('[data-garder]')?.addEventListener('click', async (e) => {
-        e.currentTarget.disabled = true;
+        const btn = e.currentTarget;
+        btn.disabled = true;
         const siteCle = champ === 'statut' ? c._statut.site_cle : c.site_cle;
         try { await garder(champ, siteCle); retirer(champ); }
-        catch (err) { e.currentTarget.disabled = false; await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) }); }
+        catch (err) { btn.disabled = false; await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) }); }
       });
     });
   }
