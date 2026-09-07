@@ -64,6 +64,9 @@ contextBridge.exposeInMainWorld('api', {
   ouvrirUrl: (url) => ipcRenderer.invoke('app:ouvrir-url', url),
   ouvrirDossier: (dossier) => ipcRenderer.invoke('app:ouvrir-dossier', dossier),
   appZoom: (facteur) => ipcRenderer.invoke('app:zoom', facteur),
+  // Consigne une erreur d'interface dans erreurs.log. Envoi sans réponse : le
+  // filet d'erreur ne doit rien attendre, et surtout pas pouvoir échouer.
+  journaliserErreurInterface: (info) => ipcRenderer.send('app:journaliser-erreur', info),
   importChoisirFichier: () => ipcRenderer.invoke('import:choisir-fichier'),
   importExecuter: (path, mode) => ipcRenderer.invoke('import:executer', path, mode),
   backupNow: () => ipcRenderer.invoke('backup:now'),

@@ -1566,6 +1566,24 @@ async function demarrerApplication() {
     if (win) win.webContents.setZoomFactor(f);
     return { ok: true };
   });
+  // Erreurs de l'INTERFACE (processus de rendu). Sans ce canal, elles ne
+  // laissaient aucune trace : le filet global de src/app/app.js affiche
+  // « Erreur imprévue » et écrit la pile dans la console de développement, que
+  // personne n'ouvre. Un signalement de problème ne contenait donc rien
+  // d'exploitable — c'est ce qui a rendu invisible le défaut de « Reprendre la
+  // valeur du site » (2026-09-07).
+  //
+  // `on` et non `handle` : consigner ne doit jamais faire attendre l'interface
+  // ni pouvoir échouer chez elle. Une erreur ici ne doit surtout pas en
+  // provoquer une autre — d'où le try/catch qui avale tout.
+  ipcMain.on('app:journaliser-erreur', (_e, info) => {
+    try {
+      const i = info && typeof info === 'object' ? info : {};
+      const ou = i.ecran ? `écran « ${String(i.ecran).slice(0, 80)} »` : 'écran inconnu';
+      const trace = String(i.pile || i.message || 'erreur sans détail').slice(0, 4000);
+      journaliserErreur(`Erreur d'interface (${ou})`, { stack: trace });
+    } catch {}
+  });
   ipcMain.handle('import:choisir-fichier', (event) => importChoisirFichier(event.sender));
   ipcMain.handle('import:executer', (_e, filePath, mode) => importExecuter(filePath, mode));
   // ---- Copie pour le soutien technique -------------------------------

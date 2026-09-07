@@ -22,6 +22,18 @@ C'est réparé : le texte s'enregistre maintenant dans la fiche, comme prévu.
 
 ---
 
+## Vos signalements de problème en disent plus
+
+Quand Galeria affiche « Erreur imprévue », elle garde désormais la trace
+technique de ce qui s'est passé, et le bouton **Signaler un problème**
+l'emporte avec lui.
+
+Concrètement : si quelque chose se comporte mal, un seul signalement suffit
+maintenant pour comprendre — sans que vous ayez à réussir à reproduire le
+problème pour qu'on puisse le corriger.
+
+---
+
 ## Un tableau de bord au-dessus de vos œuvres
 
 La page **Œuvres** commence maintenant par une rangée de chiffres : combien sont

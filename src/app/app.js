@@ -1,4 +1,4 @@
-import { enregistrer, naviguer, remplacer, retour } from './router.js';
+import { enregistrer, naviguer, remplacer, retour, routeCourante } from './router.js';
 import { rendreAccueil } from './vues/accueil.js';
 import { rendreArtistesListe } from './vues/artistes-liste.js';
 import { rendreArtisteFiche } from './vues/artiste-fiche.js';
@@ -76,8 +76,30 @@ document.addEventListener('input', (e) => {
 // standard, au lieu d'un clic qui ne fait rien. Une seule alerte par tranche
 // de 5 s pour qu'une erreur en boucle ne submerge pas l'utilisateur.
 let dernierFiletMs = 0;
+
+// ⚠ Consigner passe AVANT l'affichage, et n'est PAS soumis à la limite des
+// 5 secondes : le dialogue est là pour l'utilisateur, le journal pour celui
+// qui devra comprendre. Tant que ces erreurs ne partaient qu'à la console de
+// développement, un signalement de problème ne contenait rien d'exploitable —
+// c'est ce qui a rendu invisible le défaut de « Reprendre la valeur du site »
+// (2026-09-07). La pile compte plus que le message : « Cannot set properties
+// of null » ne dit rien, la ligne où ça casse dit tout.
+function journaliser(raison) {
+  try {
+    const r = routeCourante();
+    window.api.journaliserErreurInterface({
+      ecran: r ? (r.id != null ? `${r.nom} #${r.id}` : r.nom) : null,
+      message: String((raison && raison.message) || raison || ''),
+      pile: raison && raison.stack ? String(raison.stack) : null,
+    });
+  } catch {
+    // Un filet d'erreur qui lève une erreur ne servirait à personne.
+  }
+}
+
 function filetErreur(raison) {
   console.error('Erreur imprévue :', raison);
+  journaliser(raison);
   const maintenant = Date.now();
   if (maintenant - dernierFiletMs < 5000) return;
   dernierFiletMs = maintenant;

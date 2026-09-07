@@ -26,6 +26,10 @@ export const VERSIONS = [
         titre: 'Reprendre un texte du site fonctionne',
         texte: "Sur une fiche, « Comparer avec le site » puis <b>Reprendre la valeur du site</b> affichait une <b>erreur imprévue</b> pour les textes — et le texte que vous veniez de relire était perdu. C'est réparé&nbsp;: le texte s'enregistre bel et bien dans la fiche.",
       },
+      {
+        titre: 'Vos signalements en disent plus',
+        texte: "Quand Galeria affiche « Erreur imprévue », elle en garde maintenant la <b>trace technique complète</b>. Votre bouton <b>Signaler un problème</b> l'emporte avec lui&nbsp;: il devient possible de comprendre ce qui s'est passé, même sans pouvoir reproduire le problème.",
+      },
     ],
   },
   {

@@ -10,6 +10,25 @@ identifiants.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Les erreurs de l'interface sont consignées dans `erreurs.log`.** Jusqu'ici, le filet global
+  du processus de rendu affichait « Erreur imprévue » et écrivait la pile dans la console de
+  développement — que personne n'ouvre. Un **signalement de problème ne contenait donc rien
+  d'exploitable** : c'est exactement ce qui a rendu invisible le défaut corrigé ci-dessous.
+  - Chaque erreur est consignée avec sa **pile** et l'**écran en cours** (`routeCourante()`).
+    « Cannot set properties of null » ne dit rien ; la ligne où ça casse dit tout.
+  - Consigner passe **avant** l'affichage et **n'est pas soumis** à la limite d'une alerte par
+    5 secondes : le dialogue est pour l'utilisateur, le journal pour qui devra comprendre. Une
+    erreur en boucle laisse donc une trace complète tout en n'affichant qu'un dialogue.
+  - Canal `app:journaliser-erreur` en `send` et non `invoke` : consigner ne doit jamais faire
+    attendre l'interface ni pouvoir échouer chez elle. Tout est enveloppé de `try/catch` des
+    deux côtés — un filet d'erreur qui lève une erreur ne servirait à personne.
+  - Vérifié **de bout en bout** : la vraie application lancée sur un dossier de données
+    temporaire (profil neuf + papier d'adresse), une promesse rejetée provoquée dans son
+    interface par le débogueur, et la ligne retrouvée dans le journal —
+    `Erreur d'interface (écran « accueil ») : Error: …` avec sa pile.
+
 ### Corrigé
 
 - **« Comparer avec le site » : reprendre un texte du site échouait toujours**, avec
