@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.21.1] — 2026-09-07
+
 ### Ajouté
 
 - **Les erreurs de l'interface sont consignées dans `erreurs.log`.** Jusqu'ici, le filet global

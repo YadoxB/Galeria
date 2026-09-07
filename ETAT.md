@@ -9,8 +9,36 @@
 
 ## ▶ Reprise — par où commencer (préparé le 2026-09-07)
 
-**✅ Dernière version PUBLIÉE : v0.21.0 (2026-09-07).** Poussée et publiée sur GitHub Releases
-avec `latest.yml` — auto-update actif.
+**✅ Dernière version PUBLIÉE : v0.21.1 (2026-09-07).** `origin/master` = tag `v0.21.1` =
+`f1f3d73`. Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
+Les parents passent de la 0.20.0 à la 0.21.1 : deux versions d'un coup, six diapos de
+nouveautés au prochain lancement.
+
+> ### 🟥 UN PIÈGE À CONNAÎTRE — `currentTarget` après un `await` (2026-09-07)
+>
+> `e.currentTarget` est remis à `null` dès la fin de la propagation de l'événement :
+> **après le moindre `await`, il ne vaut plus rien.** Dans `sync-fiche.js`, « Reprendre la
+> valeur du site » ouvrait la fenêtre d'édition du texte (`await`) puis touchait
+> `e.currentTarget.disabled` — le geste échouait **avant** l'appel d'import, et le texte que
+> les parents venaient de relire était **perdu en silence** derrière « Erreur imprévue ».
+> Corrigé en 0.21.1, confirmé par Dave sur son poste.
+>
+> **Règle : capturer le bouton avant tout `await`**, sans exception. Deux commentaires le
+> disaient déjà dans `web-sync.js` et `web-sync-artistes.js` ; il manquait dans
+> `sync-fiche.js`. Le reste du renderer a été audité — c'était le seul cas.
+>
+> **Ce défaut était indétectable à distance** : le filet global du renderer n'écrivait que
+> dans la console de développement, donc un signalement de problème ne contenait rien.
+> La 0.21.1 fait remonter ces erreurs dans `erreurs.log` (pile + écran en cours), et le
+> rapport de « Signaler un problème » les emporte désormais.
+>
+> ⚠ **Banc utile** : on peut lancer la VRAIE application isolée — `electron .
+> --user-data-dir=<temp>` plus un `emplacement.json` dans ce dossier pointant vers un dossier
+> de données temporaire — et la piloter par `--remote-debugging-port` + CDP. La base réelle
+> n'est pas touchée. Deux précautions apprises à la dure : la première fenêtre inspectable est
+> le **splash** (pas de pont `window.api`, faux négatif garanti), et **jamais de
+> `taskkill /IM Galeria.exe`** dans un banc — ce nom est celui de l'application installée,
+> pas du banc, qui tourne sous `electron.exe`.
 
 > ### ✅ CE QUE LA 0.21.0 A LIVRÉ (2026-09-07)
 >
