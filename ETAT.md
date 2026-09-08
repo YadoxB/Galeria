@@ -14,6 +14,42 @@
 Les parents passent de la 0.20.0 à la 0.21.1 : deux versions d'un coup, six diapos de
 nouveautés au prochain lancement.
 
+> ### 🟩 EN ATTENTE DE PUBLICATION — relier un artiste du site (2026-09-07)
+>
+> **« Relier à une fiche existante »** dans Site web → Artistes : nouvelle colonne `nom_site`
+> sur `artistes`, le nom que l'artiste porte **sur le site**. Le rapprochement l'essaie avant
+> le nom complet, si bien qu'un artiste qui signe d'un nom d'artiste ne produit plus de fiche
+> en double. Renommage facultatif dans le même geste ; lien réversible depuis la fiche.
+>
+> ⚠ **`nom_site` doit rester ABSENTE de `COLONNES_ARTISTE`** (`mutations.js`) : `modifierArtiste`
+> réécrit toutes les colonnes qu'il connaît et effacerait le lien à chaque enregistrement d'une
+> fiche. Un banc le vérifie ; ne pas « compléter » la liste.
+>
+> Vérifié sur une copie de la vraie base et en montant la vraie vue dans un Chromium (douze
+> contrôles). Maquette : `demos/relier-artiste-site.html`.
+>
+> ### 🟨 TROIS ARTISTES RENOMMÉS À LA MAIN — décision de Dave (2026-09-07)
+>
+> Avant que la liaison n'existe, les fiches ont été renommées pour épouser le site. La base
+> contient donc :
+>
+> | id | prénom | nom |
+> |---|---|---|
+> | 16 | *(vide)* | `LO (Laurent Torregrossa)` |
+> | 17 | `PAMCOMEAU` | `(Pamela Comeau)` |
+> | 18 | `SOFIA` | `(Sophie Lebeuf)` |
+>
+> **Dave a choisi de les laisser ainsi** (2026-09-07) ; la liaison ne servira qu'aux prochains
+> cas. Deux conséquences assumées, à ne pas « corriger » sans le lui demander :
+>
+> — les listes trient par `nom`, donc `(Pamela Comeau)` et `(Sophie Lebeuf)` se rangent **avant
+>   toutes les lettres**, en tête de chaque liste d'artistes ;
+> — `Photos\Pam Comeau\` subsiste, orphelin, avec une photo (PAC1645) dont une copie a atterri
+>   dans le nouveau dossier sous « … (2).jpg ». Rien n'est perdu.
+>
+> Pour y revenir un jour : renommer la fiche dans l'app, puis « Relier à une fiche existante »
+> à l'écran de synchronisation. Les deux gestes sont nécessaires, dans cet ordre.
+>
 > ### 🟥 UN PIÈGE À CONNAÎTRE — `currentTarget` après un `await` (2026-09-07)
 >
 > `e.currentTarget` est remis à `null` dès la fin de la propagation de l'événement :

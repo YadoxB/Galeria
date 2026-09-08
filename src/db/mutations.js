@@ -212,6 +212,76 @@ function modifierArtiste(id, data) {
   return obtenirArtiste(id);
 }
 
+// ===== Lien avec la page d'un artiste sur le site =====
+//
+// Deux artistes de la galerie signent d'un NOM D'ARTISTE : le site dit
+// « PAMCOMEAU (Pamela Comeau) » là où l'app dit « Pam Comeau ». Le comparateur
+// rapprochant par le nom, il ne les voyait pas et proposait de créer des fiches
+// en double. `nom_site` retient le nom porté sur le site — la galerie garde le
+// sien, le site garde le sien, et la paire tient.
+//
+// ⚠ `nom_site` n'est PAS dans COLONNES_ARTISTE, et ne doit pas y entrer : le
+// formulaire de la fiche réécrit toutes les colonnes qu'il connaît et effacerait
+// le lien à chaque enregistrement.
+//
+// Renommer est FACULTATIF, et volontairement dans le même geste : c'est le seul
+// moment où l'on a les deux noms sous les yeux. Le préfixe d'inventaire n'est
+// jamais touché — les numéros déjà portés par les œuvres ne bougent pas.
+function relierArtisteAuSite(id, { nomSite, prenom, nom } = {}) {
+  const aid = entier(id);
+  if (aid == null) throw new Error('Identifiant invalide.');
+  const ns = vide(nomSite);
+  if (!ns) throw new Error("Le nom de l'artiste sur le site est vide.");
+  const db = openDatabase();
+  const artiste = db.prepare('SELECT id, nom, prenom FROM artistes WHERE id = ?').get(aid);
+  if (!artiste) throw new Error('Artiste introuvable.');
+
+  // Un artiste du site ne peut être relié qu'à une seule fiche : sinon deux
+  // fiches se disputeraient la même biographie à chaque comparaison.
+  const dejaPris = db.prepare(
+    'SELECT id, nom, prenom FROM artistes WHERE nom_site = ? AND id <> ?'
+  ).get(ns, aid);
+  if (dejaPris) {
+    const qui = [dejaPris.prenom, dejaPris.nom].filter(Boolean).join(' ');
+    throw new Error(`« ${ns} » est déjà relié à la fiche de ${qui}. Déliez-la d'abord.`);
+  }
+
+  const renomme = prenom !== undefined || nom !== undefined;
+  let nouveauNom = artiste.nom;
+  let nouveauPrenom = artiste.prenom;
+  if (renomme) {
+    nouveauNom = vide(nom);
+    nouveauPrenom = vide(prenom);
+    if (!nouveauNom) throw new Error("Le nom de l'artiste est requis.");
+    const homonyme = db.prepare(
+      `SELECT id FROM artistes
+       WHERE id <> ? AND lower(trim(coalesce(prenom, '') || ' ' || nom)) = lower(trim(? || ' ' || ?))`
+    ).get(aid, nouveauPrenom || '', nouveauNom);
+    if (homonyme) {
+      throw new Error(`Une autre fiche porte déjà le nom « ${[nouveauPrenom, nouveauNom].filter(Boolean).join(' ')} ».`);
+    }
+  }
+
+  db.prepare(
+    `UPDATE artistes SET nom_site = ?, nom = ?, prenom = ?, modifie_le = datetime('now') WHERE id = ?`
+  ).run(ns, nouveauNom, nouveauPrenom, aid);
+  return obtenirArtiste(aid);
+}
+
+// Défaire le lien. Le nom de la fiche n'est pas restauré : le renommage, s'il a
+// eu lieu, était un choix distinct — le défaire à l'aveugle en écraserait
+// peut-être un autre, fait depuis.
+function delierArtisteDuSite(id) {
+  const aid = entier(id);
+  if (aid == null) throw new Error('Identifiant invalide.');
+  const db = openDatabase();
+  const info = db.prepare(
+    `UPDATE artistes SET nom_site = NULL, modifie_le = datetime('now') WHERE id = ?`
+  ).run(aid);
+  if (!info.changes) throw new Error('Artiste introuvable.');
+  return obtenirArtiste(aid);
+}
+
 function creerArtiste(data) {
   if (!vide(data.nom)) throw new Error("Le nom de l'artiste est requis.");
   const db = openDatabase();
@@ -1457,7 +1527,7 @@ module.exports = {
   ajouterOeuvresExposition, retirerOeuvreExposition, terminerExposition,
   majUrlsSiteDepuisSite,
   enregistrerAnnexe, majAnnexePdfPath, annulerAnnexe, majPresentationArtiste,
-  modifierArtiste, creerArtiste, supprimerArtiste,
+  modifierArtiste, creerArtiste, supprimerArtiste, relierArtisteAuSite, delierArtisteDuSite,
   modifierOeuvre, majChampOeuvre, majStatutOeuvre, corrigerNumeroInventaire, ignorerDiffWeb, retirerIgnoreWeb, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre,
   majChampArtiste, ignorerDiffArtisteWeb, retirerIgnoreArtisteWeb,
   modifierClient, creerClient, supprimerClient,

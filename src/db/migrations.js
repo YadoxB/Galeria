@@ -25,6 +25,11 @@ const COLONNES_ATTENDUES = {
     // que le profil n'a pas changé). `presentation_sig` = signature des champs.
     ['presentation_path', 'TEXT'],
     ['presentation_sig', 'TEXT'],
+    // Nom porté sur le site quand ce n'est pas celui d'ici (nom d'artiste).
+    // ⚠ Volontairement ABSENTE de COLONNES_ARTISTE (mutations.js) : le
+    // formulaire de la fiche réécrit toutes les colonnes qu'il connaît, et
+    // effacerait donc ce lien à chaque enregistrement d'une fiche.
+    ['nom_site', 'TEXT'],
   ],
   oeuvres: [
     ['description_en', 'TEXT'],

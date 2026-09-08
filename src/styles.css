@@ -5781,6 +5781,54 @@ select.lot-in.st-pretee { color: var(--info); }
 .wsync-recon-actions .btn-action { padding: 5px 10px; font-size: 12.5px; }
 .wsync-badge-doute { display: inline-block; font-size: 11px; font-weight: 600; color: #8a6d1f; background: #fbf1d6; border: 1px solid #e8d9a8; border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
 
+/* ----- Lien manuel vers la page d'un artiste sur le site -----
+   Se voit sur la carte de comparaison ET sur la fiche de l'artiste : la carte
+   disparaît dès que tout concorde, donc elle ne suffit pas. */
+.wsync-lien-site { font-size: 12.5px; color: var(--slate); background: var(--soft-ivory);
+  border: 1px solid var(--mist); border-radius: 9px; padding: 7px 11px; margin: 0 0 10px;
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.wsync-lien-site strong { color: var(--ink); }
+.wsync-lien-site .btn-lien { margin-left: auto; }
+.hero-artiste-lien { font-size: 12.5px; color: var(--slate); margin-top: 5px;
+  display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.hero-artiste-lien strong { color: var(--ink); font-weight: 600; }
+
+/* ----- Fenêtre « Relier à une fiche existante » ----- */
+.rl-etape { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--stone); font-weight: 700; margin: 16px 0 8px; }
+.rl-etape:first-of-type { margin-top: 0; }
+.rl-rech { width: 100%; height: 38px; padding: 0 12px; border: 1px solid var(--mist);
+  border-radius: 9px; font-family: var(--font-ui); font-size: 13.5px; margin-bottom: 10px; }
+.rl-rech:focus { outline: none; border-color: var(--warm-gold); box-shadow: 0 0 0 4px rgba(201, 154, 61, 0.18); }
+.rl-cands { max-height: 210px; overflow-y: auto; }
+.rl-cand { display: flex; align-items: center; gap: 11px; border: 1px solid var(--mist);
+  border-radius: 10px; padding: 9px 13px; margin-bottom: 7px; cursor: pointer; background: var(--porcelain); }
+.rl-cand:hover { border-color: var(--warm-gold); }
+.rl-cand.on { border-color: var(--warm-gold); box-shadow: 0 0 0 3px rgba(201, 154, 61, 0.16); }
+.rl-cand .n { font-weight: 600; font-size: 13.5px; }
+.rl-cand .d { font-size: 12px; color: var(--stone); }
+/* La raison du rapprochement, poussée à droite : sans elle, l'ordre des
+   candidats est un oracle qu'on ne peut ni vérifier ni contredire. */
+.rl-cand .p { margin-left: auto; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--warm-gold); font-weight: 700; }
+.rl-noms { display: flex; flex-direction: column; gap: 7px; }
+.rl-noms label { display: flex; align-items: baseline; gap: 10px; border: 1px solid var(--mist);
+  border-radius: 10px; padding: 10px 13px; cursor: pointer; font-size: 13.5px; }
+.rl-noms label.on { border-color: var(--warm-gold); box-shadow: 0 0 0 3px rgba(201, 154, 61, 0.16); }
+.rl-noms .q { font-size: 11.5px; color: var(--stone); }
+.rl-champs { display: flex; gap: 10px; margin-top: 9px; }
+.rl-champs > div { flex: 1; }
+.rl-champs label { display: block; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--stone); margin-bottom: 4px; }
+.rl-champs input { width: 100%; height: 36px; padding: 0 11px; border: 1px solid var(--mist);
+  border-radius: 8px; font-family: var(--font-ui); font-size: 13.5px; }
+.rl-recap { background: var(--soft-ivory); border: 1px solid var(--mist); border-radius: 11px;
+  padding: 12px 15px; margin-top: 16px; font-size: 13px; color: var(--slate); line-height: 1.7; }
+.rl-recap .ln { display: flex; gap: 8px; }
+.rl-recap .ln .k { color: var(--stone); min-width: 96px; font-size: 11.5px;
+  text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; padding-top: 2px; }
+.rl-avert { color: var(--warm-gold); }
+
 .cf-image-choix { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--slate); margin: 2px 0 6px; cursor: pointer; }
 .cf-image-choix input { accent-color: var(--warm-gold); }
 

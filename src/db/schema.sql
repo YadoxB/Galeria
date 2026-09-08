@@ -34,6 +34,12 @@ CREATE TABLE IF NOT EXISTS artistes (
   cotes               TEXT,
   presentation_path   TEXT,
   presentation_sig    TEXT,
+  -- Nom que l'artiste porte SUR LE SITE, quand ce n'est pas celui d'ici (nom
+  -- d'artiste : « PAMCOMEAU (Pamela Comeau) » pour « Pam Comeau »). Le
+  -- comparateur rapproche par ce nom d'abord, par le nom complet ensuite : la
+  -- galerie garde son nom, le site garde le sien, et la paire tient. Vide dans
+  -- l'immense majorité des cas.
+  nom_site            TEXT,
   archive             INTEGER NOT NULL DEFAULT 0
                       CHECK (archive IN (0, 1)),
   cree_le             TEXT NOT NULL DEFAULT (datetime('now')),

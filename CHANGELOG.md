@@ -10,6 +10,37 @@ identifiants.
 
 ## [Non publié]
 
+### Ajouté
+
+- **« Relier à une fiche existante » dans la synchronisation des artistes.** Deux artistes de
+  la galerie signent d'un **nom d'artiste** : le site dit « PAMCOMEAU (Pamela Comeau) » et
+  « Sofia (Sophie Lebeuf) » là où Galeria disait « Pam Comeau » et « Sophie Lebeuf ». Le
+  rapprochement se faisant par le nom, chacun tombait d'un côté et le seul geste offert —
+  « Créer la fiche artiste » — aurait produit des **doublons**, chacun avec ses œuvres.
+  - Nouvelle colonne **`nom_site`** sur `artistes` : le nom que l'artiste porte *sur le site*.
+    Le rapprochement essaie ce nom d'abord, le nom complet ensuite. La galerie garde le sien,
+    le site garde le sien, et la paire tient — personne ne renonce à son nom.
+  - ⚠ `nom_site` est **volontairement absente de `COLONNES_ARTISTE`** : `modifierArtiste`
+    réécrit toutes les colonnes qu'il connaît et effacerait le lien à chaque enregistrement
+    d'une fiche. Un banc le vérifie explicitement.
+  - La fenêtre propose les **candidats classés** — les artistes que le site ne retrouve pas
+    d'abord, puis par mots de nom en commun — avec **la raison affichée** (« nom en commun :
+    pam, comeau »). Sans elle, l'ordre serait un oracle qu'on ne peut ni vérifier ni contredire.
+    Une recherche atteint n'importe quelle autre fiche.
+  - **Renommer est facultatif** et se fait dans le même geste, seul moment où l'on a les deux
+    noms sous les yeux : garder le nom actuel (défaut), prendre celui du site, ou en écrire un.
+    Le renommage passe par le même soin que `artistes:modifier` — l'artiste **emporte son
+    dossier de photos**. Le préfixe d'inventaire n'est jamais touché.
+  - **Réversible** : le lien s'affiche sur la carte de comparaison *et* sur la fiche de
+    l'artiste, avec « Délier ». La carte disparaît dès que tout concorde, donc elle ne suffit
+    pas — le lien serait introuvable précisément quand il marche.
+  - Garde-fous : un artiste du site ne peut être relié qu'à **une seule** fiche, un nom vide
+    est refusé, et un renommage vers un nom déjà porté par une autre fiche l'est aussi.
+  - Vérifié sur une **copie de la vraie base** (migration, non-effacement par le formulaire,
+    rapprochement) et en **montant la vraie vue** dans un Chromium : douze contrôles, du
+    classement des candidats jusqu'au renommage effectif. Maquette :
+    `demos/relier-artiste-site.html`.
+
 ## [0.21.1] — 2026-09-07
 
 ### Ajouté

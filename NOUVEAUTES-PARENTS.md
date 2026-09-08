@@ -11,6 +11,32 @@
 
 ---
 
+## Les artistes qui signent d'un nom d'artiste
+
+Certains artistes sont présentés sur le site sous un nom différent de celui que
+vous leur donnez : le site dit **« PAMCOMEAU (Pamela Comeau) »** là où vous
+dites « Pam Comeau ».
+
+Jusqu'ici, Galeria croyait avoir affaire à deux personnes différentes, et ne
+vous proposait que de **créer une deuxième fiche** — ce qui aurait coupé les
+œuvres de l'artiste en deux.
+
+Dans **Site web → Artistes**, onglet « Seulement sur le site », un nouveau
+bouton **« Relier à une fiche existante »** règle la chose. Il vous demande :
+
+1. **De quelle fiche s'agit-il ?** Galeria vous propose les plus probables en
+   premier, en vous disant pourquoi (« nom en commun : pam, comeau »). Une
+   recherche permet d'aller chercher n'importe quel autre artiste.
+2. **Quel nom Galeria doit-elle afficher ?** Vous gardez le vôtre — c'est le
+   cas courant — ou vous prenez celui du site, ou vous en écrivez un autre.
+
+Vous gardez votre nom, le site garde le sien, et les deux fiches restent
+appariées. Aucune fiche n'est supprimée, aucune œuvre ne bouge, et rien n'est
+modifié sur le site. Le lien s'affiche ensuite sur la fiche de l'artiste, avec
+un bouton **Délier** si vous vous êtes trompé de personne.
+
+---
+
 ## Réparé : reprendre un texte du site
 
 Sur une fiche d'artiste ou d'œuvre, le bouton **Comparer avec le site** vous

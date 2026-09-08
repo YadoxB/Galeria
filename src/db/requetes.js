@@ -219,7 +219,7 @@ function listerWebSyncIgnoreArtiste() {
 function artistesPourComparaisonWeb() {
   const db = openDatabase();
   return db.prepare(`
-    SELECT id, prenom, nom, citation, biographie, demarche, curriculum, photo_path
+    SELECT id, prenom, nom, nom_site, citation, biographie, demarche, curriculum, photo_path
     FROM artistes
     WHERE archive = 0
     ORDER BY nom COLLATE NOCASE

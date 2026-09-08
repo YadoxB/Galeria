@@ -17,9 +17,22 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
-    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.21.1 :
+    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.22.0 :
     // `npm run release` refuse de publier si elle ne correspond pas à
     // package.json.
+    version: '0.22.0',
+    diapos: [
+      {
+        titre: 'Les artistes qui signent d’un nom d’artiste',
+        texte: "Quand le site appelle un artiste autrement que vous — <b>« PAMCOMEAU (Pamela Comeau) »</b> pour votre « Pam Comeau » — Galeria croyait avoir affaire à deux personnes et proposait de créer une <b>fiche en double</b>.",
+      },
+      {
+        titre: 'Un bouton « Relier à une fiche existante »',
+        texte: "Dans <b>Site web → Artistes</b>, onglet « Seulement sur le site », ce nouveau bouton vous demande de quelle fiche il s'agit — en vous proposant les bonnes en premier — puis <b>quel nom Galeria doit afficher</b>. Vous gardez le vôtre, le site garde le sien, et les deux restent appariés. Le lien se défait d'un clic depuis la fiche de l'artiste.",
+      },
+    ],
+  },
+  {
     version: '0.21.1',
     diapos: [
       {

@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette — Relier un artiste du site à une fiche existante</title>
+<link rel="stylesheet" href="../src/theme.css">
+<link rel="stylesheet" href="../src/styles.css">
+<style>
+  body{padding:30px 34px;overflow:auto;height:auto;user-select:text;}
+  .doc{max-width:1120px;margin:0 auto;}
+  h1{font-family:var(--font-titre);font-weight:500;font-size:29px;margin:0 0 8px;}
+  .sous{color:var(--slate);font-size:14px;line-height:1.65;margin:0 0 6px;max-width:900px;}
+  .lot-titre{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+             margin:44px 0 6px;font-weight:600;}
+  .lot-note{font-size:13.5px;color:var(--slate);line-height:1.65;margin:0 0 16px;max-width:900px;}
+  .etiq{font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;
+        margin:20px 0 8px;color:var(--stone);}
+  .etiq.reco{color:var(--warm-gold);}
+  .maquette{background:var(--soft-ivory);border:1px dashed var(--mist);border-radius:16px;padding:20px;}
+  .journal{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:16px 21px;margin-top:22px;}
+  .journal h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+              margin:0 0 9px;font-weight:700;}
+  .journal ul{margin:0;padding-left:19px;font-size:13.5px;color:var(--slate);line-height:1.8;}
+  .journal em{color:var(--ink);font-style:normal;font-weight:600;}
+  .avert{background:#FFF8F8;border:1px solid #E9D2D2;border-left:3px solid #900001;border-radius:10px;
+         padding:14px 18px;margin-top:18px;}
+  .avert h4{margin:0 0 7px;font-size:13.5px;color:#900001;}
+  .avert p{margin:0 0 7px;font-size:13.5px;color:var(--slate);line-height:1.6;}
+  .avert p:last-child{margin:0;}
+
+  /* --- pièces reprises de l'écran de synchronisation --- */
+  .wsync-recon{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--mist);
+               border-radius:11px;padding:11px 15px;margin-bottom:9px;}
+  .wsync-recon strong{font-size:13.5px;}
+  .wsync-recon .cit{color:var(--slate);font-size:12.5px;font-style:italic;flex:1;min-width:0;
+                    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .wsync-recon-actions{margin-left:auto;display:flex;gap:8px;flex:0 0 auto;}
+
+  /* --- la modale de liaison --- */
+  .cadre-modale{position:relative;background:rgba(7,26,47,.16);border-radius:16px;padding:26px;}
+  .faux-dialogue{background:#fff;border-radius:16px;box-shadow:0 18px 50px rgba(7,26,47,.2);
+                 max-width:660px;margin:0 auto;padding:22px 24px;}
+  .faux-dialogue h3{font-family:var(--font-titre);font-weight:500;font-size:21px;margin:0 0 4px;}
+  .faux-dialogue .msg{color:var(--slate);font-size:13.5px;line-height:1.6;margin:0 0 16px;}
+  .etape{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--stone);
+         font-weight:700;margin:18px 0 8px;}
+  .etape:first-of-type{margin-top:0;}
+  .cand{display:flex;align-items:center;gap:11px;border:1px solid var(--mist);border-radius:10px;
+        padding:9px 13px;margin-bottom:7px;cursor:pointer;background:#fff;}
+  .cand:hover{border-color:var(--warm-gold);}
+  .cand.on{border-color:var(--warm-gold);box-shadow:0 0 0 3px rgba(201,154,61,.16);}
+  .cand .n{font-weight:600;font-size:13.5px;}
+  .cand .p{margin-left:auto;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--warm-gold);
+           font-weight:700;}
+  .cand .d{font-size:12px;color:var(--stone);}
+  .rech{width:100%;height:38px;padding:0 12px;border:1px solid var(--mist);border-radius:9px;
+        font-family:var(--font-ui);font-size:13.5px;margin-bottom:10px;}
+  .choix-nom{display:flex;flex-direction:column;gap:7px;}
+  .choix-nom label{display:flex;align-items:baseline;gap:10px;border:1px solid var(--mist);border-radius:10px;
+                   padding:10px 13px;cursor:pointer;font-size:13.5px;}
+  .choix-nom label.on{border-color:var(--warm-gold);box-shadow:0 0 0 3px rgba(201,154,61,.16);}
+  .choix-nom .q{font-size:11.5px;color:var(--stone);}
+  .champs-nom{display:flex;gap:10px;margin-top:9px;}
+  .champs-nom div{flex:1;}
+  .champs-nom label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+                    color:var(--stone);margin-bottom:4px;border:0;padding:0;}
+  .champs-nom input{width:100%;height:36px;padding:0 11px;border:1px solid var(--mist);border-radius:8px;
+                    font-family:var(--font-ui);font-size:13.5px;}
+  .recap{background:var(--soft-ivory);border:1px solid var(--mist);border-radius:11px;padding:12px 15px;
+         margin-top:18px;font-size:13px;color:var(--slate);line-height:1.75;}
+  .recap b{color:var(--ink);}
+  .recap .ln{display:flex;gap:8px;}
+  .recap .ln .k{color:var(--stone);min-width:96px;font-size:11.5px;text-transform:uppercase;
+                letter-spacing:.05em;font-weight:700;padding-top:2px;}
+  .actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px;}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<h1>Relier un artiste du site à une fiche existante</h1>
+<p class="sous">Deux artistes de la galerie signent d'un nom d'artiste. Le site les appelle
+<b>PAMCOMEAU (Pamela Comeau)</b> et <b>Sofia (Sophie Lebeuf)</b> ; Galeria les appelle
+<b>Pam Comeau</b> et <b>Sophie ( Sofia) Lebeuf</b>. Le comparateur rapproche <b>par le nom</b> : il ne
+voit donc aucun lien, et propose de créer deux fiches en double.</p>
+
+<p class="lot-titre">Le principe : relier, pas renommer</p>
+<p class="lot-note">Galeria retient <b>le nom que l'artiste porte sur le site</b>, à côté du nom qu'il porte
+dans l'app. Le rapprochement se fait d'abord par ce nom-là, et seulement ensuite par le nom complet. Conséquence :
+la galerie garde « Pam Comeau », le site garde « PAMCOMEAU (Pamela Comeau) », et les deux fiches restent
+appariées — <b>sans que personne ait à renoncer à son nom</b>. C'est le même principe que l'adresse du site déjà
+retenue pour chaque œuvre.</p>
+
+<p class="etiq">Aujourd'hui — onglet « Seulement sur le site »</p>
+<div class="maquette">
+  <div class="wsync-recon">
+    <strong>PAMCOMEAU (Pamela Comeau)</strong>
+    <span class="cit">« Je veux faire de l'art qui est aussi intéressant visuellement qu'intellectuelle…</span>
+    <div class="wsync-recon-actions">
+      <button type="button" class="btn-action btn-principal">Créer la fiche artiste</button>
+    </div>
+  </div>
+  <p class="lot-note" style="margin:12px 0 0;">Le seul geste offert crée un <b>doublon</b> : la galerie se
+  retrouverait avec « Pam Comeau » et « PAMCOMEAU (Pamela Comeau) », chacun avec ses œuvres.</p>
+</div>
+
+<p class="etiq reco">Proposé — un second geste</p>
+<div class="maquette">
+  <div class="wsync-recon">
+    <strong>PAMCOMEAU (Pamela Comeau)</strong>
+    <span class="cit">« Je veux faire de l'art qui est aussi intéressant visuellement qu'intellectuelle…</span>
+    <div class="wsync-recon-actions">
+      <button type="button" class="btn-action btn-secondaire-action" id="ouvrir-1">Relier à une fiche existante</button>
+      <button type="button" class="btn-action btn-principal">Créer la fiche artiste</button>
+    </div>
+  </div>
+  <div class="wsync-recon">
+    <strong>Sofia (Sophie Lebeuf)</strong>
+    <span class="cit">« Dans mon travail se dessine une expression humaine à travers le modelage des co…</span>
+    <div class="wsync-recon-actions">
+      <button type="button" class="btn-action btn-secondaire-action" id="ouvrir-2">Relier à une fiche existante</button>
+      <button type="button" class="btn-action btn-principal">Créer la fiche artiste</button>
+    </div>
+  </div>
+</div>
+
+<p class="lot-titre">La fenêtre de liaison — essayez-la</p>
+<p class="lot-note">Deux étapes : <b>de qui s'agit-il</b>, puis <b>quel nom l'app doit afficher</b>. Les artistes
+que le site ne retrouve pas sont proposés en premier, avec la raison du rapprochement ; une recherche permet
+d'aller chercher n'importe quel autre artiste. Le récapitulatif du bas dit, en toutes lettres, ce qui va être
+enregistré.</p>
+
+<div class="cadre-modale">
+  <div class="faux-dialogue">
+    <h3>Relier « <span id="d-site">PAMCOMEAU (Pamela Comeau)</span> »</h3>
+    <p class="msg">Cet artiste du site correspond-il à une fiche que vous avez déjà&nbsp;? Rien n'est modifié sur
+    le site.</p>
+
+    <p class="etape">1 — De quelle fiche s'agit-il&nbsp;?</p>
+    <input class="rech" id="d-rech" type="search" placeholder="Chercher un artiste…">
+    <div id="d-cands"></div>
+
+    <div id="d-etape2" hidden>
+      <p class="etape">2 — Quel nom Galeria doit-elle afficher&nbsp;?</p>
+      <div class="choix-nom" id="d-noms"></div>
+      <div class="champs-nom" id="d-champs" hidden>
+        <div><label for="d-prenom">Prénom</label><input id="d-prenom" type="text"></div>
+        <div><label for="d-nom">Nom</label><input id="d-nom" type="text"></div>
+      </div>
+      <div class="recap" id="d-recap"></div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn-action btn-secondaire-action">Annuler</button>
+      <button type="button" class="btn-action btn-principal" id="d-ok" disabled>Relier</button>
+    </div>
+  </div>
+</div>
+
+<div class="journal">
+  <h4>Ce que le geste fait, et ne fait pas</h4>
+  <ul>
+    <li><em>Il ne fusionne pas deux fiches de Galeria.</em> Il apparie une fiche existante avec une page du site.
+      Aucune œuvre ne change de main, aucune fiche n'est supprimée — donc rien à défaire en cas d'erreur.</li>
+    <li><em>Il est réversible.</em> Le lien s'affiche sur la fiche de l'artiste (« Sur le site : … ») avec un
+      bouton <b>Délier</b>. Se tromper de personne se corrige en un clic.</li>
+    <li><em>Après la liaison</em>, la paire quitte les deux listes « seulement » et rejoint l'onglet
+      <b>Différences</b>, où la biographie, la démarche, le C.V., la citation et la photo se reprennent comme pour
+      tout le monde.</li>
+    <li><em>Renommer reste facultatif.</em> Par défaut Galeria garde son nom à elle ; c'est le cas courant. Le
+      choix n'existe que parce qu'il fallait pouvoir corriger « Sophie ( Sofia) Lebeuf » au passage.</li>
+    <li><em>Un artiste du site ne peut être relié qu'à une seule fiche</em>, et une fiche à un seul artiste du
+      site. Si le nom choisi est déjà pris par une autre fiche, Galeria refuse et le dit.</li>
+  </ul>
+</div>
+
+<div class="avert">
+  <h4>Le point délicat : renommer touche au dossier des photos</h4>
+  <p>Le dossier des photos d'un artiste porte son nom (<code>Photos\Pam Comeau\</code>). Renommer un artiste doit
+  donc renommer son dossier — la mécanique existe déjà (<code>renommerDossierArtiste</code>), et la liaison
+  passera par <b>la même route que la modification d'une fiche</b> plutôt que d'écrire en base directement.
+  C'est la seule façon que les photos suivent.</p>
+  <p>Le préfixe d'inventaire, lui, n'est <b>pas</b> touché : les numéros déjà attribués aux œuvres ne doivent
+  jamais bouger.</p>
+</div>
+
+</div>
+<script>
+const SITE = {
+  1: { nom: 'PAMCOMEAU (Pamela Comeau)', cit: "Je veux faire de l'art qui est aussi intéressant visuellement qu'intellectuellement." },
+  2: { nom: 'Sofia (Sophie Lebeuf)', cit: 'Dans mon travail se dessine une expression humaine à travers le modelage des courbes.' },
+};
+// Les artistes que le site ne retrouve pas, puis le reste du carnet.
+const APP = [
+  { id: 11, prenom: 'Pam', nom: 'Comeau', seul: true, oeuvres: 14 },
+  { id: 12, prenom: 'Sophie', nom: '( Sofia) Lebeuf', seul: true, oeuvres: 9 },
+  { id: 13, prenom: 'Marie-Claude', nom: 'Lortie', seul: false, oeuvres: 38 },
+  { id: 14, prenom: 'Jean-Pierre', nom: 'Rousseau', seul: false, oeuvres: 21 },
+  { id: 15, prenom: 'Hélène', nom: 'Béliveau', seul: false, oeuvres: 17 },
+];
+
+const sansAcc = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const nomComplet = (a) => [a.prenom, a.nom].filter(Boolean).join(' ').trim();
+// Mots de 3 lettres et plus, ponctuation retirée : c'est ce qui rapproche
+// « Comeau » de « PAMCOMEAU (Pamela Comeau) ».
+const mots = (s) => sansAcc(s).replace(/[^a-z0-9]+/g, ' ').split(' ').filter((m) => m.length >= 3);
+
+function score(siteNom, a) {
+  const ms = new Set(mots(siteNom));
+  const ma = mots(nomComplet(a));
+  const communs = ma.filter((m) => ms.has(m));
+  // Un mot de l'app contenu dans un mot du site (comeau ⊂ pamcomeau) compte aussi.
+  const inclus = ma.filter((m) => !ms.has(m) && [...ms].some((x) => x.includes(m) || m.includes(x)));
+  return communs.length * 2 + inclus.length;
+}
+function raison(siteNom, a) {
+  const ms = new Set(mots(siteNom));
+  const ma = mots(nomComplet(a));
+  const c = ma.filter((m) => ms.has(m) || [...ms].some((x) => x.includes(m) || m.includes(x)));
+  return c.length ? `nom en commun : ${c.join(', ')}` : `${a.oeuvres} œuvres`;
+}
+
+let siteId = 1, choisi = null, modeNom = 'app';
+
+function dessinerCands() {
+  const q = sansAcc(document.getElementById('d-rech').value.trim());
+  const s = SITE[siteId].nom;
+  let liste = APP.slice()
+    .map((a) => ({ a, sc: score(s, a) }))
+    .sort((x, y) => (y.a.seul - x.a.seul) || (y.sc - x.sc) || nomComplet(x.a).localeCompare(nomComplet(y.a)));
+  if (q) liste = liste.filter(({ a }) => sansAcc(nomComplet(a)).includes(q));
+  else liste = liste.slice(0, 4);
+  document.getElementById('d-cands').innerHTML = liste.map(({ a, sc }) => `
+    <div class="cand${choisi === a.id ? ' on' : ''}" data-id="${a.id}">
+      <span class="n">${nomComplet(a)}</span>
+      <span class="d">${a.oeuvres} œuvres</span>
+      ${sc >= 2 ? `<span class="p">${raison(s, a)}</span>` : ''}
+    </div>`).join('') || '<p class="liste-vide">Aucun artiste trouvé.</p>';
+  document.querySelectorAll('.cand').forEach((c) => c.addEventListener('click', () => {
+    choisi = Number(c.dataset.id); modeNom = 'app'; dessinerCands(); dessinerNoms();
+  }));
+}
+
+function dessinerNoms() {
+  const e2 = document.getElementById('d-etape2');
+  const ok = document.getElementById('d-ok');
+  if (!choisi) { e2.hidden = true; ok.disabled = true; return; }
+  e2.hidden = false; ok.disabled = false;
+  const a = APP.find((x) => x.id === choisi);
+  const s = SITE[siteId].nom;
+  const opts = [
+    { cle: 'app', t: `Garder « ${nomComplet(a)} »`, q: "le nom actuel de la fiche — c'est le cas courant" },
+    { cle: 'site', t: `Prendre « ${s} »`, q: 'le nom que porte le site' },
+    { cle: 'autre', t: 'Écrire un autre nom', q: 'pour corriger une coquille au passage' },
+  ];
+  document.getElementById('d-noms').innerHTML = opts.map((o) => `
+    <label class="${modeNom === o.cle ? 'on' : ''}" data-cle="${o.cle}">
+      <input type="radio" name="mn" ${modeNom === o.cle ? 'checked' : ''}>
+      <span>${o.t}<br><span class="q">${o.q}</span></span>
+    </label>`).join('');
+  document.querySelectorAll('#d-noms label').forEach((l) => l.addEventListener('click', () => {
+    modeNom = l.dataset.cle;
+    if (modeNom === 'autre') {
+      document.getElementById('d-prenom').value = a.prenom || '';
+      document.getElementById('d-nom').value = a.nom || '';
+    }
+    dessinerNoms();
+  }));
+  document.getElementById('d-champs').hidden = modeNom !== 'autre';
+  dessinerRecap();
+}
+
+function nomRetenu() {
+  const a = APP.find((x) => x.id === choisi);
+  if (modeNom === 'site') return SITE[siteId].nom;
+  if (modeNom === 'autre') {
+    const p = document.getElementById('d-prenom').value.trim();
+    const n = document.getElementById('d-nom').value.trim();
+    return [p, n].filter(Boolean).join(' ') || nomComplet(a);
+  }
+  return nomComplet(a);
+}
+
+function dessinerRecap() {
+  const a = APP.find((x) => x.id === choisi);
+  const change = nomRetenu() !== nomComplet(a);
+  document.getElementById('d-recap').innerHTML = `
+    <div class="ln"><span class="k">Sur le site</span><span><b>${SITE[siteId].nom}</b></span></div>
+    <div class="ln"><span class="k">Dans l'app</span><span><b>${nomRetenu()}</b>${change ? ` <span style="color:var(--warm-gold);">(renommée, son dossier de photos suivra)</span>` : ''}</span></div>
+    <div class="ln"><span class="k">Conséquence</span><span>Les ${a.oeuvres} œuvres restent sur cette fiche. La paire passera dans l'onglet <b>Différences</b>.</span></div>`;
+}
+
+document.getElementById('d-rech').addEventListener('input', dessinerCands);
+['d-prenom', 'd-nom'].forEach((id) => document.getElementById(id).addEventListener('input', dessinerRecap));
+document.getElementById('ouvrir-1').addEventListener('click', () => { siteId = 1; reinit(); });
+document.getElementById('ouvrir-2').addEventListener('click', () => { siteId = 2; reinit(); });
+function reinit() {
+  choisi = null; modeNom = 'app';
+  document.getElementById('d-site').textContent = SITE[siteId].nom;
+  document.getElementById('d-rech').value = '';
+  dessinerCands(); dessinerNoms();
+  document.querySelector('.cadre-modale').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+dessinerCands(); dessinerNoms();
+</script>
+</body></html>

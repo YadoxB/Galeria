@@ -69,7 +69,7 @@ const {
   statsTableauDeBord,
 } = require('./db/requetes');
 const {
-  modifierArtiste, creerArtiste, supprimerArtiste,
+  modifierArtiste, creerArtiste, supprimerArtiste, relierArtisteAuSite, delierArtisteDuSite,
   modifierOeuvre, majChampOeuvre, majStatutOeuvre, corrigerNumeroInventaire, ignorerDiffWeb, retirerIgnoreWeb, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre,
   majChampArtiste, ignorerDiffArtisteWeb, retirerIgnoreArtisteWeb,
   modifierClient, creerClient, supprimerClient,
@@ -773,6 +773,13 @@ function retirerCitationDeBio(bio, citation) {
 // Champs : biographie (le site combine parfois bio + curriculum → on tolère les
 // deux) et photo (proposée seulement si le site en a une et pas l'app). Lecture
 // seule. `ignores` = Map `${artisteId}:${champ}` → site_cle.
+//
+// Deux artistes de la galerie signent d'un NOM D'ARTISTE : le site les appelle
+// « PAMCOMEAU (Pamela Comeau) » et « Sofia (Sophie Lebeuf) » là où l'app dit
+// « Pam Comeau » et « Sophie Lebeuf ». Le rapprochement par le seul nom complet
+// ne les voyait pas et proposait de créer des fiches en double. On essaie donc
+// d'abord `nom_site`, le nom que l'artiste porte sur le site, posé à la main par
+// « Relier à une fiche existante » (voir ipcMain 'web:relier-artiste').
 function comparerArtistesEtSite(portfolios, artistes, ignores = new Map()) {
   const parNom = new Map();
   for (const p of portfolios) { const k = clefComparaison(p.nom); if (k) parNom.set(k, p); }
@@ -783,10 +790,13 @@ function comparerArtistesEtSite(portfolios, artistes, ignores = new Map()) {
 
   for (const a of artistes) {
     const nomApp = [a.prenom, a.nom].filter(Boolean).join(' ').trim();
+    // Le lien posé à la main prime : c'est un jugement humain, il ne doit pas
+    // être contredit par une coïncidence de noms.
+    const kLien = clefComparaison(a.nom_site || '');
     const k = clefComparaison(nomApp);
-    const p = k ? parNom.get(k) : null;
-    if (!p) { appSeul.push({ id: a.id, nom: nomApp }); continue; }
-    nomsVus.add(k);
+    const p = (kLien && parNom.get(kLien)) || (k ? parNom.get(k) : null);
+    if (!p) { appSeul.push({ id: a.id, nom: nomApp, nom_site: a.nom_site || null }); continue; }
+    nomsVus.add(clefComparaison(p.nom));
 
     const ignoreDe = (champ) => ignores.get(`${a.id}:${champ}`);
     const champs = [];
@@ -834,7 +844,10 @@ function comparerArtistesEtSite(portfolios, artistes, ignores = new Map()) {
       champs.push({ champ: 'photo', libelle: 'Photo', app: '(aucune photo dans l\'app)', site: '(photo sur le site)', site_image: p.image, site_cle, ignore: ignoreDe('photo') === site_cle });
     }
 
-    lignes.push({ artiste_id: a.id, nom: nomApp, champs });
+    // `nom_site` remonte à l'écran pour que le lien posé à la main soit VISIBLE
+    // là où il agit — et défaisable. Un rapprochement invisible qu'on ne peut
+    // pas corriger vaut moins qu'un rapprochement manquant.
+    lignes.push({ artiste_id: a.id, nom: nomApp, nom_site: a.nom_site || null, champs });
   }
 
   const siteSeul = portfolios
@@ -1347,6 +1360,23 @@ async function demarrerApplication() {
     const artiste = creerArtiste({ nom: d.nom, citation: d.citation, biographie: d.biographie, demarche: d.demarche, curriculum: d.curriculum });
     return { ok: true, artiste };
   });
+  // Relier un artiste du site à une fiche EXISTANTE, au lieu d'en créer une en
+  // double. Le renommage est facultatif et passe par le même soin que
+  // 'artistes:modifier' : un artiste renommé emporte son dossier de photos,
+  // sinon la méthode de suivi des parents se casse en silence.
+  ipcMain.handle('web:relier-artiste', (_e, artisteId, options) => {
+    const o = options || {};
+    let ancienDossier = null;
+    try { ancienDossier = dossierArtiste(obtenirArtiste(artisteId)); } catch {}
+    const artiste = relierArtisteAuSite(artisteId, o);
+    try {
+      if (ancienDossier) renommerDossierArtiste(openDatabase(), artisteId, ancienDossier);
+    } catch { /* silencieux : la base reste juste, le prochain rangement suivra */ }
+    return { ok: true, artiste };
+  });
+  // Défaire le lien. Ne restaure PAS le nom : le renommage était un choix
+  // distinct, et l'annuler à l'aveugle en écraserait peut-être un autre.
+  ipcMain.handle('web:delier-artiste', (_e, artisteId) => ({ ok: true, artiste: delierArtisteDuSite(artisteId) }));
   // Transition assistée (parents) : pour chaque artiste relié dont la citation est
   // encore VIDE, remplir le champ « Citation » depuis le site et — si la citation
   // figure comme bloc distinct dans la bio — l'en retirer. Ne réécrit jamais toute

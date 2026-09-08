@@ -4,7 +4,7 @@
 // La biographie du site peut inclure le curriculum : la comparaison tolère les
 // deux (voir main.js), et l'import place le texte dans « Biographie » seulement.
 
-import { ech, nettoyerErreur, pluriel, urlPhoto, nomComplet, initiales } from '../commun.js';
+import { ech, nettoyerErreur, pluriel, urlPhoto, nomComplet, initiales, sansAccents } from '../commun.js';
 import { naviguer } from '../router.js';
 import { alerter, confirmer, editerTexteImport } from '../dialogue.js';
 import { recadrerCarre } from '../recadrage.js';
@@ -82,6 +82,16 @@ export async function rendreWebSyncArtistes(contenu) {
   let afficherReglees = false;
   const filtres = new Set(TYPES_DIFF.map((t) => t.cle));
 
+  // Carnet complet des artistes, pour la fenêtre « Relier ». Chargé à la
+  // demande : la comparaison avec le site n'en a pas besoin, et cet écran
+  // s'ouvre souvent sans qu'on relie quoi que ce soit.
+  let artistesTous = null;
+  async function chargerArtistes() {
+    if (artistesTous) return artistesTous;
+    artistesTous = await window.api.artistesListe({ inclureArchives: false });
+    return artistesTous;
+  }
+
   const champsVisibles = (l) => l.champs.filter((c) => filtres.has(c.champ) && (afficherReglees || !c.ignore));
   const ligneVisible = (l) => champsVisibles(l).length > 0;
   const compteType = (t) => dataCourant.lignes.filter((l) => l.champs.some((c) => c.champ === t && !c.ignore)).length;
@@ -147,7 +157,10 @@ export async function rendreWebSyncArtistes(contenu) {
       ? `<div class="wsync-recon-liste">${data.siteSeul.map((p, i) => `
           <div class="wsync-recon" data-idx="${i}">
             <div class="wsync-recon-info"><strong>${ech(p.nom)}</strong>${p.excerpt ? ` <span class="wsync-artiste">${ech(p.excerpt.slice(0, 80))}${p.excerpt.length > 80 ? '…' : ''}</span>` : ''}</div>
-            <div class="wsync-recon-actions"><button type="button" class="btn-action btn-principal wsync-creer-artiste">Créer la fiche artiste</button></div>
+            <div class="wsync-recon-actions">
+              <button type="button" class="btn-action btn-secondaire-action wsync-relier-artiste">Relier à une fiche existante</button>
+              <button type="button" class="btn-action btn-principal wsync-creer-artiste">Créer la fiche artiste</button>
+            </div>
           </div>`).join('')}</div>`
       : `<p class="liste-vide">✓ Tous les artistes du site ont une fiche dans l'app.</p>`;
 
@@ -193,12 +206,22 @@ export async function rendreWebSyncArtistes(contenu) {
         </div>`;
     }).join('');
 
+    // Le lien posé à la main s'affiche LÀ OÙ IL AGIT, avec de quoi le défaire.
+    // Un rapprochement invisible qu'on ne peut pas corriger vaut moins qu'un
+    // rapprochement manquant : on verrait des différences incompréhensibles
+    // sans pouvoir remonter à leur cause.
+    const lienHtml = l.nom_site
+      ? `<div class="wsync-lien-site">Relié au site sous « <strong>${ech(l.nom_site)}</strong> »
+           <button type="button" class="btn-lien wsync-delier" data-artiste="${l.artiste_id}">Délier</button></div>`
+      : '';
+
     return `
       <div class="wsync-carte" data-artiste="${l.artiste_id}">
         <div class="wsync-tete">
           <div><strong class="wsync-titre">${ech(l.nom)}</strong></div>
           <button type="button" class="btn-lien wsync-voir-artiste" data-artiste="${l.artiste_id}">Voir la fiche</button>
         </div>
+        ${lienHtml}
         ${champsHtml}
       </div>`;
   }
@@ -226,7 +249,10 @@ export async function rendreWebSyncArtistes(contenu) {
     corps.querySelectorAll('.wsync-recon[data-idx]').forEach((row) => {
       const idx = Number(row.dataset.idx);
       row.querySelector('.wsync-creer-artiste')?.addEventListener('click', () => creerArtiste(idx));
+      row.querySelector('.wsync-relier-artiste')?.addEventListener('click', () => relierArtiste(idx));
     });
+    corps.querySelectorAll('.wsync-delier').forEach((b) =>
+      b.addEventListener('click', () => delierArtiste(Number(b.dataset.artiste))));
   }
 
   const champObj = (artisteId, champ) => {
@@ -281,6 +307,213 @@ export async function rendreWebSyncArtistes(contenu) {
     if (!c) return;
     try { await window.api.webRetirerIgnoreArtiste(artisteId, champ); c.ignore = false; dessiner(); }
     catch (err) { await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) }); }
+  }
+
+  // ===== Relier un artiste du site à une fiche existante =====
+  //
+  // Deux artistes de la galerie signent d'un nom d'artiste : le site dit
+  // « PAMCOMEAU (Pamela Comeau) » là où l'app dit « Pam Comeau ». Le
+  // rapprochement se faisant par le nom, ils tombaient chacun d'un côté et le
+  // seul geste offert créait un DOUBLON. Relier retient le nom porté sur le
+  // site : chacun garde le sien, et la paire tient.
+  async function relierArtiste(idx) {
+    const p = dataCourant.siteSeul[idx];
+    if (!p) return;
+    try { await chargerArtistes(); }
+    catch (err) {
+      await alerter({ type: 'error', title: 'Liste des artistes illisible', message: nettoyerErreur(err) });
+      return;
+    }
+    const artisteId = await choisirFicheAReliers(p);
+    if (artisteId == null) return;
+    await charger(); // la comparaison entière change : on la refait
+    await alerter({
+      type: 'succes', title: 'Fiches reliées',
+      message: `« ${p.nom} » est maintenant rattaché à une fiche existante.`,
+      detail: "Les différences de biographie, de démarche, de C.V., de citation et de photo se reprennent maintenant dans l'onglet « Différences ». Le lien se défait depuis la fiche de l'artiste.",
+    });
+  }
+
+  async function delierArtiste(artisteId) {
+    const l = dataCourant.lignes.find((x) => x.artiste_id === artisteId);
+    const rep = await confirmer({
+      type: 'question', title: 'Délier du site ?',
+      message: `Galeria ne rapprochera plus cette fiche de « ${l && l.nom_site ? l.nom_site : 'la page du site'} ».`,
+      detail: "Rien n'est supprimé : ni la fiche, ni ses œuvres, ni le site. Le nom de la fiche ne change pas non plus.",
+      buttons: ['Délier', 'Annuler'], defaultId: 1, cancelId: 1,
+    });
+    if (rep !== 0) return;
+    try { await window.api.webDelierArtiste(artisteId); await charger(); }
+    catch (err) { await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) }); }
+  }
+
+  // Retourne l'id de la fiche reliée, ou null si annulé. Fait l'appel lui-même :
+  // les deux étapes (quelle fiche, quel nom) forment un seul geste, et les
+  // séparer laisserait un état à moitié choisi.
+  function choisirFicheAReliers(produit) {
+    return new Promise((resolve) => {
+      // Les artistes que le site ne retrouve pas d'abord : par construction,
+      // c'est parmi eux que se trouve presque toujours la bonne fiche.
+      const appSeulIds = new Set((dataCourant.appSeul || []).map((a) => a.id));
+      const tous = (artistesTous || []).map((a) => ({
+        id: a.id,
+        nom: nomComplet(a) || a.nom || '',
+        prenom: a.prenom || '',
+        nomSeul: a.nom || '',
+        oeuvres: a.nb_oeuvres || 0,
+        seul: appSeulIds.has(a.id),
+      }));
+
+      // Mots de 3 lettres et plus : c'est ce qui rapproche « Comeau » de
+      // « PAMCOMEAU (Pamela Comeau) », y compris quand le site colle les mots.
+      const mots = (s) => sansAccents(String(s || '')).replace(/[^a-z0-9]+/g, ' ').split(' ').filter((m) => m.length >= 3);
+      const motsSite = new Set(mots(produit.nom));
+      const communs = (a) => mots(a.nom).filter((m) => motsSite.has(m)
+        || [...motsSite].some((x) => x.includes(m) || m.includes(x)));
+      const score = (a) => communs(a).length;
+
+      let choisi = null;
+      let modeNom = 'app';
+
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay-modale overlay-dialogue';
+      overlay.innerHTML = `
+        <div class="dialogue" role="dialog" aria-modal="true" style="max-width:660px;width:94vw;">
+          <div class="dialogue-entete"><h3 class="dialogue-titre">Relier « ${ech(produit.nom)} »</h3></div>
+          <p class="dialogue-message">Cet artiste du site correspond-il à une fiche que vous avez déjà ? Rien n'est modifié sur le site.</p>
+          <p class="rl-etape">1 — De quelle fiche s'agit-il ?</p>
+          <input class="rl-rech" id="rl-rech" type="search" placeholder="Chercher un artiste…">
+          <div id="rl-cands" class="rl-cands"></div>
+          <div id="rl-etape2" hidden>
+            <p class="rl-etape">2 — Quel nom Galeria doit-elle afficher ?</p>
+            <div class="rl-noms" id="rl-noms"></div>
+            <div class="rl-champs" id="rl-champs" hidden>
+              <div><label for="rl-prenom">Prénom</label><input id="rl-prenom" type="text"></div>
+              <div><label for="rl-nom">Nom</label><input id="rl-nom" type="text"></div>
+            </div>
+            <div class="rl-recap" id="rl-recap"></div>
+          </div>
+          <div class="dialogue-actions">
+            <button type="button" class="btn-action btn-secondaire-action" id="rl-annuler">Annuler</button>
+            <button type="button" class="btn-action btn-principal" id="rl-ok" disabled>Relier</button>
+          </div>
+        </div>`;
+
+      let fini = false;
+      const fermer = (r) => {
+        if (fini) return;
+        fini = true;
+        window.removeEventListener('keydown', onKey);
+        overlay.remove();
+        resolve(r);
+      };
+      const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); fermer(null); } };
+      overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) fermer(null); });
+      window.addEventListener('keydown', onKey);
+      document.body.appendChild(overlay);
+
+      const $ = (s) => overlay.querySelector(s);
+      const fiche = () => tous.find((a) => a.id === choisi);
+
+      function dessinerCands() {
+        const q = sansAccents($('#rl-rech').value.trim());
+        let liste = tous.slice().sort((x, y) => (y.seul - x.seul) || (score(y) - score(x))
+          || x.nom.localeCompare(y.nom));
+        if (q) liste = liste.filter((a) => sansAccents(a.nom).includes(q));
+        else liste = liste.slice(0, 5);
+        $('#rl-cands').innerHTML = liste.length ? liste.map((a) => {
+          const c = communs(a);
+          return `<div class="rl-cand${choisi === a.id ? ' on' : ''}" data-id="${a.id}">
+            <span class="n">${ech(a.nom)}</span>
+            <span class="d">${pluriel(a.oeuvres, 'œuvre')}</span>
+            ${c.length ? `<span class="p">nom en commun : ${ech(c.join(', '))}</span>` : ''}
+          </div>`;
+        }).join('') : '<p class="liste-vide">Aucun artiste trouvé.</p>';
+        $('#rl-cands').querySelectorAll('.rl-cand').forEach((el) => el.addEventListener('click', () => {
+          choisi = Number(el.dataset.id);
+          modeNom = 'app';
+          dessinerCands();
+          dessinerNoms();
+        }));
+      }
+
+      function dessinerNoms() {
+        const a = fiche();
+        $('#rl-etape2').hidden = !a;
+        $('#rl-ok').disabled = !a;
+        if (!a) return;
+        const opts = [
+          { cle: 'app', t: `Garder « ${ech(a.nom)} »`, q: "le nom actuel de la fiche — c'est le cas courant" },
+          { cle: 'site', t: `Prendre « ${ech(produit.nom)} »`, q: 'le nom que porte le site' },
+          { cle: 'autre', t: 'Écrire un autre nom', q: 'pour corriger une coquille au passage' },
+        ];
+        $('#rl-noms').innerHTML = opts.map((o) => `
+          <label class="${modeNom === o.cle ? 'on' : ''}" data-cle="${o.cle}">
+            <input type="radio" name="rl-mn" ${modeNom === o.cle ? 'checked' : ''}>
+            <span>${o.t}<br><span class="q">${o.q}</span></span>
+          </label>`).join('');
+        $('#rl-noms').querySelectorAll('label').forEach((l) => l.addEventListener('click', () => {
+          modeNom = l.dataset.cle;
+          if (modeNom === 'autre') {
+            $('#rl-prenom').value = a.prenom;
+            $('#rl-nom').value = a.nomSeul;
+          }
+          dessinerNoms();
+        }));
+        $('#rl-champs').hidden = modeNom !== 'autre';
+        dessinerRecap();
+      }
+
+      // Le nom retenu, et comment il se range dans prénom + nom. Un nom
+      // d'artiste ne se coupe pas : il part entier dans « nom », prénom vide.
+      function nomRetenu() {
+        const a = fiche();
+        if (modeNom === 'site') return { prenom: '', nom: produit.nom, affiche: produit.nom };
+        if (modeNom === 'autre') {
+          const pr = $('#rl-prenom').value.trim();
+          const nm = $('#rl-nom').value.trim();
+          return { prenom: pr, nom: nm, affiche: [pr, nm].filter(Boolean).join(' ') };
+        }
+        return null; // « garder » : on ne renomme pas du tout
+      }
+
+      function dessinerRecap() {
+        const a = fiche();
+        const n = nomRetenu();
+        const affiche = n ? n.affiche : a.nom;
+        const change = !!n && affiche !== a.nom;
+        $('#rl-ok').disabled = !!n && !n.nom.trim();
+        $('#rl-recap').innerHTML = `
+          <div class="ln"><span class="k">Sur le site</span><span><strong>${ech(produit.nom)}</strong></span></div>
+          <div class="ln"><span class="k">Dans l'app</span><span><strong>${ech(affiche) || '<em>nom manquant</em>'}</strong>${change ? ' <span class="rl-avert">(renommée, son dossier de photos suivra)</span>' : ''}</span></div>
+          <div class="ln"><span class="k">Conséquence</span><span>Les ${pluriel(a.oeuvres, 'œuvre')} restent sur cette fiche. La paire passera dans l'onglet « Différences ».</span></div>`;
+      }
+
+      $('#rl-rech').addEventListener('input', dessinerCands);
+      ['#rl-prenom', '#rl-nom'].forEach((s) => $(s).addEventListener('input', dessinerRecap));
+      $('#rl-annuler').addEventListener('click', () => fermer(null));
+      $('#rl-ok').addEventListener('click', async (e) => {
+        const btn = e.currentTarget; // avant tout await
+        const a = fiche();
+        if (!a) return;
+        const n = nomRetenu();
+        btn.disabled = true;
+        btn.textContent = 'Liaison…';
+        try {
+          await window.api.webRelierArtiste(a.id,
+            n ? { nomSite: produit.nom, prenom: n.prenom, nom: n.nom } : { nomSite: produit.nom });
+          fermer(a.id);
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = 'Relier';
+          await alerter({ type: 'error', title: 'Liaison impossible', message: nettoyerErreur(err) });
+        }
+      });
+
+      dessinerCands();
+      dessinerNoms();
+      $('#rl-rech').focus();
+    });
   }
 
   async function creerArtiste(idx) {

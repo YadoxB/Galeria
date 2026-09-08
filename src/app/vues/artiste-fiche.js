@@ -346,6 +346,16 @@ export async function rendreArtisteFiche(contenu, params) {
             ${a.prefixe_inventaire ? ` &middot; Préfixe ${ech(a.prefixe_inventaire)}` : ''}
             &middot; ${pluriel(a.nb_oeuvres_dispo || 0, 'œuvre disponible', 'œuvres disponibles')}
           </p>
+          <!-- Lien posé à la main vers la page du site, quand l'artiste n'y
+               porte pas le même nom (nom d'artiste). C'est ICI qu'il doit se
+               voir : l'écran de synchronisation ne montre une carte que s'il
+               reste des différences, donc le lien y devient introuvable dès
+               que tout concorde — c'est-à-dire précisément quand il marche. -->
+          ${a.nom_site ? `
+            <p class="hero-artiste-lien" id="lien-site">
+              Relié au site sous « <strong>${ech(a.nom_site)}</strong> »
+              <button type="button" class="btn-lien" id="btn-delier-site">Délier</button>
+            </p>` : ''}
           <div class="hero-artiste-filet"></div>
           <div class="hero-artiste-stats">
             <div class="hero-stat"><span class="v">${stats.catalogue}</span><span class="l">Au catalogue</span></div>
@@ -640,6 +650,25 @@ export async function rendreArtisteFiche(contenu, params) {
     `;
 
     // === Handlers ===
+    contenu.querySelector('#btn-delier-site')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget; // avant tout await : currentTarget devient null ensuite
+      const rep = await confirmer({
+        type: 'question', title: 'Délier du site ?',
+        message: `Galeria ne rapprochera plus cette fiche de « ${a.nom_site} » sur le site.`,
+        detail: "Rien n'est supprimé : ni la fiche, ni ses œuvres, ni le site. Le nom de la fiche ne change pas non plus. Vous pourrez relier de nouveau depuis l'écran de synchronisation.",
+        buttons: ['Délier', 'Annuler'], defaultId: 1, cancelId: 1,
+      });
+      if (rep !== 0) return;
+      btn.disabled = true;
+      try {
+        await window.api.webDelierArtiste(a.id);
+        await rechargerBundle();
+        dessiner();
+      } catch (err) {
+        btn.disabled = false;
+        await confirmer({ type: 'error', title: 'Échec', message: nettoyerErreur(err), buttons: ['OK'] });
+      }
+    });
     contenu.querySelector('#btn-modifier').addEventListener('click', () => entrerEdition('fr'));
     contenu.querySelector('#btn-sync-site').addEventListener('click', () =>
       synchroniserArtiste(a.id, () => remplacerCourant('artiste-fiche', { id: a.id })));

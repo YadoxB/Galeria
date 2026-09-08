@@ -59,6 +59,8 @@ contextBridge.exposeInMainWorld('api', {
   webRecupererAdresses: () => ipcRenderer.invoke('web:recuperer-adresses'),
   webImporterAnglais: () => ipcRenderer.invoke('web:importer-anglais'),
   webRangerCitations: () => ipcRenderer.invoke('web:ranger-citations'),
+  webRelierArtiste: (artisteId, options) => ipcRenderer.invoke('web:relier-artiste', artisteId, options),
+  webDelierArtiste: (artisteId) => ipcRenderer.invoke('web:delier-artiste', artisteId),
   webComparerOeuvre: (oeuvreId) => ipcRenderer.invoke('web:comparer-oeuvre', oeuvreId),
   webComparerArtiste: (artisteId) => ipcRenderer.invoke('web:comparer-artiste', artisteId),
   ouvrirUrl: (url) => ipcRenderer.invoke('app:ouvrir-url', url),
