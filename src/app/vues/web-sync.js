@@ -12,10 +12,117 @@ import { recadrerCarre } from '../recadrage.js';
 const TYPES_DIFF = [
   { cle: 'titre', libelle: 'Titre' },
   { cle: 'description', libelle: 'Description' },
+  // Seule colonne anglaise des œuvres : ni le titre ni le prix n'ont de
+  // version anglaise dans l'app.
+  { cle: 'description_en', libelle: 'Description (EN)' },
   { cle: 'prix', libelle: 'Prix' },
   { cle: 'statut', libelle: 'Statut' },
 ];
-const CHAMPS_COPIE = ['titre', 'description', 'prix'];
+const CHAMPS_COPIE = ['titre', 'description', 'description_en', 'prix'];
+
+// Clé de préférence : comparer l'anglais oblige à relire tout le site une
+// seconde fois. Le choix se mémorise plutôt que de se redemander à chaque fois.
+const CLE_PREF_ANGLAIS = 'web-sync-anglais';
+
+// ===== « Manquant » et « différent » ne sont pas la même chose =====
+//
+// Un champ VIDE dans l'app qu'on remplit depuis le site, et un champ REMPLI
+// qu'on remplace, sont deux gestes de nature opposée : le premier ne peut rien
+// détruire, le second écrase peut-être une correction faite à la main.
+//
+// C'est cette distinction qui justifiait le bouton « Importer les textes
+// anglais » (retiré le 2026-09-09), dont la règle était « remplir le vide, ne
+// jamais écraser ». Elle devient un filtre : avec « Manquants » actif, « tout
+// cocher » fait exactement ce que faisait ce bouton — mais visible avant
+// confirmation, et décochable ligne par ligne.
+export const NATURES = [
+  { cle: 'tous', libelle: 'Toutes' },
+  { cle: 'manquant', libelle: 'Manquants' },
+  { cle: 'different', libelle: 'Différents' },
+];
+export function natureDe(c) { return c && c.manquant ? 'manquant' : 'different'; }
+export function pastilleNature(c) {
+  const n = natureDe(c);
+  return `<span class="wsync-nature ${n}">${n === 'manquant' ? 'manquant' : 'différent'}</span>`;
+}
+
+// Les pastilles de nature, partagées par les deux écrans.
+export function chipsNatureHtml(natureActive, compte) {
+  return NATURES.map((n) => {
+    const c = n.cle === 'tous' ? null : compte(n.cle);
+    return `<button type="button" class="wsync-chip${natureActive === n.cle ? ' actif' : ''}" data-nature="${n.cle}"
+      ${c === 0 ? 'disabled' : ''}>${n.libelle}${c == null ? '' : ` <span class="wsync-chip-n">${c}</span>`}</button>`;
+  }).join('');
+}
+
+export function lirePrefAnglais() {
+  try { return localStorage.getItem(CLE_PREF_ANGLAIS) === '1'; } catch { return false; }
+}
+export function ecrirePrefAnglais(v) {
+  try { localStorage.setItem(CLE_PREF_ANGLAIS, v ? '1' : '0'); } catch { /* sans conséquence */ }
+}
+
+// ===== État de la connexion au site =====
+//
+// Depuis que « Site web » est une entrée du menu, on arrive ici DIRECTEMENT.
+// Le garde-fou qui vivait dans les Réglages — vérifier les clés avant
+// d'ouvrir — n'existe plus : l'écran doit donc le dire lui-même, plutôt que de
+// laisser cliquer « Comparer » pour ne récolter qu'un message d'erreur.
+//
+// ⚠ Trois états, et non deux, parce que les besoins diffèrent :
+//   — comparer les ŒUVRES exige l'adresse ET les clés REST (`web:comparer`) ;
+//   — comparer les ARTISTES, récupérer les adresses, importer les textes
+//     anglais n'exigent que l'ADRESSE : ils passent par les API publiques.
+// Un bandeau « relié / pas relié » unique désactiverait donc à tort la moitié
+// de l'écran quand seules les clés manquent.
+export async function etatConnexion() {
+  try {
+    const e = await window.api.webEtat();
+    return {
+      url: (e && e.url) || '',
+      cles: !!(e && e.cles_definies),
+      adresseOk: !!(e && e.url),
+    };
+  } catch {
+    return { url: '', cles: false, adresseOk: false };
+  }
+}
+
+// `exigeCles` : true pour l'écran des œuvres, false pour celui des artistes.
+export function bandeauConnexionHtml(etat, exigeCles) {
+  if (!etat.adresseOk) {
+    return `<div class="wsync-connexion absente">
+        <span>Aucune adresse de site n'est configurée&nbsp;: il n'y a rien à comparer.</span>
+        <button type="button" class="btn-lien" data-vers-reglages>Configurer dans Réglages</button>
+      </div>`;
+  }
+  if (exigeCles && !etat.cles) {
+    return `<div class="wsync-connexion partielle">
+        <span>Relié à <strong>${ech(etat.url)}</strong>, mais la comparaison des œuvres demande en plus les
+          <strong>clés d'accès</strong> de la boutique. Les artistes, eux, se comparent déjà.</span>
+        <button type="button" class="btn-lien" data-vers-reglages>Ajouter les clés</button>
+      </div>`;
+  }
+  return `<div class="wsync-connexion ok">
+      <span>Relié à <strong>${ech(etat.url)}</strong>. Lecture seule&nbsp;: rien n'est modifié sur le site.</span>
+      <button type="button" class="btn-lien" data-vers-reglages>Changer la connexion</button>
+    </div>`;
+}
+
+// Branche le renvoi vers les Réglages et grise ce qui ne peut pas fonctionner.
+export function brancherConnexion(contenu, etat, { exigeCles, boutons }) {
+  contenu.querySelector('[data-vers-reglages]')?.addEventListener('click',
+    () => naviguer('reglages', { categorie: 'web' }));
+  const bloque = !etat.adresseOk || (exigeCles && !etat.cles);
+  for (const b of boutons) {
+    if (!b) continue;
+    // Un bouton grisé qui n'explique rien est une impasse : le bandeau
+    // juste au-dessus dit pourquoi, et l'infobulle le redit au survol.
+    b.disabled = bloque;
+    if (bloque) b.title = etat.adresseOk ? "Ajoutez les clés d'accès dans Réglages → Site web."
+      : "Configurez l'adresse du site dans Réglages → Site web.";
+  }
+}
 
 function valeurAffichee(champ, v) {
   if (champ === 'prix') return (v == null || v === '') ? '—' : formaterPrix(Number(v));
@@ -24,11 +131,12 @@ function valeurAffichee(champ, v) {
 }
 
 export async function rendreWebSync(contenu) {
+  const etat = await etatConnexion();
   contenu.innerHTML = `
     <div class="vue-liste web-sync-vue">
       <div class="entete-page">
         <div>
-          <h1>Synchronisation avec le site</h1>
+          <h1>Site web</h1>
           <p class="sous-titre">Sens « tirer » — l'app lit la boutique et te propose de reprendre des valeurs. <strong>Aucune modification n'est faite sur le site.</strong></p>
           <div class="wsync-mode" role="tablist" aria-label="Type de synchronisation">
             <button type="button" class="wsync-mode-btn actif" aria-current="true">Œuvres</button>
@@ -36,29 +144,42 @@ export async function rendreWebSync(contenu) {
           </div>
         </div>
         <div class="entete-page-actions">
-          <button type="button" class="btn-action btn-secondaire-action" id="btn-importer-anglais">Importer les textes anglais</button>
           <button type="button" class="btn-action btn-secondaire-action" id="btn-recuperer-adresses">Récupérer les adresses du site</button>
+          <label class="wsync-opt-anglais" title="Relit le site en anglais pour comparer aussi les descriptions anglaises. Deux fois plus long.">
+            <input type="checkbox" id="c-anglais"> textes anglais
+          </label>
           <button type="button" class="btn-action btn-principal" id="btn-comparer">Comparer avec le site</button>
         </div>
       </div>
+      ${bandeauConnexionHtml(etat, true)}
       <div id="web-sync-corps"></div>
     </div>
   `;
 
   const corps = contenu.querySelector('#web-sync-corps');
   const btnComparer = contenu.querySelector('#btn-comparer');
-  brancherRecupererAdresses(contenu.querySelector('#btn-recuperer-adresses'));
-  brancherImporterAnglais(contenu.querySelector('#btn-importer-anglais'));
+  const btnAdresses = contenu.querySelector('#btn-recuperer-adresses');
+  const caseAnglais = contenu.querySelector('#c-anglais');
+  caseAnglais.checked = lirePrefAnglais();
+  caseAnglais.addEventListener('change', () => ecrirePrefAnglais(caseAnglais.checked));
+  brancherRecupererAdresses(btnAdresses);
   contenu.querySelector('#wsync-vers-artistes')?.addEventListener('click', () => naviguer('web-sync-artistes'));
+  // « Comparer » exige les clés ; « Récupérer les adresses » se contente de
+  // l'adresse, et reste donc utilisable quand seules les clés manquent.
+  brancherConnexion(contenu, etat, { exigeCles: true, boutons: [btnComparer] });
+  if (!etat.adresseOk) btnAdresses.disabled = true;
 
   let dataCourant = null;
   let ongletActif = 'diff'; // 'diff' | 'app' | 'site'
   let afficherReglees = false; // montrer aussi les différences « déjà gardées »
   const filtres = new Set(TYPES_DIFF.map((t) => t.cle)); // tous actifs par défaut
+  let nature = 'tous'; // 'tous' | 'manquant' | 'different'
   const selection = new Set(); // clés `${oeuvreId}:${champ}` (champs de copie only)
 
   const cle = (oeuvreId, champ) => `${oeuvreId}:${champ}`;
-  const champsVisibles = (l) => l.champs.filter((c) => filtres.has(c.champ) && (afficherReglees || !c.ignore));
+  const champsVisibles = (l) => l.champs.filter((c) => filtres.has(c.champ)
+    && (nature === 'tous' || natureDe(c) === nature)
+    && (afficherReglees || !c.ignore));
   const statutVisible = (l) => !!l.statut_reconcilier && filtres.has('statut') && (afficherReglees || !l.statut_reconcilier.ignore);
   const ligneVisible = (l) => champsVisibles(l).length > 0 || statutVisible(l);
   const compteType = (t) => (t === 'statut'
@@ -67,10 +188,11 @@ export async function rendreWebSync(contenu) {
 
   async function charger() {
     btnComparer.disabled = true;
-    corps.innerHTML = `<p class="chargement">⏳ Lecture de la boutique et comparaison… (aucune modification du site)</p>`;
+    const avecAnglais = !!(caseAnglais && caseAnglais.checked);
+    corps.innerHTML = `<p class="chargement">⏳ Lecture de la boutique${avecAnglais ? ' (français puis anglais)' : ''} et comparaison… (aucune modification du site)</p>`;
     let data;
     try {
-      data = await window.api.webComparer();
+      data = await window.api.webComparer({ avecAnglais });
     } catch (err) {
       corps.innerHTML = `<div class="wsync-erreur"><p>✗ ${ech(nettoyerErreur(err))}</p></div>`;
       btnComparer.disabled = false;
@@ -109,11 +231,18 @@ export async function rendreWebSync(contenu) {
       </button>`;
     }).join('');
 
+    // Le compte par nature respecte les types déjà filtrés : sinon le chiffre
+    // annoncerait des écarts que la liste ne montre pas.
+    const compteNature = (n) => dataCourant.lignes.reduce((acc, l) => acc
+      + l.champs.filter((c) => filtres.has(c.champ) && !c.ignore && natureDe(c) === n).length, 0);
+
     const barreHtml = `
       <div class="wsync-barre">
         <div class="wsync-filtres" role="group" aria-label="Filtrer les différences">
           <span class="wsync-filtres-lib">Afficher :</span>
           ${chipsHtml}
+          <span class="wsync-filtres-lib wsync-filtres-sep">Nature :</span>
+          ${chipsNatureHtml(nature, compteNature)}
         </div>
         <div class="wsync-selection">
           ${nbReglees ? `<label class="wsync-reglees-toggle"><input type="checkbox" id="wsync-voir-reglees" ${afficherReglees ? 'checked' : ''}> déjà gardées (${nbReglees})</label>` : ''}
@@ -180,7 +309,7 @@ export async function rendreWebSync(contenu) {
       const k = cle(l.oeuvre_id, c.champ);
       const tete = c.ignore
         ? `<div class="wsync-champ-tete"><span class="wsync-lib">${ech(c.libelle)}</span> <span class="wsync-gardee">✓ gardé (version de l'app)</span></div>`
-        : `<div class="wsync-champ-tete"><label class="wsync-check"><input type="checkbox" class="wsync-case" data-cle="${k}" ${selection.has(k) ? 'checked' : ''}><span class="wsync-lib">${ech(c.libelle)}</span></label></div>`;
+        : `<div class="wsync-champ-tete"><label class="wsync-check"><input type="checkbox" class="wsync-case" data-cle="${k}" ${selection.has(k) ? 'checked' : ''}><span class="wsync-lib">${ech(c.libelle)}</span></label>${pastilleNature(c)}</div>`;
       const actions = c.ignore
         ? `<button type="button" class="btn-lien wsync-degarder" data-champ="${ech(c.champ)}">Ne plus garder</button>`
         : `<button type="button" class="btn-action btn-secondaire-action wsync-importer" data-champ="${ech(c.champ)}">Reprendre la valeur du site →</button>
@@ -266,9 +395,16 @@ export async function rendreWebSync(contenu) {
       ongletActif = b.dataset.onglet;
       dessiner();
     }));
-    corps.querySelectorAll('.wsync-chip').forEach((chip) => chip.addEventListener('click', () => {
+    corps.querySelectorAll('.wsync-chip[data-type]').forEach((chip) => chip.addEventListener('click', () => {
       const t = chip.dataset.type;
       if (filtres.has(t)) filtres.delete(t); else filtres.add(t);
+      dessiner();
+    }));
+    // Changer de nature vide la sélection : garder des cases cochées qui ne
+    // sont plus à l'écran ferait reprendre des valeurs qu'on ne voit plus.
+    corps.querySelectorAll('.wsync-chip[data-nature]').forEach((chip) => chip.addEventListener('click', () => {
+      nature = chip.dataset.nature;
+      selection.clear();
       dessiner();
     }));
 
@@ -747,60 +883,14 @@ function modalCorrigerSku(produit) {
     });
   });
 }
+// (brancherImporterAnglais retirée le 2026-09-09 : l'import en masse des textes
+//  anglais est remplacé par le filtre « Manquants » du comparateur, qui couvre
+//  en plus la citation anglaise que cet import n'a jamais traitée.)
+
 // Bouton « Récupérer les adresses du site ». Remplit l'adresse de la fiche de
 // chaque œuvre sur le site, rapprochée par numéro d'inventaire = SKU. Passe par
 // l'API publique de la boutique : fonctionne même sans clés REST configurées.
 // C'est cette adresse que le code QR des cartels d'exposition utilise.
-// Bouton « Importer les textes anglais du site ». Le site est bilingue (WPML) :
-// les mêmes fiches y existent en anglais, rédigées à la main. On les récupère
-// pour alimenter les documents en anglais, sans traduction automatique.
-// Ne remplit que ce qui est vide côté app ; ne touche jamais au français.
-function brancherImporterAnglais(btn) {
-  if (!btn) return;
-  btn.addEventListener('click', async (e) => {
-    const bouton = e.currentTarget; // à capturer AVANT tout await (sinon null ensuite)
-    const rep = await confirmer({
-      type: 'question',
-      title: 'Importer les textes anglais du site ?',
-      message: "Récupérer les versions anglaises des biographies, démarches, C.V. et descriptions d'œuvres.",
-      detail: [
-        "Les artistes sont rapprochés par nom, les œuvres par numéro d'inventaire.",
-        "Seuls les champs anglais ENCORE VIDES sont remplis : une traduction que vous auriez déjà corrigée n'est pas écrasée.",
-        "Les textes français ne sont jamais touchés, et rien n'est modifié sur le site.",
-      ].join('\n\n'),
-      buttons: ['Importer', 'Annuler'], defaultId: 0, cancelId: 1,
-    });
-    if (rep !== 0) return;
-    bouton.disabled = true;
-    const lib = bouton.textContent;
-    bouton.textContent = 'Lecture du site…';
-    try {
-      const r = await window.api.webImporterAnglais();
-      const lignes = [];
-      lignes.push(`${pluriel(r.champs_artistes, 'texte d\u2019artiste importé', 'textes d\u2019artistes importés')} sur ${pluriel(r.artistes_touches, 'artiste', 'artistes')}.`);
-      lignes.push(`${pluriel(r.oeuvres_touchees, 'description d\u2019œuvre importée', 'descriptions d\u2019œuvres importées')}.`);
-      if (r.champs_deja_remplis) lignes.push(`${pluriel(r.champs_deja_remplis, 'champ était déjà rempli', 'champs étaient déjà remplis')} en anglais : laissé tel quel.`);
-      if (r.oeuvres_deja) lignes.push(`${pluriel(r.oeuvres_deja, 'œuvre avait déjà', 'œuvres avaient déjà')} sa description anglaise.`);
-      if (r.artistes_sans_site) lignes.push(`${pluriel(r.artistes_sans_site, 'artiste est introuvable', 'artistes sont introuvables')} sur le site.`);
-      if (r.oeuvres_sans_site) lignes.push(`${pluriel(r.oeuvres_sans_site, 'œuvre est sans', 'œuvres sont sans')} équivalent anglais sur le site.`);
-      const total = r.champs_artistes + r.oeuvres_touchees;
-      await alerter({
-        type: 'succes',
-        title: total ? 'Textes anglais importés' : 'Rien à importer',
-        message: total
-          ? `${pluriel(total, 'texte anglais enregistré', 'textes anglais enregistrés')}.`
-          : 'Aucun texte anglais nouveau à enregistrer.',
-        detail: lignes.join('\n'),
-      });
-    } catch (err) {
-      await alerter({ type: 'error', title: 'Importation impossible', message: nettoyerErreur(err) });
-    } finally {
-      bouton.disabled = false;
-      bouton.textContent = lib;
-    }
-  });
-}
-
 function brancherRecupererAdresses(btn) {
   if (!btn) return;
   btn.addEventListener('click', async (e) => {

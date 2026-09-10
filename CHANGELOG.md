@@ -26,6 +26,43 @@ identifiants.
     suivante, livrée avec les textes anglais : les deux ont été écrits dans les mêmes lignes).
   - Maquette : `demos/menu-site-web.html`.
 
+- **Les deux comparateurs comparent aussi les textes anglais**, et le bouton « Importer les
+  textes anglais » disparaît (Dave, 2026-09-08 : « comparer les fiches devrait aussi détecter
+  les textes en anglais »).
+  - Quatre nouveaux types côté artistes — Citation, Biographie, Démarche, C.V. (EN) — et un seul
+    côté œuvres, Description (EN) : ce sont les cinq seules colonnes `_en` du schéma.
+  - ⚠ **« Manquant » n'est pas « différent ».** Remplir une case vide ne peut rien détruire ;
+    remplacer une case pleine écrase peut-être une correction faite à la main. C'était LA
+    raison d'être du bouton d'import (« remplir le vide, ne jamais écraser »). Chaque écart
+    porte désormais une pastille *manquant* / *différent* et un filtre du même nom : avec
+    « Manquants » actif, « Tout cocher » fait exactement ce que faisait le bouton — mais
+    visible avant confirmation et décochable ligne par ligne. Deux boutons qui se
+    ressemblaient à ce point étaient un piège ; il n'en reste qu'un.
+  - **La sélection en lot arrive sur l'écran des artistes.** Elle n'existait que sur celui des
+    œuvres : c'est cette asymétrie qui rendait l'import en masse indispensable. La photo en est
+    exclue (téléchargement + recadrage, une décision par image).
+  - **La citation anglaise entre enfin dans le tableau.** L'ancien import ne l'a jamais
+    couverte : **22 citations françaises et 0 anglaise** dans la base au 2026-09-09. Contre le
+    vrai site : `citation_en` 22 écarts, tous manquants ; biographie, démarche et C.V. anglais
+    à 0 — l'import avait bien fait son travail sur ce qu'il couvrait.
+  - Le dialogue de reprise en lot compte à part les champs vides et les champs déjà remplis,
+    et annonce ces derniers en toutes lettres (« ⚠ 14 champs déjà remplis seront REMPLACÉS »).
+    Changer de filtre de nature **vide la sélection**, pour ne jamais reprendre ce qu'on ne
+    voit plus.
+  - Case **« textes anglais »** mémorisée à côté de « Comparer » : comparer en anglais relit
+    le site une seconde fois (`?lang=en`). La lecture anglaise passe par l'API publique, et
+    son échec est journalisé sans emporter la comparaison française.
+  - Retirés : l'IPC `web:importer-anglais`, son pont `webImporterAnglais`, le bouton et sa
+    fonction de branchement.
+  - **Bandeau d'état de connexion à trois cas** (livré ici avec les textes anglais, écrit dans
+    les mêmes lignes) : aucune adresse → rouge, tout grisé ; adresse seule → ambre, seule la
+    comparaison des œuvres est grisée ; adresse + clés → vert. Chaque bouton grisé porte une
+    infobulle qui dit quoi faire.
+  - Vérifié contre le vrai site avec une copie de la vraie base, dans l'application réelle :
+    « Manquants » + « Tout cocher » → **23 cases, toutes vides** (22 citations anglaises et un
+    curriculum) ; les 27 différents restent hors de portée. Maquette :
+    `demos/comparer-anglais.html`.
+
 - **Le courriel de signalement se lit sans effort** (Dave, 2026-09-08 : « moins technique et
   plus clair pour moi, et qu'il m'indique sur quelle page ils se trouvent »).
   - **Ordre inversé** : CE QUI S'EST PASSÉ, puis OÙ, puis QUAND ; tout le technique est rejeté

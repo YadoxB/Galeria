@@ -32,7 +32,7 @@ contextBridge.exposeInMainWorld('api', {
   webDefinirCles: (data) => ipcRenderer.invoke('web:definir-cles', data),
   webEffacerCles: () => ipcRenderer.invoke('web:effacer-cles'),
   webTesterConnexion: () => ipcRenderer.invoke('web:tester-connexion'),
-  webComparer: () => ipcRenderer.invoke('web:comparer'),
+  webComparer: (options) => ipcRenderer.invoke('web:comparer', options),
   webImporterChamp: (oeuvreId, champ, valeur) => ipcRenderer.invoke('web:importer-champ', oeuvreId, champ, valeur),
   webImporterLot: (items) => ipcRenderer.invoke('web:importer-lot', items),
   webDefinirStatut: (oeuvreId, statut) => ipcRenderer.invoke('web:definir-statut', oeuvreId, statut),
@@ -41,7 +41,7 @@ contextBridge.exposeInMainWorld('api', {
   webTelechargerImage: (url) => ipcRenderer.invoke('web:telecharger-image', url),
   webCreerOeuvreDepuisSite: (data) => ipcRenderer.invoke('web:creer-oeuvre-depuis-site', data),
   webCorrigerSku: (oeuvreId, sku) => ipcRenderer.invoke('web:corriger-sku', oeuvreId, sku),
-  webComparerArtistes: () => ipcRenderer.invoke('web:comparer-artistes'),
+  webComparerArtistes: (options) => ipcRenderer.invoke('web:comparer-artistes', options),
   webImporterChampArtiste: (artisteId, champ, valeur) => ipcRenderer.invoke('web:importer-champ-artiste', artisteId, champ, valeur),
   webIgnorerDiffArtiste: (artisteId, champ, siteCle) => ipcRenderer.invoke('web:ignorer-diff-artiste', artisteId, champ, siteCle),
   webRetirerIgnoreArtiste: (artisteId, champ) => ipcRenderer.invoke('web:retirer-ignore-artiste', artisteId, champ),
@@ -57,7 +57,8 @@ contextBridge.exposeInMainWorld('api', {
   exposTerminer: (id) => ipcRenderer.invoke('expos:terminer', id),
   exposCartels: (id, options) => ipcRenderer.invoke('expos:cartels', id, options),
   webRecupererAdresses: () => ipcRenderer.invoke('web:recuperer-adresses'),
-  webImporterAnglais: () => ipcRenderer.invoke('web:importer-anglais'),
+  // (webImporterAnglais retiré le 2026-09-09 : remplacé par le filtre
+  //  « Manquants » du comparateur, qui couvre en plus la citation anglaise.)
   webRangerCitations: () => ipcRenderer.invoke('web:ranger-citations'),
   webRelierArtiste: (artisteId, options) => ipcRenderer.invoke('web:relier-artiste', artisteId, options),
   webDelierArtiste: (artisteId) => ipcRenderer.invoke('web:delier-artiste', artisteId),

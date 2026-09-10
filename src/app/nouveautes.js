@@ -35,6 +35,10 @@ export const VERSIONS = [
         texte: "Comparer vos fiches avec le site ne se cache plus dans les Réglages&nbsp;: une entrée <b>Site web</b> vous attend dans le menu de gauche, en bas. L'écran vous dit lui-même s'il est bien relié au site.",
       },
       {
+        titre: 'Les textes anglais aussi',
+        texte: "L'écran <b>Site web</b> compare maintenant les textes anglais. Chaque écart porte une étiquette&nbsp;: <b>manquant</b> (la case est vide chez vous) ou <b>différent</b> (vous avez un autre texte). Cliquez <b>Manquants</b> puis <b>Tout cocher</b>&nbsp;: tout ce qui manque arrive d'un coup, sans rien effacer.",
+      },
+      {
         titre: 'Des signalements plus clairs',
         texte: "Le message de <b>Signaler un problème</b> commence maintenant par ce que vous avez écrit, puis dit <b>sur quelle page</b> vous étiez, en toutes lettres. Les détails techniques sont rangés à la fin.",
       },

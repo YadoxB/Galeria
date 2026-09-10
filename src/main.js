@@ -645,9 +645,14 @@ function siteCleChamp(champ, valeur) {
 // Compare les produits du site (SKU) aux œuvres de l'app (numéro d'inventaire).
 // Ne fait AUCUNE écriture. `ignores` = Map `${oeuvreId}:${champ}` → site_cle des
 // différences que l'utilisateur a choisi de garder. Retourne résumé + lignes.
-function comparerSiteEtApp(produits, oeuvres, ignores = new Map()) {
+// `produitsEn` : la MÊME boutique relue en anglais (WPML, `?lang=en`), vide si
+// la comparaison des textes anglais n'a pas été demandée. Le rapprochement se
+// fait par SKU, qui est partagé entre les traductions d'un même produit.
+function comparerSiteEtApp(produits, oeuvres, ignores = new Map(), produitsEn = []) {
   const parSku = new Map();
   for (const p of produits) if (p.sku) parSku.set(p.sku.toUpperCase(), p);
+  const parSkuEn = new Map();
+  for (const p of produitsEn) if (p.sku) parSkuEn.set(p.sku.toUpperCase(), p);
 
   const skuAppparies = new Set();
   const lignes = [];
@@ -658,11 +663,17 @@ function comparerSiteEtApp(produits, oeuvres, ignores = new Map()) {
     const p = inv ? parSku.get(inv.toUpperCase()) : null;
     if (!p) { appSeul.push({ id: o.id, inv, titre: o.titre || '', artiste: o.artiste_nom || '' }); continue; }
     skuAppparies.add(p.sku.toUpperCase());
+    const pEn = inv ? parSkuEn.get(inv.toUpperCase()) : null;
 
     const ignoreDe = (champ) => ignores.get(`${o.id}:${champ}`);
+    // `manquant` : la case est VIDE dans l'app. C'est la distinction qui
+    // justifiait le bouton « Importer les textes anglais » — remplir le vide
+    // sans jamais écraser. Devenue une propriété de chaque écart, elle donne
+    // un filtre, et « tout cocher » cesse d'être un pari.
     const ajouter = (arr, champ, libelle, app, site) => {
       const site_cle = siteCleChamp(champ, site);
-      arr.push({ champ, libelle, app, site, site_cle, ignore: ignoreDe(champ) === site_cle });
+      const manquant = app == null || String(app).trim() === '';
+      arr.push({ champ, libelle, app, site, site_cle, manquant, ignore: ignoreDe(champ) === site_cle });
     };
 
     const champs = [];
@@ -676,6 +687,14 @@ function comparerSiteEtApp(produits, oeuvres, ignores = new Map()) {
     const ps = (p.prix == null) ? null : Number(p.prix);
     if ((Number.isFinite(pa) ? pa : null) !== (Number.isFinite(ps) ? ps : null)) {
       ajouter(champs, 'prix', 'Prix', Number.isFinite(pa) ? pa : null, Number.isFinite(ps) ? ps : null);
+    }
+
+    // Description anglaise. Le titre et le prix n'ont pas de version anglaise
+    // dans l'app (`description_en` est la seule colonne _en des œuvres) : il
+    // n'y a donc rien d'autre à comparer de ce côté.
+    if (pEn && (pEn.description || '').trim()
+        && clefComparaison(o.description_en) !== clefComparaison(pEn.description)) {
+      ajouter(champs, 'description_en', 'Description (EN)', o.description_en || '', pEn.description || '');
     }
 
     // Réconciliation de statut : le site marque « épuisé » (outofstock) une œuvre
@@ -780,9 +799,20 @@ function retirerCitationDeBio(bio, citation) {
 // ne les voyait pas et proposait de créer des fiches en double. On essaie donc
 // d'abord `nom_site`, le nom que l'artiste porte sur le site, posé à la main par
 // « Relier à une fiche existante » (voir ipcMain 'web:relier-artiste').
-function comparerArtistesEtSite(portfolios, artistes, ignores = new Map()) {
+//
+// `portfoliosEn` : les MÊMES pages relues en anglais (WPML, `?lang=en`), vides
+// si la comparaison des textes anglais n'a pas été demandée. Rapprochement par
+// NOM, comme le faisait l'ancien import en masse : les noms d'artistes ne se
+// traduisent pas, et ce rapprochement a rempli 22 biographies sur 22.
+function comparerArtistesEtSite(portfolios, artistes, ignores = new Map(), portfoliosEn = []) {
   const parNom = new Map();
   for (const p of portfolios) { const k = clefComparaison(p.nom); if (k) parNom.set(k, p); }
+  const parNomEn = new Map();
+  for (const p of portfoliosEn) {
+    const k = clefComparaison(p.nom);
+    if (k) parNomEn.set(k, p);
+    if (p.slug) parNomEn.set('slug:' + p.slug, p);
+  }
 
   const nomsVus = new Set();
   const lignes = [];
@@ -797,9 +827,26 @@ function comparerArtistesEtSite(portfolios, artistes, ignores = new Map()) {
     const p = (kLien && parNom.get(kLien)) || (k ? parNom.get(k) : null);
     if (!p) { appSeul.push({ id: a.id, nom: nomApp, nom_site: a.nom_site || null }); continue; }
     nomsVus.add(clefComparaison(p.nom));
+    // Le pendant anglais : même slug de préférence (WPML le conserve souvent),
+    // sinon même nom.
+    const pEn = (p.slug && parNomEn.get('slug:' + p.slug))
+      || parNomEn.get(clefComparaison(p.nom))
+      || (kLien && parNomEn.get(kLien))
+      || (k ? parNomEn.get(k) : null);
 
     const ignoreDe = (champ) => ignores.get(`${a.id}:${champ}`);
     const champs = [];
+    // `manquant` : la case est VIDE dans l'app. C'est la règle qui justifiait le
+    // bouton « Importer les textes anglais » — remplir le vide sans jamais
+    // écraser. Devenue une propriété de chaque écart, elle se filtre, et
+    // « tout cocher » cesse d'être un pari sur ce qu'on a déjà corrigé.
+    const pousser = (champ, libelle, app, site, site_cle) => {
+      champs.push({
+        champ, libelle, app, site, site_cle,
+        manquant: String(app || '').trim() === '',
+        ignore: ignoreDe(champ) === site_cle,
+      });
+    };
 
     // Le contenu du site est découpé par section (voir woocommerce.js) et mappé
     // sur les champs de l'app. On compare chacun indépendamment ; on propose le
@@ -810,8 +857,27 @@ function comparerArtistesEtSite(portfolios, artistes, ignores = new Map()) {
       { champ: 'curriculum', libelle: 'Curriculum (C.V.)', app: a.curriculum || '', site: p.curriculum || '' },
     ]) {
       if (f.site.trim() && clefComparaison(f.site) !== clefComparaison(f.app)) {
-        const site_cle = clefComparaison(f.site);
-        champs.push({ champ: f.champ, libelle: f.libelle, app: f.app, site: f.site, site_cle, ignore: ignoreDe(f.champ) === site_cle });
+        pousser(f.champ, f.libelle, f.app, f.site, clefComparaison(f.site));
+      }
+    }
+
+    // ---- Textes ANGLAIS ----
+    // Le site est bilingue (WPML) et les mêmes pages y existent en anglais,
+    // rédigées à la main. Les quatre colonnes _en de l'app leur correspondent
+    // une à une. ⚠ La CITATION anglaise n'a jamais été couverte par l'ancien
+    // import en masse — d'où 22 citations françaises et 0 anglaise dans la base
+    // au 2026-09-09. Un comparateur, lui, ne peut pas oublier un champ.
+    if (pEn) {
+      const citationEn = (pEn.excerpt || '').replace(/\s*(\[[…\.]+\]|…|\.\.\.)\s*$/u, '').trim();
+      for (const f of [
+        { champ: 'citation_en', libelle: 'Citation (EN)', app: a.citation_en || '', site: citationEn },
+        { champ: 'biographie_en', libelle: 'Biographie (EN)', app: a.biographie_en || '', site: (pEn.biographie || '').trim() },
+        { champ: 'demarche_en', libelle: 'Démarche (EN)', app: a.demarche_en || '', site: (pEn.demarche || '').trim() },
+        { champ: 'curriculum_en', libelle: 'C.V. (EN)', app: a.curriculum_en || '', site: (pEn.curriculum || '').trim() },
+      ]) {
+        if (f.site && clefComparaison(f.site) !== clefComparaison(f.app)) {
+          pousser(f.champ, f.libelle, f.app, f.site, clefComparaison(f.site));
+        }
       }
     }
 
@@ -819,8 +885,7 @@ function comparerArtistesEtSite(portfolios, artistes, ignores = new Map()) {
     // désormais son propre champ « citation ». On les compare directement.
     const citation = (p.excerpt || '').replace(/\s*(\[[…\.]+\]|…|\.\.\.)\s*$/u, '').trim();
     if (citation && clefComparaison(citation) !== clefComparaison(a.citation || '')) {
-      const site_cle = clefComparaison(citation);
-      champs.push({ champ: 'citation', libelle: 'Citation', app: a.citation || '', site: citation, site_cle, ignore: ignoreDe('citation') === site_cle });
+      pousser('citation', 'Citation', a.citation || '', citation, clefComparaison(citation));
     }
 
     // Biographie : comparaison directe. Tolérance de transition — tant que la
@@ -835,13 +900,14 @@ function comparerArtistesEtSite(portfolios, artistes, ignores = new Map()) {
       citation ? `${bioSite}\n\n${citation}` : bioSite,
     ];
     if (bioSite && !candidatsBio.some((cand) => clefComparaison(cand) === clefApp)) {
-      const site_cle = clefComparaison(bioSite);
-      champs.push({ champ: 'biographie', libelle: 'Biographie', app: a.biographie || '', site: bioSite, site_cle, ignore: ignoreDe('biographie') === site_cle });
+      pousser('biographie', 'Biographie', a.biographie || '', bioSite, clefComparaison(bioSite));
     }
 
     if (p.image && !a.photo_path) {
       const site_cle = 'presente';
-      champs.push({ champ: 'photo', libelle: 'Photo', app: '(aucune photo dans l\'app)', site: '(photo sur le site)', site_image: p.image, site_cle, ignore: ignoreDe('photo') === site_cle });
+      // La photo est toujours « manquante » par construction : on ne la propose
+      // que si l'app n'en a pas.
+      champs.push({ champ: 'photo', libelle: 'Photo', app: '(aucune photo dans l\'app)', site: '(photo sur le site)', site_image: p.image, site_cle, manquant: true, ignore: ignoreDe('photo') === site_cle });
     }
 
     // `nom_site` remonte à l'écran pour que le lien posé à la main soit VISIBLE
@@ -1299,16 +1365,30 @@ async function demarrerApplication() {
   });
   // Comparer (lecture seule) : lit les produits du site et les confronte aux
   // œuvres de l'app par SKU = numéro d'inventaire. N'écrit rien.
-  ipcMain.handle('web:comparer', async () => {
+  // `avecAnglais` : relit la boutique en anglais pour comparer aussi
+  // `description_en`. Débrayable parce que ça DOUBLE la lecture du site — plus
+  // de 500 produits paginés — et qu'on ne travaille pas toujours l'anglais.
+  ipcMain.handle('web:comparer', async (_e, options) => {
+    const avecAnglais = !!(options && options.avecAnglais);
     const creds = obtenirClesWoo();
     if (!creds.url || !creds.consumerKey || !creds.consumerSecret) {
       throw new Error("Configure d'abord l'adresse et les clés dans Réglages → Site web.");
     }
-    const produits = await require('./web/woocommerce').listerProduits(creds);
+    const woo = require('./web/woocommerce');
+    const produits = await woo.listerProduits(creds);
+    // La version anglaise passe par l'API PUBLIQUE : elle n'a pas besoin des
+    // clés, et un échec de ce côté ne doit pas emporter toute la comparaison.
+    let produitsEn = [];
+    if (avecAnglais) {
+      try { produitsEn = await woo.listerProduitsPublics({ url: creds.url, langue: 'en' }); }
+      catch (err) { journaliserErreur('Lecture des textes anglais (œuvres)', err); }
+    }
     const req = require('./db/requetes');
     const oeuvres = req.oeuvresPourComparaisonWeb();
     const ignores = new Map(req.listerWebSyncIgnore().map((r) => [`${r.oeuvre_id}:${r.champ}`, r.site_cle]));
-    return comparerSiteEtApp(produits, oeuvres, ignores);
+    const res = comparerSiteEtApp(produits, oeuvres, ignores, produitsEn);
+    res.anglais_lu = avecAnglais && produitsEn.length > 0;
+    return res;
   });
   // « Garder la version de l'app » pour un champ : mémorise la clé du site.
   ipcMain.handle('web:ignorer-diff', (_e, oeuvreId, champ, siteCle) => ignorerDiffWeb(oeuvreId, champ, siteCle));
@@ -1340,14 +1420,23 @@ async function demarrerApplication() {
   });
 
   // --- Synchro des ARTISTES (type site `portfolio`, API WordPress publique) ---
-  ipcMain.handle('web:comparer-artistes', async () => {
+  ipcMain.handle('web:comparer-artistes', async (_e, options) => {
+    const avecAnglais = !!(options && options.avecAnglais);
     const { url } = obtenirClesWoo();
     if (!url) throw new Error("Configure d'abord l'adresse du site dans Réglages → Site web.");
-    const portfolios = await require('./web/woocommerce').listerArtistesSite({ url });
+    const woo = require('./web/woocommerce');
+    const portfolios = await woo.listerArtistesSite({ url });
+    let portfoliosEn = [];
+    if (avecAnglais) {
+      try { portfoliosEn = await woo.listerArtistesSite({ url, langue: 'en' }); }
+      catch (err) { journaliserErreur('Lecture des textes anglais (artistes)', err); }
+    }
     const req = require('./db/requetes');
     const artistes = req.artistesPourComparaisonWeb();
     const ignores = new Map(req.listerWebSyncIgnoreArtiste().map((r) => [`${r.artiste_id}:${r.champ}`, r.site_cle]));
-    return comparerArtistesEtSite(portfolios, artistes, ignores);
+    const res = comparerArtistesEtSite(portfolios, artistes, ignores, portfoliosEn);
+    res.anglais_lu = avecAnglais && portfoliosEn.length > 0;
+    return res;
   });
   ipcMain.handle('web:importer-champ-artiste', (_e, artisteId, champ, valeur) => {
     const artiste = majChampArtiste(artisteId, champ, valeur);
@@ -1402,74 +1491,12 @@ async function demarrerApplication() {
     return majUrlsSiteDepuisSite(produits);
   });
 
-  // Importe les textes ANGLAIS du site. Le site est bilingue (WPML) : les mêmes
-  // fiches existent en anglais, rédigées à la main, et l'API publique les
-  // expose via ?lang=en — aucune clé REST nécessaire.
-  //
-  // Ne remplit que les champs anglais ENCORE VIDES : une traduction déjà
-  // relue et corrigée dans l'app n'est jamais écrasée. Les champs français ne
-  // sont jamais touchés.
-  ipcMain.handle('web:importer-anglais', async () => {
-    const { url } = obtenirClesWoo();
-    if (!url) throw new Error("Configure d'abord l'adresse du site dans Réglages → Site web.");
-    const woo = require('./web/woocommerce');
-    const req = require('./db/requetes');
-
-    // --- Artistes : rapprochement par nom ---
-    const portfolios = await woo.listerArtistesSite({ url, langue: 'en' });
-    const parNom = new Map();
-    for (const p of portfolios) {
-      const k = clefComparaison(p.nom);
-      if (k) parNom.set(k, p);
-    }
-    const CHAMPS = [['biographie', 'biographie_en'], ['demarche', 'demarche_en'], ['curriculum', 'curriculum_en']];
-    let artistesTouches = 0, champsArtistes = 0, artistesSansSite = 0, dejaRemplis = 0;
-    for (const a of req.artistesPourComparaisonWeb()) {
-      const nomA = [a.prenom, a.nom].filter(Boolean).join(' ').trim();
-      const p = parNom.get(clefComparaison(nomA));
-      if (!p) { artistesSansSite += 1; continue; }
-      let touche = false;
-      const complet = req.obtenirArtiste(a.id) || {};
-      for (const [source, cible] of CHAMPS) {
-        const valeur = (p[source] || '').trim();
-        if (!valeur) continue;
-        if ((complet[cible] || '').trim()) { dejaRemplis += 1; continue; }
-        majChampArtiste(a.id, cible, valeur);
-        champsArtistes += 1;
-        touche = true;
-      }
-      if (touche) artistesTouches += 1;
-    }
-
-    // --- Œuvres : rapprochement par numéro d'inventaire = SKU ---
-    const produits = await woo.listerProduitsPublics({ url, langue: 'en' });
-    const parSku = new Map();
-    for (const p of produits) {
-      const k = (p.sku || '').trim().toLowerCase();
-      if (k && (p.description || '').trim()) parSku.set(k, p);
-    }
-    let oeuvresTouchees = 0, oeuvresSansSite = 0, oeuvresDeja = 0;
-    for (const o of req.listerOeuvres({ inclureArchives: true })) {
-      const k = (o.numero_inventaire || '').trim().toLowerCase();
-      if (!k) continue;
-      const p = parSku.get(k);
-      if (!p) { oeuvresSansSite += 1; continue; }
-      const complet = req.obtenirOeuvre(o.id) || {};
-      if ((complet.description_en || '').trim()) { oeuvresDeja += 1; continue; }
-      majChampOeuvre(o.id, 'description_en', p.description);
-      oeuvresTouchees += 1;
-    }
-
-    return {
-      artistes_touches: artistesTouches,
-      champs_artistes: champsArtistes,
-      artistes_sans_site: artistesSansSite,
-      champs_deja_remplis: dejaRemplis,
-      oeuvres_touchees: oeuvresTouchees,
-      oeuvres_sans_site: oeuvresSansSite,
-      oeuvres_deja: oeuvresDeja,
-    };
-  });
+  // (L'import en masse des textes anglais a été RETIRÉ le 2026-09-09. Sa règle
+  //  — remplir les champs anglais vides, ne jamais écraser — est devenue le
+  //  filtre « Manquants » du comparateur, qui couvre les mêmes champs PLUS la
+  //  citation anglaise, que cet import n'a jamais traitée : d'où 22 citations
+  //  françaises et 0 anglaise dans la base. Deux boutons qui se ressemblaient
+  //  à ce point étaient un piège ; il n'en reste qu'un.)
 
   ipcMain.handle('web:ranger-citations', async () => {
     const { url } = obtenirClesWoo();

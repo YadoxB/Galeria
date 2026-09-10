@@ -8,14 +8,28 @@ import { ech, nettoyerErreur, pluriel, urlPhoto, nomComplet, initiales, sansAcce
 import { naviguer } from '../router.js';
 import { alerter, confirmer, editerTexteImport } from '../dialogue.js';
 import { recadrerCarre } from '../recadrage.js';
+import {
+  etatConnexion, bandeauConnexionHtml, brancherConnexion,
+  natureDe, pastilleNature, chipsNatureHtml, lirePrefAnglais, ecrirePrefAnglais,
+} from './web-sync.js';
 
 const TYPES_DIFF = [
   { cle: 'citation', libelle: 'Citation' },
   { cle: 'biographie', libelle: 'Biographie' },
   { cle: 'demarche', libelle: 'Démarche' },
   { cle: 'curriculum', libelle: 'Curriculum' },
+  // Les quatre colonnes anglaises de la table `artistes`. La CITATION anglaise
+  // n'avait jamais de chemin pour arriver : l'ancien import en masse ne la
+  // couvrait pas, d'où 22 citations françaises et 0 anglaise au 2026-09-09.
+  { cle: 'citation_en', libelle: 'Citation (EN)' },
+  { cle: 'biographie_en', libelle: 'Biographie (EN)' },
+  { cle: 'demarche_en', libelle: 'Démarche (EN)' },
+  { cle: 'curriculum_en', libelle: 'C.V. (EN)' },
   { cle: 'photo', libelle: 'Photo' },
 ];
+// Champs qui se reprennent EN LOT. La photo en est exclue : elle passe par un
+// téléchargement et un recadrage, qui demandent une décision par image.
+const CHAMPS_COPIE = TYPES_DIFF.map((t) => t.cle).filter((c) => c !== 'photo');
 
 function apercuTexte(v) {
   const s = (v == null) ? '' : String(v);
@@ -23,11 +37,12 @@ function apercuTexte(v) {
 }
 
 export async function rendreWebSyncArtistes(contenu) {
+  const etat = await etatConnexion();
   contenu.innerHTML = `
     <div class="vue-liste web-sync-vue">
       <div class="entete-page">
         <div>
-          <h1>Synchronisation avec le site</h1>
+          <h1>Site web</h1>
           <p class="sous-titre">Sens « tirer » — l'app lit les artistes du site. <strong>Aucune modification n'est faite sur le site.</strong></p>
           <div class="wsync-mode" role="tablist" aria-label="Type de synchronisation">
             <button type="button" class="wsync-mode-btn" id="wsync-vers-oeuvres">Œuvres</button>
@@ -35,9 +50,13 @@ export async function rendreWebSyncArtistes(contenu) {
           </div>
         </div>
         <div class="entete-page-actions">
+          <label class="wsync-opt-anglais" title="Relit les pages du site en anglais pour comparer aussi les textes anglais. Deux fois plus long.">
+            <input type="checkbox" id="c-anglais"> textes anglais
+          </label>
           <button type="button" class="btn-action btn-principal" id="btn-comparer">Comparer les artistes</button>
         </div>
       </div>
+      ${bandeauConnexionHtml(etat, false)}
       <div class="wsync-astuce">
         <div class="wsync-astuce-txt">
           <strong>Séparer les citations</strong> — sur le site, la citation de l'artiste (« … ») est rangée à part, alors que dans l'app elle est encore <em>incluse dans la biographie</em>. Ce bouton remplit le champ <strong>Citation</strong> de chaque artiste à partir du site <strong>et</strong> retire cette citation du texte de la biographie. À faire une seule fois ; n'agit que sur les artistes dont le champ Citation est encore vide.
@@ -50,7 +69,16 @@ export async function rendreWebSyncArtistes(contenu) {
 
   const corps = contenu.querySelector('#web-sync-corps');
   const btnComparer = contenu.querySelector('#btn-comparer');
+  const caseAnglais = contenu.querySelector('#c-anglais');
+  caseAnglais.checked = lirePrefAnglais();
+  caseAnglais.addEventListener('change', () => ecrirePrefAnglais(caseAnglais.checked));
   contenu.querySelector('#wsync-vers-oeuvres').addEventListener('click', () => naviguer('web-sync'));
+  // Les artistes passent par l'API publique de WordPress : l'adresse suffit,
+  // les clés REST ne sont pas nécessaires ici.
+  brancherConnexion(contenu, etat, {
+    exigeCles: false,
+    boutons: [btnComparer, contenu.querySelector('#btn-ranger-citations')],
+  });
   contenu.querySelector('#btn-ranger-citations').addEventListener('click', async (e) => {
     const btn = e.currentTarget; // à capturer AVANT tout await (sinon null ensuite)
     const rep = await confirmer({
@@ -81,6 +109,12 @@ export async function rendreWebSyncArtistes(contenu) {
   let ongletActif = 'diff';
   let afficherReglees = false;
   const filtres = new Set(TYPES_DIFF.map((t) => t.cle));
+  let nature = 'tous'; // 'tous' | 'manquant' | 'different'
+  // La sélection en lot n'existait que sur l'écran des ŒUVRES. C'est cette
+  // asymétrie qui rendait l'import en masse indispensable : sans elle, remplir
+  // 22 citations anglaises demandait 22 décisions.
+  const selection = new Set(); // clés `${artisteId}:${champ}`
+  const cle = (artisteId, champ) => `${artisteId}:${champ}`;
 
   // Carnet complet des artistes, pour la fenêtre « Relier ». Chargé à la
   // demande : la comparaison avec le site n'en a pas besoin, et cet écran
@@ -92,16 +126,21 @@ export async function rendreWebSyncArtistes(contenu) {
     return artistesTous;
   }
 
-  const champsVisibles = (l) => l.champs.filter((c) => filtres.has(c.champ) && (afficherReglees || !c.ignore));
+  const champsVisibles = (l) => l.champs.filter((c) => filtres.has(c.champ)
+    && (nature === 'tous' || natureDe(c) === nature)
+    && (afficherReglees || !c.ignore));
   const ligneVisible = (l) => champsVisibles(l).length > 0;
   const compteType = (t) => dataCourant.lignes.filter((l) => l.champs.some((c) => c.champ === t && !c.ignore)).length;
+  const compteNature = (n) => dataCourant.lignes.reduce((acc, l) => acc
+    + l.champs.filter((c) => filtres.has(c.champ) && !c.ignore && natureDe(c) === n).length, 0);
 
   async function charger() {
     btnComparer.disabled = true;
-    corps.innerHTML = `<p class="chargement">⏳ Lecture des artistes du site… (aucune modification du site)</p>`;
+    const avecAnglais = !!(caseAnglais && caseAnglais.checked);
+    corps.innerHTML = `<p class="chargement">⏳ Lecture des artistes du site${avecAnglais ? ' (français puis anglais)' : ''}… (aucune modification du site)</p>`;
     let data;
     try {
-      data = await window.api.webComparerArtistes();
+      data = await window.api.webComparerArtistes({ avecAnglais });
     } catch (err) {
       corps.innerHTML = `<div class="wsync-erreur"><p>✗ ${ech(nettoyerErreur(err))}</p></div>`;
       btnComparer.disabled = false;
@@ -135,9 +174,17 @@ export async function rendreWebSyncArtistes(contenu) {
     }).join('');
     const barreHtml = `
       <div class="wsync-barre">
-        <div class="wsync-filtres"><span class="wsync-filtres-lib">Afficher :</span>${chipsHtml}</div>
+        <div class="wsync-filtres">
+          <span class="wsync-filtres-lib">Afficher :</span>${chipsHtml}
+          <span class="wsync-filtres-lib wsync-filtres-sep">Nature :</span>${chipsNatureHtml(nature, compteNature)}
+        </div>
         <div class="wsync-selection">
           ${nbReglees ? `<label class="wsync-reglees-toggle"><input type="checkbox" id="wsync-voir-reglees" ${afficherReglees ? 'checked' : ''}> déjà gardées (${nbReglees})</label>` : ''}
+          <button type="button" class="btn-lien" id="wsync-sel-tout">Tout cocher (visible)</button>
+          <button type="button" class="btn-lien" id="wsync-sel-rien">Décocher</button>
+          <button type="button" class="btn-action btn-principal" id="wsync-importer-lot" ${selection.size ? '' : 'disabled'}>
+            Reprendre la sélection${selection.size ? ` (${selection.size})` : ''}
+          </button>
         </div>
       </div>`;
 
@@ -184,9 +231,15 @@ export async function rendreWebSyncArtistes(contenu) {
   function carteArtiste(l) {
     const champsHtml = champsVisibles(l).map((c) => {
       const estPhoto = c.champ === 'photo';
+      const k = cle(l.artiste_id, c.champ);
+      // La photo n'entre pas dans le lot (téléchargement + recadrage) : pas de
+      // case à cocher pour elle, sinon « tout cocher » promettrait ce qu'il ne
+      // peut pas tenir.
       const tete = c.ignore
         ? `<div class="wsync-champ-tete"><span class="wsync-lib">${ech(c.libelle)}</span> <span class="wsync-gardee">✓ gardé (version de l'app)</span></div>`
-        : `<div class="wsync-champ-tete"><span class="wsync-lib">${ech(c.libelle)}</span></div>`;
+        : (estPhoto
+          ? `<div class="wsync-champ-tete"><span class="wsync-lib">${ech(c.libelle)}</span>${pastilleNature(c)}</div>`
+          : `<div class="wsync-champ-tete"><label class="wsync-check"><input type="checkbox" class="wsync-case" data-cle="${k}" ${selection.has(k) ? 'checked' : ''}><span class="wsync-lib">${ech(c.libelle)}</span></label>${pastilleNature(c)}</div>`);
       const btnReprendre = estPhoto
         ? `<button type="button" class="btn-action btn-secondaire-action wsync-import-photo" data-champ="photo">Télécharger la photo du site →</button>`
         : `<button type="button" class="btn-action btn-secondaire-action wsync-import-texte" data-champ="${ech(c.champ)}">Reprendre la valeur du site →</button>`;
@@ -228,12 +281,38 @@ export async function rendreWebSyncArtistes(contenu) {
 
   function brancher() {
     corps.querySelectorAll('.wsync-onglet').forEach((b) => b.addEventListener('click', () => { ongletActif = b.dataset.onglet; dessiner(); }));
-    corps.querySelectorAll('.wsync-chip').forEach((chip) => chip.addEventListener('click', () => {
+    corps.querySelectorAll('.wsync-chip[data-type]').forEach((chip) => chip.addEventListener('click', () => {
       const t = chip.dataset.type;
       if (filtres.has(t)) filtres.delete(t); else filtres.add(t);
       dessiner();
     }));
+    // Changer de nature vide la sélection : des cases cochées hors écran
+    // feraient reprendre des valeurs qu'on ne voit plus.
+    corps.querySelectorAll('.wsync-chip[data-nature]').forEach((chip) => chip.addEventListener('click', () => {
+      nature = chip.dataset.nature;
+      selection.clear();
+      dessiner();
+    }));
     corps.querySelector('#wsync-voir-reglees')?.addEventListener('change', (e) => { afficherReglees = e.target.checked; dessiner(); });
+
+    corps.querySelector('#wsync-sel-tout')?.addEventListener('click', () => {
+      dataCourant.lignes.filter(ligneVisible).forEach((l) => {
+        champsVisibles(l).forEach((c) => {
+          if (CHAMPS_COPIE.includes(c.champ) && !c.ignore) selection.add(cle(l.artiste_id, c.champ));
+        });
+      });
+      dessiner();
+    });
+    corps.querySelector('#wsync-sel-rien')?.addEventListener('click', () => { selection.clear(); dessiner(); });
+    corps.querySelector('#wsync-importer-lot')?.addEventListener('click', importerLot);
+    corps.querySelectorAll('.wsync-case').forEach((cb) => cb.addEventListener('change', () => {
+      if (cb.checked) selection.add(cb.dataset.cle); else selection.delete(cb.dataset.cle);
+      const btn = corps.querySelector('#wsync-importer-lot');
+      if (btn) {
+        btn.disabled = selection.size === 0;
+        btn.textContent = `Reprendre la sélection${selection.size ? ` (${selection.size})` : ''}`;
+      }
+    }));
 
     corps.querySelectorAll('.wsync-carte').forEach((carte) => {
       const artisteId = Number(carte.dataset.artiste);
@@ -332,6 +411,57 @@ export async function rendreWebSyncArtistes(contenu) {
       message: `« ${p.nom} » est maintenant rattaché à une fiche existante.`,
       detail: "Les différences de biographie, de démarche, de C.V., de citation et de photo se reprennent maintenant dans l'onglet « Différences ». Le lien se défait depuis la fiche de l'artiste.",
     });
+  }
+
+  // Reprise EN LOT. L'écran des œuvres l'avait, celui-ci pas : c'est cette
+  // absence qui rendait l'import en masse des textes anglais indispensable.
+  // Les échecs sont comptés et rapportés plutôt que d'interrompre la série —
+  // un artiste supprimé entre-temps ne doit pas faire perdre les 21 autres.
+  async function importerLot() {
+    if (!selection.size) return;
+    const items = [];
+    for (const k of selection) {
+      const [idStr, champ] = k.split(':');
+      const artisteId = Number(idStr);
+      const { c } = champObj(artisteId, champ);
+      if (c) items.push({ artisteId, champ, valeur: c.site, libelle: c.libelle, manquant: !!c.manquant });
+    }
+    if (!items.length) return;
+    const nbManquants = items.filter((i) => i.manquant).length;
+    const nbRemplaces = items.length - nbManquants;
+    const rep = await confirmer({
+      type: 'question',
+      title: 'Reprendre les valeurs du site ?',
+      message: `Importer ${pluriel(items.length, 'valeur')} du site dans l'app ?`,
+      detail: [
+        nbManquants ? `${pluriel(nbManquants, 'champ vide sera rempli', 'champs vides seront remplis')}.` : '',
+        nbRemplaces ? `⚠ ${pluriel(nbRemplaces, 'champ déjà rempli sera REMPLACÉ', 'champs déjà remplis seront REMPLACÉS')} par la version du site.` : '',
+        "Le site n'est pas touché.",
+      ].filter(Boolean).join('\n'),
+      buttons: ['Importer', 'Annuler'], defaultId: 0, cancelId: 1,
+    });
+    if (rep !== 0) return;
+
+    let reussis = 0;
+    const erreurs = [];
+    for (const it of items) {
+      try {
+        await window.api.webImporterChampArtiste(it.artisteId, it.champ, it.valeur);
+        retirerChamp(it.artisteId, it.champ);
+        reussis += 1;
+      } catch (err) { erreurs.push(`${it.libelle} : ${nettoyerErreur(err)}`); }
+    }
+    selection.clear();
+    dessiner();
+    if (erreurs.length) {
+      await alerter({
+        type: 'warning', title: 'Import partiel',
+        message: `${reussis}/${items.length} valeur(s) importée(s).`,
+        detail: erreurs.slice(0, 8).join('\n'),
+      });
+    } else {
+      await alerter({ type: 'succes', title: 'Import terminé', message: `${pluriel(reussis, 'valeur importée')} dans l'app.` });
+    }
   }
 
   async function delierArtiste(artisteId) {

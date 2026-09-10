@@ -11,6 +11,30 @@
 
 ---
 
+## Les textes anglais dans la comparaison
+
+L'écran **Site web** compare maintenant aussi les **textes anglais** : les
+citations, biographies, démarches et C.V. des artistes, et les descriptions des
+œuvres. Cochez la case « textes anglais » à côté du bouton « Comparer ».
+
+Chaque différence porte une petite étiquette :
+
+- **manquant** (vert) — la case est vide dans Galeria, le site a un texte.
+  Le reprendre ne peut rien effacer.
+- **différent** (orangé) — les deux ont un texte, mais pas le même. Le
+  reprendre remplacerait le vôtre, peut-être une correction que vous avez
+  faite.
+
+Pour remplir d'un coup tout ce qui manque : cliquez sur **Manquants**, puis
+**Tout cocher**, puis **Reprendre la sélection**. Vos citations anglaises —
+jamais importées jusqu'ici — arrivent toutes en une seule fois.
+
+L'ancien bouton « Importer les textes anglais » a disparu : c'est exactement
+ce qu'il faisait, mais vous voyez maintenant ce qui va se passer avant de
+confirmer.
+
+---
+
 ## « Site web » est maintenant dans le menu
 
 Pour comparer vos fiches avec le site, il fallait passer par **Réglages**,

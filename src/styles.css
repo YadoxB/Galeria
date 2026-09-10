@@ -5827,6 +5827,36 @@ select.lot-in.st-pretee { color: var(--info); }
 .rl-recap .ln { display: flex; gap: 8px; }
 .rl-recap .ln .k { color: var(--stone); min-width: 96px; font-size: 11.5px;
   text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; padding-top: 2px; }
+
+/* ----- Bandeau d'état de la connexion au site -----
+   « Site web » étant devenu une entrée du menu, on y arrive directement : le
+   garde-fou qui vivait dans les Réglages a disparu, et l'écran doit dire
+   lui-même où il en est. Trois états, parce que comparer les ŒUVRES exige les
+   clés REST alors que le reste se contente de l'adresse. */
+.wsync-connexion { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  border-radius: 11px; padding: 10px 15px; margin-bottom: var(--s3); font-size: 13px; line-height: 1.5; }
+.wsync-connexion .btn-lien { margin-left: auto; white-space: nowrap; }
+.wsync-connexion.ok { background: #F3F7F3; border: 1px solid #CFE3CF; color: #2f5d34; }
+.wsync-connexion.ok strong { color: #23471f; }
+.wsync-connexion.partielle { background: #FDF8EE; border: 1px solid #E8DCC0; color: #6b5c34; }
+.wsync-connexion.partielle strong { color: #4a3f22; }
+.wsync-connexion.absente { background: #FFF8F8; border: 1px solid #E9D2D2; color: #7d2b2b; }
+
+/* ----- « Manquant » vs « différent » -----
+   Remplir une case vide ne peut rien détruire ; remplacer une case pleine
+   écrase peut-être une correction faite à la main. La pastille dit laquelle
+   des deux on s'apprête à faire, et le filtre du même nom rend « tout cocher »
+   sûr — c'est ce qui a permis de retirer le bouton « Importer les textes
+   anglais » sans perdre sa garantie. */
+.wsync-nature { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+  font-weight: 700; border-radius: 999px; padding: 2px 9px; margin-left: 8px; }
+.wsync-nature.manquant { background: #EAF3EA; color: #2f5d34; border: 1px solid #CFE3CF; }
+.wsync-nature.different { background: #FDF3E4; color: #7a5c19; border: 1px solid #E8DCC0; }
+.wsync-filtres-sep { margin-left: 10px; }
+/* Case « textes anglais » de l'en-tête : un réglage du geste, pas une action —
+   d'où le traitement discret à côté du bouton « Comparer ». */
+.wsync-opt-anglais { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px;
+  color: var(--slate); cursor: pointer; user-select: none; white-space: nowrap; }
 .rl-avert { color: var(--warm-gold); }
 
 .cf-image-choix { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--slate); margin: 2px 0 6px; cursor: pointer; }

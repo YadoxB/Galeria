@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette — Comparer aussi les textes anglais</title>
+<link rel="stylesheet" href="../src/theme.css">
+<link rel="stylesheet" href="../src/styles.css">
+<style>
+  body{padding:30px 34px;overflow:auto;height:auto;user-select:text;}
+  .doc{max-width:1080px;margin:0 auto;}
+  h1{font-family:var(--font-titre);font-weight:500;font-size:29px;margin:0 0 8px;}
+  .sous{color:var(--slate);font-size:14px;line-height:1.65;margin:0 0 6px;max-width:900px;}
+  .lot-titre{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+             margin:42px 0 6px;font-weight:600;}
+  .lot-note{font-size:13.5px;color:var(--slate);line-height:1.65;margin:0 0 16px;max-width:900px;}
+  .etiq{font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;
+        margin:0 0 9px;color:var(--stone);}
+  .etiq.reco{color:var(--warm-gold);}
+  .maquette{background:var(--soft-ivory);border:1px dashed var(--mist);border-radius:16px;padding:18px;}
+  .journal{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:16px 21px;margin-top:22px;}
+  .journal h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+              margin:0 0 9px;font-weight:700;}
+  .journal ul{margin:0;padding-left:19px;font-size:13.5px;color:var(--slate);line-height:1.8;}
+  .journal em{color:var(--ink);font-style:normal;font-weight:600;}
+  .avert{background:#FFF8F8;border:1px solid #E9D2D2;border-left:3px solid #900001;border-radius:10px;
+         padding:14px 18px;margin-top:18px;}
+  .avert h4{margin:0 0 7px;font-size:13.5px;color:#900001;}
+  .avert p{margin:0 0 7px;font-size:13.5px;color:var(--slate);line-height:1.6;}
+  .avert p:last-child{margin:0;}
+
+  /* --- pièces de l'écran de synchronisation --- */
+  .barre{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--mist);
+         border-radius:12px;padding:10px 14px;margin-bottom:12px;}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .chips .lib{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);font-weight:700;}
+  .chip{border:1px solid var(--mist);background:#fff;border-radius:999px;padding:4px 12px;cursor:pointer;
+        font-family:var(--font-ui);font-size:12.5px;color:var(--slate);}
+  .chip.on{background:var(--gallery-navy);border-color:var(--gallery-navy);color:#fff;}
+  .chip.en.on{background:#3c5a76;border-color:#3c5a76;}
+  .chip .n{opacity:.65;margin-left:5px;font-size:11px;}
+  .lot-barre{display:flex;align-items:center;gap:12px;margin-left:auto;}
+
+  .carte-c{background:#fff;border:1px solid var(--mist);border-radius:12px;padding:14px 16px;margin-bottom:10px;}
+  .carte-c .tete{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .carte-c .tete strong{font-size:14px;}
+  .champ{border-top:1px solid var(--cloud);padding:11px 0 9px;}
+  .champ:first-of-type{border-top:0;}
+  .champ-tete{display:flex;align-items:center;gap:9px;margin-bottom:7px;}
+  .champ-tete .lib{font-size:12.5px;font-weight:600;}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .col{border:1px solid var(--mist);border-radius:9px;padding:8px 11px;background:var(--soft-ivory);}
+  .col.site{background:#F7FAFC;border-color:#D8E4EC;}
+  .col .et{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+           font-weight:700;display:block;margin-bottom:3px;}
+  .col .val{font-size:12.5px;color:var(--ink);line-height:1.45;}
+  .col .vide{color:var(--stone);font-style:italic;}
+  .acts{display:flex;gap:8px;margin-top:9px;align-items:center;}
+
+  /* Le marqueur qui distingue les deux natures d'écart. */
+  .pastille{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;
+            border-radius:999px;padding:2px 9px;}
+  .pastille.manquant{background:#EAF3EA;color:#2f5d34;border:1px solid #CFE3CF;}
+  .pastille.different{background:#FDF3E4;color:#7a5c19;border:1px solid #E8DCC0;}
+  .drapeau{font-size:10px;font-weight:700;letter-spacing:.06em;color:#3c5a76;
+           background:#EAF1F7;border:1px solid #D2E0EC;border-radius:5px;padding:1px 6px;}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<h1>Comparer aussi les textes anglais</h1>
+<p class="sous">Le comparateur ignorait complètement les colonnes anglaises. On les lui donne — et du même coup, le
+bouton « Importer les textes anglais » disparaît, puisqu'un seul outil suffira. Ce qui suppose de rendre le
+comparateur aussi rapide que lui sur le cas courant : <b>remplir ce qui est vide</b>.</p>
+
+<p class="lot-titre">Le cœur : « manquant » n'est pas « différent »</p>
+<p class="lot-note">C'est la distinction qui justifiait le second bouton. Elle devient une <b>pastille</b> et un
+<b>filtre</b>, ce qui la rend plus visible qu'un bouton séparé ne le faisait — et surtout, elle s'applique aussi
+au français, où elle manquait tout autant.</p>
+
+<div class="maquette">
+  <div class="barre">
+    <div class="chips" id="chips"></div>
+    <div class="lot-barre">
+      <button type="button" class="btn-lien" id="tout">Tout cocher (visible)</button>
+      <button type="button" class="btn-action btn-principal" id="lot" disabled>Reprendre la sélection</button>
+    </div>
+  </div>
+  <div id="cartes"></div>
+</div>
+
+<div class="avert">
+  <h4>Le piège que la pastille désamorce</h4>
+  <p>Tu as <b>506 descriptions anglaises</b> dans l'app. Si tu en as corrigé quelques-unes — une traduction
+  maladroite, une coquille — elles apparaissent comme <b>différentes</b>. Un « tout cocher » sans distinction les
+  écraserait par la version du site.</p>
+  <p>Avec le filtre <b>Manquants</b> actif, « tout cocher » ne prend que les cases vides : exactement ce que
+  faisait l'ancien bouton d'import, mais visible, vérifiable, et annulable case par case avant de confirmer.</p>
+</div>
+
+<p class="lot-titre">Ce qui change ailleurs</p>
+<div class="journal">
+  <h4>Les décisions</h4>
+  <ul>
+    <li><em>Quatre nouveaux types côté artistes</em> — Citation, Biographie, Démarche, C.V. en anglais — et
+      <em>un seul côté œuvres</em>, Description : ce sont les seules colonnes anglaises qui existent
+      (<code>citation_en</code>, <code>biographie_en</code>, <code>demarche_en</code>,
+      <code>curriculum_en</code>, <code>description_en</code>). Les titres et les prix n'ont pas de version
+      anglaise, et n'en auront pas.</li>
+    <li><em>La sélection en lot arrive sur l'écran des artistes.</em> Elle n'existait que sur celui des œuvres —
+      c'est cette asymétrie qui rendait le bouton d'import indispensable pour les 22 citations.</li>
+    <li><em>Le bouton « Importer les textes anglais » disparaît.</em> Sa règle — remplir le vide, ne jamais
+      écraser — devient le filtre « Manquants ». Une seule façon de faire, au lieu de deux qui se ressemblent.</li>
+    <li><em>La citation anglaise entre enfin dans le tableau.</em> L'ancien bouton ne l'a jamais couverte :
+      d'où <b>22 citations françaises et 0 anglaise</b> dans la base. Le comparateur, lui, ne peut pas
+      « oublier » un champ : il compare ce que les deux côtés contiennent.</li>
+    <li><em>Une case « inclure les textes anglais »</em>, mémorisée, à côté de « Comparer ». Comparer en anglais
+      oblige à lire le site une seconde fois (<code>?lang=en</code>) : autant que ce coût soit débrayable.</li>
+  </ul>
+</div>
+
+</div>
+<script>
+const TYPES = [
+  { cle: 'citation', lib: 'Citation', en: false },
+  { cle: 'biographie', lib: 'Biographie', en: false },
+  { cle: 'citation_en', lib: 'Citation (EN)', en: true },
+  { cle: 'biographie_en', lib: 'Biographie (EN)', en: true },
+  { cle: 'demarche_en', lib: 'Démarche (EN)', en: true },
+];
+// « manquant » = vide dans l'app ; « different » = rempli des deux côtés, mais pas pareil.
+const LIGNES = [
+  { artiste: 'Marie-Claude Lortie', champs: [
+    { t: 'citation_en', app: '', site: 'I paint the river as it wakes.', etat: 'manquant' },
+    { t: 'biographie_en', app: 'Born in Sorel, she studied…', site: 'Born in Sorel, Quebec, she studied…', etat: 'different' },
+  ] },
+  { artiste: 'Jean-Pierre Rousseau', champs: [
+    { t: 'citation_en', app: '', site: 'Wood remembers what hands forget.', etat: 'manquant' },
+    { t: 'demarche_en', app: '', site: 'My approach begins with the material.', etat: 'manquant' },
+  ] },
+  { artiste: 'Hélène Béliveau', champs: [
+    { t: 'citation', app: '', site: 'La lumière décide de tout.', etat: 'manquant' },
+    { t: 'biographie_en', app: 'She has exhibited widely.', site: 'She has exhibited across Quebec.', etat: 'different' },
+  ] },
+];
+
+let actifs = new Set(TYPES.map((t) => t.cle));
+let etatFiltre = 'tous'; // 'tous' | 'manquant' | 'different'
+const selection = new Set();
+
+const cle = (i, j) => i + ':' + j;
+const visible = (c) => actifs.has(c.t) && (etatFiltre === 'tous' || c.etat === etatFiltre);
+
+function dessinerChips() {
+  const compte = (cl) => LIGNES.reduce((n, l) => n + l.champs.filter((c) => c.t === cl).length, 0);
+  const compteEtat = (e) => LIGNES.reduce((n, l) => n + l.champs.filter((c) => c.etat === e && actifs.has(c.t)).length, 0);
+  document.getElementById('chips').innerHTML =
+    `<span class="lib">Afficher</span>`
+    + TYPES.map((t) => `<button class="chip${t.en ? ' en' : ''}${actifs.has(t.cle) ? ' on' : ''}" data-t="${t.cle}">${t.lib}<span class="n">${compte(t.cle)}</span></button>`).join('')
+    + `<span class="lib" style="margin-left:10px;">Nature</span>`
+    + `<button class="chip${etatFiltre === 'tous' ? ' on' : ''}" data-e="tous">Toutes</button>`
+    + `<button class="chip${etatFiltre === 'manquant' ? ' on' : ''}" data-e="manquant">Manquants<span class="n">${compteEtat('manquant')}</span></button>`
+    + `<button class="chip${etatFiltre === 'different' ? ' on' : ''}" data-e="different">Différents<span class="n">${compteEtat('different')}</span></button>`;
+  document.querySelectorAll('#chips .chip[data-t]').forEach((b) => b.addEventListener('click', () => {
+    const t = b.dataset.t;
+    if (actifs.has(t)) actifs.delete(t); else actifs.add(t);
+    dessiner();
+  }));
+  document.querySelectorAll('#chips .chip[data-e]').forEach((b) => b.addEventListener('click', () => {
+    etatFiltre = b.dataset.e; dessiner();
+  }));
+}
+
+function dessinerCartes() {
+  const lib = (t) => (TYPES.find((x) => x.cle === t) || {}).lib || t;
+  const estEn = (t) => t.endsWith('_en');
+  let html = '';
+  LIGNES.forEach((l, i) => {
+    const champs = l.champs.map((c, j) => ({ c, j })).filter(({ c }) => visible(c));
+    if (!champs.length) return;
+    html += `<div class="carte-c"><div class="tete"><strong>${l.artiste}</strong></div>`
+      + champs.map(({ c, j }) => `
+        <div class="champ">
+          <div class="champ-tete">
+            <input type="checkbox" data-k="${cle(i, j)}" ${selection.has(cle(i, j)) ? 'checked' : ''}>
+            <span class="lib">${lib(c.t)}</span>
+            ${estEn(c.t) ? '<span class="drapeau">EN</span>' : ''}
+            <span class="pastille ${c.etat}">${c.etat === 'manquant' ? 'manquant' : 'différent'}</span>
+          </div>
+          <div class="cols">
+            <div class="col"><span class="et">Dans l'app</span>
+              <div class="val ${c.app ? '' : 'vide'}">${c.app || '— (vide)'}</div></div>
+            <div class="col site"><span class="et">Sur le site</span>
+              <div class="val">${c.site}</div></div>
+          </div>
+          <div class="acts">
+            <button type="button" class="btn-action btn-secondaire-action">Reprendre la valeur du site →</button>
+            <button type="button" class="btn-lien">Garder la version de l'app</button>
+          </div>
+        </div>`).join('')
+      + '</div>';
+  });
+  document.getElementById('cartes').innerHTML = html || '<p class="liste-vide">Aucune différence de ce type.</p>';
+  document.querySelectorAll('#cartes input[type="checkbox"]').forEach((cb) => cb.addEventListener('change', () => {
+    if (cb.checked) selection.add(cb.dataset.k); else selection.delete(cb.dataset.k);
+    majLot();
+  }));
+}
+
+function majLot() {
+  const b = document.getElementById('lot');
+  b.disabled = selection.size === 0;
+  b.textContent = `Reprendre la sélection${selection.size ? ` (${selection.size})` : ''}`;
+}
+
+function dessiner() { dessinerChips(); dessinerCartes(); majLot(); }
+
+document.getElementById('tout').addEventListener('click', () => {
+  LIGNES.forEach((l, i) => l.champs.forEach((c, j) => { if (visible(c)) selection.add(cle(i, j)); }));
+  dessiner();
+});
+dessiner();
+</script>
+</body></html>
