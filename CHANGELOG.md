@@ -10,6 +10,29 @@ identifiants.
 
 ## [Non publié]
 
+### Modifié
+
+- **Le courriel de signalement se lit sans effort** (Dave, 2026-09-08 : « moins technique et
+  plus clair pour moi, et qu'il m'indique sur quelle page ils se trouvent »).
+  - **Ordre inversé** : CE QUI S'EST PASSÉ, puis OÙ, puis QUAND ; tout le technique est rejeté
+    à la fin sous une ligne qui dit qu'on peut s'arrêter là. La première version ouvrait sur
+    quatre lignes de numéros de version.
+  - **La page porte un nom français** suivi du titre réellement affiché — « Fiche artiste —
+    Pam Comeau » au lieu de `artiste-fiche (n° 17)`. Le titre est lu dans le document plutôt
+    que rechargé de la base : c'est ce que la personne avait sous les yeux, sans aller-retour.
+    Un titre déjà contenu dans le nom de section est omis (« Liste des œuvres », pas « Liste
+    des œuvres — Œuvres »).
+  - **L'objet du courriel porte la page** : la boîte de réception dit de quoi il s'agit avant
+    l'ouverture.
+  - Date lisible (« 8 septembre 2026 à 19 h 04 ») et système nommé (« Windows 11 —
+    10.0.26200 ») au lieu de l'horodatage et de `Windows_NT`.
+  - ⚠ Vérifié dans l'application réelle isolée — et un piège de banc trouvé en route :
+    `spawn(..., { shell: true })` rend le processus `cmd.exe`, pas `electron`, si bien que
+    `kill()` laissait l'application vivante et que le banc suivant se rebranchait sur
+    l'**ancienne version du code** par le même port de débogage. Un « TOUT PASSE » avait
+    ainsi validé une correction qui n'avait jamais tourné. Les bancs tuent désormais leurs
+    processus par dossier temporaire — jamais par nom d'image, qui frapperait l'app installée.
+
 ### Ajouté
 
 - **« Relier à une fiche existante » dans la synchronisation des artistes.** Deux artistes de

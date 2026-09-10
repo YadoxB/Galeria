@@ -11,6 +11,16 @@
 
 ---
 
+## Vos signalements de problème, plus clairs
+
+Quand vous cliquez sur **Signaler un problème**, le message qui part commence
+maintenant par ce que **vous** avez écrit, puis dit **sur quelle page** vous
+étiez — en toutes lettres, par exemple « Fiche artiste — Pam Comeau » — et
+**quand**. Les détails techniques sont rangés à la fin. Vous le verrez en
+relisant le message avant de l'envoyer.
+
+---
+
 ## Les artistes qui signent d'un nom d'artiste
 
 Certains artistes sont présentés sur le site sous un nom différent de celui que

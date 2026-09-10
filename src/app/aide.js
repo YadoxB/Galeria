@@ -560,6 +560,52 @@ function construireMailto(objet, corps) {
   return { url: base + encodeURIComponent(corps.slice(0, bas) + suffixe), tronque: true };
 }
 
+// Nom de section en FRANÇAIS pour chaque page. Le signalement disait jusqu'ici
+// « artiste-fiche (n° 17) » : un nom de route, écrit pour le code, illisible
+// dans un courriel (Dave, 2026-09-08).
+const PAGES_LISIBLES = {
+  accueil: 'Accueil',
+  'artistes-liste': 'Liste des artistes',
+  'artiste-fiche': 'Fiche artiste',
+  'oeuvres-liste': 'Liste des œuvres',
+  'oeuvre-fiche': 'Fiche d’œuvre',
+  'expositions-liste': 'Liste des expositions',
+  'exposition-fiche': 'Fiche d’exposition',
+  'clients-liste': 'Liste des clients',
+  'client-fiche': 'Fiche client',
+  'ventes-liste': 'Liste des ventes',
+  'vente-fiche': 'Fiche de vente',
+  suivi: 'Suivi',
+  documents: 'Documents',
+  rapport: 'Rapport',
+  reglages: 'Réglages',
+  'profil-galerie': 'Réglages — profil de la galerie',
+  outils: 'Outils',
+  'web-sync': 'Site web — Œuvres',
+  'web-sync-artistes': 'Site web — Artistes',
+};
+
+// La page telle qu'un humain la nommerait, en y joignant le TITRE RÉELLEMENT
+// AFFICHÉ à l'écran : « Fiche artiste — Pam Comeau » vaut mieux que
+// « artiste-fiche (n° 17) », et dit exactement ce que la personne regardait.
+// Le titre est lu dans le document plutôt que rechargé de la base : c'est ce
+// qu'elle avait sous les yeux, et ça n'ajoute aucun aller-retour.
+function pageLisible(route) {
+  if (!route) return '(page inconnue)';
+  const section = PAGES_LISIBLES[route.nom] || route.nom;
+  let titre = '';
+  try {
+    const el = document.querySelector(
+      '#contenu .hero-artiste-nom, #contenu .entete-page-titre, #contenu h1, #contenu h2');
+    titre = el ? el.textContent.trim().replace(/\s+/g, ' ').slice(0, 60) : '';
+  } catch { /* le nom de section suffit */ }
+  // Un titre déjà contenu dans le nom de section n'apporte rien : la page des
+  // œuvres s'intitule « Œuvres » et donnerait « Liste des œuvres — Œuvres ».
+  const plat = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  if (titre && !plat(section).includes(plat(titre))) return `${section} — ${titre}`;
+  return route.id != null ? `${section} (n° ${route.id})` : section;
+}
+
 async function ouvrirSignalement() {
   const { routeCourante } = await import('./router.js');
   const { confirmer, alerter, demanderTexte } = await import('./dialogue.js');
@@ -581,7 +627,7 @@ async function ouvrirSignalement() {
     const r = await window.api.soutienRapport({
       description,
       contexte: {
-        page: route ? `${route.nom}${route.id != null ? ` (n° ${route.id})` : ''}` : '(inconnue)',
+        page: pageLisible(route),
         ecran: `${window.screen.width}×${window.screen.height}`,
       },
     });
@@ -621,7 +667,9 @@ async function ouvrirSignalement() {
 
   // Outlook. Le texte entier va aussi dans le presse-papier : si le message
   // ressort raccourci, un simple collage le complète.
-  const objet = `Galeria ${infosApp.version || ''} — signalement`;
+  // L'objet porte la page : dans une boîte de réception, il dit déjà de quoi
+  // il s'agit avant même d'ouvrir le message.
+  const objet = `Galeria ${infosApp.version || ''} — problème sur « ${pageLisible(route)} »`;
   try { await navigator.clipboard.writeText(texte); } catch { /* sans conséquence */ }
 
   // Les lignes « at ... » des traces d'appel sont retirées du COURRIEL : elles

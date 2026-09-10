@@ -69,13 +69,29 @@ function comptes() {
 
 // `contexte` vient de l'interface : la page ouverte et la taille de l'écran,
 // que le processus principal ne connaît pas.
+// « Windows_NT 10.0.26200 » est le nom que Node donne au système ; personne ne
+// l'écrit ainsi. On garde le numéro de version — il sert au diagnostic — mais
+// sous un nom qui se lit.
+function systemeLisible() {
+  const brut = `${os.release()} (${os.arch()})`;
+  if (os.type() === 'Windows_NT') {
+    // 10.0.22000 et au-delà = Windows 11 (Microsoft n'a pas changé le 10.0).
+    const build = parseInt((os.release().split('.')[2] || '0'), 10);
+    return `Windows ${build >= 22000 ? '11' : '10'} — ${brut}`;
+  }
+  return `${os.type()} ${brut}`;
+}
+
 function construireRapport({ description, contexte } = {}) {
   const sauvegarde = derniereSauvegarde();
   return {
     version: app.getVersion(),
     electron: process.versions.electron,
-    systeme: `${os.type()} ${os.release()} (${os.arch()})`,
-    date: new Date().toLocaleString('fr-CA'),
+    systeme: systemeLisible(),
+    // Une date qui se lit à voix haute plutôt qu'un horodatage.
+    date: new Date().toLocaleString('fr-CA', {
+      day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    }),
     page: (contexte && contexte.page) || '(inconnue)',
     ecran: (contexte && contexte.ecran) || '',
     catalogue: comptes(),
@@ -85,27 +101,40 @@ function construireRapport({ description, contexte } = {}) {
   };
 }
 
-// Le texte lisible, celui que les parents voient et qui part dans le courriel.
+// Le texte lisible : celui que les parents relisent avant l'envoi, et celui que
+// Dave reçoit.
+//
+// L'ordre compte. La première version commençait par « Version / Système /
+// Date » : Dave devait traverser quatre lignes de numéros avant d'apprendre ce
+// qui s'était passé, et l'endroit où ça s'était passé se perdait au milieu.
+// Désormais : CE QUI S'EST PASSÉ, puis OÙ, puis QUAND — et tout le technique
+// est rejeté à la fin, sous une ligne qui dit clairement qu'on peut s'arrêter
+// là (Dave, 2026-09-08 : « moins technique et plus clair pour moi »).
+//
+// Les parents relisent ce texte : il doit rester lisible pour eux aussi.
 function rapportEnTexte(r) {
   const l = [];
-  l.push('--- Signalement Galeria ---');
-  l.push(`Version    : ${r.version} (Electron ${r.electron})`);
-  l.push(`Système    : ${r.systeme}`);
-  l.push(`Date       : ${r.date}`);
-  l.push(`Page       : ${r.page}${r.ecran ? ` · écran ${r.ecran}` : ''}`);
+  l.push('CE QUI S\'EST PASSÉ');
+  l.push(r.description || '(rien de décrit)');
+  l.push('');
+  l.push(`OÙ     ${r.page || '(page inconnue)'}`);
+  l.push(`QUAND  ${r.date}`);
+  l.push('');
+  l.push('— — — Détails techniques — — —');
+  l.push(`Galeria ${r.version} · Electron ${r.electron}`);
+  l.push(`${r.systeme}${r.ecran ? ` · écran ${r.ecran}` : ''}`);
   if (r.catalogue) {
     const p = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`;
-    l.push(`Catalogue  : ${p(r.catalogue.artistes, 'artiste')}, ${p(r.catalogue.oeuvres, 'œuvre')}, `
+    l.push(`Catalogue : ${p(r.catalogue.artistes, 'artiste')}, ${p(r.catalogue.oeuvres, 'œuvre')}, `
       + `${p(r.catalogue.clients, 'client')}, ${p(r.catalogue.ventes, 'vente')}`);
   }
-  if (r.derniere_sauvegarde) l.push(`Sauvegarde : ${r.derniere_sauvegarde.date}`);
-  l.push('');
-  l.push('Ce qui s\'est passé :');
-  l.push(r.description || '(rien de décrit)');
+  l.push(`Dernière sauvegarde : ${r.derniere_sauvegarde ? r.derniere_sauvegarde.date : 'aucune trouvée'}`);
   if (r.erreurs.length) {
     l.push('');
-    l.push(`Journal d'erreurs (${r.erreurs.length} dernières lignes) :`);
+    l.push(`Dernières erreurs enregistrées (${r.erreurs.length}) :`);
     l.push(...r.erreurs);
+  } else {
+    l.push('Aucune erreur enregistrée dans le journal.');
   }
   return l.join('\n');
 }
