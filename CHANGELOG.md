@@ -33,6 +33,28 @@ identifiants.
     ainsi validé une correction qui n'avait jamais tourné. Les bancs tuent désormais leurs
     processus par dossier temporaire — jamais par nom d'image, qui frapperait l'app installée.
 
+### Retiré
+
+- **Audit des réglages (Dave, 2026-09-08 : « des demandes de numéros qui ne servent plus à
+  rien »).** Chaque réglage a été tracé jusqu'à son consommateur réel.
+  - **Préfixe et prochain numéro de certificat : retirés.** Le numéro se compose
+    `{inventaire}-{séquence de l'artiste}-{n° Sage}` (ex. `MTR1042-003-5567`) ; ces deux champs
+    n'avaient plus aucun appelant. Pire, l'aide affichait « Format actuel : **C-2026-001** »,
+    ce qui était faux. Retirés avec eux : `apercuProchainNumeroCertificat` et
+    `reserverProchainNumeroCertificat` (0 appelant), un import mort dans `pdf.js`, et le
+    rehaussement du compteur devenu sans objet. Les clés restées dans les `config.json`
+    existants sont simplement ignorées.
+
+### Corrigé
+
+- **Deux aides des Réglages disaient faux.**
+  - Sous les numéros TPS/TVQ de la galerie : « Ces numéros apparaissent sur les factures ».
+    Ils ne s'impriment **nulle part** — la facture artiste porte ceux de l'**artiste**, qui est
+    le fournisseur. Gardés pour la facture client, dont le gabarit reste à bâtir ; l'aide le
+    dit désormais.
+  - Le compteur de factures client **est** vivant (il numérote la vente) : c'est le document
+    qui manque. L'aide distingue maintenant les deux.
+
 ### Ajouté
 
 - **« Relier à une fiche existante » dans la synchronisation des artistes.** Deux artistes de

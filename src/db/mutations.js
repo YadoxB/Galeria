@@ -752,25 +752,10 @@ function rehausserCompteursSelonBase() {
     maj.prochain_numero_facture_artiste = maxFactureArtiste + 1;
   }
 
-  // Certificats : seuls les numéros à l'ancien format `${prefixe}-NNN`
-  // consomment ce compteur. Le format composé `{inventaire}-{seq}-{sage}`
-  // (ex. MTR1042-003-5567) ne doit surtout pas entrer dans le calcul — son
-  // dernier segment est un numéro Sage, pas un compteur.
-  const prefixeCert = (d.prefixe_certificat || '').trim();
-  if (prefixeCert) {
-    const re = new RegExp(`^${echapperRegex(prefixeCert)}-(\\d+)$`);
-    const rows = db
-      .prepare('SELECT numero_delivrance AS n FROM certificats WHERE numero_delivrance LIKE ?')
-      .all(`${prefixeCert}-%`);
-    let maxCert = 0;
-    for (const r of rows) {
-      const m = String(r.n || '').match(re);
-      if (m) maxCert = Math.max(maxCert, parseInt(m[1], 10));
-    }
-    if (maxCert >= (d.prochain_numero_certificat || 1)) {
-      maj.prochain_numero_certificat = maxCert + 1;
-    }
-  }
+  // (Plus de rehaussement du compteur de certificats : ce compteur n'existe
+  // plus. Le numéro se compose {inventaire}-{séquence de l'artiste}-{n° Sage},
+  // et la séquence se lit dans la base — il n'y a rien à rattraper dans la
+  // configuration. Retiré à l'audit des réglages du 2026-09-08.)
 
   if (Object.keys(maj).length) {
     mettreAJourConfig({ documents: maj });
@@ -1365,19 +1350,10 @@ const COLONNES_CERTIFICAT = [
   ['pdf_path', vide],
 ];
 
-function apercuProchainNumeroCertificat() {
-  const cfg = obtenirConfig();
-  return formaterNumero(cfg.documents.prefixe_certificat, cfg.documents.prochain_numero_certificat);
-}
-
-function reserverProchainNumeroCertificat() {
-  const cfg = obtenirConfig();
-  const numero = formaterNumero(cfg.documents.prefixe_certificat, cfg.documents.prochain_numero_certificat);
-  mettreAJourConfig({
-    documents: { prochain_numero_certificat: cfg.documents.prochain_numero_certificat + 1 },
-  });
-  return numero;
-}
+// (apercuProchainNumeroCertificat / reserverProchainNumeroCertificat ont été
+// retirées à l'audit du 2026-09-08 : plus aucun appelant depuis que le numéro
+// se compose {inventaire}-{séquence de l'artiste}-{n° Sage}. Voir
+// composerNumeroCertificat et creerCertificat.)
 
 function _valeursCertificat(data) {
   if (!entier(data.oeuvre_id)) throw new Error("Une œuvre doit être choisie pour le certificat.");
@@ -1536,7 +1512,6 @@ module.exports = {
   apercuProchainNumeroFactureArtiste, reserverProchainNumeroFactureArtiste,
   obtenirOuReserverNumeroFactureArtisteVente,
   creerCertificat, modifierCertificat, supprimerCertificat,
-  apercuProchainNumeroCertificat, reserverProchainNumeroCertificat,
   apercuNumeroCertificat, composerNumeroCertificat,
   apercuProchainNumeroInventaire, reserverProchainNumeroInventaire,
   formaterNumero,

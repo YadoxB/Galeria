@@ -38,8 +38,10 @@ const DEFAULTS = {
     prochain_numero_facture: 1,
     prefixe_facture_artiste: 'FA-2026',
     prochain_numero_facture_artiste: 1,
-    prefixe_certificat: 'C-2026',
-    prochain_numero_certificat: 1,
+    // (prefixe_certificat / prochain_numero_certificat retirés à l'audit du
+    // 2026-09-08 : le numéro se compose {inventaire}-{séquence de
+    // l'artiste}-{n° Sage}. Les clés restées dans les config.json existantes
+    // sont simplement ignorées.)
     tps_actif: true,
     tps_taux: 5.0,
     tvq_actif: true,

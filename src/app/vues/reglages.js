@@ -209,7 +209,14 @@ export async function rendreReglages(contenu, params) {
                     ${champTexte({ nom: 'g_numero_tps', libelle: 'Numéro TPS de la galerie', valeur: g.numero_tps })}
                     ${champTexte({ nom: 'g_numero_tvq', libelle: 'Numéro TVQ de la galerie', valeur: g.numero_tvq })}
                   </div>
-                  <p class="aide-champ">Ces numéros apparaissent sur les factures.</p>
+                  <!-- « Ces numéros apparaissent sur les factures » était FAUX
+                       (audit du 2026-09-08) : ils ne sont imprimés nulle part.
+                       La facture artiste porte les numéros de taxes de
+                       l'ARTISTE (c'est lui le fournisseur), lus sur sa fiche.
+                       Ceux de la galerie serviront à la facture client, dont le
+                       gabarit n'existe pas encore. On le dit plutôt que de
+                       laisser croire à un réglage sans effet. -->
+                  <p class="aide-champ">Conservés pour la <strong>facture client</strong>, qui reste à bâtir&nbsp;: ils ne s'impriment nulle part pour l'instant. La facture artiste, elle, porte les numéros de taxes de l'artiste, pris sur sa fiche.</p>
                 </div>
                 <div class="carte zone-taxes-cote">
                   <h3>Taxes &amp; commission</h3>
@@ -250,7 +257,10 @@ export async function rendreReglages(contenu, params) {
                       ${champTexte({ nom: 'd_prefixe_facture', libelle: 'Préfixe', valeur: d.prefixe_facture, attributs: 'placeholder="F-2026"' })}
                       ${champTexte({ nom: 'd_prochain_numero_facture', libelle: 'Prochain numéro', valeur: d.prochain_numero_facture, type: 'number', attributs: 'min="1" step="1"' })}
                     </div>
-                    <p class="aide-champ">Émise par la galerie pour l'acheteur lors d'une vente.</p>
+                    <!-- Ce compteur EST vivant : il préremplit le numéro de
+                         facture sur la fiche d'une vente. Seul le PDF de la
+                         facture client manque encore. -->
+                    <p class="aide-champ">Sert à numéroter la vente. Le <strong>document</strong> de facture client, lui, reste à bâtir.</p>
                   </div>
                   <div class="sous-section">
                     <h4>Factures artiste</h4>
@@ -260,14 +270,15 @@ export async function rendreReglages(contenu, params) {
                     </div>
                     <p class="aide-champ">Document que l'artiste devrait émettre vers la galerie pour sa part de la vente. La galerie le génère à sa place.</p>
                   </div>
+                  <!-- Préfixe et compteur de certificats RETIRÉS (audit du
+                       2026-09-08) : le numéro ne s'en servait plus depuis qu'il
+                       se compose {inventaire}-{séquence artiste}-{n° Sage}.
+                       Les deux champs ne changeaient rien, et l'aide affichait
+                       un format faux (« C-2026-001 »). -->
                   <div class="sous-section">
                     <h4>Certificats d'authenticité</h4>
-                    <div class="grille-form">
-                      ${champTexte({ nom: 'd_prefixe_certificat', libelle: 'Préfixe', valeur: d.prefixe_certificat, attributs: 'placeholder="C-2026"' })}
-                      ${champTexte({ nom: 'd_prochain_numero_certificat', libelle: 'Prochain numéro', valeur: d.prochain_numero_certificat, type: 'number', attributs: 'min="1" step="1"' })}
-                    </div>
                     ${champTexte({ nom: 'd_signataire', libelle: 'Texte du signataire sur le certificat', valeur: d.signataire_certificat })}
-                    <p class="aide-champ">Format actuel : <strong>${ech(d.prefixe_certificat || 'C-2026')}-001</strong>, <strong>${ech(d.prefixe_certificat || 'C-2026')}-002</strong>, etc.</p>
+                    <p class="aide-champ">Le numéro se compose tout seul&nbsp;: <strong>n° d'inventaire</strong>, <strong>séquence de l'artiste</strong>, <strong>n° de facture Sage</strong> — par exemple <strong>MTR1042-003-5567</strong>.</p>
                   </div>
                   <div class="sous-section">
                     <h4>Numérotation d'inventaire</h4>
@@ -946,8 +957,9 @@ export async function rendreReglages(contenu, params) {
         prochain_numero_facture: Math.max(1, Math.floor(num('d_prochain_numero_facture') || 1)),
         prefixe_facture_artiste: v('d_prefixe_facture_artiste').trim() || 'A',
         prochain_numero_facture_artiste: Math.max(1, Math.floor(num('d_prochain_numero_facture_artiste') || 1)),
-        prefixe_certificat: v('d_prefixe_certificat').trim() || 'C',
-        prochain_numero_certificat: Math.max(1, Math.floor(num('d_prochain_numero_certificat') || 1)),
+        // (plus de prefixe_certificat / prochain_numero_certificat : le numéro
+        // de certificat se compose de l'inventaire, de la séquence de l'artiste
+        // et du n° Sage — voir creerCertificat.)
         tps_actif: form.elements.d_tps_actif.checked,
         tps_taux: Math.max(0, Math.min(100, num('d_tps_taux') ?? 0)),
         tvq_actif: form.elements.d_tvq_actif.checked,

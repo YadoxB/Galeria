@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 const { openDatabase } = require('./db/database');
 const { getDocumentsDir, getDocumentsDirAnnee, getPhotosDir } = require('./db/paths');
 const { obtenirCertificat, obtenirVente, obtenirArtiste, oeuvresPourCatalogue, listerCertificatsParVente } = require('./db/requetes');
-const { obtenirOuReserverNumeroFactureArtisteVente, enregistrerAnnexe, majAnnexePdfPath, annulerAnnexe, majPresentationArtiste, creerCertificat, reserverProchainNumeroCertificat } = require('./db/mutations');
+const { obtenirOuReserverNumeroFactureArtisteVente, enregistrerAnnexe, majAnnexePdfPath, annulerAnnexe, majPresentationArtiste, creerCertificat } = require('./db/mutations');
 const { obtenirConfig } = require('./config');
 
 // ===== Helpers =====

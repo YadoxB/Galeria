@@ -21,6 +21,15 @@ relisant le message avant de l'envoyer.
 
 ---
 
+## Des Réglages sans champs inutiles
+
+Dans **Réglages → Documents**, les cases « Préfixe » et « Prochain numéro » des
+certificats ont disparu : elles ne servaient plus à rien. Le numéro d'un
+certificat se compose tout seul, à partir du numéro d'inventaire de l'œuvre —
+par exemple **MTR1042-003-5567**. L'écran l'explique maintenant.
+
+---
+
 ## Les artistes qui signent d'un nom d'artiste
 
 Certains artistes sont présentés sur le site sous un nom différent de celui que
