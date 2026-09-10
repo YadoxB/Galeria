@@ -948,6 +948,28 @@ function titreDArtiste(type, langue = 'FR') {
 
 // Signature des champs de présentation : sert à détecter un changement de profil
 // et à éviter de régénérer un PDF identique. Inclut la date de modif de la photo.
+// Empreinte du GABARIT de présentation, calculée une fois par session.
+//
+// ⚠ Sans elle, le cache ne voyait que les DONNÉES de l'artiste : une
+// correction du gabarit n'atteignait jamais une présentation déjà produite.
+// C'est exactement ce qui serait arrivé au C.V. d'André Coppens (2026-09-10) :
+// la ligne « Depuis 2014 » réparée dans le gabarit, mais l'ancien PDF — avec
+// son faux sous-titre — resservi tel quel tant que la fiche ne changeait pas,
+// et les parents concluant que rien n'avait été corrigé.
+let empreinteGabaritPresentation = null;
+function empreinteGabarit() {
+  if (empreinteGabaritPresentation != null) return empreinteGabaritPresentation;
+  try {
+    const p = path.join(__dirname, '..', 'gabarits', 'gabarit-presentation.html');
+    empreinteGabaritPresentation = crypto.createHash('sha1').update(fs.readFileSync(p)).digest('hex');
+  } catch {
+    // Gabarit illisible : on renonce au cache plutôt que de resservir un PDF
+    // dont on ne peut plus garantir qu'il correspond au gabarit actuel.
+    empreinteGabaritPresentation = String(Date.now());
+  }
+  return empreinteGabaritPresentation;
+}
+
 function signaturePresentation(artiste) {
   let mtime = '';
   if (artiste.photo_path) {
@@ -963,6 +985,7 @@ function signaturePresentation(artiste) {
     dem: artiste.demarche || '',
     cv: artiste.curriculum || '',
     photo: (artiste.photo_path || '') + '|' + mtime,
+    gabarit: empreinteGabarit(),
   });
   return crypto.createHash('sha1').update(payload).digest('hex');
 }

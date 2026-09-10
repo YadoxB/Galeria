@@ -121,9 +121,25 @@ function rendreCV(texte){
   const lignes = String(texte||'').split(/\r?\n/);
   // Année (2025), plage (1996 à 2001 / 1996-2001) ou liste (2000, 2004, 2009),
   // suivie de sa description sur la même ligne.
-  const reAnnee = /^(\d{4}(?:\s*(?:à|et|[-–—]|,)\s*\d{4})*)[\s:.,–—-]+(.+)$/;
+  //
+  // ⚠ La date peut commencer par un MOT : « Depuis 2014 — Galerie du Vieux
+  // St-Jean », « Avant 2010 — Médaille d'argent », « Since 2014 », « From 1989
+  // to today ». La première version exigeait que la ligne commence par quatre
+  // chiffres : ces lignes-là échouaient, puis estRubrique() les prenait pour des
+  // SOUS-TITRES (courtes, avec des lettres, sans point final). Signalé sur le C.V.
+  // d'André Coppens le 2026-09-10 ; au même moment, la base en comptait 19 du
+  // même genre chez plusieurs artistes, en français et en anglais.
+  //
+  // Le mot d'ouverture est facultatif et limité à une liste fermée : un mot
+  // quelconque suivi d'une année (« Exposition 2014 ») doit rester ce qu'il est.
+  const OUVERTURE = "(?:(?:depuis|dès|des|avant|après|vers|jusqu['’]en|en|since|before|after|from|until|circa|in)\\s+)?";
+  const ANNEES = "\\d{4}(?:\\s*(?:à|et|to|and|[-–—]|,)\\s*\\d{4})*";
+  // Plage ouverte : « 1989 à aujourd'hui », « from 1989 to today ».
+  const FIN_OUVERTE = "(?:\\s+(?:à|au|jusqu['’]à|to|until)\\s+(?:aujourd['’]hui|ce\\s+jour|maintenant|présent|today|present|now))?";
+  const DATE = OUVERTURE + ANNEES + FIN_OUVERTE;
+  const reAnnee = new RegExp('^(' + DATE + ')[\\s:.,–—-]+(.+)$', 'i');
   // Même chose, mais seule sur sa ligne : la description suit en dessous.
-  const reAnneeSeule = /^(\d{4}(?:\s*(?:à|et|[-–—]|,)\s*\d{4})*)[\s:.,–—-]*$/;
+  const reAnneeSeule = new RegExp('^(' + DATE + ')[\\s:.,–—-]*$', 'i');
   // Puce de liste. Le tiret peut coller au texte (« -Musée Beaulne »), ce qui
   // arrive quand le C.V. est copié-collé à la main depuis le site.
   const rePuce = /^[-–—•*]\s*\S/;

@@ -39,6 +39,10 @@ export const VERSIONS = [
         texte: "L'écran <b>Site web</b> compare maintenant les textes anglais. Chaque écart porte une étiquette&nbsp;: <b>manquant</b> (la case est vide chez vous) ou <b>différent</b> (vous avez un autre texte). Cliquez <b>Manquants</b> puis <b>Tout cocher</b>&nbsp;: tout ce qui manque arrive d'un coup, sans rien effacer.",
       },
       {
+        titre: 'Les dates des C.V. réparées',
+        texte: "Dans les présentations, « Depuis 2014 — Galerie du Vieux St-Jean » s'affichait comme un <b>titre de section</b>. C'est réparé, pour les 19 lignes de ce genre. Vos présentations se refont d'elles-mêmes à la prochaine demande.",
+      },
+      {
         titre: 'Des signalements plus clairs',
         texte: "Le message de <b>Signaler un problème</b> commence maintenant par ce que vous avez écrit, puis dit <b>sur quelle page</b> vous étiez, en toutes lettres. Les détails techniques sont rangés à la fin.",
       },

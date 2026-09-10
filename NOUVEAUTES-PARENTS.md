@@ -11,6 +11,19 @@
 
 ---
 
+## Réparé : les dates « Depuis 2014 » dans les C.V.
+
+Dans une présentation d'artiste, une ligne comme « Depuis 2014 — Galerie du
+Vieux St-Jean » s'affichait comme un titre de section, en rouge, au lieu d'une
+ligne datée. C'est réparé, et la même correction vaut pour « Avant 2010 »,
+« Since 2016 » et les autres lignes du même genre — il y en avait 19, chez
+plusieurs artistes.
+
+Vos présentations se refont d'elles-mêmes à la prochaine demande : pas besoin
+de modifier la fiche de l'artiste pour voir la correction.
+
+---
+
 ## Les textes anglais dans la comparaison
 
 L'écran **Site web** compare maintenant aussi les **textes anglais** : les

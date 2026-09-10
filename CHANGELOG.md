@@ -98,6 +98,32 @@ identifiants.
 
 ### Corrigé
 
+- **C.V. : une date qui commence par un mot devenait un sous-titre** (signalé sur celui
+  d'André Coppens, 2026-09-10). « Depuis 2014 — Galerie du Vieux St-Jean » sortait dans la
+  présentation en intertitre rouge, au lieu d'une ligne datée.
+  - Cause : le motif de date exigeait que la ligne commence par **quatre chiffres**. La ligne
+    échouait, puis `estRubrique()` la classait sous-titre (courte, avec des lettres, sans point).
+  - Le défaut était plus large que le cas signalé : **19 lignes** chez plusieurs artistes, en
+    français et en anglais — « Depuis » ×7, « Since » ×7, « Avant » ×2, « Before » ×2,
+    « From » ×1. Trois sortaient en sous-titre ; les seize autres, plus longues, en ligne simple
+    **sans colonne de date** — moins voyant, tout aussi faux.
+  - Le motif accepte désormais un mot d'ouverture pris dans une **liste fermée** (depuis, avant,
+    après, vers, dès, jusqu'en, en, since, before, after, from, until, circa, in) et une plage
+    ouverte (« à aujourd'hui », « to today »). Un mot quelconque suivi d'une année
+    (« Exposition 2014 ») reste ce qu'il est.
+  - Vérifié par comparaison avant/après sur les **2 384 lignes** de C.V. de la base : exactement
+    ces 19 lignes changent, toutes vers une entrée datée, **aucune entrée datée perdue**. La
+    colonne de 24 mm les accueille (« Depuis 2014 » 20 mm ; « From 1989 to today » sur deux
+    lignes, comme le font déjà « 2014 à 2016 et 2018 » ou « 2012, 2013 et 2017 »).
+
+- **Une correction de gabarit n'atteignait jamais une présentation déjà produite.** La
+  signature du cache portait sur les données de l'artiste (nom, textes, photo) mais **pas sur
+  le gabarit** : après la correction ci-dessus, la présentation d'André Coppens aurait été
+  resservie telle quelle, faux sous-titre compris, tant que sa fiche ne changeait pas — et les
+  parents auraient conclu que rien n'était réparé. L'empreinte du gabarit entre maintenant dans
+  la signature : toute modification du gabarit invalide d'elle-même les présentations en cache.
+  Vérifié : produite par le vrai chemin, la présentation d'André Coppens sort **à neuf**.
+
 - **Deux aides des Réglages disaient faux.**
   - Sous les numéros TPS/TVQ de la galerie : « Ces numéros apparaissent sur les factures ».
     Ils ne s'impriment **nulle part** — la facture artiste porte ceux de l'**artiste**, qui est
