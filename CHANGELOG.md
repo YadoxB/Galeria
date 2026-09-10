@@ -12,6 +12,20 @@ identifiants.
 
 ### Modifié
 
+- **« Site web » devient une entrée du menu.** Comparer les fiches avec le site vivait dans
+  Réglages → Site web → « Comparer les fiches avec le site… » : un écran de travail rangé dans
+  un tiroir de configuration, à trois clics, qu'il fallait savoir chercher (Dave, 2026-09-08).
+  - Entrée **Site web** (un globe) dans le bloc du bas, au-dessus d'Outils. Les deux onglets
+    Œuvres et Artistes partagent la même entrée, qui reste surlignée sur les deux.
+  - Réglages ne garde que la **connexion** (adresse, clés, test). Le gros bouton cède la place
+    à « Ouvrir Site web » — celui qui avait appris l'ancien chemin est conduit au nouveau.
+  - ⚠ L'ancien garde-fou des Réglages **exigeait les clés REST pour entrer**, alors que la
+    comparaison des artistes, la récupération des adresses et l'import des textes anglais
+    passent tous par les API publiques et n'ont jamais eu besoin que de l'adresse. Il est
+    remplacé par un bandeau d'état à **trois cas** sur l'écran lui-même (voir l'entrée
+    suivante, livrée avec les textes anglais : les deux ont été écrits dans les mêmes lignes).
+  - Maquette : `demos/menu-site-web.html`.
+
 - **Le courriel de signalement se lit sans effort** (Dave, 2026-09-08 : « moins technique et
   plus clair pour moi, et qu'il m'indique sur quelle page ils se trouvent »).
   - **Ordre inversé** : CE QUI S'EST PASSÉ, puis OÙ, puis QUAND ; tout le technique est rejeté

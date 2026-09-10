@@ -31,6 +31,10 @@ export const VERSIONS = [
         texte: "Dans <b>Site web → Artistes</b>, onglet « Seulement sur le site », ce nouveau bouton vous demande de quelle fiche il s'agit — en vous proposant les bonnes en premier — puis <b>quel nom Galeria doit afficher</b>. Vous gardez le vôtre, le site garde le sien, et les deux restent appariés. Le lien se défait d'un clic depuis la fiche de l'artiste.",
       },
       {
+        titre: '« Site web » dans le menu',
+        texte: "Comparer vos fiches avec le site ne se cache plus dans les Réglages&nbsp;: une entrée <b>Site web</b> vous attend dans le menu de gauche, en bas. L'écran vous dit lui-même s'il est bien relié au site.",
+      },
+      {
         titre: 'Des signalements plus clairs',
         texte: "Le message de <b>Signaler un problème</b> commence maintenant par ce que vous avez écrit, puis dit <b>sur quelle page</b> vous étiez, en toutes lettres. Les détails techniques sont rangés à la fin.",
       },

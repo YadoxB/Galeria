@@ -26,6 +26,9 @@ function sectionDe(nomVue) {
   if (nomVue === 'documents')        return 'documents';
   if (nomVue === 'rapport')          return 'rapport';
   if (nomVue.startsWith('vente'))   return 'ventes';
+  // Les deux écrans de synchronisation (œuvres et artistes) partagent UNE
+  // entrée de menu : c'est la même tâche vue sous deux angles.
+  if (nomVue.startsWith('web-sync')) return 'site-web';
   if (nomVue === 'outils')           return 'outils';
   if (nomVue === 'reglages')         return 'reglages';
   // Le Profil est maintenant une catégorie des Réglages : l'ancienne route

@@ -489,13 +489,19 @@ export async function rendreReglages(contenu, params) {
               <div class="panneau-tete"><h2>Site web</h2><p class="desc">Relier l'application à la boutique WooCommerce du site, pour comparer et tenir à jour les fiches.</p></div>
               <div class="grille-bento">
                 <div class="carte zone-web">
+                  <!-- La comparaison a quitté les Réglages pour l'entrée
+                       « Site web » du menu (2026-09-08). On garde ici un
+                       renvoi plutôt qu'un vide : celui qui avait appris
+                       l'ancien chemin doit être conduit au nouveau, pas laissé
+                       devant une section amputée. Les Réglages ne gardent que
+                       la connexion — ce qui leur appartient vraiment. -->
                   <div class="web-action">
                     <div class="web-action-txt">
                       <h3>Comparer avec le site</h3>
-                      <p class="aide-champ">L'app lit la boutique (par numéro d'inventaire = SKU) et te propose de reprendre des valeurs. <strong>Lecture seule — rien n'est modifié sur le site.</strong></p>
+                      <p class="aide-champ">La comparaison des fiches se fait maintenant depuis <strong>Site web</strong>, dans le menu de gauche. <strong>Lecture seule — rien n'est modifié sur le site.</strong></p>
                       <p class="web-etat-compact" id="web-etat-compact"></p>
                     </div>
-                    <button type="button" class="btn-action btn-principal btn-web-grand" id="btn-web-comparer">Comparer les fiches avec le site…</button>
+                    <button type="button" class="btn-action btn-secondaire-action" id="btn-web-comparer">Ouvrir Site web</button>
                   </div>
 
                   <details class="web-connexion" id="web-connexion" ${(config.web?.consumer_key && config.web?.consumer_secret) ? '' : 'open'}>
@@ -1155,16 +1161,13 @@ export async function rendreReglages(contenu, params) {
         btn.textContent = libelle;
       }
     });
+    // Plus de garde-fou ici : l'écran « Site web » dit lui-même où en est la
+    // connexion, à trois états (aucune adresse / adresse seule / adresse +
+    // clés), et grise seulement ce qui ne peut pas fonctionner. L'ancien
+    // contrôle bloquait tout faute de clés, alors que la comparaison des
+    // ARTISTES n'en a jamais eu besoin.
     const btnComparer = contenu.querySelector('#btn-web-comparer');
-    if (btnComparer) btnComparer.addEventListener('click', async () => {
-      const etat = await window.api.webEtat().catch(() => null);
-      if (!etat || !etat.cles_definies) {
-        if (webConnexion) webConnexion.open = true; // déplie la connexion pour guider la saisie
-        await alerter({ type: 'warning', title: 'Clés manquantes', message: "Renseigne d'abord l'adresse, la clé et le secret (section « Connexion au site »), puis teste la connexion." });
-        return;
-      }
-      naviguer('web-sync');
-    });
+    if (btnComparer) btnComparer.addEventListener('click', () => naviguer('web-sync'));
     contenu.querySelector('#btn-web-suppr').addEventListener('click', async () => {
       const r = await confirmer({
         type: 'warning', title: 'Retirer les clés du site ?',

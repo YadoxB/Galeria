@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette — Une entrée « Site web » dans le menu</title>
+<link rel="stylesheet" href="../src/theme.css">
+<link rel="stylesheet" href="../src/styles.css">
+<style>
+  body{padding:30px 34px;overflow:auto;height:auto;user-select:text;}
+  .doc{max-width:1180px;margin:0 auto;}
+  h1{font-family:var(--font-titre);font-weight:500;font-size:29px;margin:0 0 8px;}
+  .sous{color:var(--slate);font-size:14px;line-height:1.65;margin:0 0 6px;max-width:920px;}
+  .lot-titre{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+             margin:44px 0 6px;font-weight:600;}
+  .lot-note{font-size:13.5px;color:var(--slate);line-height:1.65;margin:0 0 16px;max-width:920px;}
+  .etiq{font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;
+        margin:0 0 9px;color:var(--stone);}
+  .etiq.reco{color:var(--warm-gold);}
+  .rangee{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;}
+  .legende{font-size:12.5px;color:var(--slate);margin:11px 0 0;max-width:330px;line-height:1.55;}
+  .legende b{color:var(--ink);}
+  .journal{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:16px 21px;margin-top:22px;}
+  .journal h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+              margin:0 0 9px;font-weight:700;}
+  .journal ul{margin:0;padding-left:19px;font-size:13.5px;color:var(--slate);line-height:1.8;}
+  .journal em{color:var(--ink);font-style:normal;font-weight:600;}
+  .maquette{background:var(--soft-ivory);border:1px dashed var(--mist);border-radius:16px;padding:18px;}
+
+  /* --- la barre latérale, à sa vraie largeur --- */
+  .faux-menu{width:250px;background:var(--gallery-navy);border-radius:14px;padding:14px 10px;
+             display:flex;flex-direction:column;gap:2px;min-height:430px;}
+  .faux-menu .grp{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:rgba(255,255,255,.42);
+                  font-weight:700;margin:14px 0 5px;padding-left:11px;}
+  .faux-menu .grp:first-child{margin-top:2px;}
+  .faux-menu button{display:flex;align-items:center;gap:11px;width:100%;border:0;background:transparent;
+    color:rgba(255,255,255,.82);font-family:var(--font-ui);font-size:13.5px;text-align:left;
+    padding:8px 11px;border-radius:9px;cursor:pointer;}
+  .faux-menu button:hover{background:rgba(255,255,255,.07);}
+  .faux-menu button.actif{background:rgba(255,255,255,.13);color:#fff;}
+  .faux-menu button.neuf{box-shadow:0 0 0 2px var(--warm-gold) inset;color:#fff;}
+  .faux-menu svg{width:18px;height:18px;flex:0 0 auto;}
+  .faux-menu .bas{margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.12);}
+
+  /* --- l'écran de droite --- */
+  .ecran{flex:1;min-width:430px;background:#fff;border:1px solid var(--mist);border-radius:14px;padding:20px 22px;}
+  .ecran h2{font-family:var(--font-titre);font-weight:500;font-size:24px;margin:0 0 3px;}
+  .ecran .st{color:var(--slate);font-size:13px;margin:0 0 14px;line-height:1.55;}
+  .bandeau-etat{display:flex;align-items:center;gap:11px;border-radius:11px;padding:11px 14px;
+                font-size:13px;margin-bottom:14px;flex-wrap:wrap;}
+  .bandeau-etat.ok{background:#F2F7F2;border:1px solid #CFE3CF;color:#2f5d34;}
+  .bandeau-etat.non{background:#FFF8F8;border:1px solid #E9D2D2;color:#7d2b2b;}
+  .bandeau-etat .btn-lien{margin-left:auto;}
+  .barre-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .faux-corps{border:1px dashed var(--mist);border-radius:11px;padding:26px;text-align:center;
+              color:var(--stone);font-size:13px;background:var(--soft-ivory);}
+  .bascule{display:inline-flex;border:1px solid var(--mist);border-radius:999px;overflow:hidden;
+           background:#fff;margin-bottom:14px;}
+  .bascule button{border:0;background:transparent;cursor:pointer;font-family:var(--font-ui);
+    font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--stone);padding:6px 14px;}
+  .bascule button.on{background:var(--gallery-navy);color:#fff;}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<h1>Sortir la comparaison des Réglages</h1>
+<p class="sous">Aujourd'hui, comparer les fiches avec le site se trouve dans <b>Réglages → Site web → « Comparer les
+fiches avec le site… »</b>. C'est un écran de travail quotidien rangé dans un tiroir de configuration : trois clics,
+et il faut savoir qu'il existe (Dave, 2026-09-08 : « ces fonctions sont loin dans les réglages et ce n'est pas
+évident à trouver »).</p>
+
+<p class="lot-titre">Le changement : une entrée de menu</p>
+<p class="lot-note">Le menu latéral gagne <b>Site web</b>, juste au-dessus d'Outils, dans le bloc du bas avec les
+utilitaires. Un clic au lieu de trois, et surtout : <b>on le voit sans le chercher</b>. Réglages ne garde que ce
+qui y appartient vraiment — l'adresse du site et les clés d'accès.</p>
+
+<div class="rangee">
+  <div>
+    <p class="etiq">Aujourd'hui</p>
+    <div class="faux-menu" id="menu-avant"></div>
+    <p class="legende">Rien n'annonce que l'app sait parler au site. La fonction vit dans <b>Réglages</b>, entre
+    les clés d'accès et les sauvegardes.</p>
+  </div>
+  <div>
+    <p class="etiq reco">Proposé</p>
+    <div class="faux-menu" id="menu-apres"></div>
+    <p class="legende">Une entrée <b>Site web</b> dans le bloc des utilitaires. À côté d'Outils : c'est un
+    système périphérique, pas une section du catalogue.</p>
+  </div>
+  <div class="ecran">
+    <div class="bascule" id="bascule">
+      <button class="on" data-etat="ok">Connexion configurée</button>
+      <button data-etat="non">Pas encore configurée</button>
+    </div>
+    <h2>Site web</h2>
+    <p class="st">L'app <b>lit</b> la boutique et vous propose de reprendre des valeurs.
+      <b>Rien n'est jamais modifié sur le site.</b></p>
+    <div id="bandeau"></div>
+    <div class="wsync-mode" role="tablist" style="margin-bottom:14px;">
+      <button type="button" class="wsync-mode-btn actif">Œuvres</button>
+      <button type="button" class="wsync-mode-btn">Artistes</button>
+    </div>
+    <div class="barre-actions" id="actions"></div>
+    <div class="faux-corps" id="corps"></div>
+  </div>
+</div>
+
+<p class="lot-titre">Ce que Réglages garde</p>
+<p class="lot-note">Uniquement la <b>connexion</b> : l'adresse du site, les clés, le bouton pour tester. Le gros
+bouton « Comparer les fiches avec le site… » cède la place à un simple renvoi — celui qui l'a appris ne se
+retrouve pas devant un vide.</p>
+
+<div class="maquette" style="max-width:620px;">
+  <div class="carte" style="background:#fff;border:1px solid var(--mist);border-radius:14px;padding:18px 20px;">
+    <h3 style="font-family:var(--font-titre);font-weight:500;font-size:19px;margin:0 0 4px;">Site web</h3>
+    <p class="aide-champ" style="margin:0 0 14px;">Relier l'application à la boutique du site.</p>
+    <p style="font-size:13px;color:var(--slate);margin:0 0 14px;line-height:1.6;">
+      La comparaison des fiches se fait maintenant depuis <b>Site web</b>, dans le menu de gauche.
+      <button type="button" class="btn-lien">Y aller</button>
+    </p>
+    <details open style="border-top:1px solid var(--mist);padding-top:12px;">
+      <summary style="font-size:13px;cursor:pointer;color:var(--ink);">Connexion au site (adresse et clés)</summary>
+      <p class="aide-champ" style="margin-top:10px;">Adresse, clé, secret, bouton « Tester la connexion » — inchangés.</p>
+    </details>
+  </div>
+</div>
+
+<div class="journal">
+  <h4>Les points qui méritent un mot</h4>
+  <ul>
+    <li><em>Un état de connexion visible.</em> Depuis les Réglages, un garde-fou vérifiait les clés avant
+      d'ouvrir l'écran. Avec une entrée de menu, on y arrive directement : l'écran doit donc <b>dire lui-même</b>
+      s'il est relié, et mener aux Réglages si non — au lieu de laisser cliquer « Comparer » pour n'obtenir
+      qu'un message d'erreur.</li>
+    <li><em>Les deux onglets restent.</em> Œuvres et Artistes ne deviennent pas deux entrées de menu : c'est la
+      même tâche vue sous deux angles, et deux entrées voisines auraient obligé à choisir avant de savoir.</li>
+    <li><em>Les actions groupées ne bougent pas</em> — « Importer les textes anglais », « Récupérer les
+      adresses », « Séparer les citations » restent où elles sont, en tête de leur onglet.</li>
+    <li><em>Les boutons « Comparer avec le site » des fiches</em> d'artiste et d'œuvre ne changent pas non plus.
+      Ils servent à autre chose : vérifier <b>une</b> fiche qu'on a sous les yeux.</li>
+  </ul>
+</div>
+
+</div>
+<script>
+const ICONES = {
+  accueil: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/>',
+  artistes: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/>',
+  oeuvres: '<rect x="3" y="4" width="18" height="14" rx="2"/><path d="m6 15 4-4 3 3 2-2 3 3"/>',
+  expos: '<path d="M4 5h16v10H4z"/><path d="M12 15v5"/><path d="M8 20h8"/>',
+  clients: '<circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.3 2.9-5 6.5-5s6.5 1.7 6.5 5"/><path d="M17 11a3 3 0 1 0-2-5.2"/>',
+  ventes: '<path d="M3 6h18l-2 12H5z"/><path d="M9 10v6"/><path d="M15 10v6"/>',
+  suivi: '<path d="M9 4H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>',
+  documents: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+  rapport: '<rect x="5" y="5" width="14" height="16" rx="2"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/>',
+  // Un globe avec ses méridiens : ce que tout le monde lit comme « le web ».
+  site: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z"/>',
+  outils: '<path d="M14.7 6.3a3 3 0 0 0 4 4l-9 9-4 1 1-4 8-10z"/><path d="M3 21l3-3"/>',
+  reglages: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82a2 2 0 1 1-2.83 2.83a1.65 1.65 0 0 0-2.82 1.18a2 2 0 1 1-4 0a1.65 1.65 0 0 0-2.82-1.18a2 2 0 1 1-2.83-2.83a1.65 1.65 0 0 0-1.18-2.82a2 2 0 1 1 0-4a1.65 1.65 0 0 0 1.18-2.82a2 2 0 1 1 2.83-2.83a1.65 1.65 0 0 0 2.82-1.18a2 2 0 1 1 4 0a1.65 1.65 0 0 0 2.82 1.18a2 2 0 1 1 2.83 2.83a1.65 1.65 0 0 0 1.18 2.82a2 2 0 1 1 0 4a1.65 1.65 0 0 0-1.18 2.82z"/>',
+};
+const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+  stroke-linecap="round" stroke-linejoin="round">${ICONES[k]}</svg>`;
+
+function menu(avecSite) {
+  const e = (k, lib, cls = '') => `<button class="${cls}">${svg(k)}<span>${lib}</span></button>`;
+  return `
+    ${e('accueil', 'Accueil')}
+    <div class="grp">Catalogue</div>
+    ${e('artistes', 'Artistes')}${e('oeuvres', 'Œuvres')}${e('expos', 'Expositions')}
+    <div class="grp">Ventes</div>
+    ${e('clients', 'Clients')}${e('ventes', 'Ventes')}${e('suivi', 'Suivi')}
+    <div class="grp">Archives</div>
+    ${e('documents', 'Documents')}${e('rapport', 'Rapport')}
+    <div class="bas">
+      ${avecSite ? e('site', 'Site web', 'neuf') : ''}
+      ${e('outils', 'Outils')}${e('reglages', 'Réglages', avecSite ? '' : 'actif')}
+    </div>`;
+}
+document.getElementById('menu-avant').innerHTML = menu(false);
+document.getElementById('menu-apres').innerHTML = menu(true);
+
+function dessinerEcran(etat) {
+  const relie = etat === 'ok';
+  document.getElementById('bandeau').innerHTML = relie
+    ? `<div class="bandeau-etat ok">✓ Relié à <b>galerievieuxstjean.com</b>
+         <button type="button" class="btn-lien">Changer la connexion</button></div>`
+    : `<div class="bandeau-etat non">Aucune connexion au site n'est configurée.
+         <button type="button" class="btn-lien">Configurer dans Réglages</button></div>`;
+  document.getElementById('actions').innerHTML = relie
+    ? `<button type="button" class="btn-action btn-secondaire-action">Importer les textes anglais</button>
+       <button type="button" class="btn-action btn-secondaire-action">Récupérer les adresses du site</button>
+       <button type="button" class="btn-action btn-principal">Comparer avec le site</button>`
+    : `<button type="button" class="btn-action btn-secondaire-action" disabled>Importer les textes anglais</button>
+       <button type="button" class="btn-action btn-secondaire-action" disabled>Récupérer les adresses du site</button>
+       <button type="button" class="btn-action btn-principal" disabled>Comparer avec le site</button>`;
+  document.getElementById('corps').textContent = relie
+    ? 'Le tableau des différences s’affiche ici après « Comparer ».'
+    : 'Rien à comparer tant que la connexion n’est pas configurée.';
+}
+document.getElementById('bascule').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  document.querySelectorAll('#bascule button').forEach((x) => x.classList.toggle('on', x === b));
+  dessinerEcran(b.dataset.etat);
+});
+dessinerEcran('ok');
+</script>
+</body></html>

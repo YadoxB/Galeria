@@ -11,6 +11,18 @@
 
 ---
 
+## « Site web » est maintenant dans le menu
+
+Pour comparer vos fiches avec le site, il fallait passer par **Réglages**,
+choisir la section Site web, puis cliquer sur un bouton. Il y a maintenant une
+entrée **Site web** directement dans le menu de gauche, en bas, avec un petit
+globe.
+
+L'écran vous dit en haut s'il est bien relié au site, et vous mène aux
+Réglages si quelque chose manque.
+
+---
+
 ## Vos signalements de problème, plus clairs
 
 Quand vous cliquez sur **Signaler un problème**, le message qui part commence
