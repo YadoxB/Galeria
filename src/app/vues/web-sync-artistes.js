@@ -9,8 +9,10 @@ import { naviguer } from '../router.js';
 import { alerter, confirmer, editerTexteImport } from '../dialogue.js';
 import { recadrerCarre } from '../recadrage.js';
 import {
-  etatConnexion, bandeauConnexionHtml, brancherConnexion,
+  etatConnexion, brancherConnexion,
   natureDe, pastilleNature, chipsNatureHtml, lirePrefAnglais, ecrirePrefAnglais,
+  enteteSiteWebHtml, brancherEnteteSiteWeb, videAvantHtml, tuilesHtml,
+  barreSelectionHtml, majBarreSelection, dureeLecture,
 } from './web-sync.js';
 
 const TYPES_DIFF = [
@@ -40,40 +42,13 @@ function apercuTexte(v) {
 // Œuvres), et comparer tout de suite.
 export async function rendreWebSyncArtistes(contenu, params = {}) {
   const etat = await etatConnexion();
+  // Même barre que l'onglet Œuvres (web-sync.js). Ici, pas de lecture
+  // ciblée : toutes les pages d'artistes du site tiennent en une lecture ; le
+  // choix d'artiste FILTRE l'affichage, et suit d'un onglet à l'autre.
   contenu.innerHTML = `
     <div class="vue-liste web-sync-vue">
-      <div class="entete-page">
-        <div>
-          <h1>Site web</h1>
-          <p class="sous-titre">Sens « tirer » — l'app lit les artistes du site. <strong>Aucune modification n'est faite sur le site.</strong></p>
-          <div class="wsync-mode" role="tablist" aria-label="Type de synchronisation">
-            <button type="button" class="wsync-mode-btn" id="wsync-vers-oeuvres">Œuvres</button>
-            <button type="button" class="wsync-mode-btn actif" aria-current="true">Artistes</button>
-          </div>
-        </div>
-        <div class="entete-page-actions">
-          <!-- Même choix que sur l'onglet Œuvres, et il passe d'un onglet à
-               l'autre. Ici, pas de lecture ciblée : toutes les pages d'artistes
-               du site tiennent en une lecture ; le choix FILTRE l'affichage. -->
-          <div class="wsync-comparer-grp">
-            <label class="wsync-portee">Comparer
-              <select id="wsync-portee"><option value="">Tous les artistes</option></select>
-            </label>
-            <label class="wsync-opt-anglais" title="Relit les pages du site en anglais pour comparer aussi les textes anglais. Deux fois plus long.">
-              <input type="checkbox" id="c-anglais"> textes anglais
-            </label>
-            <button type="button" class="btn-action btn-principal" id="btn-comparer">Comparer les artistes</button>
-          </div>
-        </div>
-      </div>
-      ${bandeauConnexionHtml(etat, false)}
-      <div class="wsync-astuce">
-        <div class="wsync-astuce-txt">
-          <strong>Séparer les citations</strong> — sur le site, la citation de l'artiste (« … ») est rangée à part, alors que dans l'app elle est encore <em>incluse dans la biographie</em>. Ce bouton remplit le champ <strong>Citation</strong> de chaque artiste à partir du site <strong>et</strong> retire cette citation du texte de la biographie. À faire une seule fois ; n'agit que sur les artistes dont le champ Citation est encore vide.
-        </div>
-        <button type="button" class="btn-action btn-secondaire-action" id="btn-ranger-citations">Séparer les citations</button>
-      </div>
-      <div id="web-sync-corps"></div>
+      ${enteteSiteWebHtml('artistes', etat)}
+      <div id="web-sync-corps">${videAvantHtml('artistes', etat)}</div>
     </div>
   `;
 
@@ -82,45 +57,25 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
   const caseAnglais = contenu.querySelector('#c-anglais');
   caseAnglais.checked = lirePrefAnglais();
   caseAnglais.addEventListener('change', () => ecrirePrefAnglais(caseAnglais.checked));
-  // Le choix d'artiste suit d'un onglet à l'autre.
-  contenu.querySelector('#wsync-vers-oeuvres').addEventListener('click', () =>
-    naviguer('web-sync', portee ? { artiste_id: portee } : {}));
+  // « Séparer les citations » change les fiches : on relit ce qui est affiché.
+  brancherEnteteSiteWeb(contenu, {
+    etat, mode: 'artistes', portee: () => portee,
+    apresCitations: async () => { if (dataCourant) await charger(); },
+  });
   // Les artistes passent par l'API publique de WordPress : l'adresse suffit,
   // les clés REST ne sont pas nécessaires ici.
-  brancherConnexion(contenu, etat, {
-    exigeCles: false,
-    boutons: [btnComparer, contenu.querySelector('#btn-ranger-citations')],
-  });
-  contenu.querySelector('#btn-ranger-citations').addEventListener('click', async (e) => {
-    const btn = e.currentTarget; // à capturer AVANT tout await (sinon null ensuite)
-    const rep = await confirmer({
-      type: 'question', title: 'Séparer les citations ?',
-      message: 'Remplir le champ « Citation » de chaque artiste à partir du site, et retirer cette citation du texte de la biographie quand elle y figure.',
-      detail: "Ne touche qu'aux artistes dont la citation est encore vide. Les biographies ne sont modifiées que pour en retirer la citation exacte — rien d'autre.",
-      buttons: ['Séparer les citations', 'Annuler'], defaultId: 0, cancelId: 1,
-    });
-    if (rep !== 0) return;
-    btn.disabled = true; const lib = btn.textContent; btn.textContent = 'Séparation…';
-    try {
-      const r = await window.api.webRangerCitations();
-      await alerter({
-        type: 'succes', title: 'Citations rangées',
-        message: r.traites
-          ? `${r.traites} citation(s) remplie(s)${r.biosNettoyees ? `, dont ${r.biosNettoyees} retirée(s) de la biographie` : ''}.`
-          : 'Rien à ranger : toutes les citations sont déjà en place.',
-      });
-      if (dataCourant) await charger(); // rafraîchir la comparaison si déjà affichée
-    } catch (err) {
-      await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) });
-    } finally {
-      btn.disabled = false; btn.textContent = lib;
-    }
-  });
+  brancherConnexion(contenu, etat, { exigeCles: false, boutons: [btnComparer] });
 
   // Portée : null = tous les artistes, sinon l'id d'un artiste. Filtre
   // d'affichage seulement — les pages du site sont lues d'un bloc.
   const selPortee = contenu.querySelector('#wsync-portee');
   let portee = Number(params && params.artiste_id) || null;
+  // Recherche par nom : resserre les trois onglets, sans relire le site.
+  let recherche = '';
+  const correspond = (nom) => {
+    const q = sansAccents(recherche.trim());
+    return !q || sansAccents(nom || '').includes(q);
+  };
 
   let dataCourant = null;
   let ongletActif = 'diff';
@@ -191,7 +146,7 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
   async function charger() {
     btnComparer.disabled = true;
     const avecAnglais = !!(caseAnglais && caseAnglais.checked);
-    corps.innerHTML = `<p class="chargement">⏳ Lecture des artistes du site${avecAnglais ? ' (français puis anglais)' : ''}… (aucune modification du site)</p>`;
+    corps.innerHTML = `<p class="chargement">⏳ Lecture des fiches d'artistes du site${avecAnglais ? ' (français puis anglais)' : ''}…</p>`;
     let data;
     try {
       data = await window.api.webComparerArtistes({ avecAnglais });
@@ -201,7 +156,6 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
       return;
     }
     btnComparer.disabled = false;
-    btnComparer.textContent = 'Rafraîchir';
     dataCourant = data;
     dessiner();
   }
@@ -212,85 +166,86 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
     const v = vue();
     const resteDiff = v.lignes.filter((l) => l.champs.some((c) => !c.ignore)).length;
     const nbReglees = v.lignes.reduce((n, l) => n + l.champs.filter((c) => c.ignore).length, 0);
-    const visibles = v.lignes.filter(ligneVisible);
+    const visibles = v.lignes.filter((l) => correspond(l.nom) && ligneVisible(l));
+    const appSeulVus = v.appSeul.filter((a) => correspond(a.nom));
+    const siteSeulVus = v.siteSeul.filter(({ p }) => correspond(p.nom));
+    const aucunResultat = `<p class="liste-vide">Aucun artiste ne correspond à « ${ech(recherche.trim())} ».</p>`;
 
-    // Un seul artiste : le bandeau dit où il en est avec le site, à la place
-    // des compteurs (« 1 artiste relié » n'apprendrait rien).
-    const resumeHtml = portee ? `
-      <div class="wsync-portee-bandeau">
-        <strong>${ech(nomPortee())}</strong>
-        <span>seulement — ${v.relie
-          ? (v.relie.nom_site ? `relié au site sous « ${ech(v.relie.nom_site)} »` : 'relié à sa page du site')
-          : "aucune page du site ne lui est reliée"}</span>
-        <button type="button" class="btn-lien" id="wsync-portee-tout">Comparer tous les artistes</button>
-      </div>` : `
-      <div class="wsync-resume">
-        <div class="wsync-stat"><span class="n">${r.relies}</span><span class="lib">artiste(s) relié(s)</span></div>
-        <div class="wsync-stat"><span class="n">${resteDiff}</span><span class="lib">avec des différences</span></div>
-        <div class="wsync-stat"><span class="n">${r.app_seul}</span><span class="lib">seulement dans l'app</span></div>
-        <div class="wsync-stat"><span class="n">${r.site_seul}</span><span class="lib">seulement sur le site</span></div>
-        <div class="wsync-stat discret"><span class="n">${r.total_site}</span><span class="lib">artistes en ligne</span></div>
-      </div>`;
+    // Ce qui a été lu, en une ligne ; avec un artiste, où il en est avec le
+    // site (« 1 artiste relié » n'apprendrait rien).
+    const infoHtml = `<p class="sw-info">${portee
+      ? `${ech(nomPortee())} : ${v.relie
+        ? (v.relie.nom_site ? `relié au site sous « ${ech(v.relie.nom_site)} »` : 'relié à sa page du site')
+        : 'aucune page du site ne lui est reliée'}`
+      : `${pluriel(r.relies, 'artiste relié', 'artistes reliés')} · ${pluriel(r.total_site, "page d'artiste en ligne", "pages d'artistes en ligne")}${dureeLecture(data.duree_ms)}`}</p>`;
 
-    const chipsHtml = TYPES_DIFF.map((t) => {
-      const n = compteType(t.cle);
-      return `<button type="button" class="wsync-chip${filtres.has(t.cle) ? ' actif' : ''}" data-type="${t.cle}" ${n === 0 ? 'disabled' : ''}>${ech(t.libelle)} <span class="wsync-chip-n">${n}</span></button>`;
-    }).join('');
-    const barreHtml = `
-      <div class="wsync-barre">
-        <div class="wsync-filtres">
-          <span class="wsync-filtres-lib">Afficher :</span>${chipsHtml}
-          <span class="wsync-filtres-lib wsync-filtres-sep">Nature :</span>${chipsNatureHtml(nature, compteNature)}
-        </div>
-        <div class="wsync-selection">
-          ${nbReglees ? `<label class="wsync-reglees-toggle"><input type="checkbox" id="wsync-voir-reglees" ${afficherReglees ? 'checked' : ''}> déjà gardées (${nbReglees})</label>` : ''}
-          <button type="button" class="btn-lien" id="wsync-sel-tout">Tout cocher (visible)</button>
-          <button type="button" class="btn-lien" id="wsync-sel-rien">Décocher</button>
-          <button type="button" class="btn-action btn-principal" id="wsync-importer-lot" ${selection.size ? '' : 'disabled'}>
-            Reprendre la sélection${selection.size ? ` (${selection.size})` : ''}
-          </button>
-        </div>
+    // Types sans écart masqués : sur cet onglet, 7 sur 9 s'affichaient à zéro.
+    const chipsHtml = TYPES_DIFF.map((t) => ({ t, n: compteType(t.cle) })).filter(({ n }) => n > 0)
+      .map(({ t, n }) => `<button type="button" class="wsync-chip${filtres.has(t.cle) ? ' actif' : ''}" data-type="${t.cle}">${ech(t.libelle)} <span class="wsync-chip-n">${n}</span></button>`).join('');
+    const rechercheHtml = `<input type="search" id="wsync-rech" class="sw-rech" placeholder="Chercher un artiste" value="${ech(recherche)}" autocomplete="off">`;
+    const filtresHtml = ongletActif === 'diff'
+      ? `<div class="sw-filtres" role="group" aria-label="Filtrer les différences">${portee ? '' : `${rechercheHtml}<span class="sw-sep"></span>`}${chipsNatureHtml(nature, compteNature)}
+          ${chipsHtml ? `<span class="sw-sep"></span>${chipsHtml}` : ''}</div>`
+      : (portee ? '' : `<div class="sw-filtres">${rechercheHtml}</div>`);
+
+    // « Tout cocher » : les textes visibles (la photo se reprend une à une).
+    const copiables = visibles.flatMap((l) => champsVisibles(l)
+      .filter((c) => !c.ignore && CHAMPS_COPIE.includes(c.champ)).map((c) => cle(l.artiste_id, c.champ)));
+    const toutCoche = copiables.length > 0 && copiables.every((k) => selection.has(k));
+    const toutHtml = `<div class="sw-tout">
+        ${copiables.length ? `<label><input type="checkbox" id="wsync-tout" ${toutCoche ? 'checked' : ''}> Tout cocher (${pluriel(copiables.length, 'valeur')})</label>` : '<span></span>'}
+        ${nbReglees ? `<button type="button" class="btn-lien" id="wsync-voir-reglees">${afficherReglees
+          ? 'Masquer les différences gardées'
+          : (nbReglees === 1 ? 'Voir la différence gardée' : `Voir les ${nbReglees} différences gardées`)}</button>` : ''}
       </div>`;
 
     let cartesHtml;
-    if (portee && !v.relie) cartesHtml = `<p class="liste-vide">Rien à comparer : aucune page du site n'est reliée à cet artiste. Si l'une des pages de l'onglet « Seulement sur le site » est la sienne, reliez-la.</p>`;
+    if (portee && !v.relie) cartesHtml = `<p class="liste-vide">Rien à comparer : aucune page du site n'est reliée à cet artiste. Si l'une des pages de la tuile « Seulement sur le site » est la sienne, reliez-la.</p>`;
     else if (!resteDiff && !nbReglees) cartesHtml = `<p class="liste-vide">✓ Rien à réconcilier : ${portee ? 'sa fiche concorde' : 'les artistes reliés concordent'} avec le site.</p>`;
-    else if (!visibles.length) cartesHtml = `<p class="liste-vide">Aucune différence de ce type.</p>`;
+    else if (!visibles.length) cartesHtml = recherche.trim() ? aucunResultat : `<p class="liste-vide">Aucune différence de ce type.</p>`;
     else cartesHtml = visibles.map((l) => carteArtiste(l)).join('');
 
-    const appSeulHtml = v.appSeul.length
-      ? `<div class="wsync-recon-liste">${v.appSeul.map((a) => `
+    const appSeulHtml = !v.appSeul.length
+      ? `<p class="liste-vide">✓ ${portee ? 'Cet artiste a' : 'Tous les artistes de Galeria ont'} une page sur le site.</p>`
+      : !appSeulVus.length ? aucunResultat
+      : `<div class="wsync-recon-liste">${appSeulVus.map((a) => `
           <div class="wsync-recon" data-artiste="${a.id}">
             <div class="wsync-recon-info"><strong>${ech(a.nom)}</strong></div>
             <div class="wsync-recon-actions"><button type="button" class="btn-lien wsync-voir-artiste" data-artiste="${a.id}">Voir la fiche</button></div>
-          </div>`).join('')}</div>`
-      : `<p class="liste-vide">✓ ${portee ? 'Cet artiste a' : "Tous les artistes de l'app ont"} une page sur le site.</p>`;
+          </div>`).join('')}</div>`;
     // `data-idx` renvoie à dataCourant.siteSeul : l'index d'origine est gardé.
-    const siteSeulHtml = v.siteSeul.length
-      ? `<div class="wsync-recon-liste">${v.siteSeul.map(({ p, i }) => `
+    const siteSeulHtml = !v.siteSeul.length
+      ? `<p class="liste-vide">✓ ${portee ? 'Cet artiste est relié à sa page du site.' : 'Tous les artistes du site ont une fiche dans Galeria.'}</p>`
+      : !siteSeulVus.length ? aucunResultat
+      : `<div class="wsync-recon-liste">${siteSeulVus.map(({ p, i }) => `
           <div class="wsync-recon" data-idx="${i}">
             <div class="wsync-recon-info"><strong>${ech(p.nom)}</strong>${p.excerpt ? ` <span class="wsync-artiste">${ech(p.excerpt.slice(0, 80))}${p.excerpt.length > 80 ? '…' : ''}</span>` : ''}</div>
             <div class="wsync-recon-actions">
               <button type="button" class="btn-action btn-secondaire-action wsync-relier-artiste">Relier à une fiche existante</button>
               <button type="button" class="btn-action btn-principal wsync-creer-artiste">Créer la fiche artiste</button>
             </div>
-          </div>`).join('')}</div>`
-      : `<p class="liste-vide">✓ ${portee ? 'Cet artiste est relié à sa page du site.' : "Tous les artistes du site ont une fiche dans l'app."}</p>`;
+          </div>`).join('')}</div>`;
 
     const onglets = [
       { cle: 'diff', libelle: 'Différences', n: resteDiff },
-      { cle: 'app', libelle: "Seulement dans l'app", n: v.appSeul.length },
+      { cle: 'app', libelle: 'Seulement dans Galeria', n: v.appSeul.length },
       { cle: 'site', libelle: 'Seulement sur le site', n: v.siteSeul.length },
     ];
-    const ongletsHtml = `<div class="wsync-onglets" role="tablist">${onglets.map((o) =>
-      `<button type="button" class="wsync-onglet${ongletActif === o.cle ? ' actif' : ''}" data-onglet="${o.cle}">${ech(o.libelle)} <span class="wsync-onglet-n">${o.n}</span></button>`).join('')}</div>`;
 
     let panneauHtml;
-    if (ongletActif === 'app') panneauHtml = appSeulHtml;
-    else if (ongletActif === 'site') panneauHtml = siteSeulHtml;
-    else panneauHtml = barreHtml + `<div class="wsync-cartes">${cartesHtml}</div>`;
+    if (ongletActif === 'app') panneauHtml = filtresHtml + appSeulHtml;
+    else if (ongletActif === 'site') panneauHtml = filtresHtml + siteSeulHtml;
+    else panneauHtml = filtresHtml + toutHtml + `<div class="wsync-cartes">${cartesHtml}</div>` + barreSelectionHtml(selection.size);
 
-    corps.innerHTML = resumeHtml + ongletsHtml + `<div class="wsync-panneau">${panneauHtml}</div>`;
+    // Le champ de recherche est redessiné avec le reste : on lui rend le focus
+    // et la position du curseur.
+    const rechActif = document.activeElement && document.activeElement.id === 'wsync-rech';
+    const curseur = rechActif ? document.activeElement.selectionStart : null;
+    corps.innerHTML = infoHtml + tuilesHtml(onglets, ongletActif) + `<div class="wsync-panneau">${panneauHtml}</div>`;
+    if (rechActif) {
+      const rr = corps.querySelector('#wsync-rech');
+      if (rr) { rr.focus(); if (curseur != null) rr.setSelectionRange(curseur, curseur); }
+    }
     brancher();
   }
 
@@ -346,8 +301,14 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
   }
 
   function brancher() {
-    corps.querySelector('#wsync-portee-tout')?.addEventListener('click', () => changerPortee(null));
-    corps.querySelectorAll('.wsync-onglet').forEach((b) => b.addEventListener('click', () => { ongletActif = b.dataset.onglet; dessiner(); }));
+    // Recherche : une case cochée qui sort de l'écran est décochée.
+    corps.querySelector('#wsync-rech')?.addEventListener('input', (e) => {
+      recherche = e.target.value;
+      const vus = new Set(vue().lignes.filter((l) => correspond(l.nom)).map((l) => l.artiste_id));
+      for (const k of [...selection]) if (!vus.has(Number(k.split(':')[0]))) selection.delete(k);
+      dessiner();
+    });
+    corps.querySelectorAll('.sw-tuile').forEach((b) => b.addEventListener('click', () => { ongletActif = b.dataset.onglet; dessiner(); }));
     corps.querySelectorAll('.wsync-chip[data-type]').forEach((chip) => chip.addEventListener('click', () => {
       const t = chip.dataset.type;
       if (filtres.has(t)) filtres.delete(t); else filtres.add(t);
@@ -360,25 +321,22 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
       selection.clear();
       dessiner();
     }));
-    corps.querySelector('#wsync-voir-reglees')?.addEventListener('change', (e) => { afficherReglees = e.target.checked; dessiner(); });
+    corps.querySelector('#wsync-voir-reglees')?.addEventListener('click', () => { afficherReglees = !afficherReglees; dessiner(); });
 
-    corps.querySelector('#wsync-sel-tout')?.addEventListener('click', () => {
-      vue().lignes.filter(ligneVisible).forEach((l) => {
-        champsVisibles(l).forEach((c) => {
-          if (CHAMPS_COPIE.includes(c.champ) && !c.ignore) selection.add(cle(l.artiste_id, c.champ));
-        });
-      });
+    // « Tout cocher » : les textes visibles, pas un de plus.
+    const clesVisibles = () => vue().lignes.filter((l) => correspond(l.nom) && ligneVisible(l))
+      .flatMap((l) => champsVisibles(l).filter((c) => CHAMPS_COPIE.includes(c.champ) && !c.ignore).map((c) => cle(l.artiste_id, c.champ)));
+    corps.querySelector('#wsync-tout')?.addEventListener('change', (e) => {
+      clesVisibles().forEach((k) => { if (e.target.checked) selection.add(k); else selection.delete(k); });
       dessiner();
     });
     corps.querySelector('#wsync-sel-rien')?.addEventListener('click', () => { selection.clear(); dessiner(); });
     corps.querySelector('#wsync-importer-lot')?.addEventListener('click', importerLot);
     corps.querySelectorAll('.wsync-case').forEach((cb) => cb.addEventListener('change', () => {
       if (cb.checked) selection.add(cb.dataset.cle); else selection.delete(cb.dataset.cle);
-      const btn = corps.querySelector('#wsync-importer-lot');
-      if (btn) {
-        btn.disabled = selection.size === 0;
-        btn.textContent = `Reprendre la sélection${selection.size ? ` (${selection.size})` : ''}`;
-      }
+      majBarreSelection(corps, selection.size);
+      const tout = corps.querySelector('#wsync-tout');
+      if (tout) { const ks = clesVisibles(); tout.checked = ks.length > 0 && ks.every((k) => selection.has(k)); }
     }));
 
     corps.querySelectorAll('.wsync-carte').forEach((carte) => {

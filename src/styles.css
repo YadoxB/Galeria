@@ -5763,12 +5763,6 @@ select.lot-in.st-pretee { color: var(--info); }
 .web-sync-vue .chargement { color: var(--slate); padding: 20px 0; }
 .wsync-erreur { color: var(--erreur); background: var(--porcelain); border: 1px solid var(--erreur); border-radius: 10px; padding: 12px 14px; max-width: 720px; }
 
-.wsync-resume { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 20px; }
-.wsync-stat { background: var(--porcelain); border: 1px solid var(--mist); border-radius: 12px; padding: 10px 16px; display: flex; flex-direction: column; min-width: 120px; }
-.wsync-stat .n { font-family: var(--font-titre); font-size: 26px; font-weight: 600; color: var(--ink); line-height: 1; }
-.wsync-stat .lib { font-size: 12px; color: var(--slate); margin-top: 4px; }
-.wsync-stat.discret { opacity: .7; }
-
 .wsync-cartes { display: flex; flex-direction: column; gap: 14px; max-width: 860px; }
 .wsync-carte { background: var(--porcelain); border: 1px solid var(--mist); border-radius: 14px; padding: 14px 16px; box-shadow: var(--ombre-carte); }
 .wsync-tete { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--mist); margin-bottom: 12px; }
@@ -5790,8 +5784,6 @@ select.lot-in.st-pretee { color: var(--info); }
 .wsync-gardee { color: var(--succes); font-size: 12px; font-weight: 600; margin-left: 8px; }
 .wsync-champ.est-gardee { opacity: .85; }
 .wsync-champ.est-gardee .wsync-col.site { background: var(--soft-ivory); border-color: var(--mist); }
-.wsync-reglees-toggle { font-size: 12.5px; color: var(--slate); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
-.wsync-reglees-toggle input { accent-color: var(--warm-gold); }
 
 /* Réconciliation « un seul côté » */
 .wsync-recon-liste { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
@@ -5872,35 +5864,81 @@ select.lot-in.st-pretee { color: var(--info); }
   font-weight: 700; border-radius: 999px; padding: 2px 9px; margin-left: 8px; }
 .wsync-nature.manquant { background: #EAF3EA; color: #2f5d34; border: 1px solid #CFE3CF; }
 .wsync-nature.different { background: #FDF3E4; color: #7a5c19; border: 1px solid #E8DCC0; }
-.wsync-filtres-sep { margin-left: 10px; }
 /* Case « textes anglais » de l'en-tête : un réglage du geste, pas une action —
    d'où le traitement discret à côté du bouton « Comparer ». */
 .wsync-opt-anglais { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px;
   color: var(--slate); cursor: pointer; user-select: none; white-space: nowrap; }
-/* Site web → Œuvres : l'en-tête gagne un sélecteur, il peut passer à la ligne. */
-.web-sync-vue .entete-page-actions { flex-wrap: wrap; justify-content: flex-end; align-items: center; flex-shrink: 1; }
-.wsync-comparer-grp { display: flex; align-items: center; gap: var(--s2); flex-wrap: nowrap; }
-.wsync-portee { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--slate); }
-.wsync-portee select {
-  height: 38px; border: 1px solid var(--mist); border-radius: 9px; padding: 0 30px 0 12px;
-  font-family: var(--font-ui); font-size: 13.5px; color: var(--ink); background-color: var(--porcelain);
-  min-width: 220px; max-width: 280px;
+/* ----- Site web : hiérarchie revue le 2026-09-11 (demos/site-web-hierarchie.html)
+   En-tête → barre « quoi comparer » → tuiles-onglets → filtres. ----- */
+.sw-tete { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.sw-tete h1 { margin: 0; }
+.sw-tete-droite { display: flex; align-items: center; gap: 10px; }
+.sw-connexion {
+  display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-ui); font-size: 12.5px;
+  color: var(--slate); background: var(--porcelain); border: 1px solid var(--mist); border-radius: 999px;
+  padding: 5px 12px; cursor: pointer;
 }
-.wsync-portee select.cible { border-color: var(--warm-gold); box-shadow: 0 0 0 3px rgba(201, 154, 61, .16); }
-/* Ce qui a été comparé, quand ce n'est pas toute la boutique. */
-.wsync-portee-bandeau {
-  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; max-width: 860px;
-  background: var(--porcelain); border: 1px solid var(--mist); border-left: 3px solid var(--warm-gold);
-  border-radius: 10px; padding: 10px 15px; margin: 8px 0 14px; font-size: 13.5px; color: var(--slate);
+.sw-connexion:hover { border-color: var(--warm-gold); color: var(--ink); }
+.sw-pastille { width: 8px; height: 8px; border-radius: 50%; background: #4f9a5a; flex: none; }
+.sw-outils-pop { min-width: 350px; }
+.sw-barre {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: var(--porcelain); border: 1px solid var(--mist); border-radius: 14px; padding: 12px 14px;
 }
-.wsync-portee-bandeau strong { color: var(--ink); font-size: 14.5px; }
-.wsync-portee-bandeau .src { font-size: 12.5px; color: var(--stone); }
-.wsync-portee-bandeau .btn-lien { margin-left: auto; }
-.wsync-recherche { max-width: 860px; margin: 0 0 14px; }
-.wsync-recherche input {
-  width: 100%; max-width: 360px; height: 36px; border: 1px solid var(--mist); border-radius: 9px;
-  padding: 0 12px; font-family: var(--font-ui); font-size: 13.5px;
+.sw-seg { display: inline-flex; background: var(--cloud); border-radius: 10px; padding: 3px; }
+.sw-seg button {
+  border: 0; background: none; border-radius: 8px; padding: 8px 18px; font-family: var(--font-ui);
+  font-size: 14px; font-weight: 600; color: var(--slate); cursor: pointer;
 }
+.sw-seg button:hover { color: var(--ink); }
+.sw-seg button.actif { background: var(--porcelain); color: var(--ink); box-shadow: var(--ombre-carte); }
+.sw-artiste { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--slate); }
+.sw-artiste select {
+  height: 40px; border: 1px solid var(--mist); border-radius: 10px; padding: 0 30px 0 12px;
+  font-family: var(--font-ui); font-size: 14px; color: var(--ink); background-color: var(--porcelain);
+  min-width: 230px; max-width: 300px;
+}
+.sw-artiste select.cible { border-color: var(--warm-gold); box-shadow: 0 0 0 3px rgba(201, 154, 61, .16); }
+.sw-espace { flex: 1; }
+.sw-info { font-size: 13px; color: var(--slate); margin: 14px 2px 10px; max-width: 860px; }
+/* Les tuiles SONT les onglets. */
+.sw-tuiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; max-width: 860px; }
+.sw-tuile {
+  position: relative; text-align: left; background: var(--porcelain); border: 1px solid var(--mist);
+  border-radius: 12px; padding: 12px 16px; cursor: pointer; font-family: var(--font-ui);
+}
+.sw-tuile:hover { border-color: var(--warm-gold); }
+.sw-tuile .n { display: block; font-size: 24px; font-weight: 700; color: var(--ink); line-height: 1.1; font-variant-numeric: lining-nums tabular-nums; }
+.sw-tuile .l { display: block; font-size: 13px; color: var(--slate); margin-top: 3px; }
+.sw-tuile.zero .n { color: var(--stone); }
+.sw-tuile.actif { border-color: var(--warm-gold); box-shadow: 0 0 0 3px rgba(201, 154, 61, .16); }
+.sw-tuile.actif::after {
+  content: ""; position: absolute; left: 18px; right: 18px; bottom: -1px; height: 3px;
+  border-radius: 3px 3px 0 0; background: var(--warm-gold);
+}
+.sw-filtres { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-width: 860px; margin: 16px 0 10px; }
+.sw-rech {
+  height: 36px; border: 1px solid var(--mist); border-radius: 9px; padding: 0 12px; flex: 0 1 260px; min-width: 200px;
+  font-family: var(--font-ui); font-size: 13.5px;
+}
+.sw-sep { width: 1px; height: 22px; background: var(--mist); margin: 0 2px; }
+.sw-tout { display: flex; align-items: center; justify-content: space-between; max-width: 860px; margin: 4px 2px 12px; font-size: 13px; color: var(--slate); }
+.sw-tout label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.sw-tout input { accent-color: var(--warm-gold); }
+.sw-vide {
+  max-width: 860px; margin-top: 16px; background: var(--porcelain); border: 1px dashed var(--mist);
+  border-radius: 14px; padding: 30px; text-align: center; color: var(--slate); font-size: 14px; line-height: 1.7;
+}
+.sw-vide b { color: var(--ink); }
+.sw-vide-note { display: block; color: var(--stone); font-size: 13px; }
+/* N'apparaît qu'une fois quelque chose coché ; reste en bas de l'écran. */
+.sw-selection {
+  position: sticky; bottom: 14px; z-index: 5; max-width: 860px; margin-top: 14px;
+  display: flex; align-items: center; gap: 14px; font-size: 14px; color: #fff;
+  background: var(--gallery-navy); border-radius: 12px; padding: 10px 12px 10px 18px; box-shadow: var(--ombre-modal);
+}
+.sw-selection[hidden] { display: none; }
+.sw-selection .btn-lien { color: #e9dcc0; margin-left: auto; }
 .rl-avert { color: var(--warm-gold); }
 
 /* ----- Cycle d'une vente : client puis galerie ----- */
@@ -5940,35 +5978,12 @@ select.lot-in.st-pretee { color: var(--info); }
 .wsync-note-statut { margin-top: 8px; font-size: 12.5px; color: var(--erreur); background: #fbeeee; border: 1px solid #e6c4c1; border-radius: 8px; padding: 7px 10px; }
 .wsync-note-statut em { color: var(--slate); font-style: italic; }
 
-/* Bandeau d'astuce (ex. « Séparer les citations ») */
-.wsync-astuce { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; max-width: 860px; margin: 4px 0 18px; padding: 12px 16px; background: #fbf6ea; border: 1px solid #e8d9a8; border-radius: 12px; }
-.wsync-astuce-txt { flex: 1; min-width: 260px; font-size: 12.5px; color: var(--slate); line-height: 1.5; }
-.wsync-astuce-txt strong { color: var(--ink); }
-.wsync-astuce .btn-action { white-space: nowrap; flex: none; }
-
-/* Sélecteur Œuvres / Artistes */
-.wsync-mode { display: inline-flex; gap: 2px; margin-top: 10px; background: var(--cloud); border-radius: 999px; padding: 3px; }
-.wsync-mode-btn { border: none; background: none; padding: 6px 16px; border-radius: 999px; font-family: var(--font-ui); font-size: 13px; font-weight: 600; color: var(--slate); cursor: pointer; }
-.wsync-mode-btn.actif { background: var(--porcelain); color: var(--ink); box-shadow: var(--ombre-carte); }
-
-/* Onglets de la synchro */
-.wsync-onglets { display: flex; gap: 4px; border-bottom: 2px solid var(--mist); margin: 0 0 16px; max-width: 860px; flex-wrap: wrap; }
-.wsync-onglet { background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; padding: 9px 14px; font-family: var(--font-ui); font-size: 14px; font-weight: 500; color: var(--slate); cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
-.wsync-onglet:hover { color: var(--ink); }
-.wsync-onglet.actif { color: var(--ink); font-weight: 600; border-bottom-color: var(--warm-gold); }
-.wsync-onglet-n { font-size: 11px; font-weight: 700; background: var(--cloud); color: var(--slate); border-radius: 999px; padding: 1px 7px; }
-.wsync-onglet.actif .wsync-onglet-n { background: var(--warm-gold); color: #fff; }
-
-/* Barre : filtres + actions de lot */
-.wsync-barre { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 16px; max-width: 860px; }
-.wsync-filtres { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.wsync-filtres-lib { font-size: 12.5px; color: var(--slate); margin-right: 2px; }
+/* Pastilles de filtre (Site web) */
 .wsync-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--mist); background: var(--porcelain); color: var(--slate); font-family: var(--font-ui); font-size: 12.5px; cursor: pointer; }
 .wsync-chip.actif { background: var(--deep-navy, #1f2d3d); color: #fff; border-color: transparent; }
 .wsync-chip:disabled { opacity: .45; cursor: default; }
 .wsync-chip-n { font-weight: 700; font-size: 11px; background: rgba(0,0,0,.08); border-radius: 999px; padding: 0 6px; }
 .wsync-chip.actif .wsync-chip-n { background: rgba(255,255,255,.22); }
-.wsync-selection { display: flex; align-items: center; gap: 12px; }
 
 .wsync-champ-tete { margin-bottom: 6px; }
 .wsync-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }

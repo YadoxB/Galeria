@@ -12,6 +12,41 @@ identifiants.
 
 ### Modifié
 
+- **L'écran Site web remis en ordre** (Dave, 2026-09-11 : « des doublons, une hiérarchie
+  illogique »). Jusqu'à dix rangées séparaient le titre de la première différence ; il en
+  reste quatre, dans l'ordre où l'on réfléchit : **en-tête** (où j'en suis) → **barre**
+  (quoi comparer) → **tuiles** (ce qu'il y a à faire) → **filtres**.
+  - « Aucune modification du site » était dit trois fois (sous-titre, bandeau vert, message
+    de chargement) : une **pastille** dans l'en-tête (« Relié à … · lecture seule », un clic
+    mène aux Réglages). Le grand bandeau ne revient que s'il manque l'adresse ou les clés.
+  - Cinq compteurs puis trois onglets portaient les mêmes nombres : les **trois tuiles sont
+    les onglets** ; les deux autres nombres passent sur une ligne de texte, avec la catégorie
+    du site quand on compare un artiste (ce que disait le bandeau « … seulement », qui
+    répétait la liste et disparaît avec son bouton « Comparer toutes les œuvres »).
+  - La barre : **[Œuvres | Fiches d'artistes] · Artiste [Tous les artistes ▾] · textes
+    anglais · Comparer**. Le choix principal, Œuvres / Artistes, était une petite pastille
+    sous le sous-titre ; le bouton ne change plus de nom (« Rafraîchir »). Formulation
+    choisie par Dave : une étiquette « Artiste » plutôt que « Artistes de … ».
+  - « Récupérer les adresses du site » et « Séparer les citations », qui servent une fois,
+    occupaient les places les plus en vue : menu **Outils**.
+  - Filtres sur une rangée, **types sans écart masqués** (7 sur 9 à zéro sur l'onglet des
+    artistes) ; « Tout cocher (n valeurs) » au-dessus de la liste ; « Reprendre la sélection »
+    dans une **barre qui n'apparaît qu'une fois quelque chose coché**, collée au bas de
+    l'écran. Une recherche par nom sur l'onglet des artistes.
+  - Le nom de l'artiste n'est plus répété sur chaque carte quand on n'en compare qu'un ;
+    « Seulement dans l'app » devient « Seulement dans Galeria ».
+  - Code : en-tête, barre, tuiles et barre de sélection communs aux deux onglets
+    (`enteteSiteWebHtml`, `brancherEnteteSiteWeb`, `tuilesHtml`, `barreSelectionHtml`,
+    `web-sync.js`) ; styles `.sw-*` ; les anciens (`wsync-resume`, `wsync-onglets`,
+    `wsync-mode`, `wsync-astuce`, bandeau de portée…) retirés.
+  - Vérifié dans l'application réelle, sur une copie de la base, contre le relais local de
+    la boutique réelle (21 contrôles) : sans connexion (bandeau, rien de cliquable), avec
+    (pastille seule), barre et libellés, état « rien n'est encore lu », menu Outils, tuiles,
+    aucun filtre à zéro, barre de sélection (une case, tout cocher, décocher), un artiste
+    (catégorie, cartes sans son nom, tuile « Seulement dans Galeria »), le choix qui suit
+    vers Fiches d'artistes, recherche d'un artiste, « Séparer les citations » annulé.
+  - Maquette : `demos/site-web-hierarchie.html`.
+
 - **« Site web » devient une entrée du menu.** Comparer les fiches avec le site vivait dans
   Réglages → Site web → « Comparer les fiches avec le site… » : un écran de travail rangé dans
   un tiroir de configuration, à trois clics, qu'il fallait savoir chercher (Dave, 2026-09-08).

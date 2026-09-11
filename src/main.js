@@ -1559,6 +1559,7 @@ async function demarrerApplication() {
 
   // --- Synchro des ARTISTES (type site `portfolio`, API WordPress publique) ---
   ipcMain.handle('web:comparer-artistes', async (_e, options) => {
+    const debut = Date.now();
     const avecAnglais = !!(options && options.avecAnglais);
     const { url } = obtenirClesWoo();
     if (!url) throw new Error("Configure d'abord l'adresse du site dans Réglages → Site web.");
@@ -1574,6 +1575,7 @@ async function demarrerApplication() {
     const ignores = new Map(req.listerWebSyncIgnoreArtiste().map((r) => [`${r.artiste_id}:${r.champ}`, r.site_cle]));
     const res = comparerArtistesEtSite(portfolios, artistes, ignores, portfoliosEn);
     res.anglais_lu = avecAnglais && portfoliosEn.length > 0;
+    res.duree_ms = Date.now() - debut;
     return res;
   });
   ipcMain.handle('web:importer-champ-artiste', (_e, artisteId, champ, valeur) => {

@@ -253,26 +253,26 @@ const ARTICLES = [
      <div class="attention">La clé et le secret ne s'affichent qu'<b>une seule fois</b> sur le site : copiez-les tout de suite. Perdus ? Retournez à l'étape 3, <b>supprimez</b> la clé « Galeria » et refaites-en une — rien n'est cassé.</div>
      <div class="astuce">La permission <b>« Lecture »</b> suffit : Galeria ne fait que lire le site. Une fois entrés, vos codes sont <b>chiffrés</b> dans l'application.</div>`),
   A('web', 'Comparer vos œuvres avec le site', 'comparer synchroniser œuvres différences reprendre valeur titre description prix statut filtres lot garder rafraîchir artiste seul chercher recherche',
-    `<p>Dans le menu de gauche, <b>Site web</b>, puis <b>Comparer avec le site</b>. Galeria relie chaque œuvre à son produit par le <b>numéro d'inventaire</b> (= SKU du site) et affiche les <b>différences</b> (titre, description, prix, statut).</p>
-     <p><b>Un seul artiste</b> : choisissez-le dans la liste <b>« Comparer »</b>, à côté du bouton. Galeria ne lit alors que ses produits (1 à 2 secondes au lieu d'une dizaine) et les résultats ne parlent que de lui. Depuis la fiche d'un artiste, <b>Comparer avec le site → Ses œuvres</b> fait la même chose en un clic.</p>
+    `<p>Dans le menu de gauche, <b>Site web</b> : choisissez <b>Œuvres</b>, puis <b>Comparer</b>. Galeria relie chaque œuvre à son produit par le <b>numéro d'inventaire</b> (= SKU du site). Trois tuiles résument le résultat — <b>Différences</b>, <b>Seulement dans Galeria</b>, <b>Seulement sur le site</b> — et un clic sur l'une affiche sa liste.</p>
+     <p><b>Un seul artiste</b> : choisissez-le dans la liste <b>« Artiste »</b>. Galeria ne lit alors que ses produits (1 à 2 secondes au lieu d'une dizaine) et les résultats ne parlent que de lui. Depuis la fiche d'un artiste, <b>Comparer avec le site → Ses œuvres</b> fait la même chose en un clic.</p>
      <p>Le champ <b>Chercher</b> resserre l'affichage sur un titre ou un numéro d'inventaire, sans relire le site.</p>
      <ul><li><b>Reprendre la valeur du site →</b> remplace la valeur dans l'app. Pour le titre et la description, une fenêtre vous laisse d'abord <b>ajuster le texte avant de remplacer</b>.</li>
      <li><b>Garder la version de l'app</b> : la différence est mémorisée et ne revient plus, tant que le site ne change pas cette valeur.</li>
-     <li>Les <b>filtres</b> (chips) et les cases à cocher permettent de <b>reprendre plusieurs valeurs en lot</b>.</li></ul>
+     <li>Les <b>filtres</b> et les cases à cocher permettent de <b>reprendre plusieurs valeurs en lot</b> : cochez (ou <b>Tout cocher</b>), puis <b>Reprendre la sélection</b>, en bas de l'écran.</li></ul>
      <div class="attention">Galeria ne fait que <b>lire</b> le site ; aucune modification n'y est apportée.</div>`),
   A('web', 'Œuvres présentes d\'un seul côté', 'seulement app site créer fiche corriger sku doublon retirer vendre supprimer manquante onglet',
     `<p>Sur l'écran de synchronisation, deux onglets listent ce qui est <b>d'un seul côté</b> :</p>
      <ul><li><b>Seulement sur le site</b> — pour chaque produit : <b>Créer la fiche</b> dans l'app (titre, description, prix et image repris du site ; vous choisissez l'artiste) ; ou <b>Corriger le SKU</b> si c'est en fait une œuvre existante mal numérotée (évite un doublon).</li>
-     <li><b>Seulement dans l'app</b> — pour chaque œuvre : <b>Retirer</b>, <b>Vendre</b> ou <b>Supprimer</b>.</li></ul>`),
+     <li><b>Seulement dans Galeria</b> — pour chaque œuvre : <b>Retirer</b>, <b>Vendre</b> ou <b>Supprimer</b>.</li></ul>`),
   A('web', 'Synchroniser les artistes', 'artistes portfolio biographie démarche curriculum cv photo citation comparer reprendre créer fiche onglet nom',
-    `<p>Sur l'écran de synchronisation, le sélecteur <b>Œuvres / Artistes</b> (en haut) bascule vers les artistes. Galeria relie chaque artiste à sa page du site par le <b>nom</b> et compare <b>Biographie</b>, <b>Démarche</b>, <b>Curriculum (C.V.)</b>, <b>Citation</b> et <b>Photo</b>.</p>
-     <p>La liste <b>« Comparer »</b> n'affiche qu'un artiste. Le choix suit quand vous passez de l'onglet Œuvres à l'onglet Artistes, et inversement.</p>
+    `<p>Dans <b>Site web</b>, choisissez <b>Fiches d'artistes</b>, puis <b>Comparer</b>. Galeria relie chaque artiste à sa page du site par le <b>nom</b> et compare <b>Biographie</b>, <b>Démarche</b>, <b>Curriculum (C.V.)</b>, <b>Citation</b> et <b>Photo</b>.</p>
+     <p>La liste <b>« Artiste »</b> n'en affiche qu'un. Le choix suit quand vous passez d'Œuvres à Fiches d'artistes, et inversement.</p>
      <ul><li><b>Reprendre du site</b> (avec édition avant remplacement) ou <b>Garder la version de l'app</b>, champ par champ.</li>
      <li>Onglet <b>Seulement sur le site</b> → <b>Créer la fiche artiste</b> (bio, démarche, C.V. et photo repris du site).</li></ul>
      <p>Le C.V. du site (présenté en tableau) est repris en lignes lisibles « <b>année — description</b> ».</p>`),
   A('web', 'La citation de l\'artiste et « Séparer les citations »', 'citation extrait exergue biographie séparer champ dédié transition remplir bouton',
     `<p>Chaque artiste a un champ <b>Citation</b> (une phrase mise en exergue). Sur le site, la citation est rangée à part ; dans d'anciennes fiches, elle était parfois <b>incluse dans la biographie</b>.</p>
-     <p>Le bouton <b>« Séparer les citations »</b> (onglet Artistes) fait le ménage en un clic : il <b>remplit le champ Citation</b> de chaque artiste depuis le site <b>et</b> retire cette citation du texte de la biographie. À faire une seule fois ; il n'agit que sur les artistes dont la citation est encore vide.</p>`),
+     <p><b>Site web → Outils → Séparer les citations</b> fait le ménage en un clic : il <b>remplit le champ Citation</b> de chaque artiste depuis le site <b>et</b> retire cette citation du texte de la biographie. À faire une seule fois ; il n'agit que sur les artistes dont la citation est encore vide.</p>`),
 
   // ═══════ SAUVEGARDES & DONNÉES ═══════
   A('sauvegardes', 'Faire une sauvegarde maintenant', 'sauvegarde backup copie manuelle sauvegarder',

@@ -28,7 +28,7 @@ export const VERSIONS = [
       },
       {
         titre: 'Un bouton « Relier à une fiche existante »',
-        texte: "Dans <b>Site web → Artistes</b>, onglet « Seulement sur le site », ce nouveau bouton vous demande de quelle fiche il s'agit — en vous proposant les bonnes en premier — puis <b>quel nom Galeria doit afficher</b>. Vous gardez le vôtre, le site garde le sien, et les deux restent appariés. Le lien se défait d'un clic depuis la fiche de l'artiste.",
+        texte: "Dans <b>Site web → Fiches d'artistes</b>, tuile « Seulement sur le site », ce nouveau bouton vous demande de quelle fiche il s'agit — en vous proposant les bonnes en premier — puis <b>quel nom Galeria doit afficher</b>. Vous gardez le vôtre, le site garde le sien, et les deux restent appariés. Le lien se défait d'un clic depuis la fiche de l'artiste.",
       },
       {
         titre: '« Site web » dans le menu',
@@ -40,7 +40,11 @@ export const VERSIONS = [
       },
       {
         titre: 'Comparer un seul artiste avec le site',
-        texte: "Dans <b>Site web</b>, choisissez un artiste dans la liste <b>Comparer</b>&nbsp;: Galeria ne compare que ses œuvres, en une ou deux secondes. Passez à l'onglet <b>Artistes</b>&nbsp;: votre choix suit, et c'est sa fiche qui se compare.",
+        texte: "Dans <b>Site web</b>, choisissez un artiste dans la liste <b>Artiste</b>&nbsp;: Galeria ne compare que ses œuvres, en une ou deux secondes. Passez à <b>Fiches d'artistes</b>&nbsp;: votre choix suit, et c'est sa fiche qui se compare.",
+      },
+      {
+        titre: 'Un écran Site web plus clair',
+        texte: "Une barre pour dire quoi comparer, trois tuiles pour le résultat — <b>Différences</b>, <b>Seulement dans Galeria</b>, <b>Seulement sur le site</b> —, et c'est tout. Les outils qui ne servent qu'une fois sont rangés dans le menu <b>Outils</b>.",
       },
       {
         titre: 'Les certificats continuent la numérotation',

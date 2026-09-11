@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette — Site web : hiérarchie revue</title>
+<link rel="stylesheet" href="../src/theme.css">
+<link rel="stylesheet" href="../src/styles.css">
+<style>
+  body{padding:30px 34px 120px;overflow:auto;height:auto;user-select:text;}
+  .doc{max-width:1140px;margin:0 auto;}
+  h1.titre-demo{font-family:var(--font-titre);font-weight:500;font-size:29px;margin:0 0 8px;}
+  .sous{color:var(--slate);font-size:14px;line-height:1.65;margin:0 0 6px;max-width:920px;}
+  .lot-titre{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);margin:40px 0 8px;font-weight:600;}
+  .maquette{background:var(--soft-ivory);border:1px dashed var(--mist);border-radius:16px;padding:26px 28px;}
+  .journal{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:16px 21px;margin-top:22px;}
+  .journal h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);margin:0 0 9px;font-weight:700;}
+  .journal ol,.journal ul{margin:0;padding-left:20px;font-size:13.5px;color:var(--slate);line-height:1.75;}
+  .journal li{margin-bottom:4px;}
+  .journal em{color:var(--ink);font-style:normal;font-weight:600;}
+  .pilote{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px;font-size:12.5px;color:var(--stone);}
+  .pilote b{color:var(--ink);font-weight:600;margin-right:4px;}
+  .pilote button{border:1px solid var(--mist);background:#fff;border-radius:999px;padding:5px 12px;font-family:var(--font-ui);font-size:12.5px;cursor:pointer;color:var(--slate);}
+  .pilote button.on{border-color:var(--warm-gold);color:var(--ink);box-shadow:0 0 0 3px rgba(201,154,61,.16);}
+
+  /* ===== La proposition ===== */
+  .sw-tete{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+  .sw-tete h2{font-family:var(--font-ui);font-weight:700;font-size:26px;margin:0;color:var(--ink);}
+  .sw-tete-droite{display:flex;align-items:center;gap:10px;}
+  .sw-lien{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--slate);background:#fff;
+           border:1px solid var(--mist);border-radius:999px;padding:5px 12px;cursor:pointer;}
+  .sw-lien .pt{width:8px;height:8px;border-radius:50%;background:#4f9a5a;}
+  .sw-menu{position:relative;}
+  .sw-menu-pop{position:absolute;right:0;top:calc(100% + 6px);z-index:5;background:#fff;border:1px solid var(--mist);
+               border-radius:12px;box-shadow:0 12px 30px rgba(7,26,47,.14);min-width:330px;padding:6px;}
+  .sw-menu-pop[hidden]{display:none;}
+  .sw-menu-pop button{display:block;width:100%;text-align:left;border:0;background:none;border-radius:8px;padding:9px 12px;
+                      font-family:var(--font-ui);font-size:13.5px;color:var(--ink);cursor:pointer;}
+  .sw-menu-pop button:hover{background:var(--soft-ivory);}
+  .sw-menu-pop small{display:block;color:var(--stone);font-size:12px;margin-top:2px;}
+
+  /* La barre « question » : quoi, de qui, avec quoi, go. */
+  .sw-barre{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid var(--mist);
+            border-radius:14px;padding:12px 14px;box-shadow:0 1px 2px rgba(7,26,47,.04);}
+  .sw-seg{display:inline-flex;background:var(--cloud);border-radius:10px;padding:3px;}
+  .sw-seg button{border:0;background:none;border-radius:8px;padding:8px 18px;font-family:var(--font-ui);font-size:14px;
+                 font-weight:600;color:var(--slate);cursor:pointer;}
+  .sw-seg button.actif{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(7,26,47,.12);}
+  .sw-de{font-size:14px;color:var(--slate);}
+  .sw-barre select{height:40px;border:1px solid var(--mist);border-radius:10px;padding:0 30px 0 12px;font-family:var(--font-ui);
+                   font-size:14px;color:var(--ink);background:#fff;min-width:230px;}
+  .sw-barre select.cible{border-color:var(--warm-gold);box-shadow:0 0 0 3px rgba(201,154,61,.16);}
+  .sw-barre .espace{flex:1;}
+  .sw-barre label.opt{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--slate);white-space:nowrap;}
+
+  .sw-info{font-size:13px;color:var(--slate);margin:14px 2px 10px;}
+  .sw-info b{color:var(--ink);font-weight:600;}
+
+  /* Les tuiles SONT les onglets */
+  .sw-tuiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:860px;}
+  .sw-tuile{text-align:left;background:#fff;border:1px solid var(--mist);border-radius:12px;padding:12px 16px;cursor:pointer;
+            font-family:var(--font-ui);position:relative;}
+  .sw-tuile .n{display:block;font-family:var(--font-ui);font-variant-numeric:lining-nums tabular-nums;font-size:24px;font-weight:700;color:var(--ink);line-height:1.1;}
+  .sw-tuile .l{display:block;font-size:13px;color:var(--slate);margin-top:3px;}
+  .sw-tuile.actif{border-color:var(--warm-gold);box-shadow:0 0 0 3px rgba(201,154,61,.16);}
+  .sw-tuile.actif::after{content:"";position:absolute;left:18px;right:18px;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:var(--warm-gold);}
+  .sw-tuile.zero .n{color:var(--stone);}
+
+  .sw-filtres{display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:860px;margin:16px 0 10px;}
+  .sw-cartes .wsync-carte{margin-bottom:12px;}
+  .sw-filtres input[type=search]{height:36px;border:1px solid var(--mist);border-radius:9px;padding:0 12px;min-width:300px;
+                                 font-family:var(--font-ui);font-size:13.5px;}
+  .sw-sep{width:1px;height:22px;background:var(--mist);}
+  .sw-tout{display:flex;align-items:center;justify-content:space-between;max-width:860px;margin:4px 2px 12px;font-size:13px;color:var(--slate);}
+  .sw-tout label{display:inline-flex;align-items:center;gap:8px;cursor:pointer;}
+
+  .sw-vide{max-width:860px;background:#fff;border:1px dashed var(--mist);border-radius:14px;padding:30px;text-align:center;color:var(--slate);font-size:14px;line-height:1.7;margin-top:16px;}
+  .sw-vide b{color:var(--ink);}
+  .sw-recon{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--mist);border-radius:11px;padding:10px 14px;margin-bottom:8px;max-width:860px;font-size:13.5px;}
+  .sw-recon .act{margin-left:auto;display:flex;gap:8px;}
+
+  /* Barre de sélection : n'apparaît que quand on coche */
+  .sw-selection{position:sticky;bottom:14px;max-width:860px;margin-top:14px;display:flex;align-items:center;gap:14px;
+                background:var(--ink,#0f1d2e);color:#fff;border-radius:12px;padding:10px 12px 10px 18px;box-shadow:0 10px 30px rgba(7,26,47,.25);font-size:14px;}
+  .sw-selection[hidden]{display:none;}
+  .sw-selection .btn-lien{color:#e9dcc0;margin-left:auto;}
+</style>
+</head>
+<body>
+<div class="doc">
+  <h1 class="titre-demo">Site web : une hiérarchie revue</h1>
+  <p class="sous">
+    Aujourd'hui, jusqu'à <b>dix rangées</b> séparent le titre de la première différence, et
+    plusieurs disent la même chose. La proposition en garde <b>quatre</b>, dans l'ordre où l'on
+    réfléchit : <b>où j'en suis</b> (en-tête) → <b>quoi comparer</b> (la barre) → <b>ce qu'il y a
+    à faire</b> (trois tuiles) → <b>resserrer</b> (filtres). Tout le reste est fusionné ou rangé.
+  </p>
+
+  <div class="lot-titre">La proposition (cliquable)</div>
+  <div class="pilote">
+    <b>Pour la démo :</b>
+    <button type="button" data-etat="avant">avant de comparer</button>
+    <button type="button" data-etat="apres" class="on">résultats</button>
+  </div>
+
+  <div class="maquette" id="m">
+    <!-- 1. En-tête : le titre, l'état de la connexion, les outils ponctuels -->
+    <div class="sw-tete">
+      <h2>Site web</h2>
+      <div class="sw-tete-droite">
+        <span class="sw-lien" title="Changer la connexion (Réglages)"><span class="pt"></span>Relié à galerievieuxstjean.com · lecture seule</span>
+        <div class="sw-menu">
+          <button type="button" class="btn-action" id="b-outils">Outils <span style="font-size:10px;opacity:.6">▾</span></button>
+          <div class="sw-menu-pop" id="p-outils" hidden>
+            <button type="button">Récupérer les adresses du site<small>Remplit l'adresse de la page de chaque œuvre, pour les QR des cartels</small></button>
+            <button type="button">Séparer les citations<small>Range la citation de chaque artiste dans son propre champ (une seule fois)</small></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. La barre : se lit comme une phrase -->
+    <div class="sw-barre">
+      <span class="sw-seg" role="tablist">
+        <button type="button" data-mode="oeuvres" class="actif">Œuvres</button>
+        <button type="button" data-mode="artistes">Fiches d'artistes</button>
+      </span>
+      <span class="sw-de">Artiste</span>
+      <select id="s-art" class="cible">
+        <option value="">Tous les artistes</option>
+        <option value="jpn" selected>Jean-Pierre Neveu</option>
+        <option value="clb">Clarence Bourgoin</option>
+      </select>
+      <span class="espace"></span>
+      <label class="opt"><input type="checkbox"> textes anglais</label>
+      <button type="button" class="btn-action btn-principal" id="b-comparer">Comparer</button>
+    </div>
+
+    <div id="zone"></div>
+  </div>
+
+  <div class="journal">
+    <h4>Ce qui est fusionné ou rangé, et pourquoi</h4>
+    <ol>
+      <li><em>« Aucune modification du site » était dit trois fois</em> : sous le titre, dans le
+        bandeau vert et dans le message de chargement. Il devient une pastille discrète dans
+        l'en-tête (« Relié à … · lecture seule », un clic mène aux Réglages). Le grand bandeau ne
+        revient que lorsqu'il manque quelque chose (adresse ou clés) : là, il a une raison d'être.</li>
+      <li><em>Cinq compteurs, puis trois onglets, affichaient les mêmes nombres.</em> Les trois
+        tuiles <b>sont</b> les onglets. Les deux autres nombres (œuvres reliées, produits en ligne)
+        passent sur une ligne de texte.</li>
+      <li><em>Le choix d'artiste s'affichait deux fois</em> : dans la liste, puis dans un bandeau
+        « … seulement » avec son bouton « Comparer toutes les œuvres ». Le bandeau disparaît ; la
+        ligne de texte garde ce qu'il avait d'utile (la catégorie du site).</li>
+      <li><em>« Comparer » (la liste) + « Comparer avec le site » (le bouton), qui devenait
+        « Rafraîchir »</em> : la liste porte l'étiquette <b>Artiste</b> (choix de Dave, plutôt
+        qu'une phrase « Artistes de … » qui sonnait faux), et le bouton garde un seul nom.</li>
+      <li><em>Œuvres / Artistes, le choix principal, était une petite pastille sous le sous-titre</em>,
+        loin de la liste et du bouton. Il ouvre la barre, avec la même liste d'artistes des deux
+        côtés (« tous les artistes » ou un seul).</li>
+      <li><em>Deux outils ponctuels occupaient les places les plus en vue</em> : « Récupérer les
+        adresses du site » en haut à droite, « Séparer les citations » en encadré au milieu de
+        l'onglet Artistes. Ils servent une fois ; ils passent dans un menu <b>Outils</b>.</li>
+      <li><em>Les filtres s'étalaient sur trois rangées</em> (recherche ; types et nature ; boutons
+        de sélection) et montraient des types à zéro — sur l'onglet Artistes, 7 des 9. Une seule
+        rangée, les types à zéro masqués ; « Tout cocher » passe au-dessus de la liste, et
+        « Reprendre la sélection » n'apparaît qu'une fois quelque chose coché, en bas de l'écran.</li>
+      <li><em>Le nom de l'artiste se répétait sur chaque carte</em> quand on n'en compare qu'un :
+        il n'y figure plus que pour « tous les artistes ».</li>
+      <li><em>« Seulement dans l'app »</em> devient <b>« Seulement dans Galeria »</b>, comme ailleurs.</li>
+    </ol>
+    <h4 style="margin-top:14px">Ce qui ne change pas</h4>
+    <ul>
+      <li>Les cartes de différences, leurs boutons et « Garder la version de l'app ».</li>
+      <li>Ce que fait la comparaison, et la lecture ciblée d'un artiste.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  const $ = (s) => document.querySelector(s);
+  const JEU = {
+    oeuvres: {
+      tous: { info: '<b>510</b> œuvres reliées · <b>517</b> produits en ligne · lu en 10 s', t: [41, 11, 7] },
+      jpn: { info: '<b>33</b> œuvres reliées · <b>34</b> produits en ligne, catégorie « Jean-Pierre Neveu » · lu en 1,7 s', t: [20, 6, 1] },
+      clb: { info: '<b>58</b> œuvres reliées · <b>59</b> produits en ligne, catégorie « Clarence Bourgoin » · lu en 2,3 s', t: [3, 1, 1] },
+      types: [['Titre', 6], ['Description', 0], ['Description (EN)', 0], ['Prix', 16], ['Statut', 0]],
+    },
+    artistes: {
+      tous: { info: '<b>22</b> artistes reliés · <b>22</b> pages d\'artistes en ligne', t: [18, 1, 0] },
+      jpn: { info: 'Jean-Pierre Neveu est relié à sa page du site', t: [1, 0, 0] },
+      clb: { info: 'Clarence Bourgoin est relié à sa page du site', t: [1, 0, 0] },
+      types: [['Citation', 0], ['Biographie', 0], ['Démarche', 13], ['Curriculum', 15], ['Citation (EN)', 0], ['Biographie (EN)', 0], ['Démarche (EN)', 0], ['C.V. (EN)', 0], ['Photo', 0]],
+    },
+  };
+  let mode = 'oeuvres', etat = 'apres', onglet = 0, coches = new Set();
+
+  function carte(i, art) {
+    const o = mode === 'oeuvres'
+      ? [['JPN1532', 'Le récupérateur', 'Prix', '—', '4 120 $', 'manquant'], ['JPN1601G-3', 'Reconnaissance de deux mondes', 'Titre', 'Reconnaissance de deux mondes (Giclée – Édition de 6)', 'Reconnaissance de deux mondes (Giclée, édition de 6)', 'différent'], ['JPN1672', 'Rivière de lithieros', 'Prix', '—', '4 060 $', 'manquant']][i]
+      : [['', 'Jean-Pierre Neveu', 'Démarche', 'Dès 1986, Jean-Pierre éprouve le besoin…', 'Depuis 1986, Jean-Pierre Neveu explore…', 'différent']][i];
+    if (!o) return '';
+    const k = mode + i;
+    return `<div class="wsync-carte" style="max-width:860px"><div class="wsync-tete"><div>
+        ${o[0] ? `<span class="wsync-sku">${o[0]}</span> ` : ''}<strong class="wsync-titre">${o[1]}</strong>
+        ${art && mode === 'oeuvres' ? '<span class="wsync-artiste">Jean-Pierre Neveu</span>' : ''}</div>
+        <button type="button" class="btn-lien">Voir la fiche</button></div>
+      <div class="wsync-champ"><div class="wsync-champ-tete"><label class="wsync-check"><input type="checkbox" data-k="${k}" ${coches.has(k) ? 'checked' : ''}><span class="wsync-lib">${o[2]}</span></label>
+        <span class="wsync-nature ${o[5] === 'manquant' ? 'manquant' : 'different'}">${o[5]}</span></div>
+        <div class="wsync-cols"><div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val">${o[3]}</div></div>
+        <div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">${o[4]}</div></div></div>
+        <div class="wsync-champ-actions"><button type="button" class="btn-action btn-secondaire-action">Reprendre la valeur du site →</button>
+        <button type="button" class="btn-lien">Garder la version de l'app</button></div></div></div>`;
+  }
+
+  function rendre() {
+    const art = $('#s-art').value || 'tous';
+    $('#s-art').classList.toggle('cible', art !== 'tous');
+    document.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('actif', b.dataset.mode === mode));
+    const z = $('#zone');
+    if (etat === 'avant') {
+      z.innerHTML = `<div class="sw-vide">Rien n'est encore lu.<br>Choisissez <b>${mode === 'oeuvres' ? 'Œuvres' : 'Artistes'}</b>, un artiste ou tous, puis <b>Comparer</b>.<br>
+        <span style="color:var(--stone);font-size:13px">${mode === 'oeuvres' ? 'Toutes les œuvres : une dizaine de secondes. Un artiste : une ou deux.' : 'Quelques secondes.'}</span></div>`;
+      return;
+    }
+    const j = JEU[mode], d = j[art];
+    const libs = mode === 'oeuvres' ? ['Différences', 'Seulement dans Galeria', 'Seulement sur le site'] : ['Différences', 'Seulement dans Galeria', 'Seulement sur le site'];
+    const tuiles = d.t.map((n, i) => `<button type="button" class="sw-tuile${i === onglet ? ' actif' : ''}${n ? '' : ' zero'}" data-o="${i}"><span class="n">${n}</span><span class="l">${libs[i]}</span></button>`).join('');
+    let corps;
+    if (onglet === 0) {
+      const types = j.types.filter(([, n]) => n > 0).map(([l, n]) => `<button type="button" class="wsync-chip actif">${l} <span class="wsync-chip-n">${n}</span></button>`).join('');
+      const nb = mode === 'oeuvres' ? (art === 'tous' ? 3 : 3) : 1;
+      corps = `<div class="sw-filtres">
+          <input type="search" placeholder="${mode === 'oeuvres' ? "Chercher un titre ou un n° d'inventaire" : 'Chercher un artiste'}">
+          <span class="sw-sep"></span>
+          <button type="button" class="wsync-chip actif">Tout</button><button type="button" class="wsync-chip">Manquants <span class="wsync-chip-n">${mode === 'oeuvres' ? 16 : 1}</span></button><button type="button" class="wsync-chip">Différents <span class="wsync-chip-n">${mode === 'oeuvres' ? 6 : 27}</span></button>
+          <span class="sw-sep"></span>${types}
+        </div>
+        <div class="sw-tout"><label><input type="checkbox" id="c-tout"> Tout cocher (${d.t[0]})</label><button type="button" class="btn-lien">Voir les 2 différences gardées</button></div>
+        <div class="sw-cartes">${[0, 1, 2].slice(0, nb).map((i) => carte(i, art === 'tous')).join('')}</div>
+        <div class="sw-selection" id="bsel" ${coches.size ? '' : 'hidden'}><span id="nsel">${coches.size} valeur(s) cochée(s)</span>
+          <button type="button" class="btn-lien" id="b-decocher">Décocher</button>
+          <button type="button" class="btn-action btn-principal">Reprendre la sélection</button></div>`;
+    } else if (onglet === 1) {
+      corps = d.t[1] ? `<div style="margin-top:16px">${mode === 'oeuvres'
+        ? '<div class="sw-recon"><span class="wsync-sku">JPN908G-4</span> <strong>Kamiska Réa (Giclée – Édition de 5)</strong><span class="act"><button class="btn-lien">Voir</button><button class="btn-action btn-secondaire-action">Retirer</button><button class="btn-action btn-secondaire-action">Vendre</button><button class="btn-action btn-secondaire-action">Supprimer</button></span></div>'
+        : '<div class="sw-recon"><strong>Dave Belisle</strong><span class="act"><button class="btn-lien">Voir la fiche</button></span></div>'}</div>`
+        : '<p class="liste-vide" style="margin-top:16px">✓ Rien de ce côté.</p>';
+    } else {
+      corps = d.t[2] ? `<div style="margin-top:16px"><div class="sw-recon"><span class="wsync-sku">JPN2071</span> <strong>Sans titre (nouvelle œuvre)</strong><span class="act"><button class="btn-action btn-principal">Créer la fiche</button><button class="btn-action btn-secondaire-action">Corriger le SKU</button></span></div></div>`
+        : '<p class="liste-vide" style="margin-top:16px">✓ Rien de ce côté.</p>';
+    }
+    z.innerHTML = `<p class="sw-info">${d.info}</p><div class="sw-tuiles">${tuiles}</div>${corps}`;
+    z.querySelectorAll('[data-o]').forEach((b) => b.addEventListener('click', () => { onglet = Number(b.dataset.o); rendre(); }));
+    z.querySelectorAll('input[data-k]').forEach((c) => c.addEventListener('change', () => { if (c.checked) coches.add(c.dataset.k); else coches.delete(c.dataset.k); rendre(); }));
+    $('#c-tout')?.addEventListener('change', (e) => { z.querySelectorAll('input[data-k]').forEach((c) => { if (e.target.checked) coches.add(c.dataset.k); else coches.delete(c.dataset.k); }); rendre(); });
+    $('#b-decocher')?.addEventListener('click', () => { coches.clear(); rendre(); });
+  }
+  document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { mode = b.dataset.mode; onglet = 0; coches.clear(); rendre(); }));
+  $('#s-art').addEventListener('change', () => { onglet = 0; coches.clear(); rendre(); });
+  $('#b-comparer').addEventListener('click', () => { etat = 'apres'; document.querySelectorAll('[data-etat]').forEach((x) => x.classList.toggle('on', x.dataset.etat === 'apres')); rendre(); });
+  document.querySelectorAll('[data-etat]').forEach((b) => b.addEventListener('click', () => {
+    etat = b.dataset.etat; document.querySelectorAll('[data-etat]').forEach((x) => x.classList.toggle('on', x === b)); rendre(); }));
+  $('#b-outils').addEventListener('click', (e) => { e.stopPropagation(); $('#p-outils').hidden = !$('#p-outils').hidden; });
+  document.addEventListener('click', () => { $('#p-outils').hidden = true; });
+  rendre();
+</script>
+</body>
+</html>

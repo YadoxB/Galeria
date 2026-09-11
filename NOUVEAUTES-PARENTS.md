@@ -11,14 +11,32 @@
 
 ---
 
+## Un écran Site web plus clair
+
+L'écran **Site web** a été remis en ordre. Il se lit maintenant de haut en bas :
+
+1. **Quoi comparer** — Œuvres ou Fiches d'artistes, tous les artistes ou un
+   seul — puis **Comparer**.
+2. **Trois tuiles** pour le résultat : **Différences**, **Seulement dans
+   Galeria**, **Seulement sur le site**. Un clic sur une tuile affiche sa liste.
+3. **Les filtres**, sur une seule ligne.
+
+Pour reprendre plusieurs valeurs d'un coup : cochez-les (ou **Tout cocher**),
+puis **Reprendre la sélection**, dans la barre qui apparaît en bas de l'écran.
+
+« Récupérer les adresses du site » et « Séparer les citations », qui ne servent
+qu'une fois, sont maintenant dans le menu **Outils**, en haut à droite.
+
+---
+
 ## Comparer les œuvres d'un seul artiste avec le site
 
-Dans **Site web**, une liste **« Comparer »** à côté du bouton : choisissez un
-artiste, et Galeria ne compare que ses œuvres. C'est beaucoup plus rapide (une ou
-deux secondes), et les résultats ne parlent que de lui.
+Dans **Site web**, une liste **« Artiste »** : choisissez un artiste, et Galeria
+ne compare que ses œuvres. C'est beaucoup plus rapide (une ou deux secondes), et
+les résultats ne parlent que de lui.
 
-La même liste existe sur l'onglet **Artistes**, et votre choix suit quand vous
-passez d'un onglet à l'autre : ses œuvres d'un côté, sa fiche de l'autre.
+Votre choix suit quand vous passez d'**Œuvres** à **Fiches d'artistes** : ses
+œuvres d'un côté, sa fiche de l'autre.
 
 Depuis la fiche d'un artiste, le bouton **« Comparer avec le site »** vous
 propose maintenant deux choix : **Sa fiche** (ses textes et sa photo, comme
@@ -159,7 +177,7 @@ Jusqu'ici, Galeria croyait avoir affaire à deux personnes différentes, et ne
 vous proposait que de **créer une deuxième fiche** — ce qui aurait coupé les
 œuvres de l'artiste en deux.
 
-Dans **Site web → Artistes**, onglet « Seulement sur le site », un nouveau
+Dans **Site web → Fiches d'artistes**, tuile « Seulement sur le site », un nouveau
 bouton **« Relier à une fiche existante »** règle la chose. Il vous demande :
 
 1. **De quelle fiche s'agit-il ?** Galeria vous propose les plus probables en

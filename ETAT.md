@@ -47,6 +47,14 @@ nouveautés au prochain lancement.
 > **À faire chez les parents** : remplir le champ pour chaque artiste qui a des certificats
 > papier, **avant** son premier certificat dans Galeria.
 >
+> ### 🟩 EN ATTENTE DE PUBLICATION — Site web remis en ordre (2026-09-11)
+>
+> Quatre rangées : en-tête (pastille de connexion + menu Outils) → barre [Œuvres | Fiches
+> d'artistes] · Artiste [▾] · Comparer → trois tuiles qui sont les onglets → filtres.
+> Pièces communes aux deux onglets dans `web-sync.js` (`enteteSiteWebHtml`,
+> `brancherEnteteSiteWeb`, `tuilesHtml`, `barreSelectionHtml`) ; styles `.sw-*`. Maquette :
+> `demos/site-web-hierarchie.html`.
+>
 > ### 🟩 EN ATTENTE DE PUBLICATION — comparer un seul artiste (2026-09-11)
 >
 > Site web → Œuvres : choix « Comparer » (toutes les œuvres / un artiste) + champ Chercher ;
