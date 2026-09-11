@@ -358,7 +358,7 @@ export async function rendreExpositionFiche(contenu, params = {}) {
           <input type="checkbox" id="c-qr" checked>
           <label for="c-qr">Afficher le code QR vers la fiche du site</label>
         </div>
-        ${sansAdresse ? `<p class="aide-champ" id="c-avert-qr" style="margin-top:10px;">${pluriel(sansAdresse, 'œuvre n\u2019a', 'œuvres n\u2019ont')} pas d'adresse sur le site : ${sansAdresse > 1 ? 'leurs cartels sortiront' : 'son cartel sortira'} sans code QR. Le bouton « Récupérer les adresses du site » peut y remédier.</p>` : ''}
+        ${sansAdresse ? `<p class="aide-champ" id="c-avert-qr" style="margin-top:10px;">${pluriel(sansAdresse, 'œuvre n\u2019a', 'œuvres n\u2019ont')} pas encore d'adresse sur le site : Galeria ira la chercher avant d'imprimer. ${sansAdresse > 1 ? 'Celles qui ne sont pas en ligne sortiront' : 'Si elle n\u2019est pas en ligne, son cartel sortira'} sans code QR.</p>` : ''}
         ${sansPhoto ? `<p class="aide-champ" id="c-avert-photo" style="margin-top:6px;display:none;">${pluriel(sansPhoto, 'œuvre n’a', 'œuvres n’ont')} pas de photo : ${sansPhoto > 1 ? 'leurs cartels sortiront' : 'son cartel sortira'} sans image, le texte gardant sa place.</p>` : ''}
         <div class="dialogue-actions">
           <button type="button" class="btn-action btn-secondaire-action" id="c-annuler">Annuler</button>
@@ -410,7 +410,8 @@ export async function rendreExpositionFiche(contenu, params = {}) {
         });
         fermer();
         const details = [`${pluriel(r.pages, 'page', 'pages')} à imprimer.`];
-        if (r.nb_sans_qr) details.push(`${pluriel(r.nb_sans_qr, 'cartel est sorti', 'cartels sont sortis')} sans code QR (adresse du site manquante).`);
+        if (r.adresses_trouvees) details.push(`${pluriel(r.adresses_trouvees, 'adresse retrouvée', 'adresses retrouvées')} sur le site pour les codes QR.`);
+        if (r.nb_sans_qr) details.push(`${pluriel(r.nb_sans_qr, 'cartel est sorti', 'cartels sont sortis')} sans code QR (œuvre pas encore sur le site).`);
         if (r.nb_sans_photo) details.push(`${pluriel(r.nb_sans_photo, 'cartel est sorti', 'cartels sont sortis')} sans photo (aucune image sur la fiche).`);
         const rep = await confirmer({
           type: 'succes',

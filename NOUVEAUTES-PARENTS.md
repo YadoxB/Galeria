@@ -24,8 +24,13 @@ L'écran **Site web** a été remis en ordre. Il se lit maintenant de haut en ba
 Pour reprendre plusieurs valeurs d'un coup : cochez-les (ou **Tout cocher**),
 puis **Reprendre la sélection**, dans la barre qui apparaît en bas de l'écran.
 
-« Récupérer les adresses du site » et « Séparer les citations », qui ne servent
-qu'une fois, sont maintenant dans le menu **Outils**, en haut à droite.
+Deux boutons ont disparu, parce que Galeria fait maintenant le travail tout seul :
+
+- **« Récupérer les adresses du site »** : l'adresse d'une œuvre sur le site (celle
+  du code QR des cartels) se retrouve à chaque comparaison, et juste avant
+  d'imprimer des cartels. Une œuvre qui n'est pas encore en ligne sort sans code QR.
+- **« Séparer les citations »** : quand vous reprenez une citation du site, Galeria
+  la retire aussi de la biographie si elle y était recopiée, et vous le dit.
 
 ---
 

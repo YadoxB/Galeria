@@ -49,7 +49,13 @@ nouveautés au prochain lancement.
 >
 > ### 🟩 EN ATTENTE DE PUBLICATION — Site web remis en ordre (2026-09-11)
 >
-> Quatre rangées : en-tête (pastille de connexion + menu Outils) → barre [Œuvres | Fiches
+> Plus de menu Outils : « Récupérer les adresses » et « Séparer les citations » sont RETIRÉS,
+> leur travail se fait seul (adresses à chaque comparaison et avant les cartels ; citation
+> retirée de la biographie quand on la reprend du site). À faire à la main : Humberto
+> Pinochet, Justina Smith et Isabelle Langlais ont leur citation aussi dans la biographie —
+> pour deux d'entre eux, elle ressemble à la première phrase de la bio (extrait du site).
+>
+> Quatre rangées : en-tête (pastille de connexion) → barre [Œuvres | Fiches
 > d'artistes] · Artiste [▾] · Comparer → trois tuiles qui sont les onglets → filtres.
 > Pièces communes aux deux onglets dans `web-sync.js` (`enteteSiteWebHtml`,
 > `brancherEnteteSiteWeb`, `tuilesHtml`, `barreSelectionHtml`) ; styles `.sw-*`. Maquette :

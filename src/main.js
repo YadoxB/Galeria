@@ -1486,6 +1486,17 @@ async function demarrerApplication() {
     const ignores = new Map(req.listerWebSyncIgnore().map((r) => [`${r.oeuvre_id}:${r.champ}`, r.site_cle]));
     const res = comparerSiteEtApp(produits, oeuvres, ignores, produitsEn);
     res.anglais_lu = avecAnglais && produitsEn.length > 0;
+    // Les adresses des œuvres sur le site (code QR des cartels, « Voir sur le
+    // site ») se tiennent à jour ICI, avec ce qui vient d'être lu. Il fallait
+    // un bouton, « Récupérer les adresses du site », qu'on oubliait — et
+    // chaque œuvre publiée restait sans adresse. Produits publiés seulement :
+    // l'adresse d'un brouillon ne mène nulle part.
+    res.adresses_mises_a_jour = 0;
+    try {
+      res.adresses_mises_a_jour = majUrlsSiteDepuisSite(
+        produits.filter((p) => p.status === 'publish' && p.permalink)
+      ).remplies;
+    } catch (err) { journaliserErreur('Adresses des œuvres sur le site', err); }
     res.portee = portee;
     res.duree_ms = Date.now() - debut;
     return res;
@@ -1578,9 +1589,21 @@ async function demarrerApplication() {
     res.duree_ms = Date.now() - debut;
     return res;
   });
+  // Une citation qui arrive dans une case VIDE était souvent recopiée dans la
+  // biographie des vieilles fiches : on l'en retire dans le même geste. C'était
+  // le travail de « Séparer les citations », retiré le 2026-09-11 — il ne
+  // traitait, lui aussi, que les citations vides.
   ipcMain.handle('web:importer-champ-artiste', (_e, artisteId, champ, valeur) => {
-    const artiste = majChampArtiste(artisteId, champ, valeur);
-    return { ok: true, artiste };
+    const avant = (champ === 'citation' || champ === 'citation_en') ? obtenirArtiste(artisteId) : null;
+    let artiste = majChampArtiste(artisteId, champ, valeur);
+    let bioNettoyee = false;
+    if (avant && !String(avant[champ] || '').trim() && String(valeur || '').trim()) {
+      const champBio = champ === 'citation' ? 'biographie' : 'biographie_en';
+      const bio = avant[champBio] || '';
+      const nouvelle = retirerCitationDeBio(bio, valeur);
+      if (nouvelle !== bio) { artiste = majChampArtiste(artisteId, champBio, nouvelle); bioNettoyee = true; }
+    }
+    return { ok: true, artiste, bio_nettoyee: bioNettoyee };
   });
   ipcMain.handle('web:ignorer-diff-artiste', (_e, artisteId, champ, siteCle) => ignorerDiffArtisteWeb(artisteId, champ, siteCle));
   ipcMain.handle('web:retirer-ignore-artiste', (_e, artisteId, champ) => retirerIgnoreArtisteWeb(artisteId, champ));
@@ -1622,13 +1645,28 @@ async function demarrerApplication() {
   ipcMain.handle('expos:ajouter-oeuvres', (_e, id, ids) => rangerApres(ajouterOeuvresExposition(id, ids)));
   ipcMain.handle('expos:retirer-oeuvre', (_e, id, oeuvreId) => rangerApres(retirerOeuvreExposition(id, oeuvreId), [oeuvreId]));
   ipcMain.handle('expos:terminer', (_e, id) => rangerApres(terminerExposition(id)));
-  ipcMain.handle('expos:cartels', (_e, id, options) => genererCartelsPdf(id, options || {}));
-
-  ipcMain.handle('web:recuperer-adresses', async () => {
-    const { url } = obtenirClesWoo();
-    if (!url) throw new Error("Configure d'abord l'adresse du site dans Réglages → Site web.");
-    const produits = await require('./web/woocommerce').listerProduitsPublics({ url });
-    return majUrlsSiteDepuisSite(produits);
+  // Juste avant d'imprimer, les œuvres sans adresse sur le site vont la
+  // chercher (une seule lecture, par leurs numéros d'inventaire) : sinon leur
+  // cartel sortirait sans code QR. Sans réseau ou sans site, on imprime quand
+  // même — c'est le cartel sans code, comme avant.
+  ipcMain.handle('expos:cartels', async (_e, id, options) => {
+    const opts = options || {};
+    let adressesTrouvees = 0;
+    if (opts.afficherQr !== false) {
+      try {
+        const { url } = obtenirClesWoo();
+        const expo = require('./db/requetes').obtenirExposition(id);
+        const skus = ((expo && expo.oeuvres) || [])
+          .filter((o) => !o.retire_le && !String(o.url_site || '').trim() && String(o.numero_inventaire || '').trim())
+          .map((o) => o.numero_inventaire);
+        if (url && skus.length) {
+          const produits = await require('./web/woocommerce').listerProduitsPublics({ url, skus });
+          adressesTrouvees = majUrlsSiteDepuisSite(produits.filter((p) => p.permalink)).remplies;
+        }
+      } catch (err) { journaliserErreur('Adresses des cartels', err); }
+    }
+    const r = await genererCartelsPdf(id, opts);
+    return { ...r, adresses_trouvees: adressesTrouvees };
   });
 
   // (L'import en masse des textes anglais a été RETIRÉ le 2026-09-09. Sa règle
@@ -1638,28 +1676,6 @@ async function demarrerApplication() {
   //  françaises et 0 anglaise dans la base. Deux boutons qui se ressemblaient
   //  à ce point étaient un piège ; il n'en reste qu'un.)
 
-  ipcMain.handle('web:ranger-citations', async () => {
-    const { url } = obtenirClesWoo();
-    if (!url) throw new Error("Configure d'abord l'adresse du site dans Réglages → Site web.");
-    const portfolios = await require('./web/woocommerce').listerArtistesSite({ url });
-    const artistes = require('./db/requetes').artistesPourComparaisonWeb();
-    const parNom = new Map();
-    for (const p of portfolios) { const k = clefComparaison(p.nom); if (k) parNom.set(k, p); }
-    let traites = 0, biosNettoyees = 0;
-    for (const a of artistes) {
-      if ((a.citation || '').trim()) continue; // déjà une citation → on n'y touche pas
-      const nomA = [a.prenom, a.nom].filter(Boolean).join(' ').trim();
-      const p = parNom.get(clefComparaison(nomA));
-      if (!p) continue;
-      const citation = (p.excerpt || '').replace(/\s*(\[[…\.]+\]|…|\.\.\.)\s*$/u, '').trim();
-      if (!citation) continue;
-      majChampArtiste(a.id, 'citation', citation);
-      const nouvelleBio = retirerCitationDeBio(a.biographie || '', citation);
-      if (nouvelleBio !== (a.biographie || '')) { majChampArtiste(a.id, 'biographie', nouvelleBio); biosNettoyees += 1; }
-      traites += 1;
-    }
-    return { traites, biosNettoyees, total: artistes.length };
-  });
 
   // Comparaison d'un SEUL élément, depuis sa fiche.
   ipcMain.handle('web:comparer-oeuvre', async (_e, oeuvreId) => {

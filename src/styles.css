@@ -5880,7 +5880,7 @@ select.lot-in.st-pretee { color: var(--info); }
 }
 .sw-connexion:hover { border-color: var(--warm-gold); color: var(--ink); }
 .sw-pastille { width: 8px; height: 8px; border-radius: 50%; background: #4f9a5a; flex: none; }
-.sw-outils-pop { min-width: 350px; }
+.sw-connexion:focus-visible { outline: 2px solid var(--warm-gold); outline-offset: 2px; }
 .sw-barre {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   background: var(--porcelain); border: 1px solid var(--mist); border-radius: 14px; padding: 12px 14px;

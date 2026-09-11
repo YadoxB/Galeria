@@ -57,11 +57,7 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
   const caseAnglais = contenu.querySelector('#c-anglais');
   caseAnglais.checked = lirePrefAnglais();
   caseAnglais.addEventListener('change', () => ecrirePrefAnglais(caseAnglais.checked));
-  // « Séparer les citations » change les fiches : on relit ce qui est affiché.
-  brancherEnteteSiteWeb(contenu, {
-    etat, mode: 'artistes', portee: () => portee,
-    apresCitations: async () => { if (dataCourant) await charger(); },
-  });
+  brancherEnteteSiteWeb(contenu, { mode: 'artistes', portee: () => portee });
   // Les artistes passent par l'API publique de WordPress : l'adresse suffit,
   // les clés REST ne sont pas nécessaires ici.
   brancherConnexion(contenu, etat, { exigeCles: false, boutons: [btnComparer] });
@@ -376,9 +372,16 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
     if (edite == null) return; // annulé
     btn.disabled = true; btn.textContent = 'Import…';
     try {
-      await window.api.webImporterChampArtiste(artisteId, champ, edite);
+      const r = await window.api.webImporterChampArtiste(artisteId, champ, edite);
       retirerChamp(artisteId, champ);
-      dessiner();
+      // La citation était recopiée dans la biographie : Galeria l'en a
+      // retirée. On le dit, et on relit — la biographie affichée a changé.
+      if (r && r.bio_nettoyee) {
+        await alerter({ type: 'succes', title: 'Citation reprise', message: 'La citation figurait aussi dans la biographie : elle en a été retirée.' });
+        await charger();
+      } else {
+        dessiner();
+      }
     } catch (err) { btn.disabled = false; btn.textContent = 'Reprendre la valeur du site →'; await alerter({ type: 'error', title: 'Import échoué', message: nettoyerErreur(err) }); }
   }
   async function importerPhoto(btn, artisteId) {
@@ -468,16 +471,20 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
     if (rep !== 0) return;
 
     let reussis = 0;
+    let biosNettoyees = 0;
     const erreurs = [];
     for (const it of items) {
       try {
-        await window.api.webImporterChampArtiste(it.artisteId, it.champ, it.valeur);
+        const r = await window.api.webImporterChampArtiste(it.artisteId, it.champ, it.valeur);
+        if (r && r.bio_nettoyee) biosNettoyees += 1;
         retirerChamp(it.artisteId, it.champ);
         reussis += 1;
       } catch (err) { erreurs.push(`${it.libelle} : ${nettoyerErreur(err)}`); }
     }
     selection.clear();
-    dessiner();
+    // Des biographies ont changé (citation retirée) : on relit plutôt que
+    // d'afficher des écarts qui ne sont plus vrais.
+    if (biosNettoyees) await charger(); else dessiner();
     if (erreurs.length) {
       await alerter({
         type: 'warning', title: 'Import partiel',
@@ -485,7 +492,13 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
         detail: erreurs.slice(0, 8).join('\n'),
       });
     } else {
-      await alerter({ type: 'succes', title: 'Import terminé', message: `${pluriel(reussis, 'valeur importée')} dans l'app.` });
+      await alerter({
+        type: 'succes', title: 'Import terminé',
+        message: `${pluriel(reussis, 'valeur importée')} dans l'app.`,
+        detail: biosNettoyees
+          ? `${pluriel(biosNettoyees, 'citation figurait', 'citations figuraient')} aussi dans la biographie : ${biosNettoyees > 1 ? 'elles en ont été retirées' : 'elle en a été retirée'}.`
+          : '',
+      });
     }
   }
 

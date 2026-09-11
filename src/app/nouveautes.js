@@ -44,7 +44,7 @@ export const VERSIONS = [
       },
       {
         titre: 'Un écran Site web plus clair',
-        texte: "Une barre pour dire quoi comparer, trois tuiles pour le résultat — <b>Différences</b>, <b>Seulement dans Galeria</b>, <b>Seulement sur le site</b> —, et c'est tout. Les outils qui ne servent qu'une fois sont rangés dans le menu <b>Outils</b>.",
+        texte: "Une barre pour dire quoi comparer, trois tuiles pour le résultat — <b>Différences</b>, <b>Seulement dans Galeria</b>, <b>Seulement sur le site</b> —, et c'est tout. Les adresses des œuvres pour les codes QR se retrouvent maintenant toutes seules&nbsp;: plus de bouton à penser à cliquer.",
       },
       {
         titre: 'Les certificats continuent la numérotation',

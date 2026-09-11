@@ -168,6 +168,8 @@ function normaliserProduitV3(p) {
     stock_status: p.stock_status || '',
     status: p.status || '',
     image: (Array.isArray(p.images) && p.images[0] && p.images[0].src) ? p.images[0].src : '',
+    // Adresse publique du produit : le code QR des cartels y mène.
+    permalink: p.permalink || '',
     // Sur ce site, la catégorie d'un produit est son artiste (vrai pour 22
     // artistes sur 23 au 2026-09-11). Sert à comparer UN artiste.
     categories: Array.isArray(p.categories)

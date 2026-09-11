@@ -27,8 +27,9 @@ identifiants.
     anglais · Comparer**. Le choix principal, Œuvres / Artistes, était une petite pastille
     sous le sous-titre ; le bouton ne change plus de nom (« Rafraîchir »). Formulation
     choisie par Dave : une étiquette « Artiste » plutôt que « Artistes de … ».
-  - « Récupérer les adresses du site » et « Séparer les citations », qui servent une fois,
-    occupaient les places les plus en vue : menu **Outils**.
+  - « Récupérer les adresses du site » et « Séparer les citations » occupaient les places
+    les plus en vue ; d'abord rangés dans un menu Outils, ils ont ensuite **disparu**, leur
+    travail se faisant tout seul (voir « Retiré »).
   - Filtres sur une rangée, **types sans écart masqués** (7 sur 9 à zéro sur l'onglet des
     artistes) ; « Tout cocher (n valeurs) » au-dessus de la liste ; « Reprendre la sélection »
     dans une **barre qui n'apparaît qu'une fois quelque chose coché**, collée au bas de
@@ -120,6 +121,26 @@ identifiants.
     processus par dossier temporaire — jamais par nom d'image, qui frapperait l'app installée.
 
 ### Retiré
+
+- **Les boutons « Récupérer les adresses du site » et « Séparer les citations »** (question
+  de Dave, 2026-09-11 : « ont-ils encore lieu d'être ? »). Leur travail se fait maintenant
+  tout seul, là où il sert.
+  - **Adresses** (code QR des cartels, « Voir sur le site ») : il fallait penser au bouton,
+    et chaque œuvre publiée restait sans adresse — 14 dans la base de Dave, la plus récente
+    du 7 septembre. Elles se tiennent à jour **à chaque comparaison des œuvres** (produits
+    publiés seulement : l'adresse d'un brouillon ne mène nulle part), et **juste avant
+    d'imprimer des cartels**, où les œuvres sans adresse vont la chercher en une lecture par
+    leurs numéros d'inventaire ; sans réseau, on imprime quand même, sans code. La fenêtre des
+    cartels renvoyait à un bouton situé sur un autre écran : elle dit maintenant ce que
+    Galeria va faire.
+  - **Citations** : l'outil ne remplissait que les citations vides — ce que la comparaison
+    fait déjà (« manquant ») — et ne servait plus chez Dave (22 artistes sur 23 ont leur
+    citation ; le 23ᵉ est une fiche d'essai). Son seul travail propre, retirer la citation
+    recopiée dans la biographie, se fait désormais **dans le même geste** quand on reprend une
+    citation manquante (`web:importer-champ-artiste`), en français comme en anglais, et
+    Galeria le dit. Couvre le cas des parents, dont le catalogue peut dater d'avant la
+    synchronisation avec le site.
+  - Le menu Outils de Site web disparaît avec eux.
 
 - **Audit des réglages (Dave, 2026-09-08 : « des demandes de numéros qui ne servent plus à
   rien »).** Chaque réglage a été tracé jusqu'à son consommateur réel.

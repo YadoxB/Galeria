@@ -128,7 +128,7 @@ export function brancherConnexion(contenu, etat, { exigeCles, boutons }) {
 //
 // Hiérarchie revue le 2026-09-11 (Dave : « des doublons, une hiérarchie
 // illogique »). Quatre rangées, dans l'ordre où l'on réfléchit :
-//   1. l'en-tête — où j'en suis (connexion) et les outils ponctuels ;
+//   1. l'en-tête — où j'en suis (connexion) ;
 //   2. la barre — quoi comparer (Œuvres / Fiches d'artistes), de quel
 //      artiste, et le bouton ;
 //   3. les tuiles, qui SONT les onglets (elles portaient les mêmes nombres
@@ -151,17 +151,6 @@ export function enteteSiteWebHtml(mode, etat) {
       <div class="sw-tete-droite">
         ${relie ? `<button type="button" class="sw-connexion" data-vers-reglages title="Changer la connexion (Réglages → Site web)">
           <span class="sw-pastille" aria-hidden="true"></span>Relié à ${ech(hoteDe(etat.url))} · lecture seule</button>` : ''}
-        <!-- Deux outils qui ne servent qu'une fois : rangés, plutôt qu'aux
-             places les plus en vue de l'écran. -->
-        <div class="menu-docs">
-          <button type="button" class="btn-action" id="btn-outils-site" aria-haspopup="menu" aria-expanded="false">
-            Outils <span class="menu-docs-chev" aria-hidden="true">▾</span>
-          </button>
-          <div class="menu-docs-pop sw-outils-pop" id="pop-outils-site" role="menu" hidden>
-            <button type="button" role="menuitem" id="btn-recuperer-adresses">Récupérer les adresses du site<small>L'adresse de la page de chaque œuvre, pour « Voir sur le site » et les QR des cartels</small></button>
-            <button type="button" role="menuitem" id="btn-ranger-citations">Séparer les citations<small>Range la citation de chaque artiste dans son propre champ, à partir du site</small></button>
-          </div>
-        </div>
       </div>
     </div>
     ${bandeauConnexionHtml(etat, exigeCles)}
@@ -224,75 +213,18 @@ export function dureeLecture(ms) {
   return ` · lu en ${s < 10 ? s.toFixed(1).replace('.', ',') : Math.round(s)} s`;
 }
 
-// Un bouton occupé : désactivé, avec un libellé d'attente ; rend de quoi le
-// remettre tel quel (contenu HTML compris).
-function occuper(el, texte) {
-  if (!el) return () => {};
-  const avant = el.innerHTML;
-  el.disabled = true;
-  el.textContent = texte;
-  return () => { el.disabled = false; el.innerHTML = avant; };
-}
-
 // Branche l'en-tête commun. `portee()` : l'artiste choisi, qui suit d'un
-// onglet à l'autre. `apresCitations` : rafraîchir ce qui est affiché.
-export function brancherEnteteSiteWeb(contenu, { etat, mode, portee, apresCitations }) {
+// onglet à l'autre.
+// (Le menu Outils — « Récupérer les adresses du site », « Séparer les
+//  citations » — a été retiré le 2026-09-11 : les adresses se tiennent à jour
+//  à chaque comparaison des œuvres et juste avant d'imprimer des cartels ; la
+//  citation reprise du site est retirée de la biographie dans le même geste.)
+export function brancherEnteteSiteWeb(contenu, { mode, portee }) {
   contenu.querySelectorAll('.sw-seg [data-mode]').forEach((b) => b.addEventListener('click', () => {
     if (b.dataset.mode === mode) return;
     const p = portee();
     naviguer(b.dataset.mode === 'oeuvres' ? 'web-sync' : 'web-sync-artistes', p ? { artiste_id: p } : {});
   }));
-
-  const btn = contenu.querySelector('#btn-outils-site');
-  const pop = contenu.querySelector('#pop-outils-site');
-  const fermer = () => { pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); };
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!pop.hidden) { fermer(); return; }
-    pop.hidden = false;
-    btn.setAttribute('aria-expanded', 'true');
-    pop.querySelector('[role="menuitem"]:not(:disabled)')?.focus();
-  });
-  pop.addEventListener('click', (e) => { if (e.target.closest('button')) fermer(); });
-  contenu.addEventListener('click', () => { if (!pop.hidden) fermer(); });
-  contenu.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) { fermer(); btn.focus(); } });
-
-  // Les deux outils passent par les API publiques : l'adresse suffit.
-  const itemAdresses = contenu.querySelector('#btn-recuperer-adresses');
-  const itemCitations = contenu.querySelector('#btn-ranger-citations');
-  if (!etat.adresseOk) { itemAdresses.disabled = true; itemCitations.disabled = true; }
-  brancherRecupererAdresses(itemAdresses, btn);
-  brancherRangerCitations(itemCitations, btn, apresCitations);
-}
-
-// « Séparer les citations » — sur le site, la citation de l'artiste est rangée
-// à part ; dans de vieilles fiches, elle est encore incluse dans la biographie.
-function brancherRangerCitations(item, indicateur, apres) {
-  if (!item) return;
-  item.addEventListener('click', async () => {
-    const rep = await confirmer({
-      type: 'question', title: 'Séparer les citations ?',
-      message: 'Remplir le champ « Citation » de chaque artiste à partir du site, et retirer cette citation du texte de la biographie quand elle y figure.',
-      detail: "À faire une seule fois. Ne touche qu'aux artistes dont la citation est encore vide. Les biographies ne sont modifiées que pour en retirer la citation exacte — rien d'autre.",
-      buttons: ['Séparer les citations', 'Annuler'], defaultId: 0, cancelId: 1,
-    });
-    if (rep !== 0) return;
-    const fin = occuper(indicateur, 'Séparation…');
-    try {
-      const r = await window.api.webRangerCitations();
-      await alerter({
-        type: 'succes', title: 'Citations rangées',
-        message: r.traites
-          ? `${r.traites} citation(s) remplie(s)${r.biosNettoyees ? `, dont ${r.biosNettoyees} retirée(s) de la biographie` : ''}.`
-          : 'Rien à ranger : toutes les citations sont déjà en place.',
-      });
-      if (apres) await apres();
-    } catch (err) {
-      await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) });
-    } finally {
-      fin();
-    }
-  });
 }
 
 function valeurAffichee(champ, v) {
@@ -320,8 +252,8 @@ export async function rendreWebSync(contenu, params = {}) {
   caseAnglais.checked = lirePrefAnglais();
   caseAnglais.addEventListener('change', () => ecrirePrefAnglais(caseAnglais.checked));
   // Le choix d'artiste suit d'un onglet à l'autre.
-  brancherEnteteSiteWeb(contenu, { etat, mode: 'oeuvres', portee: () => portee });
-  // « Comparer » exige les clés ; les outils se contentent de l'adresse.
+  brancherEnteteSiteWeb(contenu, { mode: 'oeuvres', portee: () => portee });
+  // « Comparer » exige l'adresse ET les clés.
   brancherConnexion(contenu, etat, { exigeCles: true, boutons: [btnComparer] });
 
   // Portée : null = tous les artistes, sinon l'id d'un artiste.
@@ -415,7 +347,9 @@ export async function rendreWebSync(contenu, params = {}) {
         ? (pt.categorie
           ? `, catégorie du site « ${ech(pt.categorie)} »`
           : " — aucune catégorie du site à son nom : seules ses œuvres déjà reliées sont comparées")
-        : ''}${dureeLecture(data.duree_ms)}</p>`;
+        : ''}${dureeLecture(data.duree_ms)}${data.adresses_mises_a_jour
+        ? ` · ${pluriel(data.adresses_mises_a_jour, 'adresse du site enregistrée', 'adresses du site enregistrées')}`
+        : ''}</p>`;
 
     // Les types sans écart sont masqués (ils s'affichaient à zéro, grisés).
     const chipsHtml = TYPES_DIFF.map((t) => ({ t, n: compteType(t.cle) })).filter(({ n }) => n > 0)
@@ -1154,49 +1088,3 @@ function modalCorrigerSku(produit) {
 //  anglais est remplacé par le filtre « Manquants » du comparateur, qui couvre
 //  en plus la citation anglaise que cet import n'a jamais traitée.)
 
-// Bouton « Récupérer les adresses du site ». Remplit l'adresse de la fiche de
-// chaque œuvre sur le site, rapprochée par numéro d'inventaire = SKU. Passe par
-// l'API publique de la boutique : fonctionne même sans clés REST configurées.
-// C'est cette adresse que le code QR des cartels d'exposition utilise.
-// `indicateur` : ce qui montre l'attente (le bouton « Outils ») — l'entrée du
-// menu, elle, disparaît avec le menu dès le clic.
-function brancherRecupererAdresses(item, indicateur) {
-  if (!item) return;
-  item.addEventListener('click', async () => {
-    const rep = await confirmer({
-      type: 'question',
-      title: 'Récupérer les adresses du site ?',
-      message: "Remplir, pour chaque œuvre, l'adresse de sa fiche sur le site web.",
-      detail: [
-        "Le rapprochement se fait par numéro d'inventaire (le SKU du site).",
-        "Seule cette adresse est renseignée : aucun autre champ n'est touché, et rien n'est modifié sur le site.",
-        "L'adresse sert au bouton « Voir sur le site » et aux codes QR des cartels.",
-      ].join('\n\n'),
-      buttons: ['Récupérer', 'Annuler'], defaultId: 0, cancelId: 1,
-    });
-    if (rep !== 0) return;
-    const fin = occuper(indicateur || item, 'Lecture du site…');
-    try {
-      const r = await window.api.webRecupererAdresses();
-      const lignes = [
-        `${pluriel(r.total_site, 'produit lu', 'produits lus')} sur le site.`,
-        `${pluriel(r.rapprochees, 'œuvre rapprochée', 'œuvres rapprochées')} par numéro d'inventaire.`,
-      ];
-      if (r.inchangees) lignes.push(`${pluriel(r.inchangees, 'adresse était déjà à jour', 'adresses étaient déjà à jour')}.`);
-      if (r.sans_correspondance) lignes.push(`${pluriel(r.sans_correspondance, 'produit du site n\u2019a', 'produits du site n\u2019ont')} aucune œuvre correspondante.`);
-      if (r.sans_numero) lignes.push(`${pluriel(r.sans_numero, 'œuvre n\u2019a', 'œuvres n\u2019ont')} pas de numéro d'inventaire — impossible de les rapprocher.`);
-      await alerter({
-        type: 'succes',
-        title: r.remplies ? 'Adresses récupérées' : 'Rien à mettre à jour',
-        message: r.remplies
-          ? `${pluriel(r.remplies, 'adresse enregistrée', 'adresses enregistrées')}.`
-          : "Aucune nouvelle adresse à enregistrer.",
-        detail: lignes.join('\n'),
-      });
-    } catch (err) {
-      await alerter({ type: 'error', title: 'Récupération impossible', message: nettoyerErreur(err) });
-    } finally {
-      fin();
-    }
-  });
-}

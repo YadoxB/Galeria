@@ -802,8 +802,9 @@ function cartelsEnPaysage(n) {
 }
 
 // Prépare les cartels d'une exposition. Le code QR mène à la fiche de l'œuvre
-// sur le site (colonne `url_site`, remplie par « Récupérer les adresses du
-// site »). Une œuvre sans adresse reçoit un cartel sans code — voir src/qr.js.
+// sur le site (colonne `url_site`, tenue à jour par la comparaison des œuvres
+// et complétée juste avant l'impression — 'expos:cartels', main.js). Une œuvre
+// sans adresse reçoit un cartel sans code — voir src/qr.js.
 function preparerDonneesCartels(expo, opts = {}) {
   const { qrSvg } = require('./qr');
   const avecPhoto = !!opts.avecPhoto;

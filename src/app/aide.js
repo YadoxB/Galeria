@@ -270,9 +270,12 @@ const ARTICLES = [
      <ul><li><b>Reprendre du site</b> (avec édition avant remplacement) ou <b>Garder la version de l'app</b>, champ par champ.</li>
      <li>Onglet <b>Seulement sur le site</b> → <b>Créer la fiche artiste</b> (bio, démarche, C.V. et photo repris du site).</li></ul>
      <p>Le C.V. du site (présenté en tableau) est repris en lignes lisibles « <b>année — description</b> ».</p>`),
-  A('web', 'La citation de l\'artiste et « Séparer les citations »', 'citation extrait exergue biographie séparer champ dédié transition remplir bouton',
+  A('web', 'La citation de l\'artiste', 'citation extrait exergue biographie séparer champ dédié remplir manquant',
     `<p>Chaque artiste a un champ <b>Citation</b> (une phrase mise en exergue). Sur le site, la citation est rangée à part ; dans d'anciennes fiches, elle était parfois <b>incluse dans la biographie</b>.</p>
-     <p><b>Site web → Outils → Séparer les citations</b> fait le ménage en un clic : il <b>remplit le champ Citation</b> de chaque artiste depuis le site <b>et</b> retire cette citation du texte de la biographie. À faire une seule fois ; il n'agit que sur les artistes dont la citation est encore vide.</p>`),
+     <p>Dans <b>Site web → Fiches d'artistes</b>, une citation vide apparaît comme <b>manquant</b>. Quand vous la reprenez du site, Galeria la <b>retire aussi de la biographie</b> si elle y figurait, et vous le dit.</p>`),
+  A('web', 'Adresse d\'une œuvre sur le site (code QR)', 'adresse lien url code qr cartel voir sur le site récupérer',
+    `<p>L'adresse de la page d'une œuvre sur le site sert au <b>code QR des cartels</b> et au lien <b>Voir sur le site</b> de sa fiche.</p>
+     <p>Rien à faire : Galeria la retrouve <b>à chaque comparaison des œuvres</b>, et <b>juste avant d'imprimer des cartels</b> pour les œuvres qui n'en ont pas encore. Une œuvre qui n'est pas encore en ligne sort sans code QR.</p>`),
 
   // ═══════ SAUVEGARDES & DONNÉES ═══════
   A('sauvegardes', 'Faire une sauvegarde maintenant', 'sauvegarde backup copie manuelle sauvegarder',

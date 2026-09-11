@@ -57,10 +57,10 @@ contextBridge.exposeInMainWorld('api', {
   exposRetirerOeuvre: (id, oeuvreId) => ipcRenderer.invoke('expos:retirer-oeuvre', id, oeuvreId),
   exposTerminer: (id) => ipcRenderer.invoke('expos:terminer', id),
   exposCartels: (id, options) => ipcRenderer.invoke('expos:cartels', id, options),
-  webRecupererAdresses: () => ipcRenderer.invoke('web:recuperer-adresses'),
   // (webImporterAnglais retiré le 2026-09-09 : remplacé par le filtre
-  //  « Manquants » du comparateur, qui couvre en plus la citation anglaise.)
-  webRangerCitations: () => ipcRenderer.invoke('web:ranger-citations'),
+  //  « Manquants » du comparateur, qui couvre en plus la citation anglaise.
+  //  webRecupererAdresses et webRangerCitations retirés le 2026-09-11 : les
+  //  adresses se tiennent à jour toutes seules, voir main.js.)
   webRelierArtiste: (artisteId, options) => ipcRenderer.invoke('web:relier-artiste', artisteId, options),
   webDelierArtiste: (artisteId) => ipcRenderer.invoke('web:delier-artiste', artisteId),
   webComparerOeuvre: (oeuvreId) => ipcRenderer.invoke('web:comparer-oeuvre', oeuvreId),
