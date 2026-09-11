@@ -17,6 +17,9 @@ Dans **Site web**, une liste **« Comparer »** à côté du bouton : choisissez
 artiste, et Galeria ne compare que ses œuvres. C'est beaucoup plus rapide (une ou
 deux secondes), et les résultats ne parlent que de lui.
 
+La même liste existe sur l'onglet **Artistes**, et votre choix suit quand vous
+passez d'un onglet à l'autre : ses œuvres d'un côté, sa fiche de l'autre.
+
 Depuis la fiche d'un artiste, le bouton **« Comparer avec le site »** vous
 propose maintenant deux choix : **Sa fiche** (ses textes et sa photo, comme
 avant) ou **Ses œuvres**.

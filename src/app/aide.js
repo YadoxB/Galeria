@@ -266,6 +266,7 @@ const ARTICLES = [
      <li><b>Seulement dans l'app</b> — pour chaque œuvre : <b>Retirer</b>, <b>Vendre</b> ou <b>Supprimer</b>.</li></ul>`),
   A('web', 'Synchroniser les artistes', 'artistes portfolio biographie démarche curriculum cv photo citation comparer reprendre créer fiche onglet nom',
     `<p>Sur l'écran de synchronisation, le sélecteur <b>Œuvres / Artistes</b> (en haut) bascule vers les artistes. Galeria relie chaque artiste à sa page du site par le <b>nom</b> et compare <b>Biographie</b>, <b>Démarche</b>, <b>Curriculum (C.V.)</b>, <b>Citation</b> et <b>Photo</b>.</p>
+     <p>La liste <b>« Comparer »</b> n'affiche qu'un artiste. Le choix suit quand vous passez de l'onglet Œuvres à l'onglet Artistes, et inversement.</p>
      <ul><li><b>Reprendre du site</b> (avec édition avant remplacement) ou <b>Garder la version de l'app</b>, champ par champ.</li>
      <li>Onglet <b>Seulement sur le site</b> → <b>Créer la fiche artiste</b> (bio, démarche, C.V. et photo repris du site).</li></ul>
      <p>Le C.V. du site (présenté en tableau) est repris en lignes lisibles « <b>année — description</b> ».</p>`),

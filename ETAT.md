@@ -50,6 +50,8 @@ nouveautés au prochain lancement.
 > ### 🟩 EN ATTENTE DE PUBLICATION — comparer un seul artiste (2026-09-11)
 >
 > Site web → Œuvres : choix « Comparer » (toutes les œuvres / un artiste) + champ Chercher ;
+> le même choix sur l'onglet Artistes (filtre d'affichage, sans relecture), qui suit d'un
+> onglet à l'autre par `params.artiste_id` ;
 > fiche artiste : menu « Comparer avec le site » (Sa fiche / Ses œuvres). Lecture ciblée dans
 > `lireProduitsArtiste` (`main.js`) : SKU de ses œuvres, puis la catégorie que portent ces
 > produits. Banc : les 23 artistes donnent exactement la part de la comparaison complète.

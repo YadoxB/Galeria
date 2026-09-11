@@ -173,7 +173,9 @@ export async function rendreWebSync(contenu, params = {}) {
   caseAnglais.checked = lirePrefAnglais();
   caseAnglais.addEventListener('change', () => ecrirePrefAnglais(caseAnglais.checked));
   brancherRecupererAdresses(btnAdresses);
-  contenu.querySelector('#wsync-vers-artistes')?.addEventListener('click', () => naviguer('web-sync-artistes'));
+  // Le choix d'artiste suit d'un onglet à l'autre.
+  contenu.querySelector('#wsync-vers-artistes')?.addEventListener('click', () =>
+    naviguer('web-sync-artistes', portee ? { artiste_id: portee } : {}));
   // « Comparer » exige les clés ; « Récupérer les adresses » se contente de
   // l'adresse, et reste donc utilisable quand seules les clés manquent.
   brancherConnexion(contenu, etat, { exigeCles: true, boutons: [btnComparer] });

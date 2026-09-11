@@ -36,7 +36,9 @@ function apercuTexte(v) {
   return s.trim() ? ech(s) : '<span class="wsync-vide">— (vide)</span>';
 }
 
-export async function rendreWebSyncArtistes(contenu) {
+// `params.artiste_id` : arriver réglé sur un artiste (choix repris de l'onglet
+// Œuvres), et comparer tout de suite.
+export async function rendreWebSyncArtistes(contenu, params = {}) {
   const etat = await etatConnexion();
   contenu.innerHTML = `
     <div class="vue-liste web-sync-vue">
@@ -50,10 +52,18 @@ export async function rendreWebSyncArtistes(contenu) {
           </div>
         </div>
         <div class="entete-page-actions">
-          <label class="wsync-opt-anglais" title="Relit les pages du site en anglais pour comparer aussi les textes anglais. Deux fois plus long.">
-            <input type="checkbox" id="c-anglais"> textes anglais
-          </label>
-          <button type="button" class="btn-action btn-principal" id="btn-comparer">Comparer les artistes</button>
+          <!-- Même choix que sur l'onglet Œuvres, et il passe d'un onglet à
+               l'autre. Ici, pas de lecture ciblée : toutes les pages d'artistes
+               du site tiennent en une lecture ; le choix FILTRE l'affichage. -->
+          <div class="wsync-comparer-grp">
+            <label class="wsync-portee">Comparer
+              <select id="wsync-portee"><option value="">Tous les artistes</option></select>
+            </label>
+            <label class="wsync-opt-anglais" title="Relit les pages du site en anglais pour comparer aussi les textes anglais. Deux fois plus long.">
+              <input type="checkbox" id="c-anglais"> textes anglais
+            </label>
+            <button type="button" class="btn-action btn-principal" id="btn-comparer">Comparer les artistes</button>
+          </div>
         </div>
       </div>
       ${bandeauConnexionHtml(etat, false)}
@@ -72,7 +82,9 @@ export async function rendreWebSyncArtistes(contenu) {
   const caseAnglais = contenu.querySelector('#c-anglais');
   caseAnglais.checked = lirePrefAnglais();
   caseAnglais.addEventListener('change', () => ecrirePrefAnglais(caseAnglais.checked));
-  contenu.querySelector('#wsync-vers-oeuvres').addEventListener('click', () => naviguer('web-sync'));
+  // Le choix d'artiste suit d'un onglet à l'autre.
+  contenu.querySelector('#wsync-vers-oeuvres').addEventListener('click', () =>
+    naviguer('web-sync', portee ? { artiste_id: portee } : {}));
   // Les artistes passent par l'API publique de WordPress : l'adresse suffit,
   // les clés REST ne sont pas nécessaires ici.
   brancherConnexion(contenu, etat, {
@@ -105,6 +117,11 @@ export async function rendreWebSyncArtistes(contenu) {
     }
   });
 
+  // Portée : null = tous les artistes, sinon l'id d'un artiste. Filtre
+  // d'affichage seulement — les pages du site sont lues d'un bloc.
+  const selPortee = contenu.querySelector('#wsync-portee');
+  let portee = Number(params && params.artiste_id) || null;
+
   let dataCourant = null;
   let ongletActif = 'diff';
   let afficherReglees = false;
@@ -126,13 +143,50 @@ export async function rendreWebSyncArtistes(contenu) {
     return artistesTous;
   }
 
+  // Ce que montre l'écran, portée appliquée. Les pages « seulement sur le
+  // site » ne portent pas d'artiste de l'app : elles ne restent visibles, avec
+  // un artiste choisi, que s'il n'est relié à AUCUNE page — l'une d'elles est
+  // peut-être la sienne, et c'est de là qu'on la relie.
+  function vue() {
+    const d = dataCourant;
+    const sites = d.siteSeul.map((p, i) => ({ p, i }));
+    if (!portee) return { lignes: d.lignes, appSeul: d.appSeul, siteSeul: sites, relie: null };
+    const lignes = d.lignes.filter((l) => l.artiste_id === portee);
+    const appSeul = d.appSeul.filter((a) => a.id === portee);
+    return { lignes, appSeul, siteSeul: appSeul.length ? sites : [], relie: lignes[0] || null };
+  }
   const champsVisibles = (l) => l.champs.filter((c) => filtres.has(c.champ)
     && (nature === 'tous' || natureDe(c) === nature)
     && (afficherReglees || !c.ignore));
   const ligneVisible = (l) => champsVisibles(l).length > 0;
-  const compteType = (t) => dataCourant.lignes.filter((l) => l.champs.some((c) => c.champ === t && !c.ignore)).length;
-  const compteNature = (n) => dataCourant.lignes.reduce((acc, l) => acc
+  const compteType = (t) => vue().lignes.filter((l) => l.champs.some((c) => c.champ === t && !c.ignore)).length;
+  const compteNature = (n) => vue().lignes.reduce((acc, l) => acc
     + l.champs.filter((c) => filtres.has(c.champ) && !c.ignore && natureDe(c) === n).length, 0);
+
+  function nomPortee() {
+    const opt = selPortee.selectedOptions[0];
+    return opt && opt.value ? opt.textContent : '';
+  }
+  // Même liste que la fenêtre « Relier » : tous les artistes actifs.
+  async function remplirPortee() {
+    let artistes = [];
+    try { artistes = await chargerArtistes(); } catch { artistes = []; }
+    if (artistes.length) {
+      selPortee.insertAdjacentHTML('beforeend', `<optgroup label="Un artiste">${artistes.map((a) =>
+        `<option value="${a.id}">${ech(nomComplet(a) || a.nom || '')}</option>`).join('')}</optgroup>`);
+    }
+    if (portee && !artistes.some((a) => a.id === portee)) portee = null;
+    selPortee.value = portee ? String(portee) : '';
+    selPortee.classList.toggle('cible', !!portee);
+  }
+  function changerPortee(id) {
+    portee = id || null;
+    selPortee.value = portee ? String(portee) : '';
+    selPortee.classList.toggle('cible', !!portee);
+    selection.clear();                     // jamais de case cochée hors de l'écran
+    if (dataCourant) dessiner();
+    else if (etat.adresseOk) charger();
+  }
 
   async function charger() {
     btnComparer.disabled = true;
@@ -155,11 +209,21 @@ export async function rendreWebSyncArtistes(contenu) {
   function dessiner() {
     const data = dataCourant;
     const r = data.resume;
-    const resteDiff = data.lignes.filter((l) => l.champs.some((c) => !c.ignore)).length;
-    const nbReglees = data.lignes.reduce((n, l) => n + l.champs.filter((c) => c.ignore).length, 0);
-    const visibles = data.lignes.filter(ligneVisible);
+    const v = vue();
+    const resteDiff = v.lignes.filter((l) => l.champs.some((c) => !c.ignore)).length;
+    const nbReglees = v.lignes.reduce((n, l) => n + l.champs.filter((c) => c.ignore).length, 0);
+    const visibles = v.lignes.filter(ligneVisible);
 
-    const resumeHtml = `
+    // Un seul artiste : le bandeau dit où il en est avec le site, à la place
+    // des compteurs (« 1 artiste relié » n'apprendrait rien).
+    const resumeHtml = portee ? `
+      <div class="wsync-portee-bandeau">
+        <strong>${ech(nomPortee())}</strong>
+        <span>seulement — ${v.relie
+          ? (v.relie.nom_site ? `relié au site sous « ${ech(v.relie.nom_site)} »` : 'relié à sa page du site')
+          : "aucune page du site ne lui est reliée"}</span>
+        <button type="button" class="btn-lien" id="wsync-portee-tout">Comparer tous les artistes</button>
+      </div>` : `
       <div class="wsync-resume">
         <div class="wsync-stat"><span class="n">${r.relies}</span><span class="lib">artiste(s) relié(s)</span></div>
         <div class="wsync-stat"><span class="n">${resteDiff}</span><span class="lib">avec des différences</span></div>
@@ -189,19 +253,21 @@ export async function rendreWebSyncArtistes(contenu) {
       </div>`;
 
     let cartesHtml;
-    if (!resteDiff && !nbReglees) cartesHtml = `<p class="liste-vide">✓ Rien à réconcilier : les artistes reliés concordent avec le site.</p>`;
+    if (portee && !v.relie) cartesHtml = `<p class="liste-vide">Rien à comparer : aucune page du site n'est reliée à cet artiste. Si l'une des pages de l'onglet « Seulement sur le site » est la sienne, reliez-la.</p>`;
+    else if (!resteDiff && !nbReglees) cartesHtml = `<p class="liste-vide">✓ Rien à réconcilier : ${portee ? 'sa fiche concorde' : 'les artistes reliés concordent'} avec le site.</p>`;
     else if (!visibles.length) cartesHtml = `<p class="liste-vide">Aucune différence de ce type.</p>`;
     else cartesHtml = visibles.map((l) => carteArtiste(l)).join('');
 
-    const appSeulHtml = data.appSeul.length
-      ? `<div class="wsync-recon-liste">${data.appSeul.map((a) => `
+    const appSeulHtml = v.appSeul.length
+      ? `<div class="wsync-recon-liste">${v.appSeul.map((a) => `
           <div class="wsync-recon" data-artiste="${a.id}">
             <div class="wsync-recon-info"><strong>${ech(a.nom)}</strong></div>
             <div class="wsync-recon-actions"><button type="button" class="btn-lien wsync-voir-artiste" data-artiste="${a.id}">Voir la fiche</button></div>
           </div>`).join('')}</div>`
-      : `<p class="liste-vide">✓ Tous les artistes de l'app ont une page sur le site.</p>`;
-    const siteSeulHtml = data.siteSeul.length
-      ? `<div class="wsync-recon-liste">${data.siteSeul.map((p, i) => `
+      : `<p class="liste-vide">✓ ${portee ? 'Cet artiste a' : "Tous les artistes de l'app ont"} une page sur le site.</p>`;
+    // `data-idx` renvoie à dataCourant.siteSeul : l'index d'origine est gardé.
+    const siteSeulHtml = v.siteSeul.length
+      ? `<div class="wsync-recon-liste">${v.siteSeul.map(({ p, i }) => `
           <div class="wsync-recon" data-idx="${i}">
             <div class="wsync-recon-info"><strong>${ech(p.nom)}</strong>${p.excerpt ? ` <span class="wsync-artiste">${ech(p.excerpt.slice(0, 80))}${p.excerpt.length > 80 ? '…' : ''}</span>` : ''}</div>
             <div class="wsync-recon-actions">
@@ -209,12 +275,12 @@ export async function rendreWebSyncArtistes(contenu) {
               <button type="button" class="btn-action btn-principal wsync-creer-artiste">Créer la fiche artiste</button>
             </div>
           </div>`).join('')}</div>`
-      : `<p class="liste-vide">✓ Tous les artistes du site ont une fiche dans l'app.</p>`;
+      : `<p class="liste-vide">✓ ${portee ? 'Cet artiste est relié à sa page du site.' : "Tous les artistes du site ont une fiche dans l'app."}</p>`;
 
     const onglets = [
       { cle: 'diff', libelle: 'Différences', n: resteDiff },
-      { cle: 'app', libelle: "Seulement dans l'app", n: data.appSeul.length },
-      { cle: 'site', libelle: 'Seulement sur le site', n: data.siteSeul.length },
+      { cle: 'app', libelle: "Seulement dans l'app", n: v.appSeul.length },
+      { cle: 'site', libelle: 'Seulement sur le site', n: v.siteSeul.length },
     ];
     const ongletsHtml = `<div class="wsync-onglets" role="tablist">${onglets.map((o) =>
       `<button type="button" class="wsync-onglet${ongletActif === o.cle ? ' actif' : ''}" data-onglet="${o.cle}">${ech(o.libelle)} <span class="wsync-onglet-n">${o.n}</span></button>`).join('')}</div>`;
@@ -280,6 +346,7 @@ export async function rendreWebSyncArtistes(contenu) {
   }
 
   function brancher() {
+    corps.querySelector('#wsync-portee-tout')?.addEventListener('click', () => changerPortee(null));
     corps.querySelectorAll('.wsync-onglet').forEach((b) => b.addEventListener('click', () => { ongletActif = b.dataset.onglet; dessiner(); }));
     corps.querySelectorAll('.wsync-chip[data-type]').forEach((chip) => chip.addEventListener('click', () => {
       const t = chip.dataset.type;
@@ -296,7 +363,7 @@ export async function rendreWebSyncArtistes(contenu) {
     corps.querySelector('#wsync-voir-reglees')?.addEventListener('change', (e) => { afficherReglees = e.target.checked; dessiner(); });
 
     corps.querySelector('#wsync-sel-tout')?.addEventListener('click', () => {
-      dataCourant.lignes.filter(ligneVisible).forEach((l) => {
+      vue().lignes.filter(ligneVisible).forEach((l) => {
         champsVisibles(l).forEach((c) => {
           if (CHAMPS_COPIE.includes(c.champ) && !c.ignore) selection.add(cle(l.artiste_id, c.champ));
         });
@@ -675,6 +742,12 @@ export async function rendreWebSyncArtistes(contenu) {
   }
 
   btnComparer.addEventListener('click', charger);
+
+  // Changer d'artiste filtre ce qui est déjà lu ; sinon, lance la lecture.
+  selPortee.addEventListener('change', () => changerPortee(Number(selPortee.value) || null));
+  await remplirPortee();
+  // Arrivé avec un artiste (choix repris de l'onglet Œuvres) : on compare.
+  if (portee && etat.adresseOk) charger();
 }
 
 // Aperçu de l'artiste en modale (lecture seule) — pour consulter la fiche sans

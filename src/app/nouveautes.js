@@ -40,7 +40,7 @@ export const VERSIONS = [
       },
       {
         titre: 'Comparer un seul artiste avec le site',
-        texte: "Dans <b>Site web</b>, choisissez un artiste dans la liste <b>Comparer</b>&nbsp;: Galeria ne compare que ses œuvres, en une ou deux secondes. Depuis sa fiche, <b>Comparer avec le site → Ses œuvres</b> fait la même chose.",
+        texte: "Dans <b>Site web</b>, choisissez un artiste dans la liste <b>Comparer</b>&nbsp;: Galeria ne compare que ses œuvres, en une ou deux secondes. Passez à l'onglet <b>Artistes</b>&nbsp;: votre choix suit, et c'est sa fiche qui se compare.",
       },
       {
         titre: 'Les certificats continuent la numérotation',

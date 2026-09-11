@@ -192,6 +192,15 @@ identifiants.
     (ce qu'il faisait) et **Ses œuvres**, qui ouvre Site web réglé sur l'artiste et compare.
   - Un champ **Chercher** (titre ou n° d'inventaire) resserre les trois onglets sans relire le
     site ; une case cochée qui disparaît de l'écran est décochée.
+  - **Le même choix sur l'onglet Artistes** (demande de Dave, même jour), et il **suit d'un
+    onglet à l'autre** : choisir Jean-Pierre Neveu dans Œuvres puis passer à Artistes compare sa
+    fiche, et inversement. Ici, pas de lecture ciblée — toutes les pages d'artistes du site
+    tiennent en une lecture — : le choix filtre l'affichage, instantanément. Un bandeau dit où
+    en est l'artiste (« relié à sa page du site », « relié au site sous … », « aucune page du
+    site ne lui est reliée »). Sans page reliée, l'onglet « Seulement sur le site » reste
+    affiché : l'une de ces pages est peut-être la sienne, et c'est de là qu'on la relie.
+    Vérifié dans l'application réelle (10 contrôles : filtre sans relecture du site, artiste
+    relié, artiste sans page, retour à tous, le choix qui suit dans les deux sens).
   - **Comment Galeria trouve les produits d'un artiste** (`lireProduitsArtiste`, `main.js`) :
     d'abord ses **numéros d'inventaire** en SKU (aucune œuvre reliée ne peut manquer), puis la
     **catégorie** que portent ces produits (elle apporte ceux qui ne sont que sur le site). La
