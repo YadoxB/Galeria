@@ -17,9 +17,6 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
-    // ⚠ Numéro à ajuster si la version publiée n'est pas la 0.22.0 :
-    // `npm run release` refuse de publier si elle ne correspond pas à
-    // package.json.
     version: '0.22.0',
     diapos: [
       {

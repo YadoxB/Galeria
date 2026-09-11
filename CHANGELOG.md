@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.22.0] — 2026-09-11
+
 ### Modifié
 
 - **L'écran Site web remis en ordre** (Dave, 2026-09-11 : « des doublons, une hiérarchie

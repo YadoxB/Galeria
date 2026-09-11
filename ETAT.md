@@ -7,14 +7,19 @@
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-09-07)
+## ▶ Reprise — par où commencer (préparé le 2026-09-11)
 
-**✅ Dernière version PUBLIÉE : v0.21.1 (2026-09-07).** `origin/master` = tag `v0.21.1` =
-`f1f3d73`. Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
-Les parents passent de la 0.20.0 à la 0.21.1 : deux versions d'un coup, six diapos de
-nouveautés au prochain lancement.
+**✅ Dernière version PUBLIÉE : v0.22.0 (2026-09-11).** `origin/master` = tag `v0.22.0`.
+Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif. Les parents
+passent de la 0.21.1 à la 0.22.0 : douze diapos de nouveautés au prochain lancement.
 
-> ### 🟩 EN ATTENTE DE PUBLICATION — relier un artiste du site (2026-09-07)
+**Encore ouverts sur la liste du 2026-09-08** : lot 6 (courriel de la facture artiste, PDF
+joint — il manque le type d'Outlook des parents) et le libellé définitif de l'étape Google
+du suivi des ventes (`ETAPES_GALERIE`, `commun.js`). **À faire chez les parents** : remplir
+« Dernier certificat délivré » pour chaque artiste qui a des certificats papier ; cocher les
+trois tâches « côté galerie » des ventes déjà livrées.
+
+> ### ✅ PUBLIÉ DANS LA 0.22.0 — relier un artiste du site (2026-09-07)
 >
 > **« Relier à une fiche existante »** dans Site web → Artistes : nouvelle colonne `nom_site`
 > sur `artistes`, le nom que l'artiste porte **sur le site**. Le rapprochement l'essaie avant
@@ -28,7 +33,7 @@ nouveautés au prochain lancement.
 > Vérifié sur une copie de la vraie base et en montant la vraie vue dans un Chromium (douze
 > contrôles). Maquette : `demos/relier-artiste-site.html`.
 >
-> ### 🟩 EN ATTENTE DE PUBLICATION — « Dernier certificat délivré » (2026-09-11)
+> ### ✅ PUBLIÉ DANS LA 0.22.0 — « Dernier certificat délivré » (2026-09-11)
 >
 > Lot 5 des demandes du 2026-09-08. Colonne `artistes.certificat_dernier` (carte Identité du
 > formulaire) : le séquentiel NNN de `{inventaire}-NNN-{Sage}` suit le plus grand entre ce
@@ -47,7 +52,7 @@ nouveautés au prochain lancement.
 > **À faire chez les parents** : remplir le champ pour chaque artiste qui a des certificats
 > papier, **avant** son premier certificat dans Galeria.
 >
-> ### 🟩 EN ATTENTE DE PUBLICATION — Site web remis en ordre (2026-09-11)
+> ### ✅ PUBLIÉ DANS LA 0.22.0 — Site web remis en ordre (2026-09-11)
 >
 > Plus de menu Outils : « Récupérer les adresses » et « Séparer les citations » sont RETIRÉS,
 > leur travail se fait seul (adresses à chaque comparaison et avant les cartels ; citation
@@ -61,7 +66,7 @@ nouveautés au prochain lancement.
 > `brancherEnteteSiteWeb`, `tuilesHtml`, `barreSelectionHtml`) ; styles `.sw-*`. Maquette :
 > `demos/site-web-hierarchie.html`.
 >
-> ### 🟩 EN ATTENTE DE PUBLICATION — comparer un seul artiste (2026-09-11)
+> ### ✅ PUBLIÉ DANS LA 0.22.0 — comparer un seul artiste (2026-09-11)
 >
 > Site web → Œuvres : choix « Comparer » (toutes les œuvres / un artiste) + champ Chercher ;
 > le même choix sur l'onglet Artistes (filtre d'affichage, sans relecture), qui suit d'un
