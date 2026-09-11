@@ -47,6 +47,18 @@ nouveautés au prochain lancement.
 > **À faire chez les parents** : remplir le champ pour chaque artiste qui a des certificats
 > papier, **avant** son premier certificat dans Galeria.
 >
+> ### 🟩 EN ATTENTE DE PUBLICATION — comparer un seul artiste (2026-09-11)
+>
+> Site web → Œuvres : choix « Comparer » (toutes les œuvres / un artiste) + champ Chercher ;
+> fiche artiste : menu « Comparer avec le site » (Sa fiche / Ses œuvres). Lecture ciblée dans
+> `lireProduitsArtiste` (`main.js`) : SKU de ses œuvres, puis la catégorie que portent ces
+> produits. Banc : les 23 artistes donnent exactement la part de la comparaison complète.
+>
+> ⚠ **Non vérifié faute de clés** (elles sont chiffrées dans le profil de Dave, on n'y touche
+> pas) : que `wc/v3/products?sku=A,B,C` accepte la liste. Le banc passait par un relais vers
+> l'API publique, qui l'accepte. La sonde de repli couvre le cas contraire, en plus lent. **À
+> essayer par Dave** : comparer un artiste — si le bandeau annonce ses œuvres reliées, c'est bon.
+>
 > **Restent sur la liste du 2026-09-08** : lot 6 (courriel de la facture artiste, PDF joint :
 > `.eml` avec `X-Unsent: 1` — il manque le type d'Outlook des parents) ; libellé définitif de
 > l'étape Google du suivi (`ETAPES_GALERIE`, `commun.js`), à confirmer par Dave.

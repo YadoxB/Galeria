@@ -238,7 +238,7 @@ const ARTICLES = [
      <ol><li><b>Réglages → Site web</b>.</li>
      <li>Dépliez « <b>Connexion au site</b> », entrez l'<b>adresse</b> du site et les <b>clés</b> (fournies par la personne qui gère le site).</li>
      <li><b>Enregistrer</b>, puis <b>Tester la connexion</b>.</li></ol>
-     <p>Les clés sont <b>chiffrées</b> dans le coffre de Windows (jamais affichées). Une fois en place, l'action <b>« Comparer les fiches avec le site… »</b> est en tête de la page.</p>
+     <p>Les clés sont <b>chiffrées</b> dans le coffre de Windows (jamais affichées). Une fois en place, la comparaison se fait depuis l'entrée <b>Site web</b> du menu de gauche.</p>
      <div class="voir-aussi"><b>Voir aussi :</b> <a data-go="Obtenir les clés du site web (WordPress / WooCommerce)">Obtenir les clés du site, étape par étape</a></div>`),
   A('web', 'Obtenir les clés du site web (WordPress / WooCommerce)', 'clés obtenir créer wordpress woocommerce api rest consumer key secret lecture générer wp-admin étapes installer avancé permission',
     `<p>Pour relier Galeria au site, il faut créer une <b>clé d'accès en lecture</b> sur le site — <b>une seule fois</b>. C'est sans danger : cette clé permet seulement de <b>lire</b> le site ; Galeria ne peut rien y modifier.</p>
@@ -252,8 +252,10 @@ const ARTICLES = [
      </ol>
      <div class="attention">La clé et le secret ne s'affichent qu'<b>une seule fois</b> sur le site : copiez-les tout de suite. Perdus ? Retournez à l'étape 3, <b>supprimez</b> la clé « Galeria » et refaites-en une — rien n'est cassé.</div>
      <div class="astuce">La permission <b>« Lecture »</b> suffit : Galeria ne fait que lire le site. Une fois entrés, vos codes sont <b>chiffrés</b> dans l'application.</div>`),
-  A('web', 'Comparer vos œuvres avec le site', 'comparer synchroniser œuvres différences reprendre valeur titre description prix statut filtres lot garder rafraîchir',
-    `<p>Depuis <b>Réglages → Site web</b>, cliquez <b>Comparer les fiches avec le site…</b>. Galeria relie chaque œuvre à son produit par le <b>numéro d'inventaire</b> (= SKU du site) et affiche les <b>différences</b> (titre, description, prix, statut).</p>
+  A('web', 'Comparer vos œuvres avec le site', 'comparer synchroniser œuvres différences reprendre valeur titre description prix statut filtres lot garder rafraîchir artiste seul chercher recherche',
+    `<p>Dans le menu de gauche, <b>Site web</b>, puis <b>Comparer avec le site</b>. Galeria relie chaque œuvre à son produit par le <b>numéro d'inventaire</b> (= SKU du site) et affiche les <b>différences</b> (titre, description, prix, statut).</p>
+     <p><b>Un seul artiste</b> : choisissez-le dans la liste <b>« Comparer »</b>, à côté du bouton. Galeria ne lit alors que ses produits (1 à 2 secondes au lieu d'une dizaine) et les résultats ne parlent que de lui. Depuis la fiche d'un artiste, <b>Comparer avec le site → Ses œuvres</b> fait la même chose en un clic.</p>
+     <p>Le champ <b>Chercher</b> resserre l'affichage sur un titre ou un numéro d'inventaire, sans relire le site.</p>
      <ul><li><b>Reprendre la valeur du site →</b> remplace la valeur dans l'app. Pour le titre et la description, une fenêtre vous laisse d'abord <b>ajuster le texte avant de remplacer</b>.</li>
      <li><b>Garder la version de l'app</b> : la différence est mémorisée et ne revient plus, tant que le site ne change pas cette valeur.</li>
      <li>Les <b>filtres</b> (chips) et les cases à cocher permettent de <b>reprendre plusieurs valeurs en lot</b>.</li></ul>

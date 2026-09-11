@@ -2579,6 +2579,9 @@ details.bloc.pliable > .bloc-corps {
 .menu-docs-pop button:hover { background: var(--soft-ivory); }
 .menu-docs-pop button:focus-visible { outline: 2px solid var(--warm-gold); outline-offset: -2px; }
 .menu-docs-sep { height: 1px; background: var(--mist); margin: 5px 4px; }
+/* « Comparer avec le site » : chaque entrée dit ce qu'elle compare. */
+.menu-comparer-pop { min-width: 350px; }
+.menu-docs-pop button small { display: block; margin-top: 2px; font-size: 12px; color: var(--stone); }
 /* Langue des documents : un réglage en tête du menu, pas une entrée. Il ne
    vaut que pour la présentation et le catalogue — les annexes A restent en
    français. */
@@ -5874,6 +5877,30 @@ select.lot-in.st-pretee { color: var(--info); }
    d'où le traitement discret à côté du bouton « Comparer ». */
 .wsync-opt-anglais { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px;
   color: var(--slate); cursor: pointer; user-select: none; white-space: nowrap; }
+/* Site web → Œuvres : l'en-tête gagne un sélecteur, il peut passer à la ligne. */
+.web-sync-vue .entete-page-actions { flex-wrap: wrap; justify-content: flex-end; align-items: center; flex-shrink: 1; }
+.wsync-comparer-grp { display: flex; align-items: center; gap: var(--s2); flex-wrap: nowrap; }
+.wsync-portee { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--slate); }
+.wsync-portee select {
+  height: 38px; border: 1px solid var(--mist); border-radius: 9px; padding: 0 30px 0 12px;
+  font-family: var(--font-ui); font-size: 13.5px; color: var(--ink); background-color: var(--porcelain);
+  min-width: 220px; max-width: 280px;
+}
+.wsync-portee select.cible { border-color: var(--warm-gold); box-shadow: 0 0 0 3px rgba(201, 154, 61, .16); }
+/* Ce qui a été comparé, quand ce n'est pas toute la boutique. */
+.wsync-portee-bandeau {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; max-width: 860px;
+  background: var(--porcelain); border: 1px solid var(--mist); border-left: 3px solid var(--warm-gold);
+  border-radius: 10px; padding: 10px 15px; margin: 8px 0 14px; font-size: 13.5px; color: var(--slate);
+}
+.wsync-portee-bandeau strong { color: var(--ink); font-size: 14.5px; }
+.wsync-portee-bandeau .src { font-size: 12.5px; color: var(--stone); }
+.wsync-portee-bandeau .btn-lien { margin-left: auto; }
+.wsync-recherche { max-width: 860px; margin: 0 0 14px; }
+.wsync-recherche input {
+  width: 100%; max-width: 360px; height: 36px; border: 1px solid var(--mist); border-radius: 9px;
+  padding: 0 12px; font-family: var(--font-ui); font-size: 13.5px;
+}
 .rl-avert { color: var(--warm-gold); }
 
 /* ----- Cycle d'une vente : client puis galerie ----- */

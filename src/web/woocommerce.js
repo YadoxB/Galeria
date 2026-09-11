@@ -154,52 +154,105 @@ function stripHtml(html) {
   return s.trim();
 }
 
-// Récupère TOUS les produits de la boutique (lecture seule, paginé). Retourne des
-// fiches normalisées. N'écrit jamais rien sur le site.
-async function listerProduits({ url, consumerKey, consumerSecret }) {
-  const base = normaliserUrl(url);
+// Champs demandés à l'API REST (v3) pour un produit, et leur mise en forme.
+const CHAMPS_PRODUIT_V3 = 'id,sku,name,description,short_description,price,regular_price,stock_status,status,images,permalink,categories';
+function normaliserProduitV3(p) {
+  const prixBrut = (p.regular_price || p.price || '').toString().trim();
+  const prix = prixBrut === '' ? null : Number(prixBrut);
+  return {
+    id: p.id,
+    sku: (p.sku || '').trim(),
+    name: p.name || '',
+    description: stripHtml(p.description || p.short_description || ''),
+    prix: Number.isFinite(prix) ? prix : null,
+    stock_status: p.stock_status || '',
+    status: p.status || '',
+    image: (Array.isArray(p.images) && p.images[0] && p.images[0].src) ? p.images[0].src : '',
+    // Sur ce site, la catégorie d'un produit est son artiste (vrai pour 22
+    // artistes sur 23 au 2026-09-11). Sert à comparer UN artiste.
+    categories: Array.isArray(p.categories)
+      ? p.categories.map((c) => ({ id: c.id, name: decodeEntites(c.name || '') }))
+      : [],
+  };
+}
+
+function authBasique({ consumerKey, consumerSecret }) {
   const ck = String(consumerKey == null ? '' : consumerKey).trim();
   const cs = String(consumerSecret == null ? '' : consumerSecret).trim();
   if (!ck || !cs) throw new Error('Clé et secret requis.');
-  const auth = 'Basic ' + Buffer.from(`${ck}:${cs}`).toString('base64');
-  const champs = 'id,sku,name,description,short_description,price,regular_price,stock_status,status,images,permalink';
+  return 'Basic ' + Buffer.from(`${ck}:${cs}`).toString('base64');
+}
 
+// Nombre de SKU par requête quand on lit une liste de SKU : l'API les accepte
+// séparés par des virgules, mais l'adresse doit rester de longueur raisonnable.
+const PAQUET_SKU = 40;
+
+// Découpe une lecture en requêtes : toute la boutique, une catégorie, ou une
+// liste de SKU (par paquets). Rend les fragments de requête à ajouter.
+function requetesFiltre(filtre = {}) {
+  if (Array.isArray(filtre.skus)) {
+    const skus = [...new Set(filtre.skus.map((s) => String(s == null ? '' : s).trim()).filter(Boolean))];
+    const r = [];
+    for (let i = 0; i < skus.length; i += PAQUET_SKU) {
+      r.push(`&sku=${encodeURIComponent(skus.slice(i, i + PAQUET_SKU).join(','))}`);
+    }
+    return r;                              // liste vide → aucune requête
+  }
+  if (filtre.category) return [`&category=${encodeURIComponent(filtre.category)}`];
+  return [''];
+}
+
+// Récupère les produits de la boutique (lecture seule, paginé). Retourne des
+// fiches normalisées. N'écrit jamais rien sur le site.
+// `filtre` restreint la lecture, pour comparer un seul artiste :
+//   { category: id } → les produits d'une catégorie ;
+//   { skus: [...] }  → les produits portant ces SKU.
+// Sans filtre : TOUTE la boutique.
+async function listerProduits(creds, filtre = {}) {
+  const base = normaliserUrl(creds.url);
+  const auth = authBasique(creds);
   const produits = [];
-  const MAX_PAGES = 50; // garde-fou (5000 produits max) contre une boucle infinie.
-  for (let page = 1; page <= MAX_PAGES; page++) {
-    const url2 = `${base}/wp-json/wc/v3/products?per_page=100&page=${page}&_fields=${encodeURIComponent(champs)}`;
-    const resp = await getJson(url2, { auth });
-    if (resp.status === 401 || resp.status === 403) {
-      throw new Error('Clés refusées par le site (identifiants invalides ou permissions insuffisantes).');
+  for (const q of requetesFiltre(filtre)) {
+    const MAX_PAGES = 50; // garde-fou (5000 produits max) contre une boucle infinie.
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const url2 = `${base}/wp-json/wc/v3/products?per_page=100&page=${page}${q}&_fields=${encodeURIComponent(CHAMPS_PRODUIT_V3)}`;
+      const resp = await getJson(url2, { auth });
+      if (resp.status === 401 || resp.status === 403) {
+        throw new Error('Clés refusées par le site (identifiants invalides ou permissions insuffisantes).');
+      }
+      if (resp.status === 404) {
+        throw new Error("L'API WooCommerce est introuvable à cette adresse.");
+      }
+      if (!resp.ok) {
+        throw new Error(`Le site a répondu par une erreur (${resp.status}).`);
+      }
+      let lot;
+      try { lot = await resp.json(); } catch { throw new Error("Réponse du site illisible (format inattendu)."); }
+      if (!Array.isArray(lot) || !lot.length) break;
+      for (const p of lot) produits.push(normaliserProduitV3(p));
+      const totalPages = Number(resp.headers.get('x-wp-totalpages'));
+      if (Number.isFinite(totalPages) && page >= totalPages) break;
+      if (lot.length < 100) break;
     }
-    if (resp.status === 404) {
-      throw new Error("L'API WooCommerce est introuvable à cette adresse.");
-    }
-    if (!resp.ok) {
-      throw new Error(`Le site a répondu par une erreur (${resp.status}).`);
-    }
-    let lot;
-    try { lot = await resp.json(); } catch { throw new Error("Réponse du site illisible (format inattendu)."); }
-    if (!Array.isArray(lot) || !lot.length) break;
-    for (const p of lot) {
-      const prixBrut = (p.regular_price || p.price || '').toString().trim();
-      const prix = prixBrut === '' ? null : Number(prixBrut);
-      produits.push({
-        id: p.id,
-        sku: (p.sku || '').trim(),
-        name: p.name || '',
-        description: stripHtml(p.description || p.short_description || ''),
-        prix: Number.isFinite(prix) ? prix : null,
-        stock_status: p.stock_status || '',
-        status: p.status || '',
-        image: (Array.isArray(p.images) && p.images[0] && p.images[0].src) ? p.images[0].src : '',
-      });
-    }
-    const totalPages = Number(resp.headers.get('x-wp-totalpages'));
-    if (Number.isFinite(totalPages) && page >= totalPages) break;
-    if (lot.length < 100) break;
   }
   return produits;
+}
+
+// Catégories de produits de la boutique (id, nom, nombre de produits).
+async function listerCategoriesProduits(creds) {
+  const base = normaliserUrl(creds.url);
+  const auth = authBasique(creds);
+  const cats = [];
+  for (let page = 1; page <= 10; page++) {
+    const resp = await getJson(`${base}/wp-json/wc/v3/products/categories?per_page=100&page=${page}&_fields=id,name,count`, { auth });
+    if (!resp.ok) throw new Error(`Le site a répondu par une erreur (${resp.status}) en lisant les catégories.`);
+    let lot;
+    try { lot = await resp.json(); } catch { throw new Error('Réponse du site illisible (catégories).'); }
+    if (!Array.isArray(lot) || !lot.length) break;
+    for (const c of lot) cats.push({ id: c.id, name: decodeEntites(c.name || ''), count: c.count || 0 });
+    if (lot.length < 100) break;
+  }
+  return cats;
 }
 
 // Normalise un titre de section (retire balises/entités, minuscule, sans point final).
@@ -236,31 +289,18 @@ function decouperSectionsArtiste(html) {
 
 // Récupère UN produit par son SKU (= numéro d'inventaire). Pour la comparaison
 // d'une seule œuvre depuis sa fiche. Retourne la fiche normalisée, ou null.
-async function produitParSku({ url, consumerKey, consumerSecret }, sku) {
+async function produitParSku(creds, sku) {
   const s = String(sku == null ? '' : sku).trim();
   if (!s) return null;
-  const base = normaliserUrl(url);
-  const ck = String(consumerKey == null ? '' : consumerKey).trim();
-  const cs = String(consumerSecret == null ? '' : consumerSecret).trim();
-  if (!ck || !cs) throw new Error('Clé et secret requis.');
-  const auth = 'Basic ' + Buffer.from(`${ck}:${cs}`).toString('base64');
-  const champs = 'id,sku,name,description,short_description,price,regular_price,stock_status,status,images,permalink';
-  const resp = await getJson(`${base}/wp-json/wc/v3/products?sku=${encodeURIComponent(s)}&per_page=1&_fields=${encodeURIComponent(champs)}`, { auth });
+  const base = normaliserUrl(creds.url);
+  const auth = authBasique(creds);
+  const resp = await getJson(`${base}/wp-json/wc/v3/products?sku=${encodeURIComponent(s)}&per_page=1&_fields=${encodeURIComponent(CHAMPS_PRODUIT_V3)}`, { auth });
   if (resp.status === 401 || resp.status === 403) throw new Error('Clés refusées par le site.');
   if (!resp.ok) throw new Error(`Le site a répondu par une erreur (${resp.status}).`);
   let lot;
   try { lot = await resp.json(); } catch { throw new Error('Réponse du site illisible.'); }
   const p = Array.isArray(lot) && lot[0] ? lot[0] : null;
-  if (!p) return null;
-  const prixBrut = (p.regular_price || p.price || '').toString().trim();
-  const prix = prixBrut === '' ? null : Number(prixBrut);
-  return {
-    id: p.id, sku: (p.sku || '').trim(), name: p.name || '',
-    description: stripHtml(p.description || p.short_description || ''),
-    prix: Number.isFinite(prix) ? prix : null,
-    stock_status: p.stock_status || '', status: p.status || '',
-    image: (Array.isArray(p.images) && p.images[0] && p.images[0].src) ? p.images[0].src : '',
-  };
+  return p ? normaliserProduitV3(p) : null;
 }
 
 // Récupère les artistes du site : type de contenu WordPress `portfolio`, exposé
@@ -340,37 +380,40 @@ async function telechargerImage(url) {
 // langue : 'fr' | 'en' | undefined (voir listerArtistesSite).
 // La description d'une œuvre vit dans `short_description`, pas dans
 // `description`, qui est vide sur ce site.
-async function listerProduitsPublics({ url, langue }) {
+// `skus` (facultatif) : ne lire que ces produits — comparaison d'un artiste.
+async function listerProduitsPublics({ url, langue, skus }) {
   const base = normaliserUrl(url);
   const produits = [];
-  const MAX_PAGES = 50; // garde-fou (5000 produits) contre une boucle infinie
-  for (let page = 1; page <= MAX_PAGES; page++) {
-    const lang = langue ? `&lang=${encodeURIComponent(langue)}` : '';
-    const u = `${base}/wp-json/wc/store/v1/products?per_page=100&page=${page}${lang}`;
-    const resp = await getJson(u);
-    if (resp.status === 404) {
-      throw new Error("La boutique du site est introuvable à cette adresse.");
-    }
-    if (!resp.ok) {
-      throw new Error(`Le site a répondu par une erreur (${resp.status}) en lisant la boutique.`);
-    }
-    let lot;
-    try { lot = await resp.json(); }
-    catch { throw new Error('Réponse du site illisible (boutique).'); }
-    if (!Array.isArray(lot) || !lot.length) break;
-    for (const p of lot) {
-      const sku = (p && p.sku ? String(p.sku) : '').trim();
-      const permalink = (p && p.permalink ? String(p.permalink) : '').trim();
-      if (sku) {
-        produits.push({
-          sku,
-          permalink,
-          nom: stripHtml((p.name || '')),
-          description: stripHtml((p && p.short_description) || ''),
-        });
+  for (const q of requetesFiltre(Array.isArray(skus) ? { skus } : {})) {
+    const MAX_PAGES = 50; // garde-fou (5000 produits) contre une boucle infinie
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const lang = langue ? `&lang=${encodeURIComponent(langue)}` : '';
+      const u = `${base}/wp-json/wc/store/v1/products?per_page=100&page=${page}${lang}${q}`;
+      const resp = await getJson(u);
+      if (resp.status === 404) {
+        throw new Error("La boutique du site est introuvable à cette adresse.");
       }
+      if (!resp.ok) {
+        throw new Error(`Le site a répondu par une erreur (${resp.status}) en lisant la boutique.`);
+      }
+      let lot;
+      try { lot = await resp.json(); }
+      catch { throw new Error('Réponse du site illisible (boutique).'); }
+      if (!Array.isArray(lot) || !lot.length) break;
+      for (const p of lot) {
+        const sku = (p && p.sku ? String(p.sku) : '').trim();
+        const permalink = (p && p.permalink ? String(p.permalink) : '').trim();
+        if (sku) {
+          produits.push({
+            sku,
+            permalink,
+            nom: stripHtml((p.name || '')),
+            description: stripHtml((p && p.short_description) || ''),
+          });
+        }
+      }
+      if (lot.length < 100) break;
     }
-    if (lot.length < 100) break;
   }
   return produits;
 }
@@ -487,4 +530,4 @@ async function produitPublicParSku({ url, sku }) {
   return (Array.isArray(lot) && lot[0]) || null;
 }
 
-module.exports = { caracteristiquesProduit, produitPublicParSku, TYPES_SITE, listerProduitsPublics, testerConnexion, normaliserUrl, stripHtml, listerProduits, produitParSku, listerArtistesSite, telechargerImage };
+module.exports = { caracteristiquesProduit, produitPublicParSku, TYPES_SITE, listerProduitsPublics, testerConnexion, normaliserUrl, stripHtml, listerProduits, listerCategoriesProduits, produitParSku, listerArtistesSite, telechargerImage };

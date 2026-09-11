@@ -11,6 +11,21 @@
 
 ---
 
+## Comparer les œuvres d'un seul artiste avec le site
+
+Dans **Site web**, une liste **« Comparer »** à côté du bouton : choisissez un
+artiste, et Galeria ne compare que ses œuvres. C'est beaucoup plus rapide (une ou
+deux secondes), et les résultats ne parlent que de lui.
+
+Depuis la fiche d'un artiste, le bouton **« Comparer avec le site »** vous
+propose maintenant deux choix : **Sa fiche** (ses textes et sa photo, comme
+avant) ou **Ses œuvres**.
+
+Un champ **Chercher** permet aussi de retrouver une œuvre par son titre ou son
+numéro d'inventaire dans les résultats.
+
+---
+
 ## Les certificats continuent la numérotation de l'artiste
 
 Le numéro d'un certificat contient un numéro propre à l'artiste : le **042**

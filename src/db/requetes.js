@@ -258,7 +258,7 @@ function oeuvresPourComparaisonWeb() {
   const db = openDatabase();
   return db.prepare(`
     SELECT o.id, o.numero_inventaire, o.titre, o.description, o.description_en,
-           o.prix, o.statut, o.image_path,
+           o.prix, o.statut, o.image_path, o.artiste_id,
            TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom
     FROM oeuvres o
     JOIN artistes a ON a.id = o.artiste_id

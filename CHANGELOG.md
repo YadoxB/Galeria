@@ -98,6 +98,10 @@ identifiants.
 
 ### Corrigé
 
+- **L'aide sur la comparaison avec le site était périmée** : elle renvoyait à « Réglages →
+  Site web → Comparer les fiches avec le site… », déplacé dans le menu de gauche au lot du
+  2026-09-08.
+
 - **Annuler la pochette figeait son bouton** sur « Génération… » jusqu'au prochain changement
   d'écran : le bouton ne se rétablissait qu'en cas d'erreur, pas quand on annulait le choix de
   la langue. Il redevient cliquable dès qu'on annule.
@@ -178,6 +182,33 @@ identifiants.
     qui manque. L'aide distingue maintenant les deux.
 
 ### Ajouté
+
+- **Comparer les œuvres d'un seul artiste avec le site** (demande de Dave, 2026-09-11). La
+  comparaison lisait toute la boutique (517 produits, une dizaine de secondes, le double avec
+  l'anglais) et mêlait tous les artistes dans ses résultats.
+  - Site web → Œuvres : un choix **« Comparer »** à côté du bouton (« Toutes les œuvres » ou un
+    artiste) ; changer d'artiste relance la comparaison. Un bandeau dit ce qui a été comparé.
+  - Depuis la fiche de l'artiste, **« Comparer avec le site »** devient un menu : **Sa fiche**
+    (ce qu'il faisait) et **Ses œuvres**, qui ouvre Site web réglé sur l'artiste et compare.
+  - Un champ **Chercher** (titre ou n° d'inventaire) resserre les trois onglets sans relire le
+    site ; une case cochée qui disparaît de l'écran est décochée.
+  - **Comment Galeria trouve les produits d'un artiste** (`lireProduitsArtiste`, `main.js`) :
+    d'abord ses **numéros d'inventaire** en SKU (aucune œuvre reliée ne peut manquer), puis la
+    **catégorie** que portent ces produits (elle apporte ceux qui ne sont que sur le site). La
+    catégorie se déduit des produits plutôt que du nom : le site range « PAMCOMEAU (Pamela
+    Comeau) » sous « Pam Comeau (Pamela) ». Par le nom seulement à défaut.
+  - Garde-fous : produits filtrés après coup (une API qui ignorerait le filtre ne pourrait pas
+    faire lire la catégorie d'un autre artiste) ; si la liste de SKU ne rend rien, une sonde de
+    cinq œuvres lues une à une tranche entre « rien en ligne » et « liste non comprise ».
+  - Vérifié dans l'application réelle, sur une copie de la base, contre un serveur local qui
+    relaie la boutique réelle : pour **chacun des 23 artistes**, la comparaison ciblée donne
+    exactement la part de la comparaison complète qui le concerne (0 écart), les 7 produits
+    « seulement sur le site » sont tous retrouvés, un artiste ne lit jamais toute la boutique
+    (2 ou 3 requêtes au lieu de 6), l'anglais aussi est ciblé ; menu, recherche, course entre
+    deux choix rapides et retour à « Toutes les œuvres » vérifiés à l'écran (16 contrôles).
+    ⚠ Seul point non vérifiable sans les clés : que l'API à clés du site accepte une liste de
+    SKU séparés par des virgules — elle le documente, et la sonde couvre le cas contraire.
+  - Maquette : `demos/comparer-par-artiste.html`.
 
 - **« Dernier certificat délivré » sur la fiche de l'artiste** (demande de Dave, 2026-09-08) :
   la numérotation des certificats de chaque artiste (`{inventaire}-NNN-{n° Sage}`) partait de

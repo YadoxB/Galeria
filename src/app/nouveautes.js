@@ -39,6 +39,10 @@ export const VERSIONS = [
         texte: "L'écran <b>Site web</b> compare maintenant les textes anglais. Chaque écart porte une étiquette&nbsp;: <b>manquant</b> (la case est vide chez vous) ou <b>différent</b> (vous avez un autre texte). Cliquez <b>Manquants</b> puis <b>Tout cocher</b>&nbsp;: tout ce qui manque arrive d'un coup, sans rien effacer.",
       },
       {
+        titre: 'Comparer un seul artiste avec le site',
+        texte: "Dans <b>Site web</b>, choisissez un artiste dans la liste <b>Comparer</b>&nbsp;: Galeria ne compare que ses œuvres, en une ou deux secondes. Depuis sa fiche, <b>Comparer avec le site → Ses œuvres</b> fait la même chose.",
+      },
+      {
         titre: 'Les certificats continuent la numérotation',
         texte: "Vos artistes ont déjà des certificats sur papier. Sur la fiche de l'artiste, <b>Modifier</b>, puis inscrivez le numéro du dernier dans <b>Dernier certificat délivré</b>&nbsp;: Galeria continue au suivant. Au premier certificat d'un artiste, Galeria vous le rappelle.",
       },

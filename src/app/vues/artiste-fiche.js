@@ -417,7 +417,18 @@ export async function rendreArtisteFiche(contenu, params) {
               </div>
             </div>
             <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
-            <button class="btn-action" id="btn-sync-site" title="Comparer cet artiste avec le site web">Comparer avec le site</button>
+            <!-- Deux comparaisons, deux gestes : la fiche de l'artiste (ses
+                 textes, sa photo) se compare ici même ; ses œuvres ouvrent
+                 Site web → Œuvres réglé sur lui (demande de Dave, 2026-09-11). -->
+            <div class="menu-docs" id="menu-comparer">
+              <button class="btn-action" id="btn-menu-comparer" aria-haspopup="menu" aria-expanded="false">
+                Comparer avec le site <span class="menu-docs-chev" aria-hidden="true">▾</span>
+              </button>
+              <div class="menu-docs-pop menu-comparer-pop" id="menu-comparer-pop" role="menu" hidden>
+                <button type="button" role="menuitem" id="btn-sync-site">Sa fiche<small>Citation, biographie, démarche, curriculum, photo</small></button>
+                <button type="button" role="menuitem" id="btn-sync-oeuvres">Ses œuvres (${stats.catalogue})<small>Titres, descriptions, prix, statuts — ouvre Site web</small></button>
+              </div>
+            </div>
             ${boutonArchive({ archive: a.archive })}
             <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
           </div>
@@ -678,6 +689,8 @@ export async function rendreArtisteFiche(contenu, params) {
     contenu.querySelector('#btn-modifier').addEventListener('click', () => entrerEdition('fr'));
     contenu.querySelector('#btn-sync-site').addEventListener('click', () =>
       synchroniserArtiste(a.id, () => remplacerCourant('artiste-fiche', { id: a.id })));
+    contenu.querySelector('#btn-sync-oeuvres').addEventListener('click', () =>
+      naviguer('web-sync', { artiste_id: a.id }));
     contenu.querySelector('#btn-supprimer').addEventListener('click', supprimer);
 
     // Valeur dispo masquée : révélée au clic, re-masquée quand la souris quitte.
@@ -831,29 +844,28 @@ export async function rendreArtisteFiche(contenu, params) {
       });
     }
 
-    // --- Menu « Documents » : ouverture, fermeture, accessibilité ---
-    const menuBtn = contenu.querySelector('#btn-menu-docs');
-    const menuPop = contenu.querySelector('#menu-docs-pop');
-    if (menuBtn && menuPop) {
+    // --- Menus de l'en-tête (« Documents », « Comparer avec le site ») :
+    //     ouverture, fermeture, accessibilité. Un seul ouvert à la fois. ---
+    const fermeturesMenus = [];
+    function brancherMenu(menuBtn, menuPop, { aLOuverture } = {}) {
+      if (!menuBtn || !menuPop) return;
       const fermerMenu = () => {
         menuPop.hidden = true;
         menuBtn.setAttribute('aria-expanded', 'false');
       };
+      fermeturesMenus.push(fermerMenu);
       menuBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         const ouvert = !menuPop.hidden;
-        menuPop.hidden = ouvert;
-        menuBtn.setAttribute('aria-expanded', ouvert ? 'false' : 'true');
-        if (!ouvert) {
-          // La langue revient au français à CHAQUE ouverture : un choix
-          // oublié ne doit pas produire un document anglais par surprise
-          // trois jours plus tard.
-          reinitialiserLangueDocs();
-          // Le premier élément de MENU, pas le premier bouton — la bascule
-          // FR/EN est en tête et ne doit pas prendre le focus.
-          const premier = menuPop.querySelector('[role="menuitem"]');
-          if (premier) premier.focus();
-        }
+        fermeturesMenus.forEach((f) => f());
+        if (ouvert) return;
+        menuPop.hidden = false;
+        menuBtn.setAttribute('aria-expanded', 'true');
+        if (aLOuverture) aLOuverture();
+        // Le premier élément de MENU, pas le premier bouton — la bascule
+        // FR/EN du menu « Documents » est en tête et ne doit pas prendre le focus.
+        const premier = menuPop.querySelector('[role="menuitem"]');
+        if (premier) premier.focus();
       });
       // Un clic sur une entrée déclenche son propre handler, puis referme.
       // La bascule de langue est un réglage, pas une entrée : elle ne ferme
@@ -869,6 +881,11 @@ export async function rendreArtisteFiche(contenu, params) {
         if (e.key === 'Escape' && !menuPop.hidden) { fermerMenu(); menuBtn.focus(); }
       });
     }
+    // La langue revient au français à CHAQUE ouverture : un choix oublié ne
+    // doit pas produire un document anglais par surprise trois jours plus tard.
+    brancherMenu(contenu.querySelector('#btn-menu-docs'), contenu.querySelector('#menu-docs-pop'),
+      { aLOuverture: reinitialiserLangueDocs });
+    brancherMenu(contenu.querySelector('#btn-menu-comparer'), contenu.querySelector('#menu-comparer-pop'));
 
     const avatarVision = contenu.querySelector('#avatar-vision');
     if (avatarVision && a.photo_path) {

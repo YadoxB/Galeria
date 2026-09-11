@@ -766,6 +766,79 @@ function comparerSiteEtApp(produits, oeuvres, ignores = new Map(), produitsEn = 
   };
 }
 
+// ===== Comparer UN artiste =====
+//
+// « Comparer les œuvres d'un artiste seulement » (Dave, 2026-09-11). Lire toute
+// la boutique prend une dizaine de secondes (517 produits), le double avec
+// l'anglais ; un artiste, 1 à 2 secondes. Deux lectures, dans cet ordre :
+//   1. ses NUMÉROS D'INVENTAIRE, en SKU : aucune œuvre reliée ne peut manquer,
+//      quelle que soit la catégorie où le produit est rangé ;
+//   2. la CATÉGORIE que portent ces produits : elle fait apparaître ceux qui ne
+//      sont QUE sur le site. Elle se DÉDUIT des produits plutôt que du nom —
+//      le site range « PAMCOMEAU (Pamela Comeau) » sous « Pam Comeau
+//      (Pamela) », qu'aucun nom de l'app ne donne. Par le nom seulement à
+//      défaut (artiste sans aucune œuvre reliée).
+// Les résultats sont ceux de la comparaison complète, restreints à l'artiste.
+// Pour qu'ils le restent, un produit de sa catégorie dont le SKU appartient à
+// une œuvre d'un AUTRE artiste est écarté : la comparaison complète l'apparie
+// à cette œuvre-là, il n'est pas « seulement sur le site ».
+const platNom = (s) => String(s || '').toLowerCase().normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+
+async function lireProduitsArtiste(woo, creds, artiste, oeuvresTout) {
+  const maj = (s) => String(s || '').trim().toUpperCase();
+  const siens = oeuvresTout.filter((o) => o.artiste_id === artiste.id);
+  const skus = [...new Set(siens.map((o) => maj(o.numero_inventaire)).filter(Boolean))];
+  const voulus = new Set(skus);
+
+  // 1. Par SKU. Le filtre après coup est un garde-fou : une API qui ignorerait
+  //    la liste renverrait toute la boutique, et la catégorie majoritaire
+  //    serait alors celle d'un autre artiste.
+  let parSku = (await woo.listerProduits(creds, { skus })).filter((p) => voulus.has(maj(p.sku)));
+  // Rien du tout : soit aucune de ses œuvres n'est en ligne, soit l'API n'a
+  // pas compris la liste séparée par des virgules. Une sonde de cinq œuvres,
+  // lues une à une, tranche ; si l'une existe, on lit le reste de même.
+  if (skus.length && !parSku.length) {
+    const unParUn = async (liste) => {
+      for (const s of liste) {
+        const p = await woo.produitParSku(creds, s);
+        if (p && voulus.has(maj(p.sku))) parSku.push(p);
+      }
+    };
+    await unParUn(skus.slice(0, 5));
+    if (parSku.length) await unParUn(skus.slice(5, 150));
+  }
+
+  // 2. La catégorie la plus portée par ses produits, sinon celle à son nom.
+  const compte = new Map();
+  for (const p of parSku) for (const c of p.categories || []) {
+    const e = compte.get(c.id) || { c, n: 0 };
+    e.n += 1;
+    compte.set(c.id, e);
+  }
+  let categorie = [...compte.values()].sort((a, b) => b.n - a.n)[0]?.c || null;
+  let source = categorie ? 'oeuvres' : null;
+  if (!categorie) {
+    const noms = new Set([platNom([artiste.prenom, artiste.nom].filter(Boolean).join(' ')), platNom(artiste.nom_site)].filter(Boolean));
+    categorie = (await woo.listerCategoriesProduits(creds)).find((c) => noms.has(platNom(c.name))) || null;
+    if (categorie) source = 'nom';
+  }
+  const parCat = categorie
+    ? (await woo.listerProduits(creds, { category: categorie.id }))
+      .filter((p) => (p.categories || []).some((c) => c.id === categorie.id))
+    : [];
+
+  // Union, sans les produits appariés à l'œuvre d'un autre artiste.
+  const autres = new Set(oeuvresTout.filter((o) => o.artiste_id !== artiste.id)
+    .map((o) => maj(o.numero_inventaire)).filter(Boolean));
+  const parId = new Map();
+  for (const p of [...parSku, ...parCat]) {
+    if (!voulus.has(maj(p.sku)) && autres.has(maj(p.sku))) continue;
+    parId.set(p.id, p);
+  }
+  return { produits: [...parId.values()], oeuvres: siens, categorie, source };
+}
+
 // Retire d'une biographie le bloc (paragraphe ou ligne) qui correspond EXACTEMENT
 // à la citation connue (peu importe les guillemets/espaces). Sert à ranger la
 // citation dans son champ dédié sans réécrire toute la bio. Si la citation n'est
@@ -1369,26 +1442,52 @@ async function demarrerApplication() {
   // `avecAnglais` : relit la boutique en anglais pour comparer aussi
   // `description_en`. Débrayable parce que ça DOUBLE la lecture du site — plus
   // de 500 produits paginés — et qu'on ne travaille pas toujours l'anglais.
+  // `artisteId` : ne comparer que les œuvres de cet artiste (voir
+  // lireProduitsArtiste). Absent : toute la boutique, comme avant.
   ipcMain.handle('web:comparer', async (_e, options) => {
     const avecAnglais = !!(options && options.avecAnglais);
+    const artisteId = Number(options && options.artisteId) || null;
     const creds = obtenirClesWoo();
     if (!creds.url || !creds.consumerKey || !creds.consumerSecret) {
       throw new Error("Configure d'abord l'adresse et les clés dans Réglages → Site web.");
     }
     const woo = require('./web/woocommerce');
-    const produits = await woo.listerProduits(creds);
+    const req = require('./db/requetes');
+    const debut = Date.now();
+    let oeuvres = req.oeuvresPourComparaisonWeb();
+    let produits;
+    let portee = null;
+    if (artisteId) {
+      const artiste = req.obtenirArtiste(artisteId);
+      if (!artiste) throw new Error('Artiste introuvable.');
+      const lu = await lireProduitsArtiste(woo, creds, artiste, oeuvres);
+      produits = lu.produits;
+      oeuvres = lu.oeuvres;
+      portee = {
+        artiste_id: artiste.id,
+        artiste_nom: [artiste.prenom, artiste.nom].filter(Boolean).join(' ') || artiste.nom || '',
+        categorie: lu.categorie ? lu.categorie.name : null,
+        source: lu.source,
+      };
+    } else {
+      produits = await woo.listerProduits(creds);
+    }
     // La version anglaise passe par l'API PUBLIQUE : elle n'a pas besoin des
     // clés, et un échec de ce côté ne doit pas emporter toute la comparaison.
     let produitsEn = [];
     if (avecAnglais) {
-      try { produitsEn = await woo.listerProduitsPublics({ url: creds.url, langue: 'en' }); }
-      catch (err) { journaliserErreur('Lecture des textes anglais (œuvres)', err); }
+      try {
+        produitsEn = await woo.listerProduitsPublics({
+          url: creds.url, langue: 'en',
+          ...(artisteId ? { skus: produits.map((p) => p.sku) } : {}),
+        });
+      } catch (err) { journaliserErreur('Lecture des textes anglais (œuvres)', err); }
     }
-    const req = require('./db/requetes');
-    const oeuvres = req.oeuvresPourComparaisonWeb();
     const ignores = new Map(req.listerWebSyncIgnore().map((r) => [`${r.oeuvre_id}:${r.champ}`, r.site_cle]));
     const res = comparerSiteEtApp(produits, oeuvres, ignores, produitsEn);
     res.anglais_lu = avecAnglais && produitsEn.length > 0;
+    res.portee = portee;
+    res.duree_ms = Date.now() - debut;
     return res;
   });
   // « Garder la version de l'app » pour un champ : mémorise la clé du site.

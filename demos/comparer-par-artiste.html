@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette — Comparer les œuvres d'un seul artiste avec le site</title>
+<link rel="stylesheet" href="../src/theme.css">
+<link rel="stylesheet" href="../src/styles.css">
+<style>
+  body{padding:30px 34px;overflow:auto;height:auto;user-select:text;}
+  .doc{max-width:1120px;margin:0 auto;}
+  h1.titre-demo{font-family:var(--font-titre);font-weight:500;font-size:29px;margin:0 0 8px;}
+  .sous{color:var(--slate);font-size:14px;line-height:1.65;margin:0 0 6px;max-width:900px;}
+  .lot-titre{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+             margin:44px 0 6px;font-weight:600;}
+  .lot-note{font-size:13.5px;color:var(--slate);line-height:1.65;margin:0 0 16px;max-width:900px;}
+  .maquette{background:var(--soft-ivory);border:1px dashed var(--mist);border-radius:16px;padding:22px;}
+  .journal{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:16px 21px;margin-top:22px;}
+  .journal h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+              margin:0 0 9px;font-weight:700;}
+  .journal ul{margin:0;padding-left:19px;font-size:13.5px;color:var(--slate);line-height:1.8;}
+  .journal em{color:var(--ink);font-style:normal;font-weight:600;}
+
+  /* Le sélecteur de portée, dans l'en-tête de Site web → Œuvres */
+  .portee{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--slate);}
+  .portee select{height:38px;border:1px solid var(--mist);border-radius:9px;padding:0 34px 0 12px;
+                 font-family:var(--font-ui);font-size:13.5px;color:var(--ink);background:#fff;min-width:230px;}
+  .portee select.cible{border-color:var(--warm-gold);box-shadow:0 0 0 3px rgba(201,154,61,.16);}
+  .entete-demo{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;}
+  .entete-demo h2{font-family:var(--font-titre);font-weight:500;font-size:26px;margin:0 0 4px;}
+  .entete-demo .actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+
+  /* La ligne qui dit ce qui a été comparé */
+  .portee-bandeau{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;background:#fff;
+                  border:1px solid var(--mist);border-left:3px solid var(--warm-gold);border-radius:10px;
+                  padding:10px 15px;margin:16px 0 12px;font-size:13.5px;color:var(--slate);}
+  .portee-bandeau strong{color:var(--ink);font-size:14.5px;}
+  .portee-bandeau .src{font-size:12.5px;color:var(--stone);}
+  .portee-bandeau .btn-lien{margin-left:auto;}
+
+  .rech-demo{height:34px;border:1px solid var(--mist);border-radius:9px;padding:0 12px;min-width:300px;
+             font-family:var(--font-ui);font-size:13px;}
+  .chargement-demo{font-size:13.5px;color:var(--slate);padding:14px 2px;}
+
+  /* Fiche artiste : le bouton devient un petit menu */
+  .hero-mini{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:16px 20px;
+             display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+  .hero-mini h2{font-family:var(--font-titre);font-weight:500;font-size:24px;margin:0 0 3px;}
+  .menu-demo{position:relative;display:inline-block;}
+  .menu-demo-pop{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--mist);
+                 border-radius:11px;box-shadow:0 12px 30px rgba(7,26,47,.14);min-width:290px;padding:6px;z-index:2;}
+  .menu-demo-pop button{display:block;width:100%;text-align:left;border:0;background:none;border-radius:8px;
+                        padding:9px 12px;font-family:var(--font-ui);font-size:13.5px;color:var(--ink);cursor:pointer;}
+  .menu-demo-pop button:hover{background:var(--soft-ivory);}
+  .menu-demo-pop small{display:block;color:var(--stone);font-size:12px;margin-top:2px;}
+</style>
+</head>
+<body>
+<div class="doc">
+  <h1 class="titre-demo">Comparer les œuvres d'un seul artiste avec le site</h1>
+  <p class="sous">
+    Aujourd'hui, « Comparer avec le site » lit <b>toute la boutique</b> (517 produits, une dizaine de
+    secondes, le double avec l'anglais) et mélange tous les artistes dans les résultats.
+  </p>
+  <p class="sous">
+    La proposition : choisir <b>ce qu'on compare</b> avant de cliquer. Avec un artiste, Galeria ne
+    lit que ses produits : <b>1 à 2 secondes</b>, et les trois onglets ne parlent que de lui.
+  </p>
+
+  <div class="lot-titre">1 · Site web → Œuvres : un choix « Comparer » à côté du bouton</div>
+  <p class="lot-note">
+    Choisir un artiste relance la comparaison tout de suite. « Toutes les œuvres » fait ce que fait
+    le bouton aujourd'hui. Le bandeau sous l'en-tête dit ce qui a été comparé, pour qu'on ne prenne
+    jamais les résultats d'un artiste pour ceux de toute la galerie. <i>Les nombres d'œuvres et de
+    produits sont les vrais ; les écarts affichés dans les cartes sont des exemples.</i>
+  </p>
+
+  <div class="maquette">
+    <div class="entete-demo">
+      <div>
+        <h2>Site web</h2>
+        <div class="wsync-mode" role="tablist">
+          <button type="button" class="wsync-mode-btn actif">Œuvres</button>
+          <button type="button" class="wsync-mode-btn">Artistes</button>
+        </div>
+      </div>
+      <div class="actions">
+        <label class="portee">Comparer
+          <select id="d-portee" class="cible">
+            <option value="tout">Toutes les œuvres</option>
+            <optgroup label="Un artiste">
+              <option value="jpn" selected>Jean-Pierre Neveu</option>
+              <option value="clb">Clarence Bourgoin</option>
+              <option value="pam">PAMCOMEAU (Pamela Comeau)</option>
+            </optgroup>
+          </select>
+        </label>
+        <label class="wsync-opt-anglais"><input type="checkbox"> textes anglais</label>
+        <button type="button" class="btn-action btn-principal" id="d-comparer">Rafraîchir</button>
+      </div>
+    </div>
+
+    <div id="d-resultats"></div>
+  </div>
+
+  <div class="lot-titre">2 · Depuis la fiche de l'artiste</div>
+  <p class="lot-note">
+    Le bouton « Comparer avec le site » de la fiche ne compare aujourd'hui que <b>sa fiche</b>
+    (biographie, démarche, photo). Il devient un petit menu à deux choix, comme « Documents ».
+    « Ses œuvres » ouvre Site web → Œuvres, déjà réglé sur l'artiste, et lance la comparaison.
+  </p>
+  <div class="maquette">
+    <div class="hero-mini">
+      <div>
+        <h2>Jean-Pierre Neveu</h2>
+        <p class="hero-artiste-meta">Peintre · Préfixe JPN · Prochain certificat n° 001</p>
+      </div>
+      <div class="menu-demo">
+        <button type="button" class="btn-action" id="d-menu">Comparer avec le site <span aria-hidden="true">▾</span></button>
+        <div class="menu-demo-pop" id="d-menu-pop">
+          <button type="button">Sa fiche<small>Citation, biographie, démarche, curriculum, photo</small></button>
+          <button type="button">Ses œuvres (39)<small>Titres, descriptions, prix, statuts — ouvre Site web</small></button>
+        </div>
+      </div>
+    </div>
+    <div style="height:120px"></div>
+  </div>
+
+  <div class="journal">
+    <h4>Comment Galeria trouve les produits d'un artiste</h4>
+    <ul>
+      <li><em>D'abord par ses numéros d'inventaire</em> : chaque œuvre de l'artiste est cherchée sur
+        le site par son n° (le SKU). Rien ne peut donc manquer parmi les œuvres déjà reliées.</li>
+      <li><em>Ensuite par sa catégorie</em> : la catégorie que portent ces produits sur le site. C'est
+        elle qui fait apparaître les produits <b>seulement sur le site</b> (pas encore de fiche dans
+        Galeria). Vérifié sur ta base : 22 artistes sur 23 ont une catégorie à leur nom, et le
+        23<sup>e</sup>, Pam Comeau (rangée sous « Pam Comeau (Pamela) »), est retrouvée par ses
+        numéros.</li>
+      <li><em>Un artiste sans aucune œuvre reliée</em> (tout nouveau, comme Ferhat Özgür Görel) est
+        cherché par son nom parmi les catégories. Si rien ne correspond, le bandeau le dit.</li>
+      <li><em>Les résultats sont les mêmes qu'avec « Toutes les œuvres »</em>, filtrés sur l'artiste.
+        Mesuré sur le site : Jean-Pierre Neveu, 33 œuvres reliées, 6 seulement dans Galeria, 1
+        seulement sur le site, en 1,7 s.</li>
+      <li><em>Le champ « Chercher »</em> resserre encore l'affichage (titre ou n° d'inventaire), sans
+        relire le site. Il vaut aussi en mode « Toutes les œuvres ».</li>
+      <li><em>Rien ne change sur le site</em> : comme aujourd'hui, c'est de la lecture seulement.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  const JEUX = {
+    tout: { nom: null, relies: 510, diff: 41, app: 11, site: 7, total: 517, cartes: [
+      ['CLB1993', 'Réveil au lac', 'Clarence Bourgoin', 'Prix', '850 $', '800 $'],
+      ['JPN798', 'Samankari', 'Jean-Pierre Neveu', 'Description', 'Œuvre originale.', 'Œuvre originale. Acrylique sur toile, signée au recto.'],
+      ['HEL2140', 'Marée basse', 'Hélène Lafontaine', 'Titre', 'Marée basse', 'Marée basse II'],
+    ] },
+    jpn: { nom: 'Jean-Pierre Neveu', cat: 'Jean-Pierre Neveu', relies: 33, diff: 4, app: 6, site: 1, total: 34, duree: '1,7 s', cartes: [
+      ['JPN798', 'Samankari', 'Jean-Pierre Neveu', 'Description', 'Œuvre originale.', 'Œuvre originale. Acrylique sur toile, signée au recto.'],
+      ['JPN458', 'Mankiata Réa', 'Jean-Pierre Neveu', 'Prix', '600 $', '650 $'],
+      ['JPN364', 'Taffel Garé', 'Jean-Pierre Neveu', 'Description', 'Œuvre originale.', 'Œuvre originale.\n36 × 24 po'],
+      ['JPN361', 'Aïya Réa', 'Jean-Pierre Neveu', 'Titre', 'Aïya Réa', 'Aiya Réa'],
+    ] },
+    clb: { nom: 'Clarence Bourgoin', cat: 'Clarence Bourgoin', relies: 58, diff: 3, app: 1, site: 1, total: 59, duree: '2,3 s', cartes: [
+      ['CLB1993', 'Réveil au lac', 'Clarence Bourgoin', 'Prix', '850 $', '800 $'],
+    ] },
+    pam: { nom: 'PAMCOMEAU (Pamela Comeau)', cat: 'Pam Comeau (Pamela)', relies: 16, diff: 0, app: 0, site: 0, total: 16, duree: '1,3 s', cartes: [] },
+  };
+  const ech = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let recherche = '';
+
+  function carte([sku, titre, art, lib, app, site]) {
+    return `<div class="wsync-carte"><div class="wsync-tete"><div>
+        <span class="wsync-sku">${ech(sku)}</span> <strong class="wsync-titre">${ech(titre)}</strong>
+        <span class="wsync-artiste">${ech(art)}</span></div>
+        <button type="button" class="btn-lien">Voir la fiche</button></div>
+      <div class="wsync-champ"><div class="wsync-champ-tete"><label class="wsync-check"><input type="checkbox"><span class="wsync-lib">${ech(lib)}</span></label></div>
+        <div class="wsync-cols"><div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val">${ech(app)}</div></div>
+        <div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">${ech(site).replace(/\n/g, '<br>')}</div></div></div>
+        <div class="wsync-champ-actions"><button type="button" class="btn-action btn-secondaire-action">Reprendre la valeur du site →</button>
+        <button type="button" class="btn-lien">Garder la version de l'app</button></div></div></div>`;
+  }
+
+  function rendre() {
+    const j = JEUX[document.getElementById('d-portee').value];
+    const q = recherche.trim().toLowerCase();
+    const cartes = j.cartes.filter((c) => !q || (c[0] + ' ' + c[1]).toLowerCase().includes(q));
+    const bandeau = j.nom
+      ? `<div class="portee-bandeau"><strong>${ech(j.nom)}</strong>
+           <span>seulement — ${j.relies + j.app} œuvres dans Galeria, ${j.total} produits sur le site</span>
+           <span class="src">catégorie du site « ${ech(j.cat)} » · lu en ${j.duree}</span>
+           <button type="button" class="btn-lien" data-tout>Comparer toutes les œuvres</button></div>`
+      : `<div class="portee-bandeau"><strong>Toutes les œuvres</strong> <span>— toute la boutique, tous les artistes</span></div>`;
+    document.getElementById('d-resultats').innerHTML = bandeau + `
+      <div class="wsync-resume">
+        <div class="wsync-stat"><span class="n">${j.relies}</span><span class="lib">œuvre(s) reliée(s)</span></div>
+        <div class="wsync-stat"><span class="n">${j.diff}</span><span class="lib">avec des différences</span></div>
+        <div class="wsync-stat"><span class="n">${j.app}</span><span class="lib">seulement dans l'app</span></div>
+        <div class="wsync-stat"><span class="n">${j.site}</span><span class="lib">seulement sur le site</span></div>
+        <div class="wsync-stat discret"><span class="n">${j.total}</span><span class="lib">${j.nom ? 'produits de l’artiste en ligne' : 'produits en ligne'}</span></div>
+      </div>
+      <div class="wsync-onglets"><button type="button" class="wsync-onglet actif">Différences <span class="wsync-onglet-n">${j.diff}</span></button>
+        <button type="button" class="wsync-onglet">Seulement dans l'app <span class="wsync-onglet-n">${j.app}</span></button>
+        <button type="button" class="wsync-onglet">Seulement sur le site <span class="wsync-onglet-n">${j.site}</span></button></div>
+      <div class="wsync-panneau">
+        <div class="wsync-barre"><div class="wsync-filtres">
+          <input type="search" class="rech-demo" id="d-rech" placeholder="Chercher un titre ou un n° d'inventaire" value="${ech(recherche)}">
+          <span class="wsync-filtres-lib wsync-filtres-sep">Afficher :</span>
+          <button type="button" class="wsync-chip actif">Titre</button><button type="button" class="wsync-chip actif">Description</button>
+          <button type="button" class="wsync-chip actif">Prix</button><button type="button" class="wsync-chip actif">Statut</button></div></div>
+        <div class="wsync-cartes">${cartes.length ? cartes.map(carte).join('')
+          : `<p class="liste-vide">${j.diff ? 'Aucune œuvre ne correspond à la recherche.' : '✓ Rien à réconcilier : les fiches de cet artiste concordent avec le site.'}</p>`}</div>
+      </div>`;
+    const r = document.getElementById('d-rech');
+    r.addEventListener('input', () => { recherche = r.value; const pos = r.selectionStart; rendre(); const r2 = document.getElementById('d-rech'); r2.focus(); r2.setSelectionRange(pos, pos); });
+    document.querySelector('[data-tout]')?.addEventListener('click', () => { document.getElementById('d-portee').value = 'tout'; relire(); });
+  }
+
+  function relire() {
+    const sel = document.getElementById('d-portee');
+    sel.classList.toggle('cible', sel.value !== 'tout');
+    const j = JEUX[sel.value];
+    document.getElementById('d-resultats').innerHTML = `<p class="chargement-demo">⏳ Lecture des produits ${j.nom ? 'de ' + ech(j.nom) : 'de toute la boutique'} et comparaison… (aucune modification du site)</p>`;
+    setTimeout(rendre, j.nom ? 500 : 1400);
+  }
+
+  document.getElementById('d-portee').addEventListener('change', relire);
+  document.getElementById('d-comparer').addEventListener('click', relire);
+  rendre();
+</script>
+</body>
+</html>
