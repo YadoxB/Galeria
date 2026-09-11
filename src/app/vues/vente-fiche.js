@@ -472,6 +472,7 @@ export async function rendreVenteFiche(contenu, params) {
         </div>
         <div class="doc-actions">
           <button type="button" class="btn-action btn-secondaire-action" id="btn-voir-facture-artiste">Voir le PDF</button>
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-courriel-facture-artiste" title="Préparer le courriel à l'artiste, la facture en pièce jointe">Envoyer par courriel…</button>
           <button type="button" class="btn-action btn-secondaire-action" id="btn-ouvrir-dossier-facture-artiste" title="Ouvrir le dossier">Dossier</button>
           <button type="button" class="btn-action btn-secondaire-action" id="btn-regen-facture-artiste">Re-générer</button>
           <button type="button" class="btn-action btn-secondaire-action" id="btn-facture-modifiee" title="Modifier la facture avant de l'imprimer">Modifier ce document…</button>
@@ -689,8 +690,70 @@ export async function rendreVenteFiche(contenu, params) {
         await alerter({ type: 'error', title: 'Génération échouée', message: nettoyerErreur(err) });
         btn.disabled = false;
         btn.textContent = ancien;
+        return;
       }
+      // La facture produite, la suite logique : l'envoyer à l'artiste.
+      const rep = await confirmer({
+        type: 'succes',
+        title: 'Facture artiste produite',
+        message: "Préparer le courriel à l'artiste, avec la facture en pièce jointe ?",
+        buttons: ['Préparer le courriel', 'Plus tard'],
+        defaultId: 0,
+        cancelId: 1,
+      });
+      if (rep === 0) await preparerCourrielFacture();
     };
+
+    // Courriel de la facture artiste. Un aperçu dit à qui, quoi et quelle
+    // pièce jointe ; puis Outlook s'ouvre sur un brouillon. Rien ne part tant
+    // qu'on n'a pas cliqué « Envoyer » dans Outlook.
+    let courrielEnCours = false;
+    async function preparerCourrielFacture() {
+      if (courrielEnCours) return;          // deux clics = deux brouillons
+      let ap;
+      try { ap = await window.api.courrielFactureArtisteApercu(v.id); }
+      catch (err) { await alerter({ type: 'error', title: 'Courriel impossible', message: nettoyerErreur(err) }); return; }
+      const rep = await confirmer({
+        type: 'question',
+        title: "Courriel à l'artiste",
+        message: [
+          `À : ${ap.a || "(aucune adresse sur la fiche de l'artiste)"}`,
+          `Objet : ${ap.sujet}`,
+          `Pièce jointe : ${ap.piece_nom}`,
+        ].join('\n'),
+        detail: [
+          ap.piece_modifiee ? 'C\u2019est la version modifiée de la facture, la plus récente.' : '',
+          ap.a ? '' : "Ajoutez l'adresse dans le courriel — et sur la fiche de l'artiste, pour la prochaine fois.",
+          ap.langue === 'EN' ? 'Le texte est en anglais, la langue indiquée sur la fiche de l\u2019artiste.' : '',
+          'Outlook s\u2019ouvre avec le courriel prêt à relire. Rien n\u2019est envoyé tant que vous ne cliquez pas « Envoyer ».',
+        ].filter(Boolean).join('\n\n'),
+        buttons: ['Ouvrir dans Outlook', 'Annuler'],
+        defaultId: 0,
+        cancelId: 1,
+      });
+      if (rep !== 0) return;
+      courrielEnCours = true;
+      const btnC = contenu.querySelector('#btn-courriel-facture-artiste');
+      const libC = btnC ? btnC.textContent : '';
+      if (btnC) { btnC.disabled = true; btnC.textContent = 'Ouverture d\u2019Outlook…'; }
+      try {
+        const r = await window.api.courrielFactureArtisteOuvrir(v.id);
+        if (r.moyen === 'eml') {
+          await alerter({
+            type: 'info',
+            title: 'Courriel prêt',
+            message: 'Le courriel s\u2019est ouvert comme brouillon dans votre logiciel de courriel.',
+            detail: "Outlook n'a pas pu être piloté directement. Vérifiez que la facture est bien jointe, puis envoyez.",
+          });
+        }
+      } catch (err) {
+        await alerter({ type: 'error', title: 'Courriel impossible', message: nettoyerErreur(err) });
+      } finally {
+        courrielEnCours = false;
+        if (btnC && btnC.isConnected) { btnC.disabled = false; btnC.textContent = libC; }
+      }
+    }
+    contenu.querySelector('#btn-courriel-facture-artiste')?.addEventListener('click', preparerCourrielFacture);
     contenu.querySelectorAll('#btn-gen-facture-artiste, #btn-regen-facture-artiste').forEach((btn) =>
       btn.addEventListener('click', genererFactureArtiste)
     );

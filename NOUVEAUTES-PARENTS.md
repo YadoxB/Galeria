@@ -11,6 +11,26 @@
 
 ---
 
+## La facture de l'artiste, déjà dans le courriel
+
+Quand vous produisez une **facture artiste**, Galeria vous propose maintenant de
+**préparer le courriel** :
+
+1. Une fenêtre vous montre à qui il partira, l'objet et la pièce jointe.
+2. **Ouvrir dans Outlook** : le courriel s'ouvre avec l'adresse de l'artiste, un
+   petit texte déjà écrit au-dessus de votre signature, et la **facture jointe**.
+3. Vous relisez, vous ajustez si vous voulez, puis vous cliquez **Envoyer** dans
+   Outlook. Galeria n'envoie jamais rien tout seul.
+
+Le texte est en anglais si la fiche de l'artiste indique l'anglais. Si l'artiste
+n'a pas d'adresse sur sa fiche, la fenêtre vous le dit : ajoutez-la dans le
+courriel (et sur la fiche, pour la prochaine fois).
+
+Pour renvoyer une facture plus tard : bouton **Envoyer par courriel…** sur la ligne
+de la facture, dans la fiche de la vente.
+
+---
+
 ## Un écran Site web plus clair
 
 L'écran **Site web** a été remis en ordre. Il se lit maintenant de haut en bas :

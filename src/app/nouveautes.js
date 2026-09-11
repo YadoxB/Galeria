@@ -17,6 +17,18 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
+    // ⚠ Numéro à ajuster si la prochaine version publiée n'est pas la 0.23.0 :
+    // `npm run release` refuse de publier si elle ne correspond pas à
+    // package.json.
+    version: '0.23.0',
+    diapos: [
+      {
+        titre: 'La facture de l’artiste, déjà dans le courriel',
+        texte: "Après avoir produit une facture artiste, Galeria vous propose de <b>préparer le courriel</b>&nbsp;: Outlook s'ouvre avec l'adresse de l'artiste, le texte et la <b>facture déjà jointe</b>. Vous relisez, puis vous cliquez <b>Envoyer</b>. Plus tard&nbsp;: bouton <b>Envoyer par courriel…</b> sur la ligne de la facture.",
+      },
+    ],
+  },
+  {
     version: '0.22.0',
     diapos: [
       {

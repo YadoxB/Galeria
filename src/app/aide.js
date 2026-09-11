@@ -217,6 +217,12 @@ const ARTICLES = [
      <div class="attention">Faites-le <b>avant</b> son premier certificat dans Galeria : un certificat produit ne se renumérote pas. Galeria vous le rappelle au premier certificat de chaque artiste.</div>`),
   A('documents', 'Produire la facture artiste', 'facture artiste versement commission relevé cote type taxes',
     `<p>Fiche de vente → <b>Produire la facture artiste</b> : le relevé du versement à l'artiste après commission et taxes. La <b>cote</b> dépend du type de l'œuvre (sculpture 33 %, sinon 50 %), et les taxes dépendent du régime fiscal de l'artiste.</p>`),
+  A('documents', 'Envoyer la facture à l\'artiste par courriel', 'courriel email outlook envoyer facture artiste pièce jointe brouillon',
+    `<p>Une fois la facture artiste produite, Galeria propose de <b>préparer le courriel</b>. Plus tard : bouton <b>Envoyer par courriel…</b> sur la ligne de la facture.</p>
+     <ol><li>Une fenêtre montre <b>à qui</b> (l'adresse de la fiche de l'artiste), <b>l'objet</b> et <b>la pièce jointe</b>.</li>
+     <li><b>Ouvrir dans Outlook</b> : le courriel s'ouvre, facture jointe, texte prêt au-dessus de votre signature — en anglais si la fiche de l'artiste le demande.</li>
+     <li>Relisez, ajustez au besoin, puis <b>Envoyer</b> dans Outlook. Galeria n'envoie jamais rien lui-même.</li></ol>
+     <div class="astuce">Si la facture a été retouchée avec « Modifier ce document… » après avoir été produite, c'est la version modifiée qui est jointe — la fenêtre le dit.</div>`),
   A('documents', 'Catalogue, annexe A, présentation, rapport', 'catalogue annexe dépôt retrait présentation rapport pdf artiste imprimer',
     `<p>Depuis la fiche <b>artiste</b> : <b>Catalogue PDF</b> (6 œuvres/page), <b>Annexe A</b> (dépôt en rouge / retrait en bleu), <b>Présentation PDF</b>. Le <b>Rapport</b> journalier s'exporte depuis la section Rapport. Tous sont rangés par type dans le dossier de l'année.</p>`),
   A('documents', 'Modifier un document avant de l\'imprimer', 'modifier ce document version modifiée éditer corriger texte pdf wysiwyg retoucher saut de page',

@@ -10,6 +10,34 @@ identifiants.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Envoyer la facture artiste par courriel, PDF déjà joint** (demande de Dave, 2026-09-08 ;
+  les parents ont l'Outlook classique). Après la production d'une facture artiste, Galeria
+  propose de préparer le courriel ; plus tard, bouton **Envoyer par courriel…** sur la ligne
+  de la facture.
+  - **Un brouillon, jamais un envoi** : pas de mot de passe ni de serveur de courriel dans
+    l'app ; la personne relit et clique « Envoyer » dans Outlook. Un aperçu dit d'abord à
+    qui, quel objet et quelle pièce jointe.
+  - **Outlook classique piloté directement** (objet COM, par un court script PowerShell dont
+    les données passent par un fichier JSON — aucun échappement sur la ligne de commande) :
+    brouillon avec destinataire, objet, texte écrit **au-dessus de la signature habituelle**,
+    facture jointe. À défaut (pas d'Outlook classique, Outlook sans profil, délai de 45 s
+    dépassé), un **.eml « X-Unsent: 1 »** ouvert par le logiciel de courriel par défaut, et
+    la raison va dans `erreurs.log`. Module : `src/courriel.js`.
+  - Texte en **anglais** si la fiche de l'artiste le demande ; date longue ; objet
+    « Facture FA-2026-012 — « Titre » ». Sans adresse sur la fiche, la fenêtre le dit.
+  - La pièce jointe est la **plus récente** entre la facture officielle et ses versions
+    modifiées (« Modifier ce document… ») — si on l'a retouchée après coup, c'est la
+    retouche qu'on envoie ; la fenêtre le signale.
+  - Vérifié : module seul (14 contrôles — .eml relu, pièce jointe identique octet pour octet,
+    nom et objet accentués, choix de la version, script PowerShell lu sans erreur, accents
+    transmis, texte inséré au-dessus d'une signature, « $ » intacts) ; application réelle sur
+    une copie de la base (11 contrôles — proposition après production, bouton, aperçus
+    français et anglais, sans adresse, version modifiée, rien d'ouvert sur « Annuler »).
+  - ⚠ **Non vérifiable sur le poste de Dave** : l'ouverture réelle dans Outlook (Outlook y
+    est installé sans profil). À essayer une fois chez les parents.
+
 ## [0.22.0] — 2026-09-11
 
 ### Modifié

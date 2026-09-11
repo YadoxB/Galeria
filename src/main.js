@@ -2160,6 +2160,23 @@ async function demarrerApplication() {
   ipcMain.handle('certificats:apercu', (_e, oeuvreId) => apercuNumeroCertificat(oeuvreId));
   ipcMain.handle('pdf:certificat-generer', (_e, id) => genererCertificatPdf(id));
   ipcMain.handle('pdf:facture-artiste-generer', (_e, venteId) => genererFactureArtistePdf(venteId));
+  // Courriel de la facture artiste : un BROUILLON, jamais un envoi (src/courriel.js).
+  // L'aperçu dit à qui, quoi et quelle pièce jointe avant d'ouvrir Outlook.
+  ipcMain.handle('courriel:facture-artiste-apercu', (_e, venteId) => {
+    const c = require('./courriel').preparerCourrielFactureArtiste(venteId);
+    return {
+      a: c.a, sujet: c.sujet, texte: c.texte, langue: c.langue, artiste_nom: c.artiste_nom,
+      piece_nom: c.piece.nom, piece_modifiee: c.piece.modifiee,
+    };
+  });
+  ipcMain.handle('courriel:facture-artiste-ouvrir', async (_e, venteId) => {
+    const courriel = require('./courriel');
+    const c = courriel.preparerCourrielFactureArtiste(venteId);
+    const r = await courriel.ouvrirBrouillon(c, { shell });
+    // Pourquoi pas Outlook : utile dans un signalement de problème.
+    if (r.moyen === 'eml') journaliserErreur('Courriel : Outlook non piloté, brouillon .eml ouvert', new Error(r.raison_outlook || 'raison inconnue'));
+    return { moyen: r.moyen };
+  });
   ipcMain.handle('pdf:catalogue-generer', (_e, artisteId, options) => genererCataloguePdf(artisteId, options || {}));
   ipcMain.handle('pdf:annexe-generer', (_e, payload) => genererAnnexePdf(payload));
   ipcMain.handle('pdf:presentation-generer', (_e, artisteId, options) => genererPresentationPdf(artisteId, options || {}));
