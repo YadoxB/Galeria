@@ -40,6 +40,11 @@ CREATE TABLE IF NOT EXISTS artistes (
   -- galerie garde son nom, le site garde le sien, et la paire tient. Vide dans
   -- l'immense majorité des cas.
   nom_site            TEXT,
+  -- Dernier certificat délivré à cet artiste (le NNN de {inventaire}-NNN-{Sage}).
+  -- Les artistes ont presque tous des certificats papier d'avant l'app : on
+  -- inscrit ici le dernier, et Galeria continue au suivant. Plancher, jamais
+  -- compteur — voir sequenceCertificatsArtiste (requetes.js).
+  certificat_dernier  INTEGER,
   archive             INTEGER NOT NULL DEFAULT 0
                       CHECK (archive IN (0, 1)),
   cree_le             TEXT NOT NULL DEFAULT (datetime('now')),

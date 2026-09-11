@@ -118,6 +118,7 @@ export async function rendreVenteFiche(contenu, params) {
     });
     if (choix !== 0 && choix !== 1) return null;
     const langue = choix === 1 ? 'EN' : 'FR';
+    if (!await premierCertificatAccepte(venteId)) return null;
 
     const res = await window.api.pdfPochetteGenerer(venteId, { langue });
     const lignes = res.fichiers
@@ -135,6 +136,33 @@ export async function rendreVenteFiche(contenu, params) {
     });
     if (rep === 0) { try { await window.api.ouvrirDossier(res.dossier); } catch {} }
     return res;
+  }
+
+  // La pochette crée le certificat SANS fenêtre. Si c'est le premier de
+  // l'artiste et que sa fiche ne dit rien de ses certificats papier, il
+  // porterait le n° 001 — peut-être déjà remis à un autre client. On le dit
+  // AVANT, une seule fois par artiste : dès qu'un certificat existe, ou qu'un
+  // dernier numéro est inscrit sur la fiche, la question ne revient plus.
+  // Lu depuis la base (et non `v`) : juste après l'enregistrement d'une
+  // vente, `v` n'est pas encore à jour.
+  async function premierCertificatAccepte(venteId) {
+    let b, ap;
+    try {
+      b = await window.api.venteFicheBundle(venteId);
+      if (!b || !b.vente || (b.certificats && b.certificats.length)) return true;
+      ap = await window.api.certificatApercu(b.vente.oeuvre_id);
+    } catch { return true; }               // en cas d'échec, on ne bloque pas
+    if (!ap || ap.seq_source !== 'premier') return true;
+    const rep = await confirmer({
+      type: 'question',
+      title: 'Premier certificat de cet artiste',
+      message: `Le certificat de cette vente sera le premier de ${b.vente.artiste_nom || "l'artiste"} : n° 001.`,
+      detail: "Si l'artiste a déjà des certificats sur papier, annulez, puis inscrivez le numéro du dernier sur sa fiche (« Dernier certificat délivré ») : Galeria continuera au suivant.\n\nUn certificat produit ne se renumérote pas.",
+      buttons: ['Produire avec le n° 001', 'Annuler'],
+      defaultId: 1,
+      cancelId: 1,
+    });
+    return rep === 0;
   }
 
   let mode = estNouveau ? 'edition' : 'lecture';
@@ -694,7 +722,11 @@ export async function rendreVenteFiche(contenu, params) {
         btnPochette.disabled = true;
         btnPochette.textContent = 'Génération…';
         try {
-          await produirePochette(v.id, { recharger: true });
+          // Annulé (langue, ou premier certificat de l'artiste) : rien n'a été
+          // produit, le bouton doit redevenir cliquable — il restait figé sur
+          // « Génération… » jusqu'au prochain changement d'écran.
+          const res = await produirePochette(v.id, { recharger: true });
+          if (!res) { btnPochette.disabled = false; btnPochette.textContent = ancien; }
         } catch (err) {
           await alerter({ type: 'error', title: 'Génération échouée', message: nettoyerErreur(err) });
           btnPochette.disabled = false;

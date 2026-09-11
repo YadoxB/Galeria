@@ -30,6 +30,9 @@ const COLONNES_ATTENDUES = {
     // formulaire de la fiche réécrit toutes les colonnes qu'il connaît, et
     // effacerait donc ce lien à chaque enregistrement d'une fiche.
     ['nom_site', 'TEXT'],
+    // Dernier certificat délivré à l'artiste (plancher de la numérotation).
+    // Dans COLONNES_ARTISTE : le formulaire de la fiche le montre et le renvoie.
+    ['certificat_dernier', 'INTEGER'],
   ],
   oeuvres: [
     ['description_en', 'TEXT'],

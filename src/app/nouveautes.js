@@ -39,6 +39,10 @@ export const VERSIONS = [
         texte: "L'écran <b>Site web</b> compare maintenant les textes anglais. Chaque écart porte une étiquette&nbsp;: <b>manquant</b> (la case est vide chez vous) ou <b>différent</b> (vous avez un autre texte). Cliquez <b>Manquants</b> puis <b>Tout cocher</b>&nbsp;: tout ce qui manque arrive d'un coup, sans rien effacer.",
       },
       {
+        titre: 'Les certificats continuent la numérotation',
+        texte: "Vos artistes ont déjà des certificats sur papier. Sur la fiche de l'artiste, <b>Modifier</b>, puis inscrivez le numéro du dernier dans <b>Dernier certificat délivré</b>&nbsp;: Galeria continue au suivant. Au premier certificat d'un artiste, Galeria vous le rappelle.",
+      },
+      {
         titre: 'Trois tâches de plus après une vente',
         texte: "Le suivi d'une vente a maintenant un groupe <b>Côté galerie</b>&nbsp;: rendre l'œuvre <b>inactive dans Sage</b>, la <b>retirer de Google</b>, <b>payer l'artiste</b>. Une vente n'est terminée qu'une fois tout coché — la tuile <b>Artistes à payer</b> vous les compte.",
       },

@@ -11,6 +11,24 @@
 
 ---
 
+## Les certificats continuent la numérotation de l'artiste
+
+Le numéro d'un certificat contient un numéro propre à l'artiste : le **042**
+dans MAP2231-042-5567. Galeria le faisait partir de 001, alors que vos artistes
+ont déjà des certificats sur papier.
+
+Sur la fiche de l'artiste, cliquez **Modifier** : sous le préfixe d'inventaire,
+une nouvelle case **« Dernier certificat délivré »**. Recopiez-y le numéro du
+dernier certificat de l'artiste. Galeria vous dit tout de suite quel sera le
+prochain, et continue à partir de là.
+
+- À faire **une fois par artiste**, avant son premier certificat dans Galeria.
+- Au premier certificat d'un artiste dont la case est vide, Galeria vous pose la
+  question avant de le produire.
+- Un certificat déjà produit ne change jamais de numéro.
+
+---
+
 ## Trois tâches de plus après une vente
 
 Le suivi d'une vente comptait quatre étapes, toutes pour le **client** :

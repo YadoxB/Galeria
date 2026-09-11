@@ -37,6 +37,7 @@ const GABARIT_VIDE = {
   instructions_ia: null,
   lien_chatgpt: null,
   cotes: null,
+  certificat_dernier: null,
   nb_oeuvres: 0,
   nb_oeuvres_catalogue: 0,
   nb_oeuvres_dispo: 0,
@@ -59,6 +60,8 @@ export async function rendreArtisteFiche(contenu, params) {
   }
 
   let stats = { catalogue: 0, disponibles: 0, exposees: 0, vendues: 0, retirees: 0, valeurDispo: 0, ventes: 0 };
+  // Numérotation des certificats (voir sequenceCertificatsArtiste).
+  let certifs = { galeria: 0, fiche: 0, dernier: 0, prochain: 1 };
   let apercu = [];
 
   if (estNouveau) {
@@ -72,6 +75,7 @@ export async function rendreArtisteFiche(contenu, params) {
     a = bundle.artiste;
     voisins = bundle.voisins;
     stats = bundle.stats;
+    certifs = bundle.certificats || certifs;
     apercu = bundle.apercu;
   }
 
@@ -82,6 +86,7 @@ export async function rendreArtisteFiche(contenu, params) {
       a = bundle.artiste;
       voisins = bundle.voisins;
       stats = bundle.stats;
+      certifs = bundle.certificats || certifs;
       apercu = bundle.apercu;
     }
   }
@@ -344,6 +349,7 @@ export async function rendreArtisteFiche(contenu, params) {
           <p class="hero-artiste-meta">
             ${a.type ? ech(a.type) : '<em>type non précisé</em>'}
             ${a.prefixe_inventaire ? ` &middot; Préfixe ${ech(a.prefixe_inventaire)}` : ''}
+            &middot; Prochain certificat n° ${String(certifs.prochain || 1).padStart(3, '0')}
             &middot; ${pluriel(a.nb_oeuvres_dispo || 0, 'œuvre disponible', 'œuvres disponibles')}
           </p>
           <!-- Lien posé à la main vers la page du site, quand l'artiste n'y
@@ -1068,6 +1074,16 @@ export async function rendreArtisteFiche(contenu, params) {
                 ${champTexte({ nom: 'langue', libelle: 'Langue', valeur: a.langue, liste: 'langues' })}
               </div>
               ${nouveau ? '<p class="aide-champ">Le préfixe se calcule automatiquement à partir des deux premières lettres du prénom et de la première du nom de famille (ex. Joe Untel → JOU). Tu peux le modifier au besoin.</p>' : ''}
+              <!-- Numérotation des certificats. Le champ montre le dernier
+                   numéro RÉELLEMENT délivré (le plus grand entre ceux produits
+                   ici et celui inscrit) : son libellé reste vrai à chaque
+                   ouverture, et on le corrige vers le haut pour les
+                   certificats papier. Voir sequenceCertificatsArtiste. -->
+              <div class="ligne-certif-artiste">
+                ${champTexte({ nom: 'certificat_dernier', libelle: 'Dernier certificat délivré', valeur: certifs.dernier ? String(certifs.dernier) : '', type: 'number', attributs: 'min="0" max="99999" step="1" placeholder="aucun"' })}
+                <p class="phrase-certif" id="phrase-certif" aria-live="polite"></p>
+              </div>
+              <p class="aide-champ">Le numéro du milieu sur les certificats de l'artiste (ex. 041 dans MAP2190-041-5310). Galeria le tient à jour à chaque certificat produit. Si l'artiste a déjà des certificats sur papier, inscrivez le numéro du dernier.</p>
             </div>
 
             <!-- Contact (6 col) -->
@@ -1461,6 +1477,27 @@ export async function rendreArtisteFiche(contenu, params) {
     };
     if (elPrenom) elPrenom.addEventListener('input', majPrefixe);
     if (elNom)    elNom.addEventListener('input', majPrefixe);
+
+    // Phrase à côté du « Dernier certificat délivré » : le prochain numéro, en
+    // clair. En rouge si le numéro inscrit est sous ce que Galeria a déjà
+    // produit — il ne changera rien (plancher, jamais compteur), et mieux vaut
+    // le savoir que croire avoir fait reculer la séquence.
+    const elCertif = form.elements.certificat_dernier;
+    const phraseCertif = contenu.querySelector('#phrase-certif');
+    const majPhraseCertif = () => {
+      if (!elCertif || !phraseCertif) return;
+      const pad = (n) => String(n).padStart(3, '0');
+      const brut = elCertif.value.trim();
+      const saisi = brut === '' ? 0 : Math.max(0, Math.floor(Number(brut)) || 0);
+      const prochain = Math.max(saisi, certifs.galeria || 0) + 1;
+      const trop = brut !== '' && saisi < (certifs.galeria || 0);
+      phraseCertif.classList.toggle('alerte', trop);
+      phraseCertif.innerHTML = trop
+        ? `Galeria a déjà produit le n° ${pad(certifs.galeria)} : ce numéro ne changera rien. Prochain certificat : <span class="num">${pad(prochain)}</span>`
+        : `${saisi || certifs.galeria ? 'Prochain certificat' : 'Premier certificat'} : <span class="num">${pad(prochain)}</span>`;
+    };
+    if (elCertif) elCertif.addEventListener('input', majPhraseCertif);
+    majPhraseCertif();
 
     form.addEventListener('submit', soumissionUnique(async (e) => {
       e.preventDefault();

@@ -98,6 +98,14 @@ identifiants.
 
 ### Corrigé
 
+- **Annuler la pochette figeait son bouton** sur « Génération… » jusqu'au prochain changement
+  d'écran : le bouton ne se rétablissait qu'en cas d'erreur, pas quand on annulait le choix de
+  la langue. Il redevient cliquable dès qu'on annule.
+
+- **L'aide sur les numéros de certificats était périmée** : elle renvoyait à un « prochain
+  numéro de certificat (C-…) » dans Réglages → Documents, retiré à l'audit des réglages. Elle
+  explique maintenant la numérotation par artiste, dans une entrée à part.
+
 - **La mise à jour du cycle d'une vente effaçait les colonnes qu'on ne lui envoyait pas.**
   `majCycleVente` réécrivait toutes les colonnes du cycle à chaque appel : une colonne non
   transmise redevenait vide. Rien ne se voyait tant que les deux appelants envoyaient les cinq
@@ -170,6 +178,33 @@ identifiants.
     qui manque. L'aide distingue maintenant les deux.
 
 ### Ajouté
+
+- **« Dernier certificat délivré » sur la fiche de l'artiste** (demande de Dave, 2026-09-08) :
+  la numérotation des certificats de chaque artiste (`{inventaire}-NNN-{n° Sage}`) partait de
+  001, alors que presque tous les artistes ont des certificats papier. Le premier certificat
+  produit par Galeria aurait repris un numéro déjà remis à un autre client.
+  - Nouvelle colonne `artistes.certificat_dernier`, dans la carte **Identité** du formulaire,
+    sous le préfixe d'inventaire. On y recopie le numéro du dernier certificat papier ; une
+    phrase à côté dit le prochain numéro en clair (« Prochain certificat : 042 »).
+  - **Plancher, jamais compteur** : le prochain numéro est le plus grand entre ce champ et les
+    certificats déjà produits, plus 1. Baisser le champ ne fait pas reculer la séquence et ne
+    peut pas recréer un numéro existant ; la phrase passe au rouge pour le dire. Le champ
+    affiche le **vrai** dernier numéro (celui de Galeria s'il est plus grand) : son libellé
+    reste exact sans parler d'« avant Galeria ».
+  - **Une seule règle**, `sequenceCertificatsArtiste` (`requetes.js`), pour l'aperçu de la
+    fenêtre du certificat, sa création (fenêtre et pochette) et la fiche. Le calcul était
+    jusqu'ici recopié dans `apercuNumeroCertificat` et `creerCertificat`.
+  - En-tête de la fiche : « Prochain certificat n° 042 ». La fenêtre du certificat dit d'où
+    vient le numéro ; au **premier** certificat d'un artiste, elle rappelle en rouge d'inscrire
+    le dernier numéro papier.
+  - ⚠ **La pochette crée le certificat sans fenêtre** : c'est la voie la plus courante, et
+    elle aurait produit un n° 001 en silence. Elle demande désormais confirmation avant le
+    premier certificat d'un artiste dont la fiche est vierge, une seule fois par artiste.
+  - Aucun certificat existant n'est renuméroté.
+  - Maquette : `demos/certificat-point-depart.html`. Vérifié dans l'application réelle, sur
+    une copie de la base (20 contrôles) : question de la pochette et Annuler, rappel dans la
+    fenêtre, champ et phrase, enregistrement sans toucher aux autres champs de la fiche,
+    certificat de pochette numéroté 042, séquence qui ne recule pas, refus d'un négatif.
 
 - **Trois tâches « côté galerie » dans le suivi d'une vente** (signalement du 2026-09-10) :
   rendre l'œuvre **inactive dans Sage**, la **retirer de la synchronisation Google** sur le site,

@@ -43,6 +43,15 @@ export async function ouvrirCreationCertificat({ oeuvre, vente = null }) {
   const numeroInventaire = (apercu.numero_inventaire || oeuvre.numero_inventaire || '').toString();
   const prochainSeq = apercu.prochain_seq || 1;
   const seqAffiche = String(prochainSeq).padStart(3, '0');
+  const dernierAffiche = String(apercu.dernier_seq || 0).padStart(3, '0');
+  // D'où vient le séquentiel — dit en clair sous le numéro. Le premier
+  // certificat d'un artiste est LE moment où une numérotation papier oubliée
+  // créerait un doublon : c'est là qu'on le rappelle.
+  const origineSeq = {
+    galeria: `Le ${seqAffiche} suit le n° ${dernierAffiche}, dernier certificat de l'artiste produit dans Galeria.`,
+    fiche: `Le ${seqAffiche} suit le n° ${dernierAffiche}, dernier certificat délivré inscrit sur la fiche de l'artiste.`,
+    premier: "C'est le premier certificat de l'artiste. S'il en a déjà sur papier, annulez et inscrivez le numéro du dernier sur sa fiche (« Dernier certificat délivré »).",
+  }[apercu.seq_source] || `Le séquentiel ${seqAffiche} est propre à l'artiste.`;
 
   return new Promise((resolve) => {
     function composerNumero() {
@@ -112,8 +121,8 @@ export async function ouvrirCreationCertificat({ oeuvre, vente = null }) {
       champApercu.value = sage ? complet : `${base}-…`;
       if (sage) {
         btn.disabled = false;
-        aide.textContent = `Numéro : ${complet}. Le séquentiel ${seqAffiche} est propre à l'artiste.`;
-        aide.style.color = '';
+        aide.textContent = `Numéro : ${complet}. ${origineSeq}`;
+        aide.style.color = apercu.seq_source === 'premier' ? '#900001' : '';
       } else {
         btn.disabled = true;
         aide.textContent = 'Le n° de facture (Sage) est requis pour produire le certificat.';

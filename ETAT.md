@@ -28,6 +28,29 @@ nouveautés au prochain lancement.
 > Vérifié sur une copie de la vraie base et en montant la vraie vue dans un Chromium (douze
 > contrôles). Maquette : `demos/relier-artiste-site.html`.
 >
+> ### 🟩 EN ATTENTE DE PUBLICATION — « Dernier certificat délivré » (2026-09-11)
+>
+> Lot 5 des demandes du 2026-09-08. Colonne `artistes.certificat_dernier` (carte Identité du
+> formulaire) : le séquentiel NNN de `{inventaire}-NNN-{Sage}` suit le plus grand entre ce
+> champ et les certificats produits ici. **Plancher, jamais compteur.** Règle unique :
+> `sequenceCertificatsArtiste` (`requetes.js`). Libellé choisi par Dave : « Dernier certificat
+> délivré », **sans** « avant Galeria » — le champ affiche donc le vrai dernier numéro.
+>
+> ⚠ **Contrairement à `nom_site`, `certificat_dernier` EST dans `COLONNES_ARTISTE`** : le
+> formulaire le montre et le renvoie. Tout autre appelant de `modifierArtiste` devra le
+> transmettre, sinon il l'effacera (sans dommage pour les numéros déjà produits, mais le
+> plancher papier serait perdu). Aujourd'hui, le formulaire est le seul appelant.
+>
+> ⚠ **La pochette crée le certificat sans fenêtre** : elle pose la question avant le premier
+> certificat d'un artiste à la fiche vierge (`premierCertificatAccepte`, `vente-fiche.js`).
+>
+> **À faire chez les parents** : remplir le champ pour chaque artiste qui a des certificats
+> papier, **avant** son premier certificat dans Galeria.
+>
+> **Restent sur la liste du 2026-09-08** : lot 6 (courriel de la facture artiste, PDF joint :
+> `.eml` avec `X-Unsent: 1` — il manque le type d'Outlook des parents) ; libellé définitif de
+> l'étape Google du suivi (`ETAPES_GALERIE`, `commun.js`), à confirmer par Dave.
+>
 > ### 🟨 TROIS ARTISTES RENOMMÉS À LA MAIN — décision de Dave (2026-09-07)
 >
 > Avant que la liaison n'existe, les fiches ont été renommées pour épouser le site. La base

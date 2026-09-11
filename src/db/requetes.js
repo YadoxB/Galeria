@@ -81,6 +81,30 @@ function obtenirArtiste(id) {
   return { ...artiste, nb_oeuvres, nb_oeuvres_catalogue, nb_oeuvres_dispo };
 }
 
+// Numérotation des certificats d'un artiste : {inventaire}-{NNN}-{n° Sage},
+// où NNN suit le DERNIER certificat délivré. Deux sources pour ce dernier :
+//   galeria → le plus grand séquentiel parmi les certificats produits ici ;
+//   fiche   → le numéro inscrit sur la fiche (artistes.certificat_dernier),
+//             pour les certificats papier : les artistes en ont presque tous.
+// Le plus grand des deux gagne. Le champ de la fiche est un PLANCHER, jamais un
+// compteur : le baisser ne fait pas reculer la séquence et ne peut pas recréer
+// un numéro déjà remis à un client.
+// Source unique : l'aperçu de la fenêtre du certificat, sa création (fenêtre
+// ET pochette) et la fiche de l'artiste passent tous par ici.
+function sequenceCertificatsArtiste(artisteId) {
+  const db = openDatabase();
+  const aid = Number(artisteId) || 0;
+  const galeria = db.prepare(`
+    SELECT COALESCE(MAX(c.seq_artiste), 0) AS m
+    FROM certificats c JOIN oeuvres o ON o.id = c.oeuvre_id
+    WHERE o.artiste_id = ?
+  `).get(aid).m || 0;
+  const row = db.prepare('SELECT certificat_dernier FROM artistes WHERE id = ?').get(aid);
+  const fiche = Math.max(0, (row && Number(row.certificat_dernier)) || 0);
+  const dernier = Math.max(galeria, fiche);
+  return { galeria, fiche, dernier, prochain: dernier + 1 };
+}
+
 function obtenirFicheArtisteBundle(id) {
   const artiste = obtenirArtiste(id);
   if (!artiste) return null;
@@ -139,6 +163,7 @@ function obtenirFicheArtisteBundle(id) {
       valeurDispo: dispoRow.v,
       ventes: ventesNb,
     },
+    certificats: sequenceCertificatsArtiste(id),
     apercu,
   };
 }
@@ -1009,6 +1034,7 @@ module.exports = {
   oeuvresDetailArtiste,
   oeuvresParIds,
   obtenirFicheArtisteBundle,
+  sequenceCertificatsArtiste,
   voisinsArtiste,
   listerOeuvres,
   obtenirOeuvre,

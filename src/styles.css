@@ -2497,6 +2497,23 @@ details.bloc.pliable > .bloc-corps {
 .hero-artiste-corps { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .hero-artiste-nom { margin: 0; font-family: var(--font-titre); font-weight: 500; font-size: 38px; line-height: 1.05; color: var(--ink); word-break: break-word; }
 .hero-artiste-meta { margin: 4px 0 0; color: var(--slate); font-size: 14px; }
+
+/* Fiche artiste (modifier) : « Dernier certificat délivré » + la phrase qui
+   dit le prochain numéro, alignée sur le champ. */
+.ligne-certif-artiste {
+  display: grid; grid-template-columns: minmax(200px, 300px) 1fr; gap: 18px; align-items: end;
+  border-top: 1px solid var(--mist); margin-top: 14px; padding-top: 12px;
+}
+.ligne-certif-artiste .form-champ { margin-bottom: 0; }
+.phrase-certif {
+  margin: 0; min-height: 40px; display: flex; align-items: center; flex-wrap: wrap; gap: 0 6px;
+  font-size: 13.5px; line-height: 1.45; color: var(--slate);
+}
+.phrase-certif .num {
+  font-weight: 700; font-size: 15px; color: var(--ink); font-variant-numeric: lining-nums tabular-nums;
+  background: var(--soft-ivory); border: 1px solid var(--mist); border-radius: 7px; padding: 2px 8px;
+}
+.phrase-certif.alerte, .phrase-certif.alerte .num { color: #900001; }
 .hero-artiste-filet { width: 60px; height: 3px; background: var(--warm-gold); border-radius: 2px; margin: 12px 0 16px; }
 .hero-artiste-stats { display: flex; gap: 28px; flex-wrap: wrap; margin-top: auto; }
 .hero-artiste-stats .hero-stat { display: flex; flex-direction: column; }

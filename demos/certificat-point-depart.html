@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette — Point de départ des certificats d'un artiste</title>
+<link rel="stylesheet" href="../src/theme.css">
+<link rel="stylesheet" href="../src/styles.css">
+<style>
+  body{padding:30px 34px;overflow:auto;height:auto;user-select:text;}
+  .doc{max-width:1120px;margin:0 auto;}
+  h1{font-family:var(--font-titre);font-weight:500;font-size:29px;margin:0 0 8px;}
+  .sous{color:var(--slate);font-size:14px;line-height:1.65;margin:0 0 6px;max-width:900px;}
+  .lot-titre{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+             margin:44px 0 6px;font-weight:600;}
+  .lot-note{font-size:13.5px;color:var(--slate);line-height:1.65;margin:0 0 16px;max-width:900px;}
+  .maquette{background:var(--soft-ivory);border:1px dashed var(--mist);border-radius:16px;padding:20px;}
+  .journal{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:16px 21px;margin-top:22px;}
+  .journal h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+              margin:0 0 9px;font-weight:700;}
+  .journal ul{margin:0;padding-left:19px;font-size:13.5px;color:var(--slate);line-height:1.8;}
+  .journal em{color:var(--ink);font-style:normal;font-weight:600;}
+
+  /* Pilote de la démo (ne fait pas partie de l'app) */
+  .pilote{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px;font-size:12.5px;color:var(--stone);}
+  .pilote b{color:var(--ink);font-weight:600;margin-right:4px;}
+  .pilote button{border:1px solid var(--mist);background:#fff;border-radius:999px;padding:5px 12px;
+                 font-family:var(--font-ui);font-size:12.5px;cursor:pointer;color:var(--slate);}
+  .pilote button.on{border-color:var(--warm-gold);color:var(--ink);box-shadow:0 0 0 3px rgba(201,154,61,.16);}
+
+  /* Le nouveau champ, dans la carte Identité du formulaire */
+  .carte-demo{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:18px 20px;max-width:760px;}
+  .carte-demo h3{margin:0 0 12px;}
+  .sep-certif{border-top:1px solid var(--mist);margin:14px 0 12px;}
+  .ligne-certif{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:end;}
+  .ligne-certif .form-champ{margin-bottom:0;}
+  .ligne-certif input{width:100%;}
+  .phrase-certif{margin:0;min-height:40px;display:flex;align-items:center;flex-wrap:wrap;gap:0 6px;
+                 font-size:13.5px;line-height:1.45;color:var(--slate);}
+  .phrase-certif .num{font-weight:700;font-size:15px;color:var(--ink);font-variant-numeric:lining-nums tabular-nums;
+                      background:var(--soft-ivory);border:1px solid var(--mist);border-radius:7px;padding:2px 8px;}
+  .phrase-certif.alerte{color:#900001;}
+  .phrase-certif.alerte .num{color:#900001;}
+
+  /* En-tête de la fiche (lecture) */
+  .hero-faux{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:16px 20px;max-width:760px;}
+  .hero-faux h2{font-family:var(--font-titre);font-weight:500;font-size:24px;margin:0 0 3px;}
+
+  /* Fenêtre du certificat */
+  .cadre-modale{background:rgba(7,26,47,.16);border-radius:16px;padding:26px;}
+  .faux-dialogue{background:#fff;border-radius:16px;box-shadow:0 18px 50px rgba(7,26,47,.2);
+                 max-width:560px;margin:0 auto;padding:22px 24px;}
+  .faux-dialogue h3{font-family:var(--font-titre);font-weight:500;font-size:21px;margin:0 0 4px;}
+  .faux-dialogue .msg{color:var(--slate);font-size:13.5px;line-height:1.6;margin:0 0 14px;}
+  .faux-dialogue input[readonly]{background:var(--soft-ivory);}
+</style>
+</head>
+<body>
+<div class="doc">
+  <h1>Point de départ des certificats d'un artiste</h1>
+  <p class="sous">
+    Aujourd'hui, Galeria numérote les certificats de chaque artiste à partir de 001 :
+    <b>MAP2231-001-5567</b>. Or la plupart des artistes ont déjà des certificats d'avant
+    Galeria, et le premier délivré par l'app ferait doublon avec un certificat papier.
+  </p>
+  <p class="sous">
+    On inscrit donc une fois sur la fiche de l'artiste <b>le dernier numéro délivré avant
+    Galeria</b>. Galeria continue à partir du suivant.
+  </p>
+
+  <div class="lot-titre">1 · Sur la fiche de l'artiste (mode Modifier), carte « Identité »</div>
+  <p class="lot-note">
+    Une ligne de plus sous le préfixe d'inventaire : les deux servent à numéroter. La phrase à
+    droite dit le résultat en clair. Pas besoin de calculer « le numéro d'après » : on recopie
+    celui du dernier certificat papier.
+  </p>
+
+  <div class="maquette">
+    <div class="pilote">
+      <b>Pour la démo, certificats déjà délivrés par Galeria :</b>
+      <button type="button" data-galeria="0" class="on">aucun</button>
+      <button type="button" data-galeria="45">jusqu'au n° 045</button>
+    </div>
+    <div class="carte-demo">
+      <h3>Identité</h3>
+      <div class="grille-form">
+        <div class="form-champ"><label>Prénom</label><input type="text" value="Manon"></div>
+        <div class="form-champ"><label>Nom de famille</label><input type="text" value="Potvin"></div>
+      </div>
+      <div class="grille-form">
+        <div class="form-champ"><label>Type</label><input type="text" value="Peintre"></div>
+        <div class="form-champ"><label>Préfixe d'inventaire</label><input type="text" value="MAP"></div>
+        <div class="form-champ"><label>Langue</label><input type="text" value="Français"></div>
+      </div>
+      <div class="sep-certif"></div>
+      <div class="ligne-certif">
+        <div class="form-champ">
+          <label for="d-anterieur">Dernier certificat délivré avant Galeria</label>
+          <input id="d-anterieur" type="number" min="0" step="1" placeholder="aucun">
+        </div>
+        <p class="phrase-certif" id="d-phrase"></p>
+      </div>
+      <p class="aide-champ">
+        Le numéro du milieu sur les certificats de l'artiste (ex. 041 dans MAP2190-041-5310).
+        Laissez vide si l'artiste n'a jamais eu de certificat.
+      </p>
+    </div>
+    <div class="pilote" style="margin:14px 0 0;">
+      <b>Essayez :</b>
+      <button type="button" data-essai="">vide</button>
+      <button type="button" data-essai="41">41</button>
+      <button type="button" data-essai="30">30 (quand Galeria est à 045)</button>
+    </div>
+  </div>
+
+  <div class="lot-titre">2 · En-tête de la fiche (lecture)</div>
+  <p class="lot-note">
+    On le voit sans ouvrir le formulaire, à côté du préfixe : on vérifie d'un coup d'œil avant
+    de produire un certificat.
+  </p>
+  <div class="maquette">
+    <div class="hero-faux">
+      <h2>Manon Potvin</h2>
+      <p class="hero-artiste-meta" id="d-meta"></p>
+    </div>
+  </div>
+
+  <div class="lot-titre">3 · Fenêtre « Produire un certificat d'authenticité »</div>
+  <p class="lot-note">
+    Rien ne change dans la façon de faire : le numéro se compose tout seul, et il part maintenant
+    du bon endroit. La phrase d'aide dit d'où il vient.
+  </p>
+  <div class="maquette">
+    <div class="cadre-modale">
+      <div class="faux-dialogue">
+        <h3>Produire un certificat d'authenticité</h3>
+        <p class="msg">Pour <strong>Lumière d'automne</strong> — Manon Potvin</p>
+        <div class="form-champ">
+          <label>Numéro de certificat (composé automatiquement)</label>
+          <input id="d-numero" type="text" readonly>
+        </div>
+        <p class="aide-champ" id="d-aide"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="journal">
+    <h4>Comment ça se comporte</h4>
+    <ul>
+      <li><em>Le numéro inscrit sert de plancher, jamais de compteur.</em> Galeria prend le plus
+        grand entre ce numéro et ses propres certificats, puis ajoute 1. Une fois que l'app a
+        délivré au-delà, le champ ne change plus rien : impossible de faire reculer la séquence
+        par erreur, ou de créer un doublon avec un certificat déjà produit.</li>
+      <li><em>Un numéro trop bas est signalé tout de suite</em>, par la phrase en rouge, sans
+        bloquer l'enregistrement du reste de la fiche.</li>
+      <li><em>Les certificats déjà produits ne sont pas renumérotés</em> : ce sont des pièces
+        officielles remises aux clients.</li>
+      <li><em>Ta base ne contient qu'un seul certificat</em> (le tien, n° 001, un essai). Aucun
+        artiste ne change tant qu'on ne remplit pas le champ.</li>
+      <li><em>Autre libellé possible</em> : « Prochain n° de certificat » (on inscrit 42 au lieu
+        de 41). Je recommande « dernier délivré » : c'est le chiffre qu'on a sous les yeux dans
+        le classeur, sans calcul.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  const pad = (n) => String(n).padStart(3, '0');
+  let galeriaMax = 0;
+  const champ = document.getElementById('d-anterieur');
+
+  function rendre() {
+    const v = champ.value.trim();
+    const anterieur = v === '' ? 0 : Math.max(0, Math.floor(Number(v)) || 0);
+    const prochain = Math.max(anterieur, galeriaMax) + 1;
+    const phrase = document.getElementById('d-phrase');
+    phrase.classList.remove('alerte');
+    if (v !== '' && anterieur < galeriaMax) {
+      phrase.classList.add('alerte');
+      phrase.innerHTML = `Galeria a déjà délivré jusqu'au n° ${pad(galeriaMax)} : ce numéro ne changera rien. `
+        + `Prochain certificat : <span class="num">${pad(prochain)}</span>`;
+    } else if (galeriaMax && anterieur <= galeriaMax) {
+      phrase.innerHTML = `Galeria a délivré jusqu'au n° ${pad(galeriaMax)}. `
+        + `Prochain certificat : <span class="num">${pad(prochain)}</span>`;
+    } else if (anterieur) {
+      phrase.innerHTML = `Galeria continuera au n° <span class="num">${pad(prochain)}</span>`;
+    } else {
+      phrase.innerHTML = `Premier certificat dans Galeria : <span class="num">${pad(prochain)}</span>`;
+    }
+
+    document.getElementById('d-meta').innerHTML =
+      `Peintre &middot; Préfixe MAP &middot; Prochain certificat n° ${pad(prochain)} &middot; 8 œuvres disponibles`;
+
+    document.getElementById('d-numero').value = `MAP2231-${pad(prochain)}-5567`;
+    const source = galeriaMax && galeriaMax >= anterieur
+      ? `il suit le n° ${pad(galeriaMax)}, dernier certificat produit par Galeria pour cette artiste`
+      : anterieur
+        ? `il suit le n° ${pad(anterieur)}, dernier certificat délivré avant Galeria (inscrit sur la fiche de l'artiste)`
+        : `c'est le premier certificat de cette artiste`;
+    document.getElementById('d-aide').textContent =
+      `Numéro : MAP2231-${pad(prochain)}-5567. Le ${pad(prochain)} est propre à l'artiste : ${source}.`;
+  }
+
+  champ.addEventListener('input', rendre);
+  document.querySelectorAll('[data-galeria]').forEach((b) => b.addEventListener('click', () => {
+    galeriaMax = Number(b.dataset.galeria);
+    document.querySelectorAll('[data-galeria]').forEach((x) => x.classList.toggle('on', x === b));
+    rendre();
+  }));
+  document.querySelectorAll('[data-essai]').forEach((b) => b.addEventListener('click', () => {
+    champ.value = b.dataset.essai;
+    if (b.dataset.essai === '30' && !galeriaMax) document.querySelector('[data-galeria="45"]').click();
+    rendre();
+  }));
+  rendre();
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 const { openDatabase } = require('./database');
-const { obtenirArtiste, obtenirOeuvre, obtenirClient, obtenirVente, obtenirCertificat, obtenirExposition } = require('./requetes');
+const { obtenirArtiste, obtenirOeuvre, obtenirClient, obtenirVente, obtenirCertificat, obtenirExposition, sequenceCertificatsArtiste } = require('./requetes');
 const { obtenirConfig, mettreAJourConfig } = require('../config');
 const { construireNomFichier } = require('./nomenclature');
 
@@ -161,7 +161,18 @@ const COLONNES_ARTISTE = [
   ['instructions_ia', vide],
   ['lien_chatgpt', vide],
   ['cotes', normaliserCotes],
+  // Dernier certificat délivré (plancher de la numérotation des certificats).
+  ['certificat_dernier', entier],
 ];
+
+// Garde-fou commun à la création et à la modification d'un artiste.
+function verifierArtiste(data) {
+  if (!vide(data.nom)) throw new Error("Le nom de l'artiste est requis.");
+  const dernier = entier(data.certificat_dernier);
+  if (dernier != null && (dernier < 0 || dernier > 99999)) {
+    throw new Error('Dernier certificat délivré : inscrivez un nombre entre 0 et 99999.');
+  }
+}
 
 const COLONNES_OEUVRE = [
   ['artiste_id', entier],
@@ -201,7 +212,7 @@ const COLONNES_OEUVRE = [
 ];
 
 function modifierArtiste(id, data) {
-  if (!vide(data.nom)) throw new Error("Le nom de l'artiste est requis.");
+  verifierArtiste(data);
   const db = openDatabase();
   const cols = COLONNES_ARTISTE.map(([c]) => c);
   const valeurs = COLONNES_ARTISTE.map(([c, n]) => n(data[c]));
@@ -283,7 +294,7 @@ function delierArtisteDuSite(id) {
 }
 
 function creerArtiste(data) {
-  if (!vide(data.nom)) throw new Error("Le nom de l'artiste est requis.");
+  verifierArtiste(data);
   const db = openDatabase();
   const cols = COLONNES_ARTISTE.map(([c]) => c);
   const valeurs = COLONNES_ARTISTE.map(([c, n]) => n(data[c]));
@@ -1387,19 +1398,20 @@ function composerNumeroCertificat({ numeroInventaire, seq, numeroSage }) {
 
 // Aperçu pour le formulaire : composantes du numéro AVANT saisie (n° d'inventaire
 // de l'œuvre + prochain séquentiel de l'artiste). Le formulaire compose le numéro
-// complet en direct en y ajoutant l'année et le n° Sage.
+// complet en direct en y ajoutant le n° Sage.
 function apercuNumeroCertificat(oeuvreId) {
   const db = openDatabase();
   const oeuvre = db.prepare('SELECT numero_inventaire, artiste_id FROM oeuvres WHERE id = ?').get(entier(oeuvreId));
   if (!oeuvre) return null;
-  const row = db.prepare(`
-    SELECT COALESCE(MAX(c.seq_artiste), 0) AS m
-    FROM certificats c JOIN oeuvres o ON o.id = c.oeuvre_id
-    WHERE o.artiste_id = ?
-  `).get(oeuvre.artiste_id);
+  const s = sequenceCertificatsArtiste(oeuvre.artiste_id);
   return {
     numero_inventaire: oeuvre.numero_inventaire || '',
-    prochain_seq: ((row && row.m) || 0) + 1,
+    prochain_seq: s.prochain,
+    dernier_seq: s.dernier,
+    // D'où vient le numéro, pour que la fenêtre le dise en clair. « premier »
+    // = rien produit ici ET rien d'inscrit sur la fiche : c'est le cas à
+    // signaler, l'artiste a peut-être des certificats papier.
+    seq_source: s.dernier === 0 ? 'premier' : (s.galeria >= s.fiche ? 'galeria' : 'fiche'),
   };
 }
 
@@ -1413,13 +1425,9 @@ function creerCertificat(data) {
   if (!numeroSage) throw new Error("Le numéro de facture (Sage) est requis pour produire un certificat.");
   exigerPositifOuNul(nombre(data.valeur), 'Valeur');
 
-  // Séquentiel par artiste : MAX existant + 1 (les anciens « C- » ont seq NULL → 0).
-  const row = db.prepare(`
-    SELECT COALESCE(MAX(c.seq_artiste), 0) AS m
-    FROM certificats c JOIN oeuvres o ON o.id = c.oeuvre_id
-    WHERE o.artiste_id = ?
-  `).get(oeuvre.artiste_id);
-  const seq = ((row && row.m) || 0) + 1;
+  // Séquentiel par artiste : suit le dernier certificat délivré, produit ici ou
+  // inscrit sur la fiche (les anciens « C- » ont seq NULL et ne comptent pas).
+  const seq = sequenceCertificatsArtiste(oeuvre.artiste_id).prochain;
   const numero = composerNumeroCertificat({ numeroInventaire: oeuvre.numero_inventaire, seq, numeroSage });
 
   const langue = (vide(data.langue) || 'FR').toUpperCase();

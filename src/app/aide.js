@@ -211,6 +211,10 @@ const ARTICLES = [
      <div class="astuce">Le certificat manquant est créé automatiquement (valeur = prix de vente) ; la présentation est réutilisée si elle n'a pas changé.</div>`),
   A('documents', 'Produire un certificat d\'authenticité', 'certificat authenticité pdf œuvre numéro valeur signataire',
     `<p>Depuis la fiche d'œuvre ou de vente : crée un certificat (numéro auto, valeur, signataire, particularité). Le PDF se génère automatiquement. Une œuvre peut avoir plusieurs certificats ; un certificat peut exister sans vente.</p>`),
+  A('documents', 'Numéro d\'un certificat', 'certificat numéro séquentiel artiste dernier délivré papier départ doublon 001',
+    `<p>Le numéro se compose de trois parties : <b>n° d'inventaire de l'œuvre</b> – <b>numéro de l'artiste</b> – <b>n° de facture Sage</b>. Exemple : MAP2231-042-5567.</p>
+     <p>Le numéro du milieu est propre à chaque artiste : il suit son <b>dernier certificat délivré</b>. Si l'artiste a déjà des certificats sur papier, ouvrez sa fiche, cliquez <b>Modifier</b> et inscrivez le numéro du dernier dans <b>Dernier certificat délivré</b>. Galeria continue au suivant.</p>
+     <div class="attention">Faites-le <b>avant</b> son premier certificat dans Galeria : un certificat produit ne se renumérote pas. Galeria vous le rappelle au premier certificat de chaque artiste.</div>`),
   A('documents', 'Produire la facture artiste', 'facture artiste versement commission relevé cote type taxes',
     `<p>Fiche de vente → <b>Produire la facture artiste</b> : le relevé du versement à l'artiste après commission et taxes. La <b>cote</b> dépend du type de l'œuvre (sculpture 33 %, sinon 50 %), et les taxes dépendent du régime fiscal de l'artiste.</p>`),
   A('documents', 'Catalogue, annexe A, présentation, rapport', 'catalogue annexe dépôt retrait présentation rapport pdf artiste imprimer',
@@ -288,7 +292,8 @@ const ARTICLES = [
   A('reglages', 'Modifier les coordonnées de la galerie', 'profil galerie nom adresse logo tps tvq entête bas de page coordonnées',
     `<p>Bloc <b>profil</b> (bas de la barre) → <b>Profil de la galerie</b> : nom, adresse, téléphone, courriel, site, numéros TPS/TVQ, logo. Ces informations alimentent l'entête et le bas de page de <b>tous</b> les documents — modifie ici une fois, c'est répercuté partout.</p>`),
   A('reglages', 'Numéros de factures et de certificats', 'numéro préfixe facture certificat inventaire séquence prochain nomenclature',
-    `<p><b>Réglages → Documents</b> : préfixe et prochain numéro pour factures client (F-…), factures artiste (A-…), certificats (C-…), et le prochain numéro d'inventaire. Modifiable à tout moment, sans rien casser.</p>`),
+    `<p><b>Réglages → Documents</b> : préfixe et prochain numéro pour factures client (F-…) et factures artiste (A-…), et le prochain numéro d'inventaire. Modifiable à tout moment, sans rien casser.</p>
+     <p>Les <b>certificats</b> ne se règlent pas ici : ils se numérotent par artiste, depuis sa fiche (voir « Numéro d'un certificat »).</p>`),
   A('reglages', 'Taux de taxes et cote par défaut', 'tps tvq taux cote pourcentage commission défaut',
     `<p><b>Réglages → Documents</b> : activer/désactiver et régler la <b>TPS</b> (5 % par défaut), la <b>TVQ</b> (9,975 %), et le <b>pourcentage de cote</b> galerie par défaut (50 %).</p>`),
   A('reglages', 'Régler la taille de l\'affichage (zoom)', 'zoom affichage taille texte agrandir interface',
