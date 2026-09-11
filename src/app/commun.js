@@ -80,8 +80,8 @@ export const STATUTS = {
 // (sauf le paiement, qui a son propre statut). C'est ce qui permet à la page
 // Suivi de les traiter toutes pareil.
 //
-// ⚠ Libellé PROVISOIRE pour `google_retire` : Dave doit confirmer ce que ses
-// parents font exactement sur le site. Le changer ici suffit, partout.
+// Libellés de `google_retire` confirmés par Dave le 2026-09-11 (« c'est
+// correct »). Les changer ici suffit, partout.
 // `lbl` dit l'ÉTAT une fois fait ; `afaire` dit la TÂCHE tant qu'elle ne l'est
 // pas. Les deux sont nécessaires : « Inactive dans Sage » dans une liste de
 // choses à faire se lirait comme déjà fait.

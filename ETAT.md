@@ -13,9 +13,9 @@
 Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif. Les parents
 passent de la 0.21.1 à la 0.22.0 : douze diapos de nouveautés au prochain lancement.
 
-**Encore ouverts sur la liste du 2026-09-08** : lot 6 (courriel de la facture artiste, PDF
-joint — il manque le type d'Outlook des parents) et le libellé définitif de l'étape Google
-du suivi des ventes (`ETAPES_GALERIE`, `commun.js`). **À faire chez les parents** : remplir
+**Encore ouvert sur la liste du 2026-09-08** : lot 6 (courriel de la facture artiste, PDF
+joint — il manque le type d'Outlook des parents). Le libellé de l'étape Google du suivi est
+confirmé tel quel par Dave (2026-09-11). **À faire chez les parents** : remplir
 « Dernier certificat délivré » pour chaque artiste qui a des certificats papier ; cocher les
 trois tâches « côté galerie » des ventes déjà livrées.
 
@@ -81,8 +81,8 @@ trois tâches « côté galerie » des ventes déjà livrées.
 > essayer par Dave** : comparer un artiste — si le bandeau annonce ses œuvres reliées, c'est bon.
 >
 > **Restent sur la liste du 2026-09-08** : lot 6 (courriel de la facture artiste, PDF joint :
-> `.eml` avec `X-Unsent: 1` — il manque le type d'Outlook des parents) ; libellé définitif de
-> l'étape Google du suivi (`ETAPES_GALERIE`, `commun.js`), à confirmer par Dave.
+> `.eml` avec `X-Unsent: 1` — il manque le type d'Outlook des parents). Libellé de l'étape
+> Google : confirmé tel quel par Dave le 2026-09-11.
 >
 > ### 🟨 TROIS ARTISTES RENOMMÉS À LA MAIN — décision de Dave (2026-09-07)
 >
