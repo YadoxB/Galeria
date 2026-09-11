@@ -86,6 +86,11 @@ const COLONNES_ATTENDUES = {
     ['emballage_date', 'TEXT'],
     ['envoi_date', 'TEXT'],
     ['livraison_date', 'TEXT'],
+    // Tâches de la galerie après la vente (voir schema.sql). ⚠ Hors de
+    // COLONNES_VENTE : le formulaire complet de la vente les effacerait.
+    ['sage_inactif_date', 'TEXT'],
+    ['google_retire_date', 'TEXT'],
+    ['artiste_paye_date', 'TEXT'],
     // Pochette de vente : sélection de la lettre de remerciement.
     ['type_achat', 'TEXT'],          // 'personne' | 'web'
     ['est_cadeau', 'INTEGER NOT NULL DEFAULT 0'],

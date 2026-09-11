@@ -380,8 +380,28 @@ function ventesRecentes(limite = 6) {
   `).all(limite);
 }
 
-// Jalon 3 — ventes dont au moins une étape post-vente n'est pas complétée :
-// paiement non reçu, ou emballage/envoi/livraison sans date.
+// ===== Une vente est-elle terminée ? =====
+//
+// ⚠ UNE SEULE définition, partagée par toutes les requêtes. Elle était
+// recopiée dans deux clauses WHERE (accueil, rapport) et deux fois côté
+// interface (Suivi, fiche de vente) : une étape ajoutée à un endroit et oubliée
+// à l'autre, et une vente paraissait terminée sur un écran, en cours sur
+// l'autre. Le pendant côté interface est venteTerminee() dans commun.js — les
+// deux doivent rester d'accord.
+//
+// Depuis le 2026-09-10, une vente n'est terminée que lorsque le CLIENT a tout
+// reçu (paiement, emballage, envoi, livraison) ET que la GALERIE a fait ses
+// trois tâches (inactive dans Sage, retirée de la synchronisation Google,
+// artiste payé) — décision de Dave : la vente reste en suivi tant que
+// l'artiste n'est pas payé, c'est l'effet de rappel recherché.
+const VENTE_EN_COURS_SQL = `(
+  v.paiement_statut IS NULL OR v.paiement_statut <> 'recu'
+  OR v.emballage_date IS NULL OR v.envoi_date IS NULL OR v.livraison_date IS NULL
+  OR v.sage_inactif_date IS NULL OR v.google_retire_date IS NULL OR v.artiste_paye_date IS NULL
+)`;
+
+// Jalon 3 — ventes dont au moins une étape post-vente n'est pas complétée
+// (voir VENTE_EN_COURS_SQL).
 function commandesNonCompletees(limite = 10) {
   const db = openDatabase();
   return db.prepare(`
@@ -389,6 +409,7 @@ function commandesNonCompletees(limite = 10) {
            v.prix_vente, v.tps, v.tvq,
            v.paiement_statut, v.paiement_date,
            v.emballage_date, v.envoi_date, v.livraison_date,
+           v.sage_inactif_date, v.google_retire_date, v.artiste_paye_date,
            o.titre AS oeuvre_titre, o.image_path, o.numero_inventaire,
            TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
            c.id AS client_id,
@@ -397,10 +418,7 @@ function commandesNonCompletees(limite = 10) {
     JOIN oeuvres o ON o.id = v.oeuvre_id
     JOIN artistes a ON a.id = o.artiste_id
     JOIN clients c ON c.id = v.client_id
-    WHERE v.paiement_statut IS NULL OR v.paiement_statut != 'recu'
-       OR v.emballage_date IS NULL
-       OR v.envoi_date IS NULL
-       OR v.livraison_date IS NULL
+    WHERE ${VENTE_EN_COURS_SQL}
     ORDER BY v.date_vente DESC, v.id DESC
     LIMIT ?
   `).all(limite);
@@ -426,7 +444,8 @@ function oeuvresAPreparer() {
 }
 
 // Section Suivi — toutes les ventes avec leurs champs de cycle de vie.
-// Le renderer sépare « en cours » et « complétées » côté affichage.
+// Le renderer sépare « en cours » et « complétées » côté affichage
+// (venteTerminee() dans commun.js).
 function ventesSuivi() {
   const db = openDatabase();
   return db.prepare(`
@@ -434,6 +453,7 @@ function ventesSuivi() {
            v.prix_vente, v.tps, v.tvq,
            v.paiement_statut, v.paiement_date,
            v.emballage_date, v.envoi_date, v.livraison_date,
+           v.sage_inactif_date, v.google_retire_date, v.artiste_paye_date,
            o.titre AS oeuvre_titre, o.image_path, o.numero_inventaire,
            TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
            c.id AS client_id,
@@ -555,6 +575,7 @@ function rapportJournalier(dateISO) {
   const ventesEnCours = db.prepare(`
     SELECT v.id, v.numero_facture, v.prix_vente, v.date_vente,
            v.paiement_statut, v.emballage_date, v.envoi_date, v.livraison_date,
+           v.sage_inactif_date, v.google_retire_date, v.artiste_paye_date,
            o.titre AS oeuvre_titre,
            TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
            TRIM(COALESCE(c.prenom || ' ', '') || c.nom) AS client_nom
@@ -562,8 +583,7 @@ function rapportJournalier(dateISO) {
     JOIN oeuvres o ON o.id = v.oeuvre_id
     JOIN artistes a ON a.id = o.artiste_id
     JOIN clients c ON c.id = v.client_id
-    WHERE v.paiement_statut IS NULL OR v.paiement_statut <> 'recu'
-       OR v.emballage_date IS NULL OR v.envoi_date IS NULL OR v.livraison_date IS NULL
+    WHERE ${VENTE_EN_COURS_SQL}
     ORDER BY v.date_vente DESC, v.id DESC
   `).all();
 

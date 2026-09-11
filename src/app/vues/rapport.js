@@ -109,11 +109,12 @@ export async function rendreRapport(contenu) {
       : '<p class="rap-vide">Aucune admission en cours.</p>';
     const ventesCoursHTML = su.ventesEnCours.length
       ? `<table class="rap-table">
-          <thead><tr><th>Œuvre</th><th>Artiste</th><th>Client</th><th class="num">Prix</th><th class="c">Paie.</th><th class="c">Emb.</th><th class="c">Exp.</th><th class="c">Livr.</th></tr></thead>
+          <thead><tr><th>Œuvre</th><th>Artiste</th><th>Client</th><th class="num">Prix</th><th class="c">Paie.</th><th class="c">Emb.</th><th class="c">Exp.</th><th class="c">Livr.</th><th class="c" title="Inactive dans Sage">Sage</th><th class="c" title="Retirée de Google">Google</th><th class="c" title="Artiste payé">Art.</th></tr></thead>
           <tbody>${su.ventesEnCours.map((v) => `<tr>
             <td><strong>${ech(v.oeuvre_titre)}</strong></td><td>${ech(v.artiste_nom || '')}</td><td>${ech(v.client_nom || '—')}</td>
             <td class="num">${formaterPrix(v.prix_vente)}</td>
             <td class="c">${caseE(v.paiement_statut === 'recu')}</td><td class="c">${caseE(!!v.emballage_date)}</td><td class="c">${caseE(!!v.envoi_date)}</td><td class="c">${caseE(!!v.livraison_date)}</td>
+            <td class="c">${caseE(!!v.sage_inactif_date)}</td><td class="c">${caseE(!!v.google_retire_date)}</td><td class="c">${caseE(!!v.artiste_paye_date)}</td>
           </tr>`).join('')}</tbody>
         </table>`
       : '<p class="rap-vide">Aucune vente ou livraison en cours.</p>';
@@ -177,8 +178,8 @@ export async function rendreRapport(contenu) {
       : '<p class="vide">Aucune admission en cours.</p>';
     const ventesCoursP = su.ventesEnCours.length
       ? `<table>
-          <thead><tr><th style="width:22%">Titre</th><th style="width:14%">Artiste</th><th style="width:16%">Client</th><th style="width:10%">Prix</th><th style="width:7%">Paiement</th><th style="width:7%">Emballée</th><th style="width:7%">Expédiée</th><th style="width:7%">Livrée</th></tr></thead>
-          <tbody>${su.ventesEnCours.map((v) => `<tr><td><strong>${ech(v.oeuvre_titre)}</strong></td><td>${ech(v.artiste_nom || '')}</td><td>${ech(v.client_nom || '—')}</td><td>${formaterPrix(v.prix_vente)}</td><td>${caseP(v.paiement_statut === 'recu')}</td><td>${caseP(!!v.emballage_date)}</td><td>${caseP(!!v.envoi_date)}</td><td>${caseP(!!v.livraison_date)}</td></tr>`).join('')}</tbody>
+          <thead><tr><th style="width:18%">Titre</th><th style="width:12%">Artiste</th><th style="width:13%">Client</th><th style="width:9%">Prix</th><th style="width:6%">Paiement</th><th style="width:6%">Emballée</th><th style="width:6%">Expédiée</th><th style="width:6%">Livrée</th><th style="width:6%">Sage inactif</th><th style="width:6%">Google retiré</th><th style="width:6%">Artiste payé</th></tr></thead>
+          <tbody>${su.ventesEnCours.map((v) => `<tr><td><strong>${ech(v.oeuvre_titre)}</strong></td><td>${ech(v.artiste_nom || '')}</td><td>${ech(v.client_nom || '—')}</td><td>${formaterPrix(v.prix_vente)}</td><td>${caseP(v.paiement_statut === 'recu')}</td><td>${caseP(!!v.emballage_date)}</td><td>${caseP(!!v.envoi_date)}</td><td>${caseP(!!v.livraison_date)}</td><td>${caseP(!!v.sage_inactif_date)}</td><td>${caseP(!!v.google_retire_date)}</td><td>${caseP(!!v.artiste_paye_date)}</td></tr>`).join('')}</tbody>
         </table>`
       : '<p class="vide">Aucune vente ou livraison en cours.</p>';
 

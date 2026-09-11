@@ -68,6 +68,45 @@ export const STATUTS = {
   exposee:    { libelle: 'En exposition', classe: 'statut-exposee' },
 };
 
+// ===== Le cycle d'une vente, en deux groupes =====
+//
+// POUR LE CLIENT : paiement, emballage, envoi, livraison.
+// CÔTÉ GALERIE (2026-09-10) : trois tâches qui s'oubliaient, dont deux défont
+// ce que la préparation avait fait — créée dans Sage → rendue inactive ;
+// publiée sur le site → retirée de la synchronisation Google — et le règlement
+// de l'artiste.
+//
+// Chaque étape se lit et s'écrit dans la colonne `${cle}_date` de la vente
+// (sauf le paiement, qui a son propre statut). C'est ce qui permet à la page
+// Suivi de les traiter toutes pareil.
+//
+// ⚠ Libellé PROVISOIRE pour `google_retire` : Dave doit confirmer ce que ses
+// parents font exactement sur le site. Le changer ici suffit, partout.
+// `lbl` dit l'ÉTAT une fois fait ; `afaire` dit la TÂCHE tant qu'elle ne l'est
+// pas. Les deux sont nécessaires : « Inactive dans Sage » dans une liste de
+// choses à faire se lirait comme déjà fait.
+export const ETAPES_GALERIE = [
+  { cle: 'sage_inactif', lbl: 'Inactive dans Sage', attente: 'À désactiver',
+    afaire: 'à désactiver dans Sage',
+    quoi: "Rendre l'article inactif dans l'inventaire de Sage 50" },
+  { cle: 'google_retire', lbl: 'Retirée de Google', attente: 'À retirer',
+    afaire: 'à retirer de Google',
+    quoi: 'Retirer la synchronisation Google de la fiche, sur le site' },
+  { cle: 'artiste_paye', lbl: 'Artiste payé', attente: 'À payer',
+    afaire: 'artiste à payer',
+    quoi: "Le versement de sa part lui a été fait" },
+];
+
+export const clientServi = (v) => !!v && v.paiement_statut === 'recu'
+  && !!v.emballage_date && !!v.envoi_date && !!v.livraison_date;
+export const galerieReglee = (v) => !!v && ETAPES_GALERIE.every((e) => !!v[`${e.cle}_date`]);
+
+// Une vente est TERMINÉE quand le client a tout reçu ET que la galerie a fait
+// ses trois tâches — décision de Dave (2026-09-10) : elle reste en suivi tant
+// que l'artiste n'est pas payé. ⚠ Pendant côté base : VENTE_EN_COURS_SQL dans
+// src/db/requetes.js. Les deux doivent rester d'accord.
+export const venteTerminee = (v) => clientServi(v) && galerieReglee(v);
+
 export function badgeStatut(statut) {
   const s = STATUTS[statut] || { libelle: statut || '—', classe: 'statut-defaut' };
   return `<span class="badge-statut ${s.classe}">${ech(s.libelle)}</span>`;

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette — Trois étapes de plus après la vente</title>
+<link rel="stylesheet" href="../src/theme.css">
+<link rel="stylesheet" href="../src/styles.css">
+<style>
+  body{padding:30px 34px;overflow:auto;height:auto;user-select:text;}
+  .doc{max-width:1120px;margin:0 auto;}
+  h1{font-family:var(--font-titre);font-weight:500;font-size:29px;margin:0 0 8px;}
+  .sous{color:var(--slate);font-size:14px;line-height:1.65;margin:0 0 6px;max-width:920px;}
+  .lot-titre{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+             margin:42px 0 6px;font-weight:600;}
+  .lot-note{font-size:13.5px;color:var(--slate);line-height:1.65;margin:0 0 16px;max-width:920px;}
+  .etiq{font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;
+        margin:0 0 9px;color:var(--stone);}
+  .etiq.reco{color:var(--warm-gold);}
+  .rangee{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap;}
+  .journal{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:16px 21px;margin-top:22px;}
+  .journal h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+              margin:0 0 9px;font-weight:700;}
+  .journal ul{margin:0;padding-left:19px;font-size:13.5px;color:var(--slate);line-height:1.8;}
+  .journal em{color:var(--ink);font-style:normal;font-weight:600;}
+  .question{background:#FDF8EE;border:1px solid #E8DCC0;border-left:3px solid var(--warm-gold);border-radius:10px;
+            padding:14px 18px;margin-top:16px;}
+  .question h4{margin:0 0 7px;font-size:13.5px;color:#6b5c34;}
+  .question p{margin:0 0 7px;font-size:13.5px;color:var(--slate);line-height:1.6;}
+  .question p:last-child{margin:0;}
+
+  /* --- la carte « Suivi » de la fiche de vente --- */
+  .carte-v{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:18px 20px;width:430px;}
+  .carte-v h3{font-family:var(--font-titre);font-weight:500;font-size:19px;margin:0 0 12px;}
+  .grp{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--stone);font-weight:700;
+       margin:16px 0 4px;padding-top:12px;border-top:1px solid var(--cloud);display:flex;align-items:center;gap:8px;}
+  .grp:first-of-type{margin-top:0;padding-top:0;border-top:0;}
+  .grp .cpt{margin-left:auto;font-weight:600;letter-spacing:0;text-transform:none;font-size:11.5px;}
+  .etape{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--cloud);}
+  .etape:last-child{border-bottom:0;}
+  .etape .nom{font-size:13.5px;flex:1;}
+  .etape .quoi{display:block;font-size:11.5px;color:var(--stone);margin-top:1px;}
+  .pastille{font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap;}
+  .pastille.fait{background:#EAF3EA;color:#2f5d34;}
+  .pastille.attente{background:var(--cloud);color:var(--slate);}
+  .marquer{border:1px solid var(--mist);background:#fff;border-radius:8px;font-family:var(--font-ui);
+           font-size:12px;padding:4px 10px;cursor:pointer;color:var(--ink);white-space:nowrap;}
+  .marquer:hover{border-color:var(--warm-gold);}
+
+  /* --- les tuiles du Suivi --- */
+  .tuiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:560px;}
+  .tuile{background:#fff;border:1px solid var(--mist);border-radius:12px;padding:12px 14px;}
+  .tuile .n{font-family:var(--font-titre);font-size:26px;color:var(--gallery-navy);line-height:1;}
+  .tuile .l{font-size:11.5px;color:var(--slate);margin-top:4px;}
+  .tuile.neuve{border-color:var(--warm-gold);box-shadow:0 0 0 2px rgba(201,154,61,.14);}
+  .tuile.neuve .n{color:#900001;}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<h1>Trois étapes de plus après la vente</h1>
+<p class="sous">Signalement du 10 septembre : ajouter au suivi d'une vente « rendre inactif dans Sage », « artiste
+payé » et « retirer la synchronisation Google sur le site ». Trois tâches qui se font aujourd'hui de mémoire — et
+qui s'oublient.</p>
+
+<p class="lot-titre">Où elles se rangent</p>
+<p class="lot-note">Le suivi d'une vente ne connaît que le <b>client</b> : paiement, emballage, envoi, livraison.
+Les trois nouvelles étapes sont d'une autre nature : ce sont des tâches <b>de la galerie</b>, et deux d'entre elles
+défont exactement ce que la préparation avait fait — créée dans Sage → rendue inactive ; publiée sur le site →
+retirée de Google. Plutôt que de les mêler aux quatre premières, elles forment un <b>second groupe</b>.</p>
+
+<div class="rangee">
+  <div>
+    <p class="etiq">Aujourd'hui — fiche d'une vente</p>
+    <div class="carte-v">
+      <h3>Suivi cycle de vie</h3>
+      <div class="etape"><span class="nom">Paiement</span><span class="pastille fait">✓ Reçu</span></div>
+      <div class="etape"><span class="nom">Emballage</span><span class="pastille fait">✓ Fait</span></div>
+      <div class="etape"><span class="nom">Envoi</span><span class="pastille fait">✓ Fait</span></div>
+      <div class="etape"><span class="nom">Livraison</span><span class="pastille fait">✓ Fait</span></div>
+    </div>
+    <p class="lot-note" style="margin-top:10px;max-width:430px;">Tout est vert : la vente <b>quitte</b> les
+    commandes en cours — alors que l'artiste n'a peut-être pas été payé.</p>
+  </div>
+  <div>
+    <p class="etiq reco">Proposé</p>
+    <div class="carte-v" id="carte"></div>
+  </div>
+</div>
+
+<p class="lot-titre">Et sur la page Suivi</p>
+<p class="lot-note">Les tuiles comptent déjà « à emballer », « à expédier ». Une tuile de plus rend visible ce qui
+s'oublie le plus facilement, et qui coûte le plus cher à oublier.</p>
+<div class="tuiles">
+  <div class="tuile"><div class="n">2</div><div class="l">À emballer</div></div>
+  <div class="tuile"><div class="n">1</div><div class="l">À expédier</div></div>
+  <div class="tuile neuve"><div class="n" id="n-artistes">3</div><div class="l">Artistes à payer</div></div>
+</div>
+
+<div class="question">
+  <h4>Deux questions avant de coder</h4>
+  <p><b>1. Quand une vente est-elle « terminée » ?</b> Aujourd'hui : quand le client a tout reçu. Je propose :
+  quand le client a tout reçu <b>et</b> que les trois tâches de la galerie sont faites. Une vente resterait alors
+  dans les « commandes en cours » jusqu'à ce que l'artiste soit payé — c'est l'effet de rappel recherché. Mais
+  ça veut dire qu'une vente livrée depuis longtemps peut y rester.</p>
+  <p><b>2. « Retirer la synchronisation Google », concrètement ?</b> Je suppose une case à décocher dans la
+  fiche du produit sur le site (l'extension Google pour WooCommerce), pour que l'œuvre vendue cesse d'apparaître
+  dans Google Shopping. Si c'est bien ça, « Retirée de Google Shopping » dit la chose en clair ; sinon, dis-moi
+  ce qu'ils font et je nomme l'étape d'après.</p>
+</div>
+
+<div class="journal">
+  <h4>Les choix proposés</h4>
+  <ul>
+    <li><em>Des noms qui disent un état, comme les autres étapes</em> : « Rendue inactive dans Sage » (miroir de
+      « Créée dans Sage »), « Retirée de Google Shopping », « Artiste payé ». Chaque étape porte en dessous une
+      ligne qui dit quoi faire concrètement.</li>
+    <li><em>Un bouton « Marquer aujourd'hui »</em> et une date modifiable, exactement comme emballage et envoi.
+      Aucune nouvelle façon de faire à apprendre.</li>
+    <li><em>« Artiste payé » est aussi une date</em> : elle servira le jour où l'on voudra savoir combien a été
+      versé à un artiste sur une période — sans rien retaper.</li>
+    <li><em>Le rapport et l'accueil suivent</em> : ils affichent aujourd'hui les quatre étapes client ; ils
+      afficheront les sept.</li>
+  </ul>
+</div>
+
+</div>
+<script>
+const CLIENT = [
+  ['Paiement', 'Le client a réglé', true],
+  ['Emballage', "L'œuvre est emballée", true],
+  ['Envoi', "L'œuvre est partie", true],
+  ['Livraison', "Le client l'a reçue", true],
+];
+const GALERIE = [
+  ['Rendue inactive dans Sage', "Désactiver l'article dans l'inventaire de Sage 50", false],
+  ['Retirée de Google Shopping', "Décocher la synchronisation Google dans la fiche du produit sur le site", false],
+  ['Artiste payé', "Le versement de sa part lui a été fait", false],
+];
+function rendre() {
+  const bloc = (liste) => liste.map(([nom, quoi, fait], i) => `
+    <div class="etape">
+      <span class="nom">${nom}<span class="quoi">${quoi}</span></span>
+      ${fait ? '<span class="pastille fait">✓ Fait</span>'
+             : `<button class="marquer" data-i="${i}">✓ Marquer aujourd'hui</button>`}
+    </div>`).join('');
+  const nb = (l) => l.filter((x) => x[2]).length;
+  document.getElementById('carte').innerHTML = `
+    <h3>Suivi cycle de vie</h3>
+    <div class="grp">Pour le client <span class="cpt">${nb(CLIENT)}/${CLIENT.length}</span></div>
+    ${bloc(CLIENT)}
+    <div class="grp">Côté galerie <span class="cpt">${nb(GALERIE)}/${GALERIE.length}</span></div>
+    ${bloc(GALERIE)}`;
+  document.querySelectorAll('#carte .marquer').forEach((b) => b.addEventListener('click', () => {
+    GALERIE[Number(b.dataset.i)][2] = true;
+    document.getElementById('n-artistes').textContent = GALERIE[2][2] ? '2' : '3';
+    rendre();
+  }));
+}
+rendre();
+</script>
+</body></html>

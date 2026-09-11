@@ -39,6 +39,14 @@ export const VERSIONS = [
         texte: "L'écran <b>Site web</b> compare maintenant les textes anglais. Chaque écart porte une étiquette&nbsp;: <b>manquant</b> (la case est vide chez vous) ou <b>différent</b> (vous avez un autre texte). Cliquez <b>Manquants</b> puis <b>Tout cocher</b>&nbsp;: tout ce qui manque arrive d'un coup, sans rien effacer.",
       },
       {
+        titre: 'Trois tâches de plus après une vente',
+        texte: "Le suivi d'une vente a maintenant un groupe <b>Côté galerie</b>&nbsp;: rendre l'œuvre <b>inactive dans Sage</b>, la <b>retirer de Google</b>, <b>payer l'artiste</b>. Une vente n'est terminée qu'une fois tout coché — la tuile <b>Artistes à payer</b> vous les compte.",
+      },
+      {
+        titre: 'Vos anciennes ventes reviennent dans le Suivi',
+        texte: "Les ventes déjà livrées réapparaissent parmi les commandes en cours&nbsp;: Galeria ne peut pas savoir si l'artiste a été payé. Cochez leurs trois tâches pour les ranger dans <b>Complétées</b>.",
+      },
+      {
         titre: 'Créer une fiche depuis le site, en entier',
         texte: "Une œuvre créée depuis le site reprend maintenant <b>toutes ses caractéristiques</b>&nbsp;: type, format, médium, support, orientation, sujets, style et dimensions. L'artiste est choisi d'avance, et la fenêtre vous montre tout avant la création.",
       },

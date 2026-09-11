@@ -5859,6 +5859,21 @@ select.lot-in.st-pretee { color: var(--info); }
   color: var(--slate); cursor: pointer; user-select: none; white-space: nowrap; }
 .rl-avert { color: var(--warm-gold); }
 
+/* ----- Cycle d'une vente : client puis galerie ----- */
+.cycle-groupe { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--stone); font-weight: 700; margin: 14px 0 4px; padding-top: 10px;
+  border-top: 1px solid var(--cloud); display: flex; }
+.zone-cycle-vie h3 + .cycle-groupe { margin-top: 4px; padding-top: 0; border-top: 0; }
+.cycle-groupe span { margin-left: auto; font-weight: 600; letter-spacing: 0; text-transform: none; font-size: 11.5px; }
+.cycle-quoi { font-size: 11.5px; color: var(--stone); margin: -2px 0 6px; line-height: 1.4; }
+/* Accueil : ce qu'il reste à faire côté galerie, sous les étapes du client. */
+.commande-galerie { font-size: 11.5px; color: #7a5c19; margin: 6px 0 0; text-align: left; }
+/* Page Suivi : deux rangées d'étapes par vente, étiquetées. */
+.suivi-stepper-double { display: flex; flex-direction: column; gap: 6px; }
+.suivi-stepper-rangee { display: flex; align-items: center; }
+.suivi-stepper-lib { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--stone); font-weight: 700; width: 52px; flex: 0 0 auto; }
+
 /* Caractéristiques reprises du site, montrées AVANT la création. */
 .cf-carac { background: var(--soft-ivory); border: 1px solid var(--mist); border-radius: 10px;
   padding: 10px 13px; margin: 4px 0 10px; }

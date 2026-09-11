@@ -152,6 +152,15 @@ CREATE TABLE IF NOT EXISTS ventes (
   emballage_date       TEXT,
   envoi_date           TEXT,
   livraison_date       TEXT,
+  -- Tâches de la GALERIE après la vente (2026-09-10) : elles défont ce que la
+  -- préparation avait fait (créée dans Sage → rendue inactive ; publiée → retirée
+  -- de la synchronisation Google) et règlent l'artiste. Une vente n'est terminée
+  -- que lorsqu'elles sont faites aussi.
+  -- ⚠ Absentes de COLONNES_VENTE : le formulaire complet de la vente ne les
+  -- connaît pas et les effacerait. Elles ne passent que par majCycleVente().
+  sage_inactif_date    TEXT,
+  google_retire_date   TEXT,
+  artiste_paye_date    TEXT,
   notes                TEXT,
   cree_le              TEXT NOT NULL DEFAULT (datetime('now')),
   modifie_le           TEXT NOT NULL DEFAULT (datetime('now'))

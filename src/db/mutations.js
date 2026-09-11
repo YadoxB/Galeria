@@ -884,21 +884,29 @@ function creerVente(data) {
 
 // Jalon 3 — mise à jour partielle des statuts post-vente (sans passer par le
 // formulaire complet). Met à jour seulement les colonnes du cycle de vie.
+//
+// ⚠ PARTIELLE depuis le 2026-09-10 : seule une colonne PRÉSENTE dans `data`
+// est écrite. Avant, chaque appel réécrivait toutes les colonnes du cycle, et
+// une colonne non transmise redevenait vide. Tant que les appelants envoyaient
+// les cinq mêmes champs, rien ne se voyait ; mais en ajoutant les trois tâches
+// de la galerie, un clic sur « Emballage » aurait effacé « Artiste payé ». Une
+// clé absente veut désormais dire « n'y touche pas » ; une clé présente à null
+// veut dire « efface ».
+const COLONNES_CYCLE = [
+  'paiement_statut', 'paiement_date',
+  'emballage_date', 'envoi_date', 'livraison_date',
+  'sage_inactif_date', 'google_retire_date', 'artiste_paye_date',
+];
 function majCycleVente(id, data = {}) {
   const vid = entier(id);
   if (!vid) throw new Error('Identifiant invalide.');
+  const cols = COLONNES_CYCLE.filter((c) => Object.prototype.hasOwnProperty.call(data, c));
+  if (!cols.length) return obtenirVente(vid);
   const db = openDatabase();
   db.prepare(`
-    UPDATE ventes SET
-      paiement_statut = ?, paiement_date = ?,
-      emballage_date = ?, envoi_date = ?, livraison_date = ?,
-      modifie_le = datetime('now')
+    UPDATE ventes SET ${cols.map((c) => `${c} = ?`).join(', ')}, modifie_le = datetime('now')
     WHERE id = ?
-  `).run(
-    vide(data.paiement_statut), vide(data.paiement_date),
-    vide(data.emballage_date), vide(data.envoi_date), vide(data.livraison_date),
-    vid
-  );
+  `).run(...cols.map((c) => vide(data[c])), vid);
   return obtenirVente(vid);
 }
 

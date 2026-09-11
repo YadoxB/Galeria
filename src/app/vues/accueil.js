@@ -1,5 +1,5 @@
 import { naviguer } from '../router.js';
-import { ech, pluriel, formaterPrix, formaterDate, badgeStatut, urlPhoto, nomComplet, nettoyerErreur } from '../commun.js';
+import { ech, pluriel, formaterPrix, formaterDate, badgeStatut, urlPhoto, nomComplet, nettoyerErreur, ETAPES_GALERIE } from '../commun.js';
 import { chargerConfig } from '../marque.js';
 
 // Icônes du stepper « Commandes non complétées » (SVG inline, stroke courant)
@@ -273,6 +273,14 @@ function remplirCommandesNonCompletees(contenu, commandes) {
       return `<span class="commande-step ${etat}"><span class="rond">${icone}</span><span class="lbl">${e.lbl}</span></span>${conn}`;
     }).join('');
   };
+  // Tâches de la galerie. Sans cette ligne, une vente livrée dont l'artiste
+  // n'est pas payé apparaîtrait ici avec ses quatre coches vertes, sans qu'on
+  // comprenne pourquoi elle est encore dans la liste.
+  const ligneGalerie = (v) => {
+    const reste = ETAPES_GALERIE.filter((e) => !v[`${e.cle}_date`]);
+    if (!reste.length) return '';
+    return `<p class="commande-galerie">Côté galerie : ${reste.map((e) => ech(e.afaire)).join(' · ')}</p>`;
+  };
   zone.innerHTML = `<div class="dashboard-liste-compacte">${commandes.map((v) => {
     const client = v.client_nom || '—';
     return `
@@ -289,6 +297,7 @@ function remplirCommandesNonCompletees(contenu, commandes) {
           </div>
         </div>
         <div class="commande-stepper" aria-label="Étapes du cycle de vie">${stepper(v)}</div>
+        ${ligneGalerie(v)}
       </button>
     `;
   }).join('')}</div>`;

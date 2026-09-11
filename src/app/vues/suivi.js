@@ -1,5 +1,5 @@
 import { naviguer } from '../router.js';
-import { ech, sansAccents, formaterDate, urlPhoto, nettoyerErreur } from '../commun.js';
+import { ech, sansAccents, formaterDate, urlPhoto, nettoyerErreur, ETAPES_GALERIE, venteTerminee } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
 
 // ===== Icônes (SVG inline, stroke courant) =====
@@ -13,6 +13,10 @@ const ICO = {
   envoi: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>',
   livraison: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
   fleche: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
+  // Tâches de la galerie après la vente.
+  sageInactif: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><line x1="4" y1="20" x2="20" y2="4"/></svg>',
+  google: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="5" y1="19" x2="19" y2="5"/></svg>',
+  artiste: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6"/><path d="M17 14v6"/><path d="M14.5 16.5c0-1 1-1.5 2.5-1.5s2.5.5 2.5 1.5-1 1.3-2.5 1.5-2.5.5-2.5 1.5 1 1.5 2.5 1.5 2.5-.5 2.5-1.5"/></svg>',
 };
 
 const PREP_STEPS = [
@@ -40,7 +44,13 @@ function aujourdHuiISO() {
 const etatPaiement = (v) => (v.paiement_statut === 'recu' ? 'fait' : v.paiement_statut === 'partiel' ? 'partiel' : 'attente');
 const etatVente = (v, cle) => (cle === 'paiement' ? etatPaiement(v) : (v[`${cle}_date`] ? 'fait' : 'attente'));
 const etatPrep = (o, cle) => (o[PREP_COL[cle]] ? 'fait' : 'attente');
-const venteComplete = (v) => v.paiement_statut === 'recu' && !!v.emballage_date && !!v.envoi_date && !!v.livraison_date;
+// Tâches de la galerie : libellés et consignes viennent de commun.js, pour
+// que la page Suivi et la fiche de vente disent exactement la même chose.
+const ICONES_GALERIE = { sage_inactif: ICO.sageInactif, google_retire: ICO.google, artiste_paye: ICO.artiste };
+const GALERIE_STEPS = ETAPES_GALERIE.map((e) => ({ cle: e.cle, lbl: e.lbl, icone: ICONES_GALERIE[e.cle] }));
+// Terminée = client servi ET galerie réglée (voir venteTerminee dans commun.js,
+// et son pendant VENTE_EN_COURS_SQL côté base).
+const venteComplete = venteTerminee;
 
 export async function rendreSuivi(contenu) {
   let data = await window.api.suiviDonnees();
@@ -122,6 +132,9 @@ export async function rendreSuivi(contenu) {
       emballage_date: v.emballage_date || null,
       envoi_date: v.envoi_date || null,
       livraison_date: v.livraison_date || null,
+      sage_inactif_date: v.sage_inactif_date || null,
+      google_retire_date: v.google_retire_date || null,
+      artiste_paye_date: v.artiste_paye_date || null,
       ...changes,
     };
     try {
@@ -175,10 +188,12 @@ export async function rendreSuivi(contenu) {
       </div>`;
   }
   function ligneVente(v) {
-    const prochaine = POST_STEPS.find((s) => etatVente(v, s.cle) !== 'fait');
+    // La prochaine étape parcourt le client PUIS la galerie : une vente livrée
+    // dont l'artiste n'est pas payé n'est pas terminée.
+    const prochaine = [...POST_STEPS, ...GALERIE_STEPS].find((s) => etatVente(v, s.cle) !== 'fait');
     const partiel = prochaine && etatVente(v, prochaine.cle) === 'partiel';
     const fin = venteComplete(v)
-      ? `<span class="suivi-etat-ok">${ICO.check} Livré le ${formaterDate(v.livraison_date)}</span>`
+      ? `<span class="suivi-etat-ok">${ICO.check} Terminée</span>`
       : `<span class="suivi-chip-prochaine">${ICO.fleche}${partiel ? 'Finir ' : ''}${prochaine.lbl}</span>`;
     return `
       <div class="suivi-ligne post">
@@ -192,7 +207,10 @@ export async function rendreSuivi(contenu) {
           <p class="c">${ech(v.client_nom || '—')}</p>
           <p class="f">${v.numero_facture ? ech(v.numero_facture) + ' · ' : ''}${formaterDate(v.date_vente)}</p>
         </div>
-        <div class="suivi-stepper">${stepperHTML(POST_STEPS, (cle) => etatVente(v, cle), 'vente', v.id)}</div>
+        <div class="suivi-stepper suivi-stepper-double">
+          <div class="suivi-stepper-rangee"><span class="suivi-stepper-lib">Client</span>${stepperHTML(POST_STEPS, (cle) => etatVente(v, cle), 'vente', v.id)}</div>
+          <div class="suivi-stepper-rangee"><span class="suivi-stepper-lib">Galerie</span>${stepperHTML(GALERIE_STEPS, (cle) => etatVente(v, cle), 'vente', v.id)}</div>
+        </div>
         <div class="suivi-col-fin">${fin}</div>
       </div>`;
   }
@@ -227,6 +245,14 @@ export async function rendreSuivi(contenu) {
           ${tuile('emballer', ICO.emballage, cs.filter((v) => v.paiement_statut === 'recu' && !v.emballage_date).length, 'À emballer')}
           ${tuile('expedier', ICO.envoi, cs.filter((v) => v.emballage_date && !v.envoi_date).length, 'À expédier')}
           ${tuile('livrer', ICO.livraison, cs.filter((v) => v.envoi_date && !v.livraison_date).length, 'À livrer')}
+        </div>
+      </div>
+      <div class="suivi-files-groupe galerie">
+        <p class="titre-g">Côté galerie</p>
+        <div class="suivi-files">
+          ${tuile('sage', ICO.sageInactif, cs.filter((v) => !v.sage_inactif_date).length, 'À désactiver dans Sage')}
+          ${tuile('site', ICO.google, cs.filter((v) => !v.google_retire_date).length, 'À retirer de Google')}
+          ${tuile('artistes', ICO.artiste, cs.filter((v) => !v.artiste_paye_date).length, 'Artistes à payer')}
         </div>
       </div>`;
 
@@ -359,7 +385,7 @@ export async function rendreSuivi(contenu) {
       if (cle === 'paiement') { ouvrirMenuPaiement(r, v); return; }
 
       const fait = etatVente(v, cle) !== 'fait'; // toggle binaire
-      const lbl = POST_STEPS.find((s) => s.cle === cle).lbl;
+      const lbl = [...POST_STEPS, ...GALERIE_STEPS].find((s) => s.cle === cle).lbl;
       const appliquer = () => sauverCycle(v, { [`${cle}_date`]: fait ? (v[`${cle}_date`] || aujourdHuiISO()) : null });
 
       if (!fait) {
@@ -369,9 +395,14 @@ export async function rendreSuivi(contenu) {
           buttons: ['Décocher', 'Annuler'], defaultId: 0, cancelId: 1,
         }).then((i) => { if (i === 0) appliquer(); });
       } else if (cle === 'livraison') {
+        // Livrer ne termine plus la vente à coup sûr : il faut aussi les
+        // tâches de la galerie. Le message ne promet donc que ce qui arrivera.
+        const termineraAussi = ETAPES_GALERIE.every((e) => !!v[`${e.cle}_date`]);
         confirmer({
           type: 'question', title: 'Confirmer la livraison ?',
-          message: `La commande « ${v.oeuvre_titre} » sera marquée livrée et déplacée dans « Complétées ».`,
+          message: termineraAussi
+            ? `La commande « ${v.oeuvre_titre} » sera marquée livrée et déplacée dans « Complétées ».`
+            : `La commande « ${v.oeuvre_titre} » sera marquée livrée. Elle reste en suivi jusqu'à ce que les tâches de la galerie soient faites.`,
           buttons: ['Confirmer la livraison', 'Annuler'], defaultId: 0, cancelId: 1,
         }).then((i) => { if (i === 0) appliquer(); });
       } else {

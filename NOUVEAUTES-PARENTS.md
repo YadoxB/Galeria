@@ -11,6 +11,27 @@
 
 ---
 
+## Trois tâches de plus après une vente
+
+Le suivi d'une vente comptait quatre étapes, toutes pour le **client** :
+paiement, emballage, envoi, livraison. Il en compte maintenant trois de plus,
+dans un second groupe **« Côté galerie »** :
+
+- **Inactive dans Sage** — rendre l'article inactif dans l'inventaire de Sage 50 ;
+- **Retirée de Google** — retirer la synchronisation Google de la fiche, sur le
+  site ;
+- **Artiste payé** — le versement de sa part lui a été fait.
+
+Chaque tâche se coche d'un clic, comme les autres. Une vente n'est
+**terminée** que lorsque les sept étapes le sont : elle reste dans le Suivi tant
+que l'artiste n'est pas payé, et une nouvelle tuile **« Artistes à payer »** vous
+les compte.
+
+À la mise à jour, les ventes déjà livrées reviennent dans le Suivi : cochez
+leurs trois tâches pour les ranger dans « Complétées ».
+
+---
+
 ## Réparé : créer une fiche depuis le site
 
 Quand vous créiez la fiche d'une œuvre qui n'existait que sur le site, seuls le

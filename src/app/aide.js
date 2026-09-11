@@ -194,8 +194,11 @@ const ARTICLES = [
     `<p>Choisis le mode (comptant, chèque, carte, Interac, virement…). Pour le <b>suivi</b> des paiements échelonnés, utilise plutôt le statut de paiement (À faire / Partiel / Reçu) du cycle de vie.</p>`),
   A('ventes', 'Modifier ou annuler une vente', 'modifier supprimer annuler vente erreur corriger pochette dossier',
     `<p><b>Modifier</b> pour corriger une vente. <b>Supprimer</b> pour l'annuler : l'œuvre redevient disponible, les certificats sont conservés (détachés), et Galeria propose d'<b>effacer le dossier de pochette</b> associé.</p>`),
-  A('ventes', 'Suivre une commande après la vente', 'suivi paiement emballage envoi livraison cycle commande complétée',
-    `<p>Sur la fiche de vente (et dans la section <b>Suivi</b>), suis l'avancement : <b>Paiement</b> (À faire / Partiel / Reçu), <b>Emballage</b>, <b>Envoi</b>, <b>Livraison</b>, éditables d'un clic. Une commande est « complétée » quand le paiement est reçu et la livraison faite.</p>`),
+  A('ventes', 'Suivre une commande après la vente', 'suivi paiement emballage envoi livraison cycle commande complétée terminée sage inactif google artiste payé galerie',
+    `<p>Sur la fiche de vente (et dans la section <b>Suivi</b>), l'avancement se suit en <b>deux groupes</b>, éditables d'un clic.</p>`
+    + `<p><b>Pour le client</b> : <b>Paiement</b> (À faire / Partiel / Reçu), <b>Emballage</b>, <b>Envoi</b>, <b>Livraison</b>.</p>`
+    + `<p><b>Côté galerie</b> : rendre l'œuvre <b>inactive dans Sage</b>, la <b>retirer de la synchronisation Google</b> sur le site, et <b>payer l'artiste</b>.</p>`
+    + `<p>Une vente n'est <b>terminée</b> que lorsque les deux groupes sont complets : elle reste dans le Suivi tant que l'artiste n'est pas payé. La tuile <b>Artistes à payer</b> les compte.</p>`),
 
   // ═══════ DOCUMENTS ═══════
   A('documents', 'La section Documents', 'documents section liste index pdf tous types année filtres',

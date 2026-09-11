@@ -4,7 +4,7 @@ import {
   champTexte, champTextarea, champCheckbox, champSelect,
   champPays, champSubdivision, brancherChangementPays,
   formaterPrix, formaterDate, nomComplet, urlPhoto, nettoyerErreur,
-  champNombreInvalide, soumissionUnique,
+  champNombreInvalide, soumissionUnique, ETAPES_GALERIE, venteTerminee,
 } from '../commun.js';
 import { confirmer, alerter } from '../dialogue.js';
 import { chargerConfig } from '../marque.js';
@@ -514,11 +514,13 @@ export async function rendreVenteFiche(contenu, params) {
         return dt.toLocaleDateString('fr-CA', { year: 'numeric', month: 'short', day: 'numeric' });
       } catch { return ech(d); }
     };
-    // Bloc d'une étape datée (emballage / envoi / livraison), inline-éditable.
-    const etapeBloc = (cle, titre, date, libelleEnAttente) => {
+    // Bloc d'une étape datée, inline-éditable. `quoi` : la consigne concrète,
+    // affichée sous le titre des tâches de la galerie.
+    const etapeBloc = (cle, titre, date, libelleEnAttente, quoi = '') => {
+      const consigne = quoi ? `<p class="cycle-quoi">${ech(quoi)}</p>` : '';
       if (date) {
         return `<div class="sous-section">
-          <h4>${ech(titre)}</h4>
+          <h4>${ech(titre)}</h4>${consigne}
           <div class="inline-prep">
             <span class="pastille-bento pastille-bento-positive">✓ Fait</span>
             <input type="date" class="inline-date" data-cycle-date="${cle}" value="${ech(date)}">
@@ -527,7 +529,7 @@ export async function rendreVenteFiche(contenu, params) {
         </div>`;
       }
       return `<div class="sous-section">
-        <h4>${ech(titre)}</h4>
+        <h4>${ech(titre)}</h4>${consigne}
         <div class="inline-prep">
           <span class="pastille-bento">${ech(libelleEnAttente)}</span>
           <button type="button" class="inline-marquer" data-cycle-toggle="${cle}" data-cycle-on="1">✓ Marquer aujourd'hui</button>
@@ -547,13 +549,21 @@ export async function rendreVenteFiche(contenu, params) {
         ${statutPaiement ? `<input type="date" class="inline-date" data-cycle-date="paiement" value="${ech(v.paiement_date || '')}">` : ''}
       </div>
     </div>`;
+    // Deux groupes : ce qui concerne le CLIENT, et les tâches de la GALERIE
+    // (2026-09-10), qui s'oubliaient. Libellés et consignes viennent de
+    // ETAPES_GALERIE dans commun.js, partagés avec la page Suivi.
+    const nbFaitsClient = [v.paiement_statut === 'recu', v.emballage_date, v.envoi_date, v.livraison_date].filter(Boolean).length;
+    const nbFaitsGalerie = ETAPES_GALERIE.filter((e) => v[`${e.cle}_date`]).length;
     const zoneCycle = `
       <div class="carte zone-cycle-vie">
-        <h3>Suivi cycle de vie</h3>
+        <h3>Suivi cycle de vie${venteTerminee(v) ? ' <span class="pastille-bento pastille-bento-positive">✓ Terminée</span>' : ''}</h3>
+        <p class="cycle-groupe">Pour le client <span>${nbFaitsClient}/4</span></p>
         ${paiementSousSection}
         ${etapeBloc('emballage', 'Emballage', v.emballage_date, 'À emballer')}
         ${etapeBloc('envoi', 'Envoi', v.envoi_date, 'À envoyer')}
         ${etapeBloc('livraison', 'Livraison', v.livraison_date, 'À livrer')}
+        <p class="cycle-groupe">Côté galerie <span>${nbFaitsGalerie}/${ETAPES_GALERIE.length}</span></p>
+        ${ETAPES_GALERIE.map((e) => etapeBloc(e.cle, e.lbl, v[`${e.cle}_date`], e.attente, e.quoi)).join('')}
       </div>
     `;
 
@@ -759,6 +769,9 @@ export async function rendreVenteFiche(contenu, params) {
           emballage_date: v.emballage_date,
           envoi_date: v.envoi_date,
           livraison_date: v.livraison_date,
+          sage_inactif_date: v.sage_inactif_date,
+          google_retire_date: v.google_retire_date,
+          artiste_paye_date: v.artiste_paye_date,
         });
         await rechargerBundle();
         dessiner();

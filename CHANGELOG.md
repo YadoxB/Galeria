@@ -98,6 +98,18 @@ identifiants.
 
 ### Corrigé
 
+- **La mise à jour du cycle d'une vente effaçait les colonnes qu'on ne lui envoyait pas.**
+  `majCycleVente` réécrivait toutes les colonnes du cycle à chaque appel : une colonne non
+  transmise redevenait vide. Rien ne se voyait tant que les deux appelants envoyaient les cinq
+  mêmes champs ; avec les trois tâches de la galerie, un clic sur « Emballage » aurait effacé
+  « Artiste payé ». La mise à jour est désormais **partielle** : une clé absente veut dire « n'y
+  touche pas », une clé présente à `null` veut dire « efface ». Les trois nouvelles colonnes sont
+  en outre **hors de `COLONNES_VENTE`** : le formulaire complet de la vente, qui ne les connaît
+  pas, ne peut pas les écraser. Vérifié dans l'application réelle sur une copie de la base : ni
+  un clic sur « Emballage » ni un enregistrement du formulaire complet n'effacent « Artiste
+  payé » ; la vente est au même état à l'accueil, au Suivi et au rapport, qu'on coche ou qu'on
+  décoche (11 contrôles).
+
 - **Créer une fiche depuis le site reprend enfin les caractéristiques** (signalement du
   2026-09-10 : « les caractéristiques ne suivent pas »). La création ne transmettait que
   titre, description et prix ; la lecture des produits ne demandait même pas les attributs.
@@ -158,6 +170,27 @@ identifiants.
     qui manque. L'aide distingue maintenant les deux.
 
 ### Ajouté
+
+- **Trois tâches « côté galerie » dans le suivi d'une vente** (signalement du 2026-09-10) :
+  rendre l'œuvre **inactive dans Sage**, la **retirer de la synchronisation Google** sur le site,
+  **payer l'artiste**. Elles se faisaient de mémoire et s'oubliaient.
+  - Un **second groupe** sous les quatre étapes du client, plutôt qu'un mélange : ce sont des
+    tâches de la galerie, dont deux défont ce que la préparation avait fait (créée dans Sage →
+    inactive ; publiée → retirée de Google). Chaque tâche porte sa consigne concrète.
+  - **Une vente n'est terminée que lorsque les sept étapes le sont** — décision de Dave : elle
+    reste en suivi tant que l'artiste n'est pas payé. Nouvelles tuiles sur la page Suivi :
+    « À désactiver dans Sage », « À retirer de Google », « Artistes à payer ». L'accueil dit ce
+    qu'il reste côté galerie (sans quoi une vente livrée y apparaîtrait avec quatre coches vertes
+    sans raison visible), et le rapport gagne trois colonnes.
+  - ⚠ Libellé **provisoire** pour Google : Dave doit confirmer le geste exact. Il se change à un
+    seul endroit, `ETAPES_GALERIE` dans `commun.js`.
+  - ⚠ **La règle « terminée » était recopiée à cinq endroits** (deux clauses SQL, la page
+    Suivi, la fiche de vente, l'accueil) — de quoi rendre une vente terminée sur un écran et en
+    cours sur un autre. Elle vit maintenant en **un seul exemplaire par processus** :
+    `VENTE_EN_COURS_SQL` (`requetes.js`) et `venteTerminee()` (`commun.js`), qui se répondent.
+  - ⚠ À la mise à jour, **toute vente déjà livrée redevient « en cours »** jusqu'à ce que ses
+    trois tâches soient cochées : on ne peut pas affirmer après coup qu'un artiste a été payé.
+  - Maquette : `demos/suivi-apres-vente.html`.
 
 - **« Relier à une fiche existante » dans la synchronisation des artistes.** Deux artistes de
   la galerie signent d'un **nom d'artiste** : le site dit « PAMCOMEAU (Pamela Comeau) » et
