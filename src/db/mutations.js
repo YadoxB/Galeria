@@ -1504,6 +1504,7 @@ module.exports = {
   majUrlsSiteDepuisSite,
   enregistrerAnnexe, majAnnexePdfPath, annulerAnnexe, majPresentationArtiste,
   modifierArtiste, creerArtiste, supprimerArtiste, relierArtisteAuSite, delierArtisteDuSite,
+  formaterDimensionsTexte,
   modifierOeuvre, majChampOeuvre, majStatutOeuvre, corrigerNumeroInventaire, ignorerDiffWeb, retirerIgnoreWeb, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre,
   majChampArtiste, ignorerDiffArtisteWeb, retirerIgnoreArtisteWeb,
   modifierClient, creerClient, supprimerClient,

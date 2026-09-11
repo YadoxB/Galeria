@@ -375,4 +375,116 @@ async function listerProduitsPublics({ url, langue }) {
   return produits;
 }
 
-module.exports = { listerProduitsPublics, testerConnexion, normaliserUrl, stripHtml, listerProduits, produitParSku, listerArtistesSite, telechargerImage };
+// ===== Caractéristiques d'une œuvre, du site vers la fiche =====
+//
+// « Quand on importe une œuvre du site pour créer la fiche, les
+// caractéristiques ne suivent pas » (signalement du 2026-09-10). La création
+// ne reprenait que titre, description et prix : type, format, médium, support,
+// orientation, sujets, style et dimensions restaient à ressaisir.
+//
+// ⚠ Le site et l'app ne parlent pas la même langue, et cette table n'a PAS été
+// devinée : elle est DÉDUITE des 510 œuvres présentes des deux côtés au
+// 2026-09-10, en regardant ce que les parents avaient eux-mêmes saisi dans
+// l'app pour chaque valeur du site. Aucune contradiction pour le type.
+const TYPES_SITE = {
+  'tableaux': 'Peinture',
+  'œuvre sur papier': 'Peinture',
+  'oeuvre sur papier': 'Peinture',
+  'fusain': 'Peinture',
+  'aquarelles': 'Peinture',
+  'sculptures': 'Sculpture',
+  'œuvre numérique': 'Reproduction',
+  'oeuvre numérique': 'Reproduction',
+  'reproductions sur toile': 'Reproduction',
+  'reproductions sur papier': 'Reproduction',
+};
+const FORMATS_APP = ['Mini', 'Petit', 'Moyen', 'Grand', 'Très grand'];
+const STYLES_APP = ['Figuratif', 'Mi-Figuratif', 'Abstrait'];
+
+function decoderEntites(s) {
+  return String(s == null ? '' : s)
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&eacute;/g, 'é').replace(/&egrave;/g, 'è').replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"').replace(/&#8217;|&rsquo;/g, '’').trim();
+}
+const plat = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+// `supportsConnus` : les supports déjà employés dans l'app, écrits comme elle
+// les écrit (« Toile », « Papier beaux-arts »…). Ils décident où couper
+// « Acrylique sur toile » : on ne coupe que si ce qui suit « sur » est un
+// support reconnu. Sinon on garde le tout comme médium — c'est ce que les
+// parents ont fait pour « Encaustique sur bois, Feuilles d'or 24k » (34
+// œuvres) et « Acrylique sur toile - Pixélisme » (27), conventions propres à
+// deux artistes.
+//
+// Chaque champ absent ou inconnu vaut null : une case vide se remplit, une
+// case fausse se remarque rarement.
+function caracteristiquesProduit(p, { supportsConnus = [] } = {}) {
+  const attr = (nom) => {
+    const a = (p.attributes || []).find((x) => plat(decoderEntites(x.name)) === plat(nom));
+    return a ? (a.terms || []).map((t) => decoderEntites(t.name)).filter(Boolean) : [];
+  };
+  const c = {
+    type: null, format: null, medium: null, support: null, orientation: null,
+    sujets: null, style: null, hauteur: null, largeur: null, profondeur: null,
+    categories: (p.categories || []).map((x) => decoderEntites(x.name)).filter(Boolean),
+  };
+
+  const type = attr('Type')[0];
+  if (type) c.type = TYPES_SITE[plat(type)] || null;
+
+  const format = attr('Format')[0];
+  if (format) c.format = FORMATS_APP.find((f) => plat(f) === plat(format)) || null;
+
+  // Plusieurs orientations (« Horizontale, Verticale ») : la première, comme
+  // l'ont fait les parents.
+  const orientation = attr('Orientation')[0];
+  if (orientation) c.orientation = orientation;
+
+  // Sujets : l'app les range séparés par une simple virgule.
+  const sujets = attr('Sujet');
+  if (sujets.length) c.sujets = sujets.join(',');
+
+  // Style : l'étiquette du site. Un seul style reconnu → on le prend ; deux
+  // (« Figuratif, Mi-Figuratif ») → on laisse la case vide plutôt que de
+  // choisir à la place des parents.
+  const styles = (p.tags || []).map((t) => decoderEntites(t.name))
+    .map((t) => STYLES_APP.find((s) => plat(s) === plat(t))).filter(Boolean);
+  if (styles.length === 1) c.style = styles[0];
+
+  // Médium et support.
+  const ms = attr('Médium et support').join(', ');
+  if (ms) {
+    const i = ms.toLowerCase().lastIndexOf(' sur ');
+    const suite = i >= 0 ? ms.slice(i + 5).trim() : '';
+    const connu = suite ? supportsConnus.find((s) => plat(s) === plat(suite)) : null;
+    if (connu) { c.medium = ms.slice(0, i).trim(); c.support = connu; }
+    else c.medium = ms;
+  } else {
+    // Les sculptures ont leur propre attribut, repris tel quel comme médium.
+    const mat = attr('Sculpture - Matériaux');
+    if (mat.length) c.medium = mat.join(', ');
+  }
+
+  // Dimensions : hauteur × largeur × profondeur (« length » côté WooCommerce).
+  const d = p.dimensions || {};
+  const nombre = (v) => { const n = Number(String(v == null ? '' : v).trim()); return v !== '' && v != null && Number.isFinite(n) && n > 0 ? n : null; };
+  c.hauteur = nombre(d.height);
+  c.largeur = nombre(d.width);
+  c.profondeur = nombre(d.length);
+  return c;
+}
+
+// Un produit, par son SKU, depuis l'API PUBLIQUE (aucune clé nécessaire) :
+// c'est elle qui expose attributs, étiquettes, catégories et dimensions dans
+// une forme stable.
+async function produitPublicParSku({ url, sku }) {
+  const base = normaliserUrl(url);
+  const resp = await getJson(`${base}/wp-json/wc/store/v1/products?sku=${encodeURIComponent(sku)}`);
+  if (!resp.ok) throw new Error(`Le site a répondu par une erreur (${resp.status}) en lisant le produit.`);
+  let lot;
+  try { lot = await resp.json(); } catch { throw new Error('Réponse du site illisible (produit).'); }
+  return (Array.isArray(lot) && lot[0]) || null;
+}
+
+module.exports = { caracteristiquesProduit, produitPublicParSku, TYPES_SITE, listerProduitsPublics, testerConnexion, normaliserUrl, stripHtml, listerProduits, produitParSku, listerArtistesSite, telechargerImage };

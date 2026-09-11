@@ -748,6 +748,11 @@ function modalCreerFiche(produit) {
         </div>
         <div class="form-champ"><label for="cf-prix">Prix</label><input type="number" id="cf-prix" min="0" step="0.01" value="${produit.prix != null ? produit.prix : ''}"></div>
         <div class="form-champ"><label for="cf-desc">Description</label><textarea id="cf-desc" rows="4">${ech(produit.description || '')}</textarea></div>
+        <!-- Caractéristiques reprises du site. Signalement du 2026-09-10 : « les
+             caractéristiques ne suivent pas ». Elles sont MONTRÉES avant la
+             création : une fiche remplie à l'insu de celui qui la crée est
+             une fiche qu'on ne relit pas. -->
+        <div class="cf-carac" id="cf-carac"><p class="aide-champ">Lecture des caractéristiques sur le site…</p></div>
         ${produit.image ? `<label class="cf-image-choix"><input type="checkbox" id="cf-image" checked> Télécharger l'image du site (recadrage ensuite)</label>` : ''}
         <div class="dialogue-actions">
           <button type="button" class="btn-action btn-secondaire-action" id="cf-annuler">Annuler</button>
@@ -762,6 +767,40 @@ function modalCreerFiche(produit) {
     window.addEventListener('keydown', onKey);
     document.body.appendChild(overlay);
     overlay.querySelector('#cf-titre').focus();
+
+    // Lecture des caractéristiques. Non bloquante : si le site ne répond pas,
+    // la fiche se crée comme avant (titre, description, prix), et on le dit.
+    let carac = null;
+    const LIB_CARAC = [
+      ['type', 'Type'], ['format', 'Format'], ['medium', 'Médium'], ['support', 'Support'],
+      ['orientation', 'Orientation'], ['sujets', 'Sujets'], ['style', 'Style'],
+    ];
+    window.api.webCaracteristiquesProduit(produit.sku).then((r) => {
+      if (fini) return;
+      const zone = overlay.querySelector('#cf-carac');
+      if (!r || !r.trouve) {
+        zone.innerHTML = `<p class="aide-champ">Aucune caractéristique trouvée sur le site pour ce produit.</p>`;
+        return;
+      }
+      carac = r.caracteristiques;
+      const dims = [carac.hauteur, carac.largeur, carac.profondeur];
+      const lignes = LIB_CARAC.filter(([k]) => carac[k]).map(([k, lib]) =>
+        `<div class="cf-carac-l"><span>${lib}</span><strong>${ech(String(carac[k]).replace(/,/g, ', '))}</strong></div>`);
+      if (dims.some((v) => v != null)) {
+        lignes.push(`<div class="cf-carac-l"><span>Dimensions</span><strong>${dims.map((v) => (v != null ? v : '?')).join(' × ')} po</strong></div>`);
+      }
+      zone.innerHTML = lignes.length
+        ? `<p class="cf-carac-titre">Repris du site</p>${lignes.join('')}`
+        : `<p class="aide-champ">Le site n'indique aucune caractéristique pour ce produit.</p>`;
+      // Artiste suggéré d'après la catégorie du produit — seulement si rien
+      // n'est encore choisi : on ne défait jamais un choix fait à la main.
+      const sel = overlay.querySelector('#cf-artiste');
+      if (r.artiste_id_suggere && !sel.value) sel.value = String(r.artiste_id_suggere);
+    }).catch(() => {
+      if (fini) return;
+      overlay.querySelector('#cf-carac').innerHTML =
+        `<p class="aide-champ">Caractéristiques illisibles sur le site : la fiche sera créée sans elles, à compléter à la main.</p>`;
+    });
 
     overlay.querySelector('#cf-annuler').addEventListener('click', () => fermer(null));
     overlay.querySelector('#cf-creer').addEventListener('click', async (e) => {
@@ -779,6 +818,7 @@ function modalCreerFiche(produit) {
         const r = await window.api.webCreerOeuvreDepuisSite({
           sku: produit.sku, titre, artiste_id: Number(artiste_id),
           description, prix: prixTxt === '' ? null : Number(prixTxt),
+          caracteristiques: carac,
         });
         oeuvre = r.oeuvre;
       } catch (err) {

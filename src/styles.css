@@ -5859,6 +5859,16 @@ select.lot-in.st-pretee { color: var(--info); }
   color: var(--slate); cursor: pointer; user-select: none; white-space: nowrap; }
 .rl-avert { color: var(--warm-gold); }
 
+/* Caractéristiques reprises du site, montrées AVANT la création. */
+.cf-carac { background: var(--soft-ivory); border: 1px solid var(--mist); border-radius: 10px;
+  padding: 10px 13px; margin: 4px 0 10px; }
+.cf-carac .aide-champ { margin: 0; }
+.cf-carac-titre { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--stone); font-weight: 700; margin: 0 0 6px; }
+.cf-carac-l { display: flex; gap: 10px; font-size: 12.5px; line-height: 1.7; }
+.cf-carac-l span { color: var(--stone); min-width: 88px; }
+.cf-carac-l strong { color: var(--ink); font-weight: 600; }
+
 .cf-image-choix { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--slate); margin: 2px 0 6px; cursor: pointer; }
 .cf-image-choix input { accent-color: var(--warm-gold); }
 

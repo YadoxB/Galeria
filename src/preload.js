@@ -40,6 +40,7 @@ contextBridge.exposeInMainWorld('api', {
   webRetirerIgnore: (oeuvreId, champ) => ipcRenderer.invoke('web:retirer-ignore', oeuvreId, champ),
   webTelechargerImage: (url) => ipcRenderer.invoke('web:telecharger-image', url),
   webCreerOeuvreDepuisSite: (data) => ipcRenderer.invoke('web:creer-oeuvre-depuis-site', data),
+  webCaracteristiquesProduit: (sku) => ipcRenderer.invoke('web:caracteristiques-produit', sku),
   webCorrigerSku: (oeuvreId, sku) => ipcRenderer.invoke('web:corriger-sku', oeuvreId, sku),
   webComparerArtistes: (options) => ipcRenderer.invoke('web:comparer-artistes', options),
   webImporterChampArtiste: (artisteId, champ, valeur) => ipcRenderer.invoke('web:importer-champ-artiste', artisteId, champ, valeur),

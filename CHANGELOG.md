@@ -98,6 +98,31 @@ identifiants.
 
 ### Corrigé
 
+- **Créer une fiche depuis le site reprend enfin les caractéristiques** (signalement du
+  2026-09-10 : « les caractéristiques ne suivent pas »). La création ne transmettait que
+  titre, description et prix ; la lecture des produits ne demandait même pas les attributs.
+  - Reprises : type, format, médium, support, orientation, sujets, style, hauteur, largeur,
+    profondeur — et le **texte des dimensions**, que l'app compose à l'enregistrement de la fiche
+    mais que la création court-circuitait. L'**artiste est présélectionné** d'après la catégorie
+    du produit (vraie pour 494 œuvres sur 510), jamais par-dessus un choix fait à la main.
+  - ⚠ La table de correspondance n'est **pas devinée** : elle est déduite des **510 œuvres**
+    présentes des deux côtés. Le site dit « Tableaux », « Œuvre sur papier », « Fusain »,
+    « Aquarelles » là où l'app dit « Peinture » ; il met « Acrylique sur toile » dans un seul
+    champ que l'app sépare. « Sur » ne coupe que si la suite est un **support déjà employé dans
+    l'app** — sinon le tout reste médium, comme les parents l'ont fait pour « Encaustique sur
+    bois, Feuilles d'or 24k » (34 œuvres) et « Acrylique sur toile - Pixélisme » (27). Les
+    sculptures prennent leur attribut « Sculpture - Matériaux ». Style : repris seulement s'il
+    n'y a qu'une étiquette de style ; deux → case laissée vide plutôt que de choisir à leur place.
+  - Rejouée sur les 510 œuvres, la règle ne **contredit jamais** la saisie des parents par sa
+    propre faute : chaque écart est une vraie différence entre site et app (dont 20 sujets
+    d'œuvres récentes saisis avec un autre vocabulaire, et une profondeur de 75 po pour 0,75 sur
+    le site, CLD1993).
+  - Les caractéristiques sont **montrées** dans la fenêtre avant la création ; si le site ne
+    répond pas, la fiche se crée comme avant et la fenêtre le dit.
+  - Vérifié de bout en bout dans l'application réelle, sur une copie de la base : trois œuvres
+    retirées puis **recréées depuis le site** (un tableau, une sculpture, une reproduction) —
+    33 champs sur 33 identiques à la saisie d'origine, artiste compris.
+
 - **C.V. : une date qui commence par un mot devenait un sous-titre** (signalé sur celui
   d'André Coppens, 2026-09-10). « Depuis 2014 — Galerie du Vieux St-Jean » sortait dans la
   présentation en intertitre rouge, au lieu d'une ligne datée.

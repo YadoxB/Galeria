@@ -11,6 +11,19 @@
 
 ---
 
+## Réparé : créer une fiche depuis le site
+
+Quand vous créiez la fiche d'une œuvre qui n'existait que sur le site, seuls le
+titre, la description et le prix suivaient. Tout le reste était à ressaisir.
+
+Maintenant, la fiche reprend aussi le **type, le format, le médium, le support,
+l'orientation, les sujets, le style et les dimensions**, et l'**artiste** est
+choisi d'avance d'après le site. La fenêtre vous montre tout ce qui sera repris
+avant que vous cliquiez sur « Créer la fiche » — et vous pouvez toujours changer
+l'artiste.
+
+---
+
 ## Réparé : les dates « Depuis 2014 » dans les C.V.
 
 Dans une présentation d'artiste, une ligne comme « Depuis 2014 — Galerie du

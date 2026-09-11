@@ -70,6 +70,7 @@ const {
 } = require('./db/requetes');
 const {
   modifierArtiste, creerArtiste, supprimerArtiste, relierArtisteAuSite, delierArtisteDuSite,
+  formaterDimensionsTexte,
   modifierOeuvre, majChampOeuvre, majStatutOeuvre, corrigerNumeroInventaire, ignorerDiffWeb, retirerIgnoreWeb, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre,
   majChampArtiste, ignorerDiffArtisteWeb, retirerIgnoreArtisteWeb,
   modifierClient, creerClient, supprimerClient,
@@ -1400,9 +1401,47 @@ async function demarrerApplication() {
   // Créer une fiche d'œuvre à partir d'un produit du site (l'artiste est choisi
   // dans l'app). Le SKU devient le numéro d'inventaire. Image gérée ensuite côté
   // renderer (téléchargement + recadrage habituel).
+  // Caractéristiques d'un produit du site, prêtes à entrer dans une fiche, et
+  // l'artiste suggéré d'après la CATÉGORIE du produit (vraie pour 494 œuvres
+  // sur 510 au 2026-09-10). Lu par l'API publique : aucune clé nécessaire.
+  // Voir caracteristiquesProduit() dans woocommerce.js pour la table de
+  // correspondance, déduite des données réelles.
+  ipcMain.handle('web:caracteristiques-produit', async (_e, sku) => {
+    const { url } = obtenirClesWoo();
+    if (!url) throw new Error("Configure d'abord l'adresse du site dans Réglages → Site web.");
+    const woo = require('./web/woocommerce');
+    const p = await woo.produitPublicParSku({ url, sku });
+    if (!p) return { trouve: false };
+    const db = openDatabase();
+    // Supports déjà employés dans l'app, dans la graphie la plus fréquente :
+    // ce sont eux qui décident où couper « Acrylique sur toile ».
+    const supportsConnus = db.prepare(`SELECT support, COUNT(*) n FROM oeuvres
+      WHERE trim(coalesce(support,'')) <> '' GROUP BY support ORDER BY n DESC`).all()
+      .map((r) => r.support)
+      .filter((s, i, t) => t.findIndex((x) => x.toLowerCase() === s.toLowerCase()) === i);
+    const c = woo.caracteristiquesProduit(p, { supportsConnus });
+    // Artiste suggéré : catégorie du produit = nom complet de l'artiste, ou le
+    // nom qu'il porte sur le site (nom_site, posé par « Relier »).
+    const plat = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+    const cats = new Set(c.categories.map(plat));
+    const artiste = db.prepare('SELECT id, prenom, nom, nom_site FROM artistes WHERE archive = 0').all()
+      .find((a) => cats.has(plat([a.prenom, a.nom].filter(Boolean).join(' '))) || (a.nom_site && cats.has(plat(a.nom_site))));
+    return { trouve: true, caracteristiques: c, artiste_id_suggere: artiste ? artiste.id : null };
+  });
   ipcMain.handle('web:creer-oeuvre-depuis-site', (_e, data) => {
     const d = data || {};
+    // Les caractéristiques reprises du site (voir 'web:caracteristiques-produit').
+    // Liste blanche : seuls ces champs peuvent entrer par ce chemin.
+    const c = (d.caracteristiques && typeof d.caracteristiques === 'object') ? d.caracteristiques : {};
+    const CARAC = ['type', 'format', 'medium', 'support', 'orientation', 'sujets', 'style', 'hauteur', 'largeur', 'profondeur'];
+    const reprises = {};
+    for (const k of CARAC) if (c[k] != null && c[k] !== '') reprises[k] = c[k];
+    // Le texte des dimensions se compose ailleurs à l'enregistrement de la
+    // fiche ; la création ne passe pas par là, on le fournit donc ici.
+    const dims = formaterDimensionsTexte(reprises.hauteur, reprises.largeur, reprises.profondeur);
+    if (dims) reprises.dimensions = dims;
     const oeuvre = creerOeuvre({
+      ...reprises,
       titre: d.titre,
       artiste_id: d.artiste_id,
       numero_inventaire: d.sku,
@@ -1410,7 +1449,7 @@ async function demarrerApplication() {
       prix: d.prix,
       statut: 'disponible',
     });
-    return { ok: true, oeuvre };
+    return { ok: true, oeuvre, reprises: Object.keys(reprises) };
   });
   // Corriger le SKU d'une œuvre existante (coquille) = aligner son numéro
   // d'inventaire sur le SKU du site, au lieu de créer un doublon.
