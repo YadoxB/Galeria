@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.23.0] — 2026-09-21
+
 ### Ajouté
 
 - **Le message du courriel à l'artiste se modifie dans l'app** (demande de Dave, 2026-09-21).
