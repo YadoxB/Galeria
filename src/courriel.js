@@ -134,6 +134,11 @@ async function ouvrirBrouillon(courriel, { shell }) {
 //
 // Demande de Dave (2026-09-08) : « quand une facture artiste est produite,
 // offrir de préparer le courriel pour l'envoi », PDF déjà joint.
+//
+// Le message se règle dans l'app (Réglages → Documents → « Courriel à
+// l'artiste », demande du 2026-09-21). Les {jetons} y sont remplacés par les
+// données de la vente. Tout passe par ce fichier : l'écran des réglages ne
+// fabrique aucun texte lui-même, il demande son aperçu ici.
 
 const echHtml = (s) => String(s == null ? '' : s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -143,6 +148,77 @@ function dateLongue(iso, langue) {
   if (!m) return '';
   const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   return d.toLocaleDateString(langue === 'EN' ? 'en-CA' : 'fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// Le texte d'origine, celui que Galeria propose tant qu'on ne l'a pas réécrit.
+const MODELES_DEFAUT = {
+  fr: {
+    sujet: 'Facture {numéro} — « {titre} »',
+    texte: [
+      'Bonjour {prénom},',
+      'Bonne nouvelle : votre œuvre « {titre} » a été vendue le {date}.',
+      "Vous trouverez ci-joint la facture {numéro}, qui détaille le prix de vente, la commission de la galerie et le montant qui vous revient.",
+      'Merci de votre confiance,',
+    ].join('\n\n'),
+  },
+  en: {
+    sujet: 'Invoice {numéro} — “{titre}”',
+    texte: [
+      'Hello {prénom},',
+      'Good news: your artwork “{titre}” was sold on {date}.',
+      "Please find attached the invoice {numéro}, which details the sale price, the gallery's commission and the amount due to you.",
+      'Thank you for your trust,',
+    ].join('\n\n'),
+  },
+};
+
+// Les mots entre accolades. `cle` est la forme normalisée : « {Numéro} » et
+// « {numero} » mènent au même endroit — on ne pénalise pas une majuscule ou un
+// accent oublié.
+const JETONS = [
+  { cle: 'prénom', jeton: '{prénom}', libelle: "Prénom de l'artiste" },
+  { cle: 'titre', jeton: '{titre}', libelle: "Titre de l'œuvre" },
+  { cle: 'date', jeton: '{date}', libelle: 'Date de la vente' },
+  { cle: 'numéro', jeton: '{numéro}', libelle: 'N° de la facture' },
+];
+const JETON_RE = /\{([^{}\n]{1,30})\}/g;
+const normJeton = (s) => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+const CLES_JETONS = JETONS.map((j) => normJeton(j.cle));
+
+// Remplace les {jetons} connus. Un jeton inconnu (faute de frappe) est laissé
+// TEL QUEL et signalé : mieux vaut un « {prenom2} » visible dans le brouillon
+// qu'un trou silencieux dans le courriel.
+function appliquerJetons(gabarit, valeurs, inconnus) {
+  return String(gabarit == null ? '' : gabarit).replace(JETON_RE, (tout, nom) => {
+    const cle = normJeton(nom);
+    if (CLES_JETONS.includes(cle)) return String(valeurs[cle] == null ? '' : valeurs[cle]);
+    if (inconnus) inconnus.add(tout);
+    return tout;
+  });
+}
+
+const paragraphes = (texte) => String(texte || '').split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+
+// Le modèle en vigueur : celui des réglages s'il est rempli, sinon l'original.
+// Un champ vidé retombe sur l'original plutôt que d'envoyer un courriel vide.
+function modeleFactureArtiste(langue) {
+  const { obtenirConfig } = require('./config');
+  const cle = langue === 'EN' ? 'en' : 'fr';
+  const defaut = MODELES_DEFAUT[cle];
+  const regle = (((obtenirConfig() || {}).courriel || {}).facture_artiste || {})[cle] || {};
+  return {
+    sujet: String(regle.sujet || '').trim() ? String(regle.sujet) : defaut.sujet,
+    texte: String(regle.texte || '').trim() ? String(regle.texte) : defaut.texte,
+  };
+}
+
+function valeursFactureArtiste(vente, artiste, langue) {
+  return {
+    'prenom': String(artiste.prenom || '').trim() || String(artiste.nom || '').trim(),
+    'titre': String(vente.oeuvre_titre || '').trim(),
+    'date': dateLongue(vente.date_vente, langue),
+    'numero': String(vente.numero_facture_artiste || '').trim(),
+  };
 }
 
 // Le PDF à joindre : le plus récent entre la facture officielle et ses
@@ -177,34 +253,19 @@ function preparerCourrielFactureArtiste(venteId) {
   const artiste = obtenirArtiste(vente.artiste_id) || {};
   const g = (obtenirConfig() || {}).galerie || {};
   const langue = /^angl/i.test(artiste.langue || '') ? 'EN' : 'FR';
-  const prenom = String(artiste.prenom || '').trim() || String(artiste.nom || '').trim();
-  const titre = String(vente.oeuvre_titre || '').trim();
   const numero = String(vente.numero_facture_artiste || '').trim();
-  const date = dateLongue(vente.date_vente, langue);
   const galerie = String(g.nom || '').trim() || 'La galerie';
 
-  const mot = langue === 'EN' ? 'Invoice' : 'Facture';
-  const oeuvre = langue === 'EN' ? `“${titre}”` : `« ${titre} »`;
-  const sujet = [numero ? `${mot} ${numero}` : mot, titre ? oeuvre : ''].filter(Boolean).join(' — ');
-  const paragraphes = langue === 'EN'
-    ? [
-      `Hello ${prenom},`,
-      `Good news: your artwork “${titre}” was sold${date ? ` on ${date}` : ''}.`,
-      `Please find attached the invoice${numero ? ` ${numero}` : ""}, which details the sale price, the gallery's commission and the amount due to you.`,
-      'Thank you for your trust,',
-    ]
-    : [
-      `Bonjour ${prenom},`,
-      `Bonne nouvelle : votre œuvre « ${titre} » a été vendue${date ? ` le ${date}` : ''}.`,
-      `Vous trouverez ci-joint la facture${numero ? ` ${numero}` : ""}, qui détaille le prix de vente, la commission de la galerie et le montant qui vous revient.`,
-      'Merci de votre confiance,',
-    ];
+  const modele = modeleFactureArtiste(langue);
+  const valeurs = valeursFactureArtiste(vente, artiste, langue);
+  const sujet = appliquerJetons(modele.sujet, valeurs).trim();
+  const corps = paragraphes(appliquerJetons(modele.texte, valeurs));
   // Outlook ajoute la signature habituelle de la galerie sous le texte. Le
   // .eml, lui, n'en a pas : on y signe avec les coordonnées des Réglages.
   const signature = [galerie, g.telephone, g.site_web].map((x) => String(x || '').trim()).filter(Boolean);
-  const texte = `${paragraphes.join('\n\n')}\n\n${signature.join('\n')}\n`;
+  const texte = `${corps.join('\n\n')}\n\n${signature.join('\n')}\n`;
   const html = `<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt">${
-    paragraphes.map((p) => `<p>${echHtml(p)}</p>`).join('')}</div>`;
+    corps.map((p) => `<p>${echHtml(p).replace(/\n/g, '<br>')}</p>`).join('')}</div>`;
 
   return {
     a: String(artiste.courriel || '').trim(),
@@ -218,7 +279,77 @@ function preparerCourrielFactureArtiste(venteId) {
   };
 }
 
+// ===== L'aperçu du modèle, pour les Réglages =====
+//
+// L'écran des réglages n'écrit pas de texte : il envoie le modèle en cours de
+// saisie et reçoit le courriel rendu. Une seule mécanique de remplacement,
+// donc l'aperçu ne peut pas mentir sur ce qui partira.
+
+// Faute de vente avec facture, un exemple : l'aperçu ne doit jamais être vide.
+const EXEMPLE_APERCU = {
+  prenom: 'Jean-Pierre', nom: 'Neveu', titre: 'Samankari',
+  numero: 'FA-2026-012', date_vente: '2026-09-11', courriel: 'jp.neveu@exemple.ca',
+  piece_nom: 'Facture artiste FA-2026-012 — Jean-Pierre Neveu.pdf',
+};
+
+function exempleFactureArtiste(langue) {
+  const requetes = require('./db/requetes');
+  let vente = null;
+  try {
+    const recente = (requetes.listerVentes() || []).find((v) => v.facture_artiste_path);
+    if (recente) vente = requetes.obtenirVente(recente.id);
+  } catch { vente = null; }
+  if (vente) {
+    const artiste = requetes.obtenirArtiste(vente.artiste_id) || {};
+    const piece = pdfFactureAJoindre(vente.facture_artiste_path);
+    return {
+      a: String(artiste.courriel || '').trim(),
+      piece_nom: piece ? piece.nom : path.basename(vente.facture_artiste_path || ''),
+      valeurs: valeursFactureArtiste(vente, artiste, langue),
+      sur_vente: true,
+    };
+  }
+  const e = EXEMPLE_APERCU;
+  return {
+    a: e.courriel,
+    piece_nom: e.piece_nom,
+    valeurs: { prenom: e.prenom, titre: e.titre, date: dateLongue(e.date_vente, langue), numero: e.numero },
+    sur_vente: false,
+  };
+}
+
+// Rend le gabarit en HTML sûr, chaque valeur remplacée entourée d'un <mark>
+// (et en rouge quand le mot entre accolades n'existe pas).
+function surlignerJetons(gabarit, valeurs, inconnus) {
+  return echHtml(gabarit).replace(JETON_RE, (tout, nom) => {
+    const cle = normJeton(nom);
+    if (CLES_JETONS.includes(cle)) return `<mark>${echHtml(valeurs[cle] == null ? '' : valeurs[cle])}</mark>`;
+    inconnus.add(tout);
+    return `<mark class="inconnu">${tout}</mark>`;
+  });
+}
+
+function apercuModeleFactureArtiste({ langue, sujet, texte } = {}) {
+  const l = langue === 'EN' ? 'EN' : 'FR';
+  const defaut = MODELES_DEFAUT[l === 'EN' ? 'en' : 'fr'];
+  const sujetVide = !String(sujet || '').trim();
+  const texteVide = !String(texte || '').trim();
+  const ex = exempleFactureArtiste(l);
+  const inconnus = new Set();
+  return {
+    a: ex.a,
+    piece_nom: ex.piece_nom,
+    sur_vente: ex.sur_vente,
+    vide: sujetVide || texteVide,
+    sujet_html: surlignerJetons(sujetVide ? defaut.sujet : sujet, ex.valeurs, inconnus),
+    paragraphes_html: paragraphes(texteVide ? defaut.texte : texte)
+      .map((p) => surlignerJetons(p, ex.valeurs, inconnus).replace(/\n/g, '<br>')),
+    inconnus: [...inconnus],
+  };
+}
+
 module.exports = {
   construireEml, ouvrirDansOutlook, ouvrirBrouillon, SCRIPT_OUTLOOK,
   pdfFactureAJoindre, preparerCourrielFactureArtiste,
+  MODELES_DEFAUT, JETONS, appliquerJetons, modeleFactureArtiste, apercuModeleFactureArtiste,
 };

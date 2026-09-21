@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette — Modifier le message de base du courriel à l'artiste</title>
+<link rel="stylesheet" href="../src/theme.css">
+<link rel="stylesheet" href="../src/styles.css">
+<style>
+  body{padding:30px 34px;overflow:auto;height:auto;user-select:text;}
+  .doc{max-width:1180px;margin:0 auto;}
+  h1{font-family:var(--font-titre);font-weight:500;font-size:29px;margin:0 0 8px;}
+  .sous{color:var(--slate);font-size:14px;line-height:1.65;margin:0 0 6px;max-width:900px;}
+  .lot-titre{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+             margin:44px 0 6px;font-weight:600;}
+  .lot-note{font-size:13.5px;color:var(--slate);line-height:1.65;margin:0 0 16px;max-width:900px;}
+  .maquette{background:var(--soft-ivory);border:1px dashed var(--mist);border-radius:16px;padding:20px;}
+  .journal{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:16px 21px;margin-top:22px;}
+  .journal h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+              margin:0 0 9px;font-weight:700;}
+  .journal ul{margin:0;padding-left:19px;font-size:13.5px;color:var(--slate);line-height:1.8;}
+  .journal em{color:var(--ink);font-style:normal;font-weight:600;}
+
+  /* ===== La carte, telle qu'elle irait dans Réglages → Documents ===== */
+  .carte-modele{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:20px 22px;}
+  .modele-intro{color:var(--slate);font-size:13px;line-height:1.55;margin:-4px 0 14px;max-width:760px;}
+  .modele-grille{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:24px;align-items:start;}
+  .modele-edition .form-champ{margin-bottom:10px;}
+  .modele-edition input,.modele-edition textarea{width:100%;}
+  .modele-edition textarea{min-height:230px;line-height:1.55;resize:vertical;}
+  .modele-inserer{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:2px 0 10px;}
+  .modele-inserer > span{font-size:12.5px;color:var(--stone);margin-right:2px;}
+  .jeton-ins{border:1px solid var(--mist);background:var(--soft-ivory);border-radius:999px;padding:4px 11px;
+             font-family:var(--font-ui);font-size:12.5px;color:var(--slate);cursor:pointer;}
+  .jeton-ins:hover{border-color:var(--warm-gold);color:var(--ink);}
+  .jeton-ins b{color:var(--warm-gold);font-weight:700;margin-right:3px;}
+  .modele-pied{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .modele-etat{font-size:12.5px;color:var(--stone);}
+  .modele-etat.perso{color:var(--ink);}
+  .modele-etat.perso::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
+                             background:var(--warm-gold);margin-right:6px;vertical-align:middle;}
+  .btn-lien{background:none;border:0;padding:0;font:inherit;font-size:12.5px;font-weight:600;color:var(--deep-navy);
+            cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+  .btn-lien:hover{color:var(--warm-gold);}
+  .btn-lien[disabled]{color:var(--mist);cursor:default;text-decoration:none;}
+
+  /* L'aperçu : un courriel, pas un formulaire */
+  .mc-titre{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+                font-weight:700;margin:0 0 7px;}
+  .mc-courriel{border:1px solid var(--mist);border-radius:12px;background:var(--porcelain, #fff);overflow:hidden;}
+  .mc-tetes{padding:10px 14px;border-bottom:1px solid var(--cloud);font-size:12.5px;color:var(--slate);line-height:1.7;}
+  .mc-tetes b{display:inline-block;width:78px;color:var(--stone);font-weight:600;}
+  .mc-pj{display:inline-flex;align-items:center;gap:6px;background:var(--soft-ivory);border:1px solid var(--cloud);
+             border-radius:7px;padding:1px 8px;font-size:12px;color:var(--ink);}
+  .mc-corps{padding:14px 16px 16px;font-family:Calibri,Arial,sans-serif;font-size:14px;color:#222;line-height:1.5;}
+  .mc-corps p{margin:0 0 11px;}
+  .mc-corps .sig{color:#8a8f98;font-style:italic;font-size:12.5px;border-top:1px dashed var(--cloud);padding-top:9px;margin-top:4px;}
+  .mc-courriel mark{background:rgba(201,154,61,.2);color:inherit;border-radius:3px;padding:0 2px;}
+  .mc-corps mark.inconnu,.mc-sujet mark.inconnu{background:rgba(144,0,1,.12);color:#900001;}
+  .mc-note{font-size:12.5px;color:var(--stone);margin:8px 0 0;line-height:1.5;}
+  .mc-note.alerte{color:#900001;}
+
+  /* Fenêtre du courriel dans la vente (lot 6), avec le nouveau lien */
+  .cadre-modale{background:rgba(7,26,47,.16);border-radius:16px;padding:26px;}
+  .faux-dialogue{background:#fff;border-radius:16px;box-shadow:0 18px 50px rgba(7,26,47,.2);
+                 max-width:560px;margin:0 auto;padding:22px 24px;}
+  .faux-dialogue h3{font-family:var(--font-titre);font-weight:500;font-size:21px;margin:0 0 10px;}
+  .faux-dialogue .msg{color:var(--ink);font-size:13.5px;line-height:1.7;margin:0 0 10px;white-space:pre-line;}
+  .faux-dialogue .detail{color:var(--slate);font-size:13px;line-height:1.6;margin:0 0 16px;}
+  .faux-dialogue .actions{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .faux-dialogue .actions div{display:flex;gap:8px;}
+  .nouveau{outline:2px solid var(--warm-gold);outline-offset:3px;border-radius:4px;}
+</style>
+</head>
+<body>
+<div class="doc">
+  <h1>Modifier le message de base du courriel à l'artiste</h1>
+  <p class="sous">
+    Aujourd'hui, le texte du courriel de la facture artiste est écrit dans Galeria. Tes parents
+    peuvent le retoucher dans Outlook avant d'envoyer, mais c'est à refaire chaque fois.
+  </p>
+  <p class="sous">
+    Avec ce module, ils écrivent <b>leur</b> message une fois. Galeria le reprend pour chaque
+    facture et remplace le prénom, le titre, la date et le numéro par ceux de la vente.
+  </p>
+
+  <div class="lot-titre">1 · Réglages → Documents, nouvelle carte « Courriel à l'artiste »</div>
+  <p class="lot-note">
+    À gauche on écrit, à droite on voit le courriel tel que l'artiste le recevra, sur une vraie
+    vente. Les mots entre accolades sont remplacés automatiquement. Les pastilles les insèrent
+    sans avoir à les taper. <b>Essaie</b> : modifie le texte, clique une pastille, passe en EN,
+    tape <code>{prenom2}</code>, vide le message.
+  </p>
+
+  <div class="maquette">
+    <div class="carte-modele">
+      <div class="carte-tete-langue">
+        <h3>Courriel à l'artiste</h3>
+        <span class="bascule-langue" id="bascule" role="group" aria-label="Langue du message">
+          <button type="button" class="actif" data-langue="fr">FR</button>
+          <button type="button" data-langue="en">EN</button>
+        </span>
+      </div>
+      <p class="modele-intro">
+        Le message proposé quand vous préparez le courriel d'une facture artiste. Vous pourrez
+        toujours l'ajuster dans Outlook avant d'envoyer. Votre signature Outlook s'ajoute dessous.
+      </p>
+      <p class="bandeau-langue" id="bandeau-en" style="display:none;">
+        Version <b>anglaise</b> : utilisée pour les artistes dont la fiche indique l'anglais.
+      </p>
+
+      <div class="modele-grille">
+        <div class="modele-edition">
+          <div class="form-champ">
+            <label for="m-sujet">Objet</label>
+            <input type="text" id="m-sujet">
+          </div>
+          <div class="form-champ">
+            <label for="m-texte">Message</label>
+            <textarea id="m-texte" rows="11"></textarea>
+          </div>
+          <div class="modele-inserer" id="inserer">
+            <span>Insérer :</span>
+            <button type="button" class="jeton-ins" data-jeton="{prénom}" title="{prénom}"><b>+</b>Prénom de l'artiste</button>
+            <button type="button" class="jeton-ins" data-jeton="{titre}" title="{titre}"><b>+</b>Titre de l'œuvre</button>
+            <button type="button" class="jeton-ins" data-jeton="{date}" title="{date}"><b>+</b>Date de la vente</button>
+            <button type="button" class="jeton-ins" data-jeton="{numéro}" title="{numéro}"><b>+</b>N° de la facture</button>
+          </div>
+          <div class="modele-pied">
+            <span class="modele-etat" id="etat"></span>
+            <button type="button" class="btn-lien" id="btn-origine">Revenir au texte d'origine</button>
+          </div>
+        </div>
+
+        <div>
+          <p class="mc-titre">Ce que l'artiste recevra</p>
+          <div class="mc-courriel">
+            <div class="mc-tetes">
+              <div><b>À</b><span id="ap-a"></span></div>
+              <div class="mc-sujet"><b>Objet</b><span id="ap-sujet"></span></div>
+              <div><b>Pièce jointe</b><span class="mc-pj" id="ap-pj"></span></div>
+            </div>
+            <div class="mc-corps" id="ap-corps"></div>
+          </div>
+          <p class="mc-note" id="ap-note"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="journal">
+    <h4>Comment ça se comporte</h4>
+    <ul>
+      <li><em>Les accolades</em> : {prénom}, {titre}, {date}, {numéro}. Sans accent ni majuscule, ça marche aussi ({prenom}, {Numero}).</li>
+      <li><em>Un mot inconnu</em> ({prenom2}) est surligné en rouge dans l'aperçu : il partirait tel quel.</li>
+      <li><em>Message vidé</em> : Galeria reprend le texte d'origine, et le dit sous l'aperçu.</li>
+      <li><em>« Revenir au texte d'origine »</em> ne touche que la langue affichée.</li>
+      <li><em>Enregistrement</em> : avec le bouton « Enregistrer » habituel des Réglages. Un message resté identique à celui d'origine n'est pas figé : si on améliore un jour le texte de base, ils en profitent.</li>
+      <li><em>La date</em> s'écrit en toutes lettres dans la langue du message (« 11 septembre 2026 » / « September 11, 2026 »).</li>
+    </ul>
+  </div>
+
+  <div class="lot-titre">2 · Dans la vente : un raccourci depuis la fenêtre du courriel</div>
+  <p class="lot-note">
+    La fenêtre qui s'ouvre avant Outlook gagne un lien discret, en bas à gauche. Il mène
+    directement à la carte ci-dessus. Après « Enregistrer », on revient à la vente.
+  </p>
+  <div class="cadre-modale">
+    <div class="faux-dialogue">
+      <h3>Courriel à l'artiste</h3>
+      <p class="msg">À : jp.neveu@exemple.ca
+Objet : Facture FA-2026-012 — « Samankari »
+Pièce jointe : Facture artiste FA-2026-012 — Jean-Pierre Neveu.pdf</p>
+      <p class="detail">Outlook s'ouvre avec le courriel prêt à relire. Rien n'est envoyé tant que vous ne cliquez pas « Envoyer ».</p>
+      <div class="actions">
+        <button type="button" class="btn-lien nouveau">Modifier le message de base…</button>
+        <div>
+          <button type="button" class="btn-action btn-secondaire-action">Annuler</button>
+          <button type="button" class="btn-action btn-principal">Ouvrir dans Outlook</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="journal">
+    <h4>Ce qui ne change pas</h4>
+    <ul>
+      <li>Rien n'est envoyé par Galeria : Outlook s'ouvre, on relit, on clique « Envoyer ».</li>
+      <li>Le message est rangé dans les réglages de Galeria, sur l'ordinateur, comme le reste.</li>
+      <li>Un seul message par langue, pour toutes les factures artiste. Pour un cas particulier, on ajuste directement dans Outlook.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  const ORIGINE = {
+    fr: {
+      sujet: 'Facture {numéro} — « {titre} »',
+      texte: "Bonjour {prénom},\n\nBonne nouvelle : votre œuvre « {titre} » a été vendue le {date}.\n\nVous trouverez ci-joint la facture {numéro}, qui détaille le prix de vente, la commission de la galerie et le montant qui vous revient.\n\nMerci de votre confiance,",
+    },
+    en: {
+      sujet: 'Invoice {numéro} — “{titre}”',
+      texte: "Hello {prénom},\n\nGood news: your artwork “{titre}” was sold on {date}.\n\nPlease find attached the invoice {numéro}, which details the sale price, the gallery's commission and the amount due to you.\n\nThank you for your trust,",
+    },
+  };
+  const VENTE = {
+    prenom: 'Jean-Pierre', titre: 'Samankari', numero: 'FA-2026-012',
+    date: { fr: '11 septembre 2026', en: 'September 11, 2026' },
+    a: 'jp.neveu@exemple.ca', pj: 'Facture artiste FA-2026-012 — Jean-Pierre Neveu.pdf',
+  };
+  const modele = { fr: { ...ORIGINE.fr }, en: { ...ORIGINE.en } };
+  let langue = 'fr';
+
+  const $ = (id) => document.getElementById(id);
+  const ech = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  const valeurs = () => ({ prenom: VENTE.prenom, titre: VENTE.titre, date: VENTE.date[langue], numero: VENTE.numero });
+
+  // Remplace les {jetons} ; surligne ce qui a été remplacé, et en rouge l'inconnu.
+  function rendre(gabarit, inconnus) {
+    const v = valeurs();
+    return ech(gabarit).replace(/\{([^{}\n]{1,30})\}/g, (tout, nom) => {
+      const cle = norm(nom);
+      if (Object.prototype.hasOwnProperty.call(v, cle)) return `<mark>${ech(v[cle])}</mark>`;
+      inconnus.add(tout);
+      return `<mark class="inconnu">${tout}</mark>`;
+    });
+  }
+
+  function dessiner() {
+    const m = modele[langue];
+    const inconnus = new Set();
+    const vide = !m.texte.trim();
+    const texte = vide ? ORIGINE[langue].texte : m.texte;
+    const sujet = m.sujet.trim() ? m.sujet : ORIGINE[langue].sujet;
+    $('ap-a').textContent = VENTE.a;
+    $('ap-pj').textContent = '📎 ' + VENTE.pj;
+    $('ap-sujet').innerHTML = rendre(sujet, inconnus);
+    const paras = texte.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+    $('ap-corps').innerHTML = paras.map((p) => `<p>${rendre(p, inconnus).replace(/\n/g, '<br>')}</p>`).join('')
+      + `<p class="sig">(votre signature Outlook habituelle)</p>`;
+    const note = $('ap-note');
+    if (inconnus.size) {
+      note.className = 'mc-note alerte';
+      note.textContent = `${[...inconnus].join(', ')} : Galeria ne connaît pas ce mot entre accolades. Il partirait tel quel. Utilisez les pastilles « Insérer ».`;
+    } else if (vide) {
+      note.className = 'mc-note';
+      note.textContent = 'Message vide : Galeria utilisera le texte d\'origine.';
+    } else {
+      note.className = 'mc-note';
+      note.textContent = 'Aperçu sur la dernière facture artiste produite. Les mots surlignés changent à chaque vente.';
+    }
+    const perso = m.sujet !== ORIGINE[langue].sujet || m.texte !== ORIGINE[langue].texte;
+    $('etat').className = perso ? 'modele-etat perso' : 'modele-etat';
+    $('etat').textContent = perso ? 'Votre message' : 'Texte d\'origine de Galeria';
+    $('btn-origine').disabled = !perso;
+  }
+
+  function charger() {
+    $('m-sujet').value = modele[langue].sujet;
+    $('m-texte').value = modele[langue].texte;
+    $('bandeau-en').style.display = langue === 'en' ? '' : 'none';
+    document.querySelectorAll('#bascule button').forEach((b) => b.classList.toggle('actif', b.dataset.langue === langue));
+    dessiner();
+  }
+
+  $('m-sujet').addEventListener('input', () => { modele[langue].sujet = $('m-sujet').value; dessiner(); });
+  $('m-texte').addEventListener('input', () => { modele[langue].texte = $('m-texte').value; dessiner(); });
+  $('bascule').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { langue = b.dataset.langue; charger(); } });
+  $('btn-origine').addEventListener('click', () => { modele[langue] = { ...ORIGINE[langue] }; charger(); });
+
+  // Les pastilles insèrent dans le dernier champ utilisé (le message par défaut).
+  let dernier = $('m-texte');
+  [$('m-sujet'), $('m-texte')].forEach((el) => el.addEventListener('focus', () => { dernier = el; }));
+  $('inserer').addEventListener('mousedown', (e) => { if (e.target.closest('.jeton-ins')) e.preventDefault(); });
+  $('inserer').addEventListener('click', (e) => {
+    const b = e.target.closest('.jeton-ins');
+    if (!b) return;
+    const el = dernier;
+    const [d, f] = [el.selectionStart ?? el.value.length, el.selectionEnd ?? el.value.length];
+    el.setRangeText(b.dataset.jeton, d, f, 'end');
+    el.focus();
+    el.dispatchEvent(new Event('input'));
+  });
+
+  charger();
+</script>
+</body>
+</html>

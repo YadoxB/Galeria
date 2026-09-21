@@ -103,6 +103,16 @@ const DEFAULTS = {
     consumer_key: '',
     consumer_secret: '',
   },
+  // Message de base des courriels (Réglages → Documents). Vide = le texte
+  // d'origine de Galeria (src/courriel.js) : ainsi une amélioration future du
+  // texte profite aux galeries qui n'y ont pas touché, sans rien écraser chez
+  // celles qui l'ont réécrit.
+  courriel: {
+    facture_artiste: {
+      fr: { sujet: '', texte: '' },
+      en: { sujet: '', texte: '' },
+    },
+  },
   // Outils de la page Outils (calculatrices autonomes). Aucune donnée métier.
   outils: {
     // Taux de change mémorisés (dernier connu). Le convertisseur les récupère à

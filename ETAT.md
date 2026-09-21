@@ -16,8 +16,12 @@ passent de la 0.21.1 à la 0.22.0 : douze diapos de nouveautés au prochain lanc
 **La liste du 2026-09-08 est close.** Le lot 6 (courriel de la facture artiste, PDF joint)
 est fait et EN ATTENTE DE PUBLICATION : Outlook classique piloté par COM, repli .eml
 (`src/courriel.js`) — ⚠ l'ouverture réelle dans Outlook reste à essayer chez les parents
-(Outlook sans profil chez Dave). Le libellé de l'étape Google du suivi est confirmé tel quel
-par Dave (2026-09-11). **À faire chez les parents** : remplir
+(Outlook sans profil chez Dave). **S'y ajoute (2026-09-21, aussi en attente)** : le message
+du courriel se modifie dans l'app — Réglages → Documents → « Courriel à l'artiste », deux
+langues, jetons `{prénom}` `{titre}` `{date}` `{numéro}`, aperçu en direct sur une vraie
+vente ; un texte laissé identique à l'original est enregistré vide, pour continuer de suivre
+les améliorations du texte de base. Le libellé de l'étape Google du suivi est confirmé tel
+quel par Dave (2026-09-11). **À faire chez les parents** : remplir
 « Dernier certificat délivré » pour chaque artiste qui a des certificats papier ; cocher les
 trois tâches « côté galerie » des ventes déjà livrées.
 
@@ -82,7 +86,8 @@ trois tâches « côté galerie » des ventes déjà livrées.
 > l'API publique, qui l'accepte. La sonde de repli couvre le cas contraire, en plus lent. **À
 > essayer par Dave** : comparer un artiste — si le bandeau annonce ses œuvres reliées, c'est bon.
 >
-> **Liste du 2026-09-08 close** : le lot 6 (courriel de la facture artiste) est fait après la
+> **Liste du 2026-09-08 close** : le lot 6 (courriel de la facture artiste, puis son message
+> modifiable dans les Réglages) est fait après la
 > 0.22.0 — voir le haut de ce fichier. Libellé de l'étape Google : confirmé tel quel par Dave
 > le 2026-09-11.
 >

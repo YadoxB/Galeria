@@ -730,7 +730,11 @@ export async function rendreVenteFiche(contenu, params) {
         buttons: ['Ouvrir dans Outlook', 'Annuler'],
         defaultId: 0,
         cancelId: 1,
+        // Le texte proposé se règle une fois pour toutes ; c'est ici qu'on y
+        // pense, alors c'est d'ici qu'on doit pouvoir y aller.
+        lien: 'Modifier le message de base…',
       });
+      if (rep === 'lien') { naviguer('reglages', { categorie: 'documents' }); return; }
       if (rep !== 0) return;
       courrielEnCours = true;
       const btnC = contenu.querySelector('#btn-courriel-facture-artiste');

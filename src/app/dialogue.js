@@ -67,6 +67,7 @@ export function confirmer(opts) {
         ${message ? `<p class="dialogue-message">${ech(message).replace(/\n/g, '<br>')}</p>` : ''}
         ${detail ? `<p class="dialogue-detail">${ech(detail).replace(/\n/g, '<br>')}</p>` : ''}
         <div class="dialogue-actions">
+          ${opts.lien ? `<button type="button" class="dialogue-lien" data-lien>${ech(opts.lien)}</button>` : ''}
           ${boutons.map((b, i) => `
             <button type="button" class="btn-action ${variantePour(b, type, i === defaultId)}" data-i="${i}">${ech(b)}</button>
           `).join('')}
@@ -96,6 +97,10 @@ export function confirmer(opts) {
     overlay.querySelectorAll('button[data-i]').forEach((btn) => {
       btn.addEventListener('click', () => fermer(Number(btn.dataset.i)));
     });
+    // Sortie de côté (opts.lien) : ni « oui » ni « non », mais « aller
+    // régler ça ailleurs ». Résout avec la chaîne 'lien'.
+    const lien = overlay.querySelector('button[data-lien]');
+    if (lien) lien.addEventListener('click', () => fermer('lien'));
     window.addEventListener('keydown', onKey);
     document.body.appendChild(overlay);
 

@@ -223,6 +223,12 @@ const ARTICLES = [
      <li><b>Ouvrir dans Outlook</b> : le courriel s'ouvre, facture jointe, texte prêt au-dessus de votre signature — en anglais si la fiche de l'artiste le demande.</li>
      <li>Relisez, ajustez au besoin, puis <b>Envoyer</b> dans Outlook. Galeria n'envoie jamais rien lui-même.</li></ol>
      <div class="astuce">Si la facture a été retouchée avec « Modifier ce document… » après avoir été produite, c'est la version modifiée qui est jointe — la fenêtre le dit.</div>`),
+  A('documents', 'Modifier le message du courriel à l\'artiste', 'courriel message texte modèle modifier personnaliser accolades prénom titre date numéro réglages',
+    `<p><b>Réglages → Documents → « Courriel à l'artiste »</b> : l'objet et le message proposés à chaque facture artiste. Le bouton <b>FR / EN</b> passe à la version anglaise.</p>
+     <ol><li>À droite, l'aperçu montre le courriel <b>tel que l'artiste le recevra</b>, sur votre dernière facture produite.</li>
+     <li>Les mots entre accolades — <b>{prénom}</b>, <b>{titre}</b>, <b>{date}</b>, <b>{numéro}</b> — sont remplacés par ceux de la vente. Les pastilles <b>Insérer</b> les posent au curseur.</li>
+     <li><b>Enregistrer</b>, en bas de la page.</li></ol>
+     <div class="astuce">Un mot entre accolades en <b>rouge</b> dans l'aperçu : Galeria ne le connaît pas, il partirait tel quel. « Revenir au texte d'origine » remet le message de départ ; un champ vidé revient aussi à ce texte.</div>`),
   A('documents', 'Catalogue, annexe A, présentation, rapport', 'catalogue annexe dépôt retrait présentation rapport pdf artiste imprimer',
     `<p>Depuis la fiche <b>artiste</b> : <b>Catalogue PDF</b> (6 œuvres/page), <b>Annexe A</b> (dépôt en rouge / retrait en bleu), <b>Présentation PDF</b>. Le <b>Rapport</b> journalier s'exporte depuis la section Rapport. Tous sont rangés par type dans le dossier de l'année.</p>`),
   A('documents', 'Modifier un document avant de l\'imprimer', 'modifier ce document version modifiée éditer corriger texte pdf wysiwyg retoucher saut de page',

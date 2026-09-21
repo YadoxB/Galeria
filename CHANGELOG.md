@@ -12,6 +12,36 @@ identifiants.
 
 ### Ajouté
 
+- **Le message du courriel à l'artiste se modifie dans l'app** (demande de Dave, 2026-09-21).
+  Nouvelle carte **Réglages → Documents → « Courriel à l'artiste »** : l'objet et le message
+  proposés à chaque facture artiste, en français et en anglais (bascule FR/EN, comme les
+  fiches).
+  - **Aperçu en direct, sur une vraie vente** (la dernière facture artiste produite ; un
+    exemple s'il n'y en a aucune) : destinataire, objet, pièce jointe et corps, rendus comme
+    un courriel. Chaque valeur remplacée est surlignée — on voit ce qui changera d'une vente
+    à l'autre.
+  - **Mots entre accolades** `{prénom}` `{titre}` `{date}` `{numéro}`, insérables par
+    pastilles. Tolérants : `{prenom}`, `{Numero}` marchent aussi (accents et casse ignorés).
+    Un mot **inconnu** est surligné en rouge dans l'aperçu et expliqué — il partirait tel
+    quel plutôt que de laisser un trou.
+  - **Rien ne peut casser le courriel** : un champ vidé retombe sur le texte d'origine ; le
+    HTML tapé est neutralisé ; « Revenir au texte d'origine » ne touche que la langue
+    affichée.
+  - **Un texte resté identique à l'original est enregistré vide** : si le texte d'origine
+    s'améliore un jour, la galerie en profite sans rien faire — et celle qui a écrit le sien
+    le garde.
+  - Raccourci : la fenêtre « Courriel à l'artiste » (avant Outlook) porte un lien
+    **« Modifier le message de base… »** qui mène à la carte ; « Enregistrer » ramène à la
+    vente. Le dialogue commun accepte désormais un `lien` (sortie de côté, résout `'lien'`).
+  - Rendu par `src/courriel.js` seul (modèle, remplacement, aperçu) : l'écran des Réglages ne
+    fabrique aucun texte, donc l'aperçu ne peut pas mentir sur ce qui partira.
+  - Vérifié : module seul (19 contrôles — texte d'origine, message réglé, jetons tolérants,
+    mot inconnu, champ vidé, `&`/`<` échappés, paragraphes et retours simples, anglais,
+    aperçu surligné, sans vente, .eml) ; application réelle sur une copie de la base
+    (15 contrôles — carte, préremplissage, aperçu, pastilles, alerte rouge, bascule EN,
+    retour à l'origine, enregistrement vide vs enregistré, courriel d'une vraie vente,
+    raccourci depuis la fenêtre). Démo : `demos/modele-courriel-artiste.html`.
+
 - **Envoyer la facture artiste par courriel, PDF déjà joint** (demande de Dave, 2026-09-08 ;
   les parents ont l'Outlook classique). Après la production d'une facture artiste, Galeria
   propose de préparer le courriel ; plus tard, bouton **Envoyer par courriel…** sur la ligne

@@ -5239,6 +5239,15 @@ details.bloc.pliable > .bloc-corps {
   margin-top: var(--s3);
   flex-wrap: wrap;
 }
+/* Lien discret à gauche des boutons : un chemin de côté (ex. « Modifier le
+   message de base… »), qui ne doit pas peser autant qu'un choix du dialogue. */
+.dialogue-lien {
+  margin-right: auto;
+  background: none; border: 0; padding: 0;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--deep-navy);
+  cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
+}
+.dialogue-lien:hover { color: var(--warm-gold); }
 
 /* ====== Visionneuse plein écran ====== */
 
@@ -6256,6 +6265,60 @@ select.lot-in.st-pretee { color: var(--info); }
 .cat-panneau[data-cat="application"] .zone-apropos { grid-column: span 6; }
 .cat-panneau[data-cat="documents"] .zone-numerotation { grid-column: span 8; }
 .cat-panneau[data-cat="documents"] .zone-doc-rappel { grid-column: span 4; }
+.cat-panneau[data-cat="documents"] .zone-courriel-artiste { grid-column: span 12; }
+
+/* ===== Modèle du courriel à l'artiste (Réglages → Documents) =====
+   À gauche on écrit, à droite on voit le courriel rendu sur une vraie vente.
+   L'aperçu imite un courriel (en-têtes, pièce jointe, signature) plutôt qu'un
+   champ de formulaire : c'est ce qu'on veut reconnaître d'un coup d'œil. */
+.mc-intro { color: var(--slate); font-size: 13px; line-height: 1.55; margin: -2px 0 var(--s3); max-width: 760px; }
+.mc-grille { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: var(--s4); align-items: start; }
+.mc-edition .form-champ { margin-bottom: 10px; }
+.mc-edition input, .mc-edition textarea { width: 100%; }
+.mc-edition textarea { min-height: 230px; line-height: 1.55; resize: vertical; }
+.mc-inserer { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 2px 0 10px; }
+.mc-inserer > span { font-size: 12.5px; color: var(--stone); }
+.jeton-ins {
+  border: 1px solid var(--mist); background: var(--soft-ivory); border-radius: 999px;
+  padding: 4px 11px; font-family: var(--font-ui); font-size: 12.5px; color: var(--slate); cursor: pointer;
+}
+.jeton-ins:hover { border-color: var(--warm-gold); color: var(--ink); }
+.jeton-ins b { color: var(--warm-gold); font-weight: 700; margin-right: 3px; }
+.mc-pied { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; }
+.mc-etat { font-size: 12.5px; color: var(--stone); }
+.mc-etat.perso { color: var(--ink); }
+.mc-etat.perso::before {
+  content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--warm-gold); margin-right: 6px; vertical-align: middle;
+}
+.mc-pied .lien-recup { margin-top: 0; }
+.mc-pied .lien-recup[disabled] { color: var(--mist); cursor: default; text-decoration: none; }
+.mc-titre {
+  font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--stone); font-weight: 700; margin: 0 0 7px;
+}
+.mc-courriel { border: 1px solid var(--mist); border-radius: 12px; background: #fff; overflow: hidden; }
+.mc-tetes { padding: 10px 14px; border-bottom: 1px solid var(--cloud); font-size: 12.5px; color: var(--slate); line-height: 1.7; }
+.mc-tetes b { display: inline-block; width: 78px; color: var(--stone); font-weight: 600; }
+.mc-pj {
+  display: inline-flex; align-items: center; background: var(--soft-ivory); border: 1px solid var(--cloud);
+  border-radius: 7px; padding: 1px 8px; font-size: 12px; color: var(--ink);
+}
+/* Le corps prend la police d'un courriel, pas celle de l'app : l'aperçu doit
+   ressembler à ce qui arrivera dans la boîte de l'artiste. */
+.mc-corps { padding: 14px 16px 16px; font-family: Calibri, Arial, sans-serif; font-size: 14px; color: #222; line-height: 1.5; }
+.mc-corps p { margin: 0 0 11px; }
+.mc-corps .mc-sig {
+  color: var(--stone); font-style: italic; font-size: 12.5px;
+  border-top: 1px dashed var(--cloud); padding-top: 9px; margin: 4px 0 0;
+}
+.mc-courriel mark { background: rgba(201, 154, 61, 0.2); color: inherit; border-radius: 3px; padding: 0 2px; }
+.mc-courriel mark.inconnu { background: rgba(144, 0, 1, 0.12); color: #900001; }
+.mc-note { font-size: 12.5px; color: var(--stone); margin: 8px 0 0; line-height: 1.5; }
+.mc-note.alerte { color: #900001; }
+@media (max-width: 1100px) {
+  .mc-grille { grid-template-columns: 1fr; }
+}
 
 /* ===== Emplacement du dossier de données (Réglages → Données) ===== */
 .cat-panneau[data-cat="donnees"] .zone-emplacement { grid-column: span 12; }

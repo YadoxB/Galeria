@@ -133,6 +133,8 @@ contextBridge.exposeInMainWorld('api', {
   pdfFactureArtisteGenerer: (venteId) => ipcRenderer.invoke('pdf:facture-artiste-generer', venteId),
   courrielFactureArtisteApercu: (venteId) => ipcRenderer.invoke('courriel:facture-artiste-apercu', venteId),
   courrielFactureArtisteOuvrir: (venteId) => ipcRenderer.invoke('courriel:facture-artiste-ouvrir', venteId),
+  courrielModeleLire: () => ipcRenderer.invoke('courriel:modele-lire'),
+  courrielModeleApercu: (modele) => ipcRenderer.invoke('courriel:modele-apercu', modele),
   pdfCatalogueGenerer: (artisteId, options) => ipcRenderer.invoke('pdf:catalogue-generer', artisteId, options),
   pdfAnnexeGenerer: (payload) => ipcRenderer.invoke('pdf:annexe-generer', payload),
   pdfPresentationGenerer: (artisteId, options) => ipcRenderer.invoke('pdf:presentation-generer', artisteId, options),

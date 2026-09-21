@@ -2169,6 +2169,22 @@ async function demarrerApplication() {
       piece_nom: c.piece.nom, piece_modifiee: c.piece.modifiee,
     };
   });
+  // Modèle du message (Réglages → Documents) : ce que Galeria propose, ce que
+  // la galerie a écrit, et l'aperçu rendu sur une vraie vente.
+  ipcMain.handle('courriel:modele-lire', () => {
+    const c = require('./courriel');
+    const { obtenirConfig } = require('./config');
+    const regle = ((obtenirConfig() || {}).courriel || {}).facture_artiste || {};
+    return {
+      defaut: c.MODELES_DEFAUT,
+      jetons: c.JETONS,
+      regle: {
+        fr: { sujet: regle.fr?.sujet || '', texte: regle.fr?.texte || '' },
+        en: { sujet: regle.en?.sujet || '', texte: regle.en?.texte || '' },
+      },
+    };
+  });
+  ipcMain.handle('courriel:modele-apercu', (_e, modele) => require('./courriel').apercuModeleFactureArtiste(modele || {}));
   ipcMain.handle('courriel:facture-artiste-ouvrir', async (_e, venteId) => {
     const courriel = require('./courriel');
     const c = courriel.preparerCourrielFactureArtiste(venteId);

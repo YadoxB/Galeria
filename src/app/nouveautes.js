@@ -23,6 +23,10 @@ export const VERSIONS = [
     version: '0.23.0',
     diapos: [
       {
+        titre: 'Votre message à l’artiste, écrit une fois pour toutes',
+        texte: "Dans <b>Réglages → Documents</b>, la carte <b>Courriel à l'artiste</b> vous laisse écrire le message qui accompagne chaque facture — en français et en anglais. Les mots entre accolades ({prénom}, {titre}, {date}, {numéro}) sont remplacés par ceux de la vente, et l'aperçu de droite vous montre le courriel tel qu'il partira.",
+      },
+      {
         titre: 'La facture de l’artiste, déjà dans le courriel',
         texte: "Après avoir produit une facture artiste, Galeria vous propose de <b>préparer le courriel</b>&nbsp;: Outlook s'ouvre avec l'adresse de l'artiste, le texte et la <b>facture déjà jointe</b>. Vous relisez, puis vous cliquez <b>Envoyer</b>. Plus tard&nbsp;: bouton <b>Envoyer par courriel…</b> sur la ligne de la facture.",
       },

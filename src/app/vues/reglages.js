@@ -113,6 +113,9 @@ export async function rendreReglages(contenu, params) {
   const config = JSON.parse(JSON.stringify(await chargerConfig()));
   const infosApp = await window.api.appInfos();
   const emplacement = await window.api.donneesEmplacement();
+  // Modèle du courriel à l'artiste : le texte d'origine de Galeria, celui
+  // qu'on a écrit par-dessus, et la liste des mots entre accolades.
+  const modeleCourriel = await window.api.courrielModeleLire();
   let modifie = false;
   const zoomInitial = Number(config?.affichage?.zoom) || 1.0;
 
@@ -291,6 +294,53 @@ export async function rendreReglages(contenu, params) {
                 <div class="carte zone-doc-rappel">
                   <h3>Rappel</h3>
                   <p class="aide-champ">Les <strong>taux</strong> de TPS/TVQ et la <strong>cote</strong> de la galerie sont dans la catégorie <strong>Finances</strong>.</p>
+                </div>
+                <!-- Le message envoyé avec la facture artiste. Les deux
+                     langues sont TOUJOURS dans le formulaire ; la bascule ne
+                     fait que masquer l'une des deux (les retirer du DOM
+                     viderait la langue cachée à l'enregistrement). -->
+                <div class="carte zone-courriel-artiste">
+                  <div class="carte-tete-langue">
+                    <h3>Courriel à l'artiste</h3>
+                    <span class="bascule-langue" id="mc-bascule" role="group" aria-label="Langue du message">
+                      <button type="button" class="actif" data-langue="fr">FR</button>
+                      <button type="button" data-langue="en">EN</button>
+                    </span>
+                  </div>
+                  <p class="mc-intro">Le message proposé quand vous préparez le courriel d'une <strong>facture artiste</strong>. Vous pourrez toujours l'ajuster dans Outlook avant d'envoyer&nbsp;; votre signature Outlook s'ajoute dessous.</p>
+                  <p class="bandeau-langue" id="mc-bandeau-en" style="display:none;">Version <b>anglaise</b>&nbsp;: utilisée pour les artistes dont la fiche indique l'anglais.</p>
+                  <div class="mc-grille">
+                    <div class="mc-edition">
+                      <div data-mc-langue="fr">
+                        ${champTexte({ nom: 'c_fr_sujet', libelle: 'Objet', valeur: modeleCourriel.regle.fr.sujet || modeleCourriel.defaut.fr.sujet })}
+                        ${champTextarea({ nom: 'c_fr_texte', libelle: 'Message', valeur: modeleCourriel.regle.fr.texte || modeleCourriel.defaut.fr.texte, lignes: 11 })}
+                      </div>
+                      <div data-mc-langue="en" style="display:none;">
+                        ${champTexte({ nom: 'c_en_sujet', libelle: 'Objet', valeur: modeleCourriel.regle.en.sujet || modeleCourriel.defaut.en.sujet })}
+                        ${champTextarea({ nom: 'c_en_texte', libelle: 'Message', valeur: modeleCourriel.regle.en.texte || modeleCourriel.defaut.en.texte, lignes: 11 })}
+                      </div>
+                      <div class="mc-inserer" id="mc-inserer">
+                        <span>Insérer&nbsp;:</span>
+                        ${modeleCourriel.jetons.map((j) => `<button type="button" class="jeton-ins" data-jeton="${ech(j.jeton)}" title="${ech(j.jeton)}"><b>+</b>${ech(j.libelle)}</button>`).join('')}
+                      </div>
+                      <div class="mc-pied">
+                        <span class="mc-etat" id="mc-etat"></span>
+                        <button type="button" class="lien-recup" id="mc-origine">Revenir au texte d'origine</button>
+                      </div>
+                    </div>
+                    <div class="mc-apercu">
+                      <p class="mc-titre">Ce que l'artiste recevra</p>
+                      <div class="mc-courriel">
+                        <div class="mc-tetes">
+                          <div><b>À</b><span id="mc-a"></span></div>
+                          <div><b>Objet</b><span id="mc-sujet"></span></div>
+                          <div><b>Pièce jointe</b><span class="mc-pj" id="mc-pj"></span></div>
+                        </div>
+                        <div class="mc-corps" id="mc-corps"></div>
+                      </div>
+                      <p class="mc-note" id="mc-note"></p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
@@ -606,6 +656,107 @@ export async function rendreReglages(contenu, params) {
     catItems.forEach((i) => i.classList.toggle('actif', i === b));
     panneaux.forEach((p) => p.classList.toggle('actif', p.dataset.cat === cat));
   });
+
+  // ---- Courriel à l'artiste : le modèle du message, avec aperçu en direct ----
+  // L'écran ne fabrique aucun texte : il envoie ce qui est tapé et affiche le
+  // courriel que le processus principal a rendu (src/courriel.js). Une seule
+  // mécanique de remplacement, donc l'aperçu ne peut pas mentir.
+  const mcBascule = contenu.querySelector('#mc-bascule');
+  if (mcBascule) {
+    let mcLangue = 'fr';
+    const champ = (l, quoi) => contenu.querySelector(`#f-c_${l}_${quoi}`);
+    const blocs = { fr: contenu.querySelector('[data-mc-langue="fr"]'), en: contenu.querySelector('[data-mc-langue="en"]') };
+    const note = contenu.querySelector('#mc-note');
+    const etat = contenu.querySelector('#mc-etat');
+    const btnOrigine = contenu.querySelector('#mc-origine');
+    let dernierChamp = champ('fr', 'texte');
+    let jetonApercu = 0;
+
+    const rafraichirEtat = () => {
+      const d = modeleCourriel.defaut[mcLangue];
+      const perso = champ(mcLangue, 'sujet').value !== d.sujet || champ(mcLangue, 'texte').value !== d.texte;
+      etat.className = perso ? 'mc-etat perso' : 'mc-etat';
+      etat.textContent = perso ? 'Votre message' : "Texte d'origine de Galeria";
+      btnOrigine.disabled = !perso;
+    };
+
+    const rafraichirApercu = async () => {
+      const mien = ++jetonApercu;            // seul le dernier aperçu s'affiche
+      let ap;
+      try {
+        ap = await window.api.courrielModeleApercu({
+          langue: mcLangue === 'en' ? 'EN' : 'FR',
+          sujet: champ(mcLangue, 'sujet').value,
+          texte: champ(mcLangue, 'texte').value,
+        });
+      } catch { return; }
+      if (mien !== jetonApercu || !document.body.contains(note)) return;
+      contenu.querySelector('#mc-a').textContent = ap.a || "(aucune adresse sur la fiche de l'artiste)";
+      contenu.querySelector('#mc-pj').textContent = ap.piece_nom;
+      contenu.querySelector('#mc-sujet').innerHTML = ap.sujet_html;
+      contenu.querySelector('#mc-corps').innerHTML = `${ap.paragraphes_html.map((p) => `<p>${p}</p>`).join('')}<p class="mc-sig">(votre signature Outlook habituelle)</p>`;
+      if (ap.inconnus.length) {
+        note.className = 'mc-note alerte';
+        note.textContent = `${ap.inconnus.join(', ')} : Galeria ne connaît pas ce mot entre accolades ; il partirait tel quel. Utilisez les pastilles « Insérer ».`;
+      } else if (ap.vide) {
+        note.className = 'mc-note';
+        note.textContent = "Champ vide : Galeria utilisera son texte d'origine.";
+      } else {
+        note.className = 'mc-note';
+        note.textContent = ap.sur_vente
+          ? 'Aperçu sur la dernière facture artiste produite. Les mots surlignés changent à chaque vente.'
+          : "Exemple : aucune facture artiste n'a encore été produite.";
+      }
+    };
+
+    let minuterie = null;
+    const redessiner = () => {
+      rafraichirEtat();
+      clearTimeout(minuterie);
+      minuterie = setTimeout(rafraichirApercu, 180);
+    };
+    for (const l of ['fr', 'en']) {
+      for (const quoi of ['sujet', 'texte']) {
+        const el = champ(l, quoi);
+        el.addEventListener('input', redessiner);
+        el.addEventListener('focus', () => { dernierChamp = el; });
+      }
+    }
+    mcBascule.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      mcLangue = b.dataset.langue;
+      [...mcBascule.querySelectorAll('button')].forEach((x) => x.classList.toggle('actif', x.dataset.langue === mcLangue));
+      blocs.fr.style.display = mcLangue === 'fr' ? '' : 'none';
+      blocs.en.style.display = mcLangue === 'en' ? '' : 'none';
+      contenu.querySelector('#mc-bandeau-en').style.display = mcLangue === 'en' ? '' : 'none';
+      dernierChamp = champ(mcLangue, 'texte');
+      redessiner();
+    });
+    btnOrigine.addEventListener('click', () => {
+      const d = modeleCourriel.defaut[mcLangue];
+      champ(mcLangue, 'sujet').value = d.sujet;
+      champ(mcLangue, 'texte').value = d.texte;
+      marquerModifie();
+      redessiner();
+    });
+    // Les pastilles écrivent là où était le curseur, sans lui voler le focus.
+    const mcInserer = contenu.querySelector('#mc-inserer');
+    mcInserer.addEventListener('mousedown', (e) => { if (e.target.closest('.jeton-ins')) e.preventDefault(); });
+    mcInserer.addEventListener('click', (e) => {
+      const b = e.target.closest('.jeton-ins');
+      if (!b) return;
+      const cible = (dernierChamp && dernierChamp.isConnected && dernierChamp.closest(`[data-mc-langue="${mcLangue}"]`))
+        ? dernierChamp : champ(mcLangue, 'texte');
+      const debut = cible.selectionStart ?? cible.value.length;
+      const fin = cible.selectionEnd ?? cible.value.length;
+      cible.setRangeText(b.dataset.jeton, debut, fin, 'end');
+      cible.focus();
+      marquerModifie();
+      redessiner();
+    });
+    redessiner();
+  }
 
   const btnUpdaterVerifier = contenu.querySelector('#btn-updater-verifier');
   const btnUpdaterVoir = contenu.querySelector('#btn-updater-voir');
@@ -946,6 +1097,16 @@ export async function rendreReglages(contenu, params) {
       return Number.isFinite(x) ? x : null;
     };
 
+    // Un texte resté identique à celui de Galeria est enregistré VIDE : le
+    // jour où le texte d'origine s'améliore, la galerie en profite sans rien
+    // faire — et celle qui a écrit le sien garde le sien.
+    const modeleAEnregistrer = (l) => {
+      const d = modeleCourriel.defaut[l];
+      const sujet = String(v(`c_${l}_sujet`)).trim();
+      const texte = String(v(`c_${l}_texte`)).replace(/[ \t]+$/gm, '').trim();
+      return { sujet: sujet === d.sujet ? '' : sujet, texte: texte === d.texte ? '' : texte };
+    };
+
     const partiel = {
       galerie: {
         nom: v('g_nom').trim() || 'Galerie',
@@ -988,6 +1149,9 @@ export async function rendreReglages(contenu, params) {
       ia: {
         instructions_galerie: v('ia_instructions_galerie').trim(),
         lien_chatgpt_defaut: v('ia_lien_chatgpt_defaut').trim() || 'https://chat.openai.com/',
+      },
+      courriel: {
+        facture_artiste: { fr: modeleAEnregistrer('fr'), en: modeleAEnregistrer('en') },
       },
     };
 

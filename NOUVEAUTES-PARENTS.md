@@ -11,6 +11,32 @@
 
 ---
 
+## Votre message à l'artiste, écrit une fois pour toutes
+
+Le petit texte qui accompagne la facture est maintenant **le vôtre**. Dans
+**Réglages → Documents**, la carte **Courriel à l'artiste** :
+
+- À gauche, vous écrivez l'**objet** et le **message**. Le bouton **FR / EN** en
+  haut à droite passe à la version anglaise (celle des artistes dont la fiche
+  indique l'anglais).
+- À droite, vous voyez le courriel **tel que l'artiste le recevra**, sur votre
+  dernière facture produite.
+- Les mots entre accolades — **{prénom}**, **{titre}**, **{date}**, **{numéro}** —
+  sont remplacés par ceux de la vente. Pas besoin de les taper : les pastilles
+  **Insérer** les posent là où est votre curseur. Ils sont surlignés dans
+  l'aperçu : c'est ce qui change d'une vente à l'autre.
+- Si vous écrivez un mot entre accolades que Galeria ne connaît pas, il devient
+  **rouge** dans l'aperçu : corrigez-le, sinon il partirait tel quel.
+- **Revenir au texte d'origine** remet le message que Galeria propose au départ.
+  Et si vous effacez tout, c'est ce texte-là qui sera utilisé.
+
+N'oubliez pas d'appuyer sur **Enregistrer** en bas de la page.
+
+Raccourci : dans la fenêtre qui s'ouvre avant Outlook, le lien **Modifier le
+message de base…** vous amène directement à cette carte.
+
+---
+
 ## La facture de l'artiste, déjà dans le courriel
 
 Quand vous produisez une **facture artiste**, Galeria vous propose maintenant de
