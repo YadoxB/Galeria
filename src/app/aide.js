@@ -66,10 +66,11 @@ const ARTICLES = [
     `<p>Ces trois textes s'affichent en onglets sur la fiche (bouton <b>⤢</b> pour les voir en grand). Ils alimentent la <b>Présentation PDF</b> de l'artiste et la pochette de vente. Le CV est mis en forme en frise (années à gauche) dans le PDF.</p>`),
   A('artistes', 'Numéros de taxes de l\'artiste (TPS / TVQ)', 'taxes tps tvq numéro percoit fiscalité validation format facture artiste',
     `<p>Dans la fiscalité de la fiche artiste : coche « <b>Perçoit les taxes</b> » et saisis les numéros. Ils apparaissent sur la facture artiste et déclenchent le calcul des taxes.</p>
-     <h4>Formats exigés (validés à l'enregistrement)</h4>
+     <p><b>N'importe quel numéro est accepté</b> et imprimé tel quel : étranger, ancien, celui d'une société, ou une mention comme « exonéré ». Rien n'est jamais refusé.</p>
+     <h4>Formes habituelles au Canada (simple repère)</h4>
      <ul><li><b>TPS</b> : 9 chiffres + <code>RT</code> + 4 chiffres (ex. <code>123456789 RT 0001</code>).</li>
      <li><b>TVQ</b> : 10 chiffres + <code>TQ</code> + 4 chiffres (ex. <code>1234567890 TQ 0001</code>).</li></ul>
-     <p>Les espaces sont ignorés. Les autres étiquettes (TVH, étranger…) et les champs vides ne bloquent jamais.</p>`),
+     <div class="astuce">Un numéro étiqueté TPS ou TVQ qui ne suit pas cette forme est simplement <b>signalé en doré</b>, pour attraper une faute de frappe. La fiche s'enregistre quand même.</div>`),
   A('artistes', 'Aide à la description (ChatGPT)', 'ia chatgpt description copier presse-papier custom gpt consignes prompt',
     `<p>Sur une œuvre, « <b>Copier pour ChatGPT</b> » assemble un texte (consignes générales de la galerie + consignes propres à l'artiste + caractéristiques de l'œuvre) à coller dans ChatGPT, plus l'image. <b>Aucune donnée de client</b> n'est incluse. Les consignes par artiste et le lien vers son Custom GPT se règlent sur sa fiche (section Aide IA) ; les consignes générales dans Réglages.</p>`),
   A('artistes', 'Archiver ou supprimer un artiste', 'archiver supprimer artiste dépendances œuvres refus impossible',

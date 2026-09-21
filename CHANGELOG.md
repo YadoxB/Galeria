@@ -10,6 +10,23 @@ identifiants.
 
 ## [Non publié]
 
+### Modifié
+
+- **N'importe quel numéro de taxes est accepté sur la fiche d'un artiste** (demande de Dave,
+  2026-09-21 : le contrôle bloquait la production de certaines factures). Le format canadien
+  (`9 chiffres RT 0001` / `10 chiffres TQ 0001`) n'est plus **exigé** : il reste un simple
+  repère. Un numéro étiqueté TPS ou TVQ qui en sort est **signalé en doré** sous les champs,
+  en direct pendant la saisie — « Galeria l'enregistre quand même et l'imprime tel quel » —
+  et l'enregistrement passe. Un numéro étranger, ancien, de société, ou une mention libre
+  (« exonéré ») se saisissent donc sans détour, et ressortent tels quels sur la facture
+  artiste.
+  - La fenêtre de refus « Numéro de taxe invalide » disparaît ; le liseré rouge cède la place
+    à un liseré doré (remarque, pas erreur).
+  - Vérifié dans l'application réelle sur une copie de la base (10 contrôles — numéro libre
+    signalé puis enregistré, aucune fenêtre de refus, numéro visible sur la fiche, facture
+    artiste produite, forme canadienne sans remarque, étiquette étrangère laissée tranquille,
+    fiche remise dans son état d'origine).
+
 ## [0.23.0] — 2026-09-21
 
 ### Ajouté

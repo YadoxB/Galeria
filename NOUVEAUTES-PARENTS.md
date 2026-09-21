@@ -11,6 +11,20 @@
 
 ---
 
+## Les numéros de taxes acceptent tout
+
+Sur la fiche d'un artiste (section **Fiscalité**), vous pouvez maintenant écrire
+**n'importe quel numéro de taxes** : un numéro étranger, un ancien numéro, celui
+d'une société, ou même une mention comme « exonéré ». Galeria l'enregistre et
+l'imprime tel quel sur la facture artiste.
+
+Avant, un numéro TPS ou TVQ qui ne suivait pas la forme canadienne était refusé,
+et la facture ne pouvait pas être produite. Maintenant, il est seulement
+**souligné en doré**, avec une petite note sous les champs : c'est une remarque
+au cas où ce serait une faute de frappe, pas un refus.
+
+---
+
 ## Votre message à l'artiste, écrit une fois pour toutes
 
 Le petit texte qui accompagne la facture est maintenant **le vôtre**. Dans

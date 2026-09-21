@@ -1186,7 +1186,8 @@ export async function rendreArtisteFiche(contenu, params) {
                 <label>Numéros de taxes</label>
                 <div id="zone-taxes">${lignesTaxesHtml}</div>
                 <button type="button" id="btn-ajouter-taxe" class="btn-ajouter">+ Ajouter un numéro de taxe</button>
-                <p class="aide-champ">Une ligne par numéro. Étiquettes courantes : TPS, TVQ, TVH.</p>
+                <p class="aide-champ">Une ligne par numéro. Étiquettes courantes : TPS, TVQ, TVH. Tout numéro est accepté et imprimé tel quel.</p>
+                <p class="aide-taxes-forme" id="note-taxes" hidden></p>
               </div>
             </div>
 
@@ -1353,6 +1354,38 @@ export async function rendreArtisteFiche(contenu, params) {
       });
     }
     brancherSuppressions();
+
+    // Forme des numéros TPS/TVQ : une REMARQUE, jamais un blocage (demande de
+    // Dave, 2026-09-21 — le format canadien imposé rendait certaines factures
+    // impossibles à produire). Un numéro d'une autre forme — étranger, ancien,
+    // celui d'une société, une mention libre — s'enregistre et s'imprime tel
+    // quel ; on se contente de signaler qu'il sort de l'ordinaire, pour
+    // attraper une faute de frappe sans jamais barrer la route.
+    const FORMES_TAXES = {
+      TPS: { regex: /^\d{9}RT\d{4}$/, exemple: 'TPS : 123456789 RT 0001' },
+      TVQ: { regex: /^\d{10}TQ\d{4}$/, exemple: 'TVQ : 1234567890 TQ 0001' },
+    };
+    const noteTaxes = contenu.querySelector('#note-taxes');
+    const majFormesTaxes = () => {
+      const inhabituels = [];
+      zoneTaxes.querySelectorAll('.ligne-taxe').forEach((l) => {
+        const inNum = l.querySelector('.champ-numero');
+        const etiquette = l.querySelector('.champ-etiquette').value.trim().toUpperCase();
+        const numero = inNum.value.trim();
+        const forme = FORMES_TAXES[etiquette];
+        const inhabituel = !!forme && !!numero && !forme.regex.test(numero.replace(/\s+/g, '').toUpperCase());
+        inNum.classList.toggle('inhabituel', inhabituel);
+        if (inhabituel) inhabituels.push(forme.exemple);
+      });
+      if (!noteTaxes) return;
+      noteTaxes.hidden = inhabituels.length === 0;
+      if (inhabituels.length) {
+        noteTaxes.textContent = `Forme inhabituelle pour un numéro canadien (${[...new Set(inhabituels)].join(' · ')}). `
+          + 'Galeria l’enregistre quand même et l’imprime tel quel sur la facture.';
+      }
+    };
+    zoneTaxes.addEventListener('input', majFormesTaxes);
+    majFormesTaxes();
 
     contenu.querySelector('#btn-ajouter-taxe').addEventListener('click', () => {
       zoneTaxes.insertAdjacentHTML('beforeend', gabaritLigneTaxe());
@@ -1541,38 +1574,8 @@ export async function rendreArtisteFiche(contenu, params) {
         .filter((t) => t.numero);
       data.numeros_taxes = lignesTaxes.length ? JSON.stringify(lignesTaxes) : null;
 
-      // Validation bloquante du format des numéros TPS et TVQ (espaces ignorés).
-      // On ne valide que les lignes TPS/TVQ remplies ; les autres étiquettes et
-      // les champs laissés vides ne bloquent pas.
-      const FORMATS_TAXES = {
-        TPS: { regex: /^\d{9}RT\d{4}$/, exemple: '123456789 RT 0001' },
-        TVQ: { regex: /^\d{10}TQ\d{4}$/, exemple: '1234567890 TQ 0001' },
-      };
-      const erreursTaxes = [];
-      zoneTaxes.querySelectorAll('.ligne-taxe').forEach((l) => {
-        const inNum = l.querySelector('.champ-numero');
-        inNum.classList.remove('erreur');
-        const etiquette = l.querySelector('.champ-etiquette').value.trim().toUpperCase();
-        const numeroBrut = inNum.value.trim();
-        const fmt = FORMATS_TAXES[etiquette];
-        if (!fmt || !numeroBrut) return;
-        const numeroNormalise = numeroBrut.replace(/\s+/g, '').toUpperCase();
-        if (!fmt.regex.test(numeroNormalise)) {
-          inNum.classList.add('erreur');
-          erreursTaxes.push(`${etiquette} : « ${numeroBrut} » — format attendu : ${fmt.exemple}`);
-        }
-      });
-      if (erreursTaxes.length) {
-        await confirmer({
-          type: 'error',
-          title: 'Numéro de taxe invalide',
-          message: 'Le format de certains numéros de taxes ne correspond pas :',
-          detail: erreursTaxes.join('\n')
-            + '\n\nTPS : 9 chiffres + RT + 4 chiffres.\nTVQ : 10 chiffres + TQ + 4 chiffres.\n(Les espaces ne sont pas pris en compte.)',
-          buttons: ['OK'],
-        });
-        return;
-      }
+      // (Plus aucun contrôle bloquant sur la forme des numéros de taxes : voir
+      // majFormesTaxes plus haut — on signale, on n'empêche pas.)
 
       const lignesCotes = Array.from(zoneCotes.querySelectorAll('.ligne-cote'))
         .map((l) => ({

@@ -4677,6 +4677,18 @@ details.bloc.pliable > .bloc-corps {
   border-color: var(--warm-gold);
   box-shadow: 0 0 0 4px rgba(201, 154, 61, 0.18);
 }
+/* Forme inhabituelle : une remarque, pas un refus. D'où le doré (attention)
+   plutôt que le rouge (erreur) — la fiche s'enregistre quand même. */
+.ligne-taxe .champ-numero.inhabituel {
+  border-color: var(--warm-gold);
+  background: rgba(201, 154, 61, 0.07);
+}
+.aide-taxes-forme {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #8a6d15;
+  margin: 6px 0 0;
+}
 .ligne-taxe .champ-numero.erreur {
   border-color: var(--erreur);
   background: rgba(144, 0, 1, 0.04);

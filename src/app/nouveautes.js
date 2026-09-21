@@ -17,6 +17,18 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
+    // ⚠ Numéro à ajuster si la prochaine version publiée n'est pas la 0.24.0 :
+    // `npm run release` refuse de publier si elle ne correspond pas à
+    // package.json.
+    version: '0.24.0',
+    diapos: [
+      {
+        titre: 'Les numéros de taxes acceptent tout',
+        texte: "Sur la fiche d'un artiste, <b>n'importe quel numéro de taxes</b> s'enregistre maintenant&nbsp;: étranger, ancien, celui d'une société, ou une mention comme «&nbsp;exonéré&nbsp;». Galeria l'imprime tel quel sur la facture. Si un numéro TPS ou TVQ ne ressemble pas à la forme canadienne habituelle, il est simplement <b>souligné en doré</b> — une remarque, jamais un refus.",
+      },
+    ],
+  },
+  {
     version: '0.23.0',
     diapos: [
       {
