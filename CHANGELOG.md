@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.25.0] — 2026-09-28
+
 ### Modifié
 
 - **Une œuvre réservée a sa place sur la fiche de l'artiste** (signalement des parents,
