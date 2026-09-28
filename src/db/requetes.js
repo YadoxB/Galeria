@@ -141,6 +141,14 @@ function obtenirFicheArtisteBundle(id) {
               WHERE artiste_id = ? AND archive = 0 AND statut = 'vendu'`)
     .get(id).n;
 
+  // Réservées : encore à la galerie, mais promises à quelqu'un. Elles ne
+  // comptent pas dans les disponibles (statut différent) — sans case à elles,
+  // elles disparaissaient de l'en-tête (signalement des parents, 2026-09-27).
+  const reserveesNb = db
+    .prepare(`SELECT COUNT(*) AS n FROM oeuvres
+              WHERE artiste_id = ? AND archive = 0 AND statut = 'reserve'`)
+    .get(id).n;
+
   const apercu = db
     .prepare(`SELECT id, titre, image_path, statut
               FROM oeuvres
@@ -158,6 +166,7 @@ function obtenirFicheArtisteBundle(id) {
       // reste au catalogue : pas de requête de plus.
       retirees: artiste.nb_oeuvres - artiste.nb_oeuvres_catalogue,
       disponibles: dispoRow.n,
+      reservees: reserveesNb,
       exposees: exposeesNb,
       vendues: venduesNb,
       valeurDispo: dispoRow.v,

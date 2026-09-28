@@ -10,6 +10,21 @@ identifiants.
 
 ## [Non publié]
 
+### Modifié
+
+- **Une œuvre réservée a sa place sur la fiche de l'artiste** (signalement des parents,
+  2026-09-27 : « quand on réserve une toile, elle devrait s'afficher dans réservée plutôt que
+  dans disponibles »). Réserver la faisait quitter les **Disponibles** sans la faire
+  apparaître ailleurs : elle ne restait que dans « Au catalogue ».
+  - Nouvelle case **Réservées** dans l'en-tête, toujours affichée (comme « En exposition »),
+    au beige doré des badges « Réservée ».
+  - Dans la section **Photos**, le fichier reste dans le dossier `disponible` — la toile est
+    encore à la galerie, et le classement sur le disque est celui des parents — mais la
+    vignette porte l'étiquette **Réservée** et le titre du groupe précise « dont N réservée(s) ».
+  - Vérifié dans l'application réelle sur une copie de la base (10 contrôles — case à zéro au
+    départ, +1 en réservant et −1 aux disponibles, catalogue inchangé, étiquette et mention
+    dans les photos, retour exact à l'état de départ après « Libérer »).
+
 ## [0.24.0] — 2026-09-28
 
 ### Modifié

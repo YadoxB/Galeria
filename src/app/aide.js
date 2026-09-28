@@ -108,6 +108,7 @@ const ARTICLES = [
     `<p>Sur une œuvre disponible, le bouton <b>Réserver</b> la met de côté pour un client.</p>
      <ol><li>Choisis le <b>client</b> (ou crée-le), une <b>date d'échéance</b> (optionnelle) et des <b>notes</b>.</li>
      <li>L'œuvre passe <b>« réservée »</b> et apparaît au tableau de bord (« Œuvres réservées »), avec un repère d'échéance (bientôt / dépassée).</li></ol>
+     <p>Sur la <b>fiche de l'artiste</b>, elle quitte les <b>Disponibles</b> pour la case <b>Réservées</b>, et sa photo porte l'étiquette « Réservée » (le fichier, lui, reste dans le dossier <i>disponible</i> : la toile est encore à la galerie).</p>
      <p>Sur la fiche, la carte <b>Réservation</b> propose ensuite :</p>
      <ul><li><b>Convertir en vente</b> — ouvre le formulaire de vente déjà rempli avec le client ;</li>
      <li><b>Libérer</b> — remet l'œuvre disponible et efface la réservation.</li></ul>

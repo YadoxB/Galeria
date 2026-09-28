@@ -59,7 +59,7 @@ export async function rendreArtisteFiche(contenu, params) {
     } catch { mediumsArtiste = []; }
   }
 
-  let stats = { catalogue: 0, disponibles: 0, exposees: 0, vendues: 0, retirees: 0, valeurDispo: 0, ventes: 0 };
+  let stats = { catalogue: 0, disponibles: 0, reservees: 0, exposees: 0, vendues: 0, retirees: 0, valeurDispo: 0, ventes: 0 };
   // Numérotation des certificats (voir sequenceCertificatsArtiste).
   let certifs = { galeria: 0, fiche: 0, dernier: 0, prochain: 1 };
   let apercu = [];
@@ -206,10 +206,15 @@ export async function rendreArtisteFiche(contenu, params) {
     const legende = p.type === 'oeuvre'
       ? [p.inventaire, p.titre].filter(Boolean).join(' · ')
       : p.titre;
+    // Une réservée reste dans le dossier « disponible » sur le disque — c'est
+    // le classement des parents, on n'y touche pas — mais elle se voit d'un
+    // coup d'œil, sans avoir à ouvrir la fiche.
+    const reservee = p.statut === 'reserve';
     return `
-      <figure class="photo-vign${p.type === 'oeuvre' ? ' photo-vign-oeuvre' : ''}"
-              data-chemin="${ech(p.chemin)}"${cliquable} title="${ech(legende)}">
+      <figure class="photo-vign${p.type === 'oeuvre' ? ' photo-vign-oeuvre' : ''}${reservee ? ' photo-vign-reservee' : ''}"
+              data-chemin="${ech(p.chemin)}"${cliquable} title="${ech(legende)}${reservee ? ' — réservée' : ''}">
         <img src="${urlPhoto(p.chemin)}" alt="" loading="lazy">
+        ${reservee ? '<span class="photo-badge-reservee">Réservée</span>' : ''}
         <figcaption>${ech(legende)}</figcaption>
         <span class="photo-actions">
           <button type="button" class="photo-mini" data-copier title="Copier l'image">Copier</button>
@@ -223,9 +228,13 @@ export async function rendreArtisteFiche(contenu, params) {
     for (const [cle, lib] of Object.entries(LIB_GROUPE)) {
       const liste = (donnees.groupes && donnees.groupes[cle]) || [];
       if (!liste.length) continue;
+      // Le titre dit combien de ces photos sont en fait des réservées : le
+      // dossier les range avec les disponibles, le compte ne doit pas mentir.
+      const nbReservees = liste.filter((p) => p.statut === 'reserve').length;
+      const note = nbReservees ? ` <em class="photos-groupe-note">dont ${pluriel(nbReservees, 'réservée')}</em>` : '';
       blocs.push(`
         <div class="photos-groupe" data-groupe="${cle}">
-          <h4 class="photos-groupe-titre">${lib} <span>${liste.length}</span></h4>
+          <h4 class="photos-groupe-titre">${lib} <span>${liste.length}</span>${note}</h4>
           <div class="photos-grille">${liste.map(vignettePhoto).join('')}</div>
         </div>`);
     }
@@ -366,6 +375,12 @@ export async function rendreArtisteFiche(contenu, params) {
           <div class="hero-artiste-stats">
             <div class="hero-stat"><span class="v">${stats.catalogue}</span><span class="l">Au catalogue</span></div>
             <div class="hero-stat"><span class="v accent">${stats.disponibles}</span><span class="l">Disponibles</span></div>
+            <!-- Réservées : encore à la galerie, déjà promises. Elles ne sont
+                 PAS dans les disponibles ; sans cette case, réserver une
+                 toile la faisait disparaître de l'en-tête (signalement des
+                 parents, 2026-09-27). Toujours affichée, comme « En
+                 exposition », pour que la rangée ne change pas de forme. -->
+            <div class="hero-stat"><span class="v${stats.reservees ? ' reserve' : ''}">${stats.reservees || 0}</span><span class="l">Réservées</span></div>
             <!-- Toujours affiché, même à zéro : une rangée dont le nombre de
                  cases change d'un artiste à l'autre est déroutante. En rouge
                  quand il y en a — c'est un état temporaire, pas un total. -->

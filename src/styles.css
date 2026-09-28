@@ -2522,6 +2522,9 @@ details.bloc.pliable > .bloc-corps {
 /* Œuvres parties en exposition : un état temporaire, pas un total — d'où le
    rouge de la galerie plutôt que l'or des disponibles. */
 .hero-artiste-stats .v.expo { color: #900001; }
+/* Réservées : le beige doré des badges « Réservée », pour que la case et la
+   pastille d'une œuvre parlent de la même chose. */
+.hero-artiste-stats .v.reserve { color: var(--badge-reservee-texte); }
 .hero-artiste-stats .l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--stone); }
 
 /* ----- Bandeau de statistiques de la liste des œuvres -----
@@ -2889,6 +2892,29 @@ details.bloc.pliable > .bloc-corps {
   text-overflow: ellipsis;
 }
 .photo-vign-oeuvre { cursor: pointer; }
+/* Réservée : la photo reste dans le dossier « disponible » sur le disque (la
+   toile est encore à la galerie), mais la vignette le dit. */
+.photo-badge-reservee {
+  position: absolute;
+  top: 5px; left: 5px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--badge-reservee-fond);
+  color: var(--badge-reservee-texte);
+}
+.photo-vign-reservee { border-color: var(--badge-reservee-fond); }
+.photos-groupe-titre .photos-groupe-note {
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--badge-reservee-texte);
+}
 .photo-vign-oeuvre:hover { border-color: var(--warm-gold); }
 /* Les actions n'apparaissent qu'au survol : à trente vignettes, les afficher
    en permanence transformerait la grille en tableau de boutons. */

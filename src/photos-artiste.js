@@ -56,6 +56,10 @@ function listerPhotosArtiste(artisteId) {
       oeuvre_id: o.id,
       titre: o.titre || '',
       inventaire: o.numero_inventaire || '',
+      // Le statut voyage avec la photo : une réservée est rangée dans le
+      // dossier « disponible » (la toile est encore à la galerie), mais
+      // l'écran doit pouvoir la distinguer des vraiment disponibles.
+      statut: o.statut || '',
       chemin: o.image_path,
       octets: tailleDe(o.image_path),
     });

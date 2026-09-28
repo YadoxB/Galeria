@@ -17,6 +17,18 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
+    // ⚠ Numéro à ajuster si la prochaine version publiée n'est pas la 0.25.0 :
+    // `npm run release` refuse de publier si elle ne correspond pas à
+    // package.json.
+    version: '0.25.0',
+    diapos: [
+      {
+        titre: 'Les œuvres réservées se voient sur la fiche de l’artiste',
+        texte: "Une toile réservée quittait les <b>Disponibles</b> sans apparaître nulle part ailleurs. L'en-tête de l'artiste a maintenant sa case <b>Réservées</b>, et dans les photos la vignette porte l'étiquette <b>Réservée</b> (le fichier, lui, reste dans le dossier « disponible »&nbsp;: la toile est encore à la galerie).",
+      },
+    ],
+  },
+  {
     version: '0.24.0',
     diapos: [
       {

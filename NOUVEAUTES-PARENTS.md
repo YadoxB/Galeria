@@ -11,6 +11,21 @@
 
 ---
 
+## Les œuvres réservées se voient sur la fiche de l'artiste
+
+Quand vous réserviez une toile, elle disparaissait des **Disponibles** sans
+apparaître ailleurs sur la fiche de l'artiste. Maintenant :
+
+- L'en-tête a une case **Réservées**, à côté de Disponibles.
+- Dans la section **Photos**, la vignette de l'œuvre porte l'étiquette
+  **Réservée**, et le titre du groupe dit « dont 1 réservée ».
+
+Le fichier de la photo ne bouge pas : il reste dans le dossier *disponible*,
+puisque la toile est encore à la galerie. Votre classement sur le disque ne
+change pas.
+
+---
+
 ## La facture de l'artiste au tarif préférentiel
 
 Le prix affiché en galerie est le prix **courant** : la cote de l'artiste plus
