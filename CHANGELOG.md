@@ -12,6 +12,24 @@ identifiants.
 
 ### Modifié
 
+- **La facture artiste part du tarif préférentiel** (demande de Dave, 2026-09-28). Le prix
+  affiché en galerie est le prix *courant* : la cote de l'artiste **+ 2 $ par unité**
+  (encadrement). L'encadrement étant le travail de la galerie, ce supplément — `2 $ × base`,
+  la base étant `H + L` ou `H × L` selon l'unité de la cote — est **retiré du prix régulier**
+  avant la commission, donc de la part de l'artiste et des taxes.
+  - **Déduction silencieuse** : aucune ligne « encadrement » sur le document ; l'artiste voit
+    directement le bon montant (choix de Dave parmi trois options).
+  - **Jamais déduit** : sculptures et reproductions (la galerie ne les encadre pas), œuvres
+    sans dimensions, artistes sans cote — et, garde-fou, quand le supplément atteindrait le
+    prix lui-même (prix saisi à la main, cote changée depuis). Le prix de vente sert alors
+    tel quel, comme avant.
+  - Nouveau module `src/prix-cadre.js` (copie miroir partielle de `src/app/calcul-prix.js` :
+    même recherche de cote applicable, même base).
+  - Vérifié : module seul (16 contrôles — les deux unités, priorité des cotes, accents,
+    types exclus, garde-fous) ; application réelle sur une copie de la base (12 contrôles,
+    montants lus **dans le gabarit pendant le rendu** — 3 560 $ → 3 460 $ au pouce linéaire,
+    → 2 360 $ au pouce carré, part de l'artiste suivie, sculpture et reproduction intactes).
+
 - **N'importe quel numéro de taxes est accepté sur la fiche d'un artiste** (demande de Dave,
   2026-09-21 : le contrôle bloquait la production de certaines factures). Le format canadien
   (`9 chiffres RT 0001` / `10 chiffres TQ 0001`) n'est plus **exigé** : il reste un simple

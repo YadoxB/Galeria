@@ -5,9 +5,10 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { openDatabase } = require('./db/database');
 const { getDocumentsDir, getDocumentsDirAnnee, getPhotosDir } = require('./db/paths');
-const { obtenirCertificat, obtenirVente, obtenirArtiste, oeuvresPourCatalogue, listerCertificatsParVente } = require('./db/requetes');
+const { obtenirCertificat, obtenirVente, obtenirArtiste, obtenirOeuvre, oeuvresPourCatalogue, listerCertificatsParVente } = require('./db/requetes');
 const { obtenirOuReserverNumeroFactureArtisteVente, enregistrerAnnexe, majAnnexePdfPath, annulerAnnexe, majPresentationArtiste, creerCertificat } = require('./db/mutations');
 const { obtenirConfig } = require('./config');
+const { prixRegulierPreferentiel } = require('./prix-cadre');
 
 // ===== Helpers =====
 
@@ -240,6 +241,12 @@ function preparerDonneesCertificat(certificat, cfg) {
 }
 
 function preparerDonneesFactureArtiste(vente, artiste, cfg, numeroFactureArtiste) {
+  // Prix régulier au tarif PRÉFÉRENTIEL : le supplément d'encadrement de la
+  // galerie (2 $ par unité de cote) sort du montant sur lequel l'artiste est
+  // payé, et ne paraît pas sur le document (voir src/prix-cadre.js).
+  const prixRegulierPaye = (Number(vente.prix_vente) || 0)
+    + (Number(vente.rabais_artiste) || 0) + (Number(vente.rabais_galerie) || 0);
+  const prixRegulier = prixRegulierPreferentiel(prixRegulierPaye, obtenirOeuvre(vente.oeuvre_id), artiste);
   // Numéros de taxes de l'artiste, parsés depuis JSON
   let tps = { active: false, taux: cfg.documents.tps_taux, numero: '' };
   let tvq = { active: false, taux: cfg.documents.tvq_taux, numero: '' };
@@ -292,9 +299,9 @@ function preparerDonneesFactureArtiste(vente, artiste, cfg, numeroFactureArtiste
       photo: photoEnDataUrl(vente.image_path),
     },
     montants: {
-      // Le gabarit recalcule prix_vente = prix_regulier - rabais.
-      // On reconstruit le prix régulier depuis le sous-total stocké et les rabais.
-      prix_regulier: (Number(vente.prix_vente) || 0) + (Number(vente.rabais_artiste) || 0) + (Number(vente.rabais_galerie) || 0),
+      // Le gabarit recalcule prix_vente = prix_regulier - rabais. Le prix
+      // régulier est ici celui du tarif PRÉFÉRENTIEL (voir plus haut).
+      prix_regulier: prixRegulier,
       rabais_artiste: Number(vente.rabais_artiste) || 0,
       rabais_galerie: Number(vente.rabais_galerie) || 0,
       // Frais de production : déduits avant la cote, uniquement pour les

@@ -216,8 +216,12 @@ const ARTICLES = [
     `<p>Le numéro se compose de trois parties : <b>n° d'inventaire de l'œuvre</b> – <b>numéro de l'artiste</b> – <b>n° de facture Sage</b>. Exemple : MAP2231-042-5567.</p>
      <p>Le numéro du milieu est propre à chaque artiste : il suit son <b>dernier certificat délivré</b>. Si l'artiste a déjà des certificats sur papier, ouvrez sa fiche, cliquez <b>Modifier</b> et inscrivez le numéro du dernier dans <b>Dernier certificat délivré</b>. Galeria continue au suivant.</p>
      <div class="attention">Faites-le <b>avant</b> son premier certificat dans Galeria : un certificat produit ne se renumérote pas. Galeria vous le rappelle au premier certificat de chaque artiste.</div>`),
-  A('documents', 'Produire la facture artiste', 'facture artiste versement commission relevé cote type taxes',
-    `<p>Fiche de vente → <b>Produire la facture artiste</b> : le relevé du versement à l'artiste après commission et taxes. La <b>cote</b> dépend du type de l'œuvre (sculpture 33 %, sinon 50 %), et les taxes dépendent du régime fiscal de l'artiste.</p>`),
+  A('documents', 'Produire la facture artiste', 'facture artiste versement commission relevé cote type taxes préférentiel encadrement 2 $',
+    `<p>Fiche de vente → <b>Produire la facture artiste</b> : le relevé du versement à l'artiste après commission et taxes. La <b>cote</b> dépend du type de l'œuvre (sculpture 33 %, sinon 50 %), et les taxes dépendent du régime fiscal de l'artiste.</p>
+     <h4>Le prix de départ est le tarif préférentiel</h4>
+     <p>Le prix affiché en galerie est le prix <b>courant</b> : la cote de l'artiste <b>+ 2 $ par unité</b> pour l'encadrement. L'encadrement étant le travail de la galerie, la facture part du prix <b>préférentiel</b> : Galeria retire ce supplément (2 $ × la base de la cote) avant la commission, sans l'écrire sur le document.</p>
+     <p>Rien n'est retiré pour une <b>sculpture</b> ou une <b>reproduction</b> (jamais encadrées), ni quand l'œuvre n'a pas de dimensions ou l'artiste pas de cote : le prix de vente sert alors tel quel.</p>
+     <div class="voir-aussi"><b>Voir aussi :</b> <a data-go="Préférentiel vs courant">Préférentiel vs courant</a></div>`),
   A('documents', 'Envoyer la facture à l\'artiste par courriel', 'courriel email outlook envoyer facture artiste pièce jointe brouillon',
     `<p>Une fois la facture artiste produite, Galeria propose de <b>préparer le courriel</b>. Plus tard : bouton <b>Envoyer par courriel…</b> sur la ligne de la facture.</p>
      <ol><li>Une fenêtre montre <b>à qui</b> (l'adresse de la fiche de l'artiste), <b>l'objet</b> et <b>la pièce jointe</b>.</li>
@@ -388,7 +392,8 @@ const ARTICLES = [
   A('glossaire', 'Cote — les deux sens', 'glossaire cote définition commission tarif',
     `<p><b>1. Cote de tarif</b> (artiste) : le prix par unité (médium × taille) qui sert à calculer le prix d'une œuvre.<br><b>2. Cote de la galerie</b> : la commission en % prélevée sur une vente (apparaît sur la facture artiste).</p>`),
   A('glossaire', 'Préférentiel vs courant', 'glossaire préférentiel courant prix encadré sans cadre',
-    `<p><b>Préférentiel</b> = prix sans encadrement. <b>Courant</b> = prix encadré ; il ajoute 2 $ par unité à la cote.</p>`),
+    `<p><b>Préférentiel</b> = prix sans encadrement. <b>Courant</b> = prix encadré ; il ajoute 2 $ par unité à la cote.</p>
+     <p>La <b>facture artiste</b> se fait toujours au tarif préférentiel : le supplément d'encadrement revient à la galerie.</p>`),
   A('glossaire', 'Format (Petit / Moyen / Grand / Très grand)', 'glossaire format taille petit moyen grand très grand seuils',
     `<p>Catégorie de taille calculée sur √(H × L) : Petit ≤ 16", Moyen ≤ 30", Grand ≤ 42", Très grand > 42". Sert à choisir la cote.</p>`),
   A('glossaire', 'Cote hors-normes', 'glossaire cote hors normes exception prix manuel',

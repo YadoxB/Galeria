@@ -11,6 +11,23 @@
 
 ---
 
+## La facture de l'artiste au tarif préférentiel
+
+Le prix affiché en galerie est le prix **courant** : la cote de l'artiste plus
+**2 $ par unité** pour l'encadrement. Comme l'encadrement est votre travail, ce
+supplément ne revient pas à l'artiste.
+
+Galeria le **retire maintenant tout seul** de la facture artiste : le prix
+régulier inscrit sur le document est le tarif **préférentiel**, et la commission
+comme la part de l'artiste se calculent là-dessus. Rien ne l'indique sur la
+facture : l'artiste voit simplement le bon montant.
+
+Ce n'est jamais retiré pour une **sculpture** ou une **reproduction** (vous ne
+les encadrez pas), ni si l'œuvre n'a pas de dimensions ou l'artiste pas de cote.
+Dans ces cas, la facture part du prix de vente, comme avant.
+
+---
+
 ## Les numéros de taxes acceptent tout
 
 Sur la fiche d'un artiste (section **Fiscalité**), vous pouvez maintenant écrire

@@ -23,6 +23,10 @@ export const VERSIONS = [
     version: '0.24.0',
     diapos: [
       {
+        titre: 'La facture de l’artiste au tarif préférentiel',
+        texte: "Le prix affiché en galerie comprend le <b>2 $ par unité</b> de l'encadrement. Ce supplément revient à la galerie&nbsp;: il est maintenant <b>retiré automatiquement</b> du montant de la facture de l'artiste, avant la commission. Rien n'est retiré pour une sculpture ou une reproduction.",
+      },
+      {
         titre: 'Les numéros de taxes acceptent tout',
         texte: "Sur la fiche d'un artiste, <b>n'importe quel numéro de taxes</b> s'enregistre maintenant&nbsp;: étranger, ancien, celui d'une société, ou une mention comme «&nbsp;exonéré&nbsp;». Galeria l'imprime tel quel sur la facture. Si un numéro TPS ou TVQ ne ressemble pas à la forme canadienne habituelle, il est simplement <b>souligné en doré</b> — une remarque, jamais un refus.",
       },
