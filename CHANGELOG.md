@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.24.0] — 2026-09-28
+
 ### Modifié
 
 - **La facture artiste part du tarif préférentiel** (demande de Dave, 2026-09-28). Le prix
