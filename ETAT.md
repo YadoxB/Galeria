@@ -1,29 +1,112 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-09-04 (catalogue bilingue bâti ; 0.14.0, 0.15.0 et l'anglais en attente de publication).
+> Date de cette sauvegarde : 2026-09-28 (0.23.0, 0.24.0 et 0.25.0 publiées le même jour ou presque ; rien en attente de publication).
+>
+> **Tableau de bord du chantier** (signalements des parents + étapes restantes) :
+> <https://claude.ai/artifact/2fBkxU3MEnkZwQHj5Vv2Kz>. Les signalements y arrivent seuls
+> depuis Gmail quand Dave ouvre la page ; **c'est à Claude de tenir les étapes et les statuts
+> à jour** (outil `ArtifactData`) à chaque session qui livre ou décide quelque chose.
 >
 > **Voir aussi** : `CHANGELOG.md` (historique versionné détaillé) et `A-VALIDER.md` (questions ouvertes avec les parents).
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-09-11)
+## ▶ Reprise — par où commencer (préparé le 2026-09-28)
 
-**✅ Dernière version PUBLIÉE : v0.22.0 (2026-09-11).** `origin/master` = tag `v0.22.0`.
-Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif. Les parents
-passent de la 0.21.1 à la 0.22.0 : douze diapos de nouveautés au prochain lancement.
+**✅ Dernière version PUBLIÉE : v0.25.0 (2026-09-28).** `origin/master` = tag `v0.25.0` =
+`b7bfd3d`. Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
+**Rien n'est en attente de publication** : l'arbre de travail est propre, tout ce qui est
+fait est en ligne.
 
-**La liste du 2026-09-08 est close.** Le lot 6 (courriel de la facture artiste, PDF joint)
-est fait et EN ATTENTE DE PUBLICATION : Outlook classique piloté par COM, repli .eml
-(`src/courriel.js`) — ⚠ l'ouverture réelle dans Outlook reste à essayer chez les parents
-(Outlook sans profil chez Dave). **S'y ajoute (2026-09-21, aussi en attente)** : le message
-du courriel se modifie dans l'app — Réglages → Documents → « Courriel à l'artiste », deux
-langues, jetons `{prénom}` `{titre}` `{date}` `{numéro}`, aperçu en direct sur une vraie
-vente ; un texte laissé identique à l'original est enregistré vide, pour continuer de suivre
-les améliorations du texte de base. Le libellé de l'étape Google du suivi est confirmé tel
-quel par Dave (2026-09-11). **À faire chez les parents** : remplir
-« Dernier certificat délivré » pour chaque artiste qui a des certificats papier ; cocher les
-trois tâches « côté galerie » des ventes déjà livrées.
+Trois versions depuis la 0.22.0 :
+
+| Version | Date | Contenu |
+|---|---|---|
+| 0.23.0 | 2026-09-21 | Courriel de la facture artiste (brouillon Outlook, PDF joint) + son message modifiable dans les Réglages |
+| 0.24.0 | 2026-09-28 | N'importe quel numéro de taxes s'enregistre ; facture artiste au tarif préférentiel |
+| 0.25.0 | 2026-09-28 | Une œuvre réservée a sa place sur la fiche de l'artiste |
+
+**Ce qui attend quelqu'un d'autre que le code :**
+
+- ⚠ **L'ouverture réelle dans Outlook n'a jamais été essayée** (Outlook sans profil chez
+  Dave) : le premier envoi chez les parents est le vrai test. Repli `.eml` si Outlook ne
+  répond pas.
+- **Signalement du 2026-09-24, en attente d'un appel** : ils veulent discuter de l'affichage
+  du prix préférentiel sur la fiche d'œuvre. Ce n'est pas un défaut ; ne rien coder avant.
+- ⚠ **Non vérifié faute de clés** : que `wc/v3/products?sku=A,B,C` accepte la liste
+  (comparaison d'un seul artiste). Une sonde de repli couvre le cas contraire.
+- **À faire chez les parents** : remplir « Dernier certificat délivré » pour chaque artiste
+  qui a des certificats papier ; cocher les trois tâches « côté galerie » des ventes déjà
+  livrées. **Chez Dave** : les citations de Pinochet, Smith et Langlais sont recopiées dans
+  leur biographie, à corriger à la main.
+
+Le libellé de l'étape Google du suivi est **confirmé tel quel** par Dave (2026-09-11) : ne
+plus le lui redemander.
+
+> ### ✅ PUBLIÉ DANS LA 0.25.0 — les œuvres réservées sur la fiche d'artiste (2026-09-28)
+>
+> Signalement des parents du 2026-09-27. Réserver une toile la faisait quitter les
+> **Disponibles** sans la faire apparaître ailleurs : elle ne restait que dans « Au
+> catalogue ». Désormais une case **Réservées** dans l'en-tête (toujours affichée, comme « En
+> exposition »), et dans la section Photos la vignette porte l'étiquette **Réservée** avec
+> « dont N réservée(s) » au titre du groupe.
+>
+> ⚠ **Le fichier ne bouge pas de dossier** : `STATUT_VERS_DOSSIER` range toujours `reserve`
+> dans `disponible` (`photos-chemins.js`) — la toile est encore à la galerie, et ce
+> classement par dossier est la méthode des parents. L'écran dit donc les deux vérités :
+> celle du dossier et celle du statut. Un vrai dossier « réservé » serait un autre chantier,
+> à leur soumettre d'abord.
+>
+> Banc sur copie de la base (10 contrôles) : +1 aux réservées, −1 aux disponibles, catalogue
+> inchangé, étiquette et mention présentes, retour exact à l'état de départ après « Libérer ».
+>
+> ### ✅ PUBLIÉ DANS LA 0.24.0 — facture artiste au tarif préférentiel (2026-09-28)
+>
+> Signalement du 2026-09-16, règle tranchée par Dave le 2026-09-28. Le prix affiché en
+> galerie est le prix *courant* : la cote de l'artiste **+ 2 $ par unité** (encadrement).
+> L'encadrement étant le travail de la galerie, ce supplément — `2 $ × base`, base = `H + L`
+> ou `H × L` selon l'unité de la cote — est **retiré du prix régulier** avant la commission,
+> **sans ligne visible** sur le document (choix de Dave parmi trois options).
+>
+> Nouveau module `src/prix-cadre.js`, ⚠ **copie miroir partielle de `src/app/calcul-prix.js`**
+> (même cote applicable, même base) : toute modification de la formule va dans les DEUX.
+>
+> Jamais déduit : sculptures et reproductions, œuvres sans dimensions, artistes sans cote —
+> et garde-fou, quand le supplément atteindrait le prix lui-même (prix saisi à la main, cote
+> changée depuis). Le prix de vente sert alors tel quel.
+>
+> ⚠ **Banc utile** : les montants sont lus **dans le gabarit pendant le rendu** (la fenêtre de
+> `genererPdf` est inspectable par CDP le temps de l'impression) — donc exactement ceux qui
+> s'impriment, pas une valeur intermédiaire. 16 contrôles du module, 12 dans l'app.
+>
+> ### ✅ PUBLIÉ DANS LA 0.24.0 — n'importe quel numéro de taxes (2026-09-28)
+>
+> Demande de Dave : le format canadien exigé (`9 chiffres RT 0001` / `10 chiffres TQ 0001`)
+> **empêchait d'enregistrer la fiche**, donc de produire la facture, dès que le numéro venait
+> d'ailleurs, d'un ancien régime ou d'une société. La fenêtre de refus disparaît ; il reste
+> une **remarque en doré** pendant la saisie (liseré + note sous les champs), jamais un
+> blocage. Tout numéro s'imprime tel quel.
+>
+> ### ✅ PUBLIÉ DANS LA 0.23.0 — le courriel de la facture artiste (2026-09-21)
+>
+> Lot 6 des demandes du 2026-09-08, puis son prolongement. Après la production d'une facture
+> artiste, Galeria propose de **préparer le courriel** ; bouton « Envoyer par courriel… » sur
+> la ligne de la facture. **Un brouillon, jamais un envoi** : aucun mot de passe, aucun
+> serveur de courriel. Outlook **classique** piloté par COM (script PowerShell, données
+> passées par un fichier JSON), repli **`.eml` X-Unsent** (`src/courriel.js`).
+>
+> Le **message se modifie dans l'app** : Réglages → Documents → « Courriel à l'artiste »,
+> objet + message en FR et EN, jetons `{prénom}` `{titre}` `{date}` `{numéro}` (accents et
+> casse ignorés, pastilles d'insertion), **aperçu en direct** rendu par `src/courriel.js` sur
+> la dernière facture produite, mot inconnu surligné en rouge. Le dialogue commun accepte
+> maintenant un `lien` (sortie de côté, résout `'lien'`) : « Modifier le message de base… ».
+>
+> ⚠ **Un texte resté identique à l'original est enregistré VIDE** : ainsi une amélioration
+> future du texte de base profite aux galeries qui n'y ont pas touché. Ne pas « corriger » en
+> enregistrant la valeur affichée.
+>
+> ⚠ **L'ouverture réelle dans Outlook reste à essayer chez les parents.**
 
 > ### ✅ PUBLIÉ DANS LA 0.22.0 — relier un artiste du site (2026-09-07)
 >
@@ -87,9 +170,8 @@ trois tâches « côté galerie » des ventes déjà livrées.
 > essayer par Dave** : comparer un artiste — si le bandeau annonce ses œuvres reliées, c'est bon.
 >
 > **Liste du 2026-09-08 close** : le lot 6 (courriel de la facture artiste, puis son message
-> modifiable dans les Réglages) est fait après la
-> 0.22.0 — voir le haut de ce fichier. Libellé de l'étape Google : confirmé tel quel par Dave
-> le 2026-09-11.
+> modifiable dans les Réglages) est publié dans la 0.23.0 — voir le haut de ce fichier.
+> Libellé de l'étape Google : confirmé tel quel par Dave le 2026-09-11.
 >
 > ### 🟨 TROIS ARTISTES RENOMMÉS À LA MAIN — décision de Dave (2026-09-07)
 >
