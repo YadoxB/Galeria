@@ -57,6 +57,10 @@ const DEFAULTS = {
   },
   affichage: {
     zoom: 1.0,
+    // Masquer le tarif préférentiel sur la fiche d'une œuvre (demande des
+    // parents, 2026-09-30 : l'écran est vu par les clients). Le calculateur
+    // des Outils, lui, le montre toujours — on y va exprès.
+    masquer_prix_preferentiel: false,
   },
   securite: {
     // Verrou léger : barrière d'accès (un code court), pas du chiffrement. Le

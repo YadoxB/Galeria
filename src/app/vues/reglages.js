@@ -597,6 +597,11 @@ export async function rendreReglages(contenu, params) {
                     </select>
                     <p class="aide-champ">Aperçu appliqué immédiatement. Annule pour revenir à l'original.</p>
                   </div>
+                  <!-- Un écran de galerie est souvent vu par le client qui est
+                       devant : le tarif préférentiel n'a pas à s'y trouver
+                       (demande des parents, 2026-09-30). -->
+                  ${champCheckbox({ nom: 'a_masquer_prix_pref', libelle: 'Masquer le prix préférentiel sur les fiches d\u2019œuvre', valeur: !!config.affichage?.masquer_prix_preferentiel })}
+                  <p class="aide-champ">La fiche n'affiche alors que le <strong>prix courant</strong>, en lecture comme en modification. Le <strong>calculateur de prix</strong> (Outils) continue de montrer les deux&nbsp;: on y va exprès.</p>
                 </div>
                 <div class="carte zone-apropos">
                   <h3>À propos</h3>
@@ -1145,6 +1150,7 @@ export async function rendreReglages(contenu, params) {
           const z = num('a_zoom');
           return Number.isFinite(z) && z > 0 ? z : 1.0;
         })(),
+        masquer_prix_preferentiel: form.elements.a_masquer_prix_pref.checked,
       },
       ia: {
         instructions_galerie: v('ia_instructions_galerie').trim(),

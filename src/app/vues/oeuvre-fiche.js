@@ -19,6 +19,7 @@ import { ouvrirCreationCertificat } from './certificat-creation.js';
 import { synchroniserOeuvre } from '../sync-fiche.js';
 import { proposerAnnexeApres } from '../annexe.js';
 import { ouvrirCreationClient } from './vente-fiche.js';
+import { chargerConfig } from '../marque.js';
 
 // Badge d'échéance d'une réservation : « Échue depuis N j » (rouge),
 // « Dans N j » (ambre si ≤ 7 jours, neutre sinon), ou « Réservée » sans échéance.
@@ -155,6 +156,11 @@ function ouvrirModaleEnvoyerChatGPT(r) {
 }
 
 export async function rendreOeuvreFiche(contenu, params) {
+  // Réglages → Application → Affichage : un écran de galerie est souvent vu
+  // par le client qui est devant. Quand la case est cochée, le tarif
+  // préférentiel ne paraît nulle part sur cette fiche — ni en lecture, ni
+  // dans le détail du prix suggéré du formulaire.
+  const masquerPrixPref = !!(await chargerConfig())?.affichage?.masquer_prix_preferentiel;
   const estNouveau = !!params.nouveau;
   let o;
   let artistes = null;
@@ -387,7 +393,7 @@ export async function rendreOeuvreFiche(contenu, params) {
 
     // Calcul du prix préférentiel (depuis les cotes de l'artiste).
     let prixPreferentiel = null;
-    if (artiste && !o.cote_hors_normes) {
+    if (artiste && !o.cote_hors_normes && !masquerPrixPref) {
       const suggere = calculerPrixSuggere({ artiste, oeuvre: o });
       if (suggere) prixPreferentiel = suggere.prix_preferentiel;
     }
@@ -1714,8 +1720,11 @@ export async function rendreOeuvreFiche(contenu, params) {
             <span class="prix-suggere-valeur">${res.prix_courant.toLocaleString('fr-CA')} $</span>
             <button type="button" class="btn-action btn-secondaire-action" id="btn-utiliser-prix-suggere">${ech(libelleBouton)}</button>
           </div>
-          <p class="prix-suggere-formule">${ech(res.formule_preferentiel)}<br>${ech(res.formule_courant)}</p>
-          <p class="prix-suggere-formule">Préférentiel (sans cadre) : <strong>${res.prix_preferentiel.toLocaleString('fr-CA')} $</strong></p>
+          <p class="prix-suggere-formule">${masquerPrixPref ? '' : `${ech(res.formule_preferentiel)}<br>`}${
+            // Masqué : on retire aussi « (cote courante = préf + 2 $) », qui
+            // laisserait déduire le tarif préférentiel de tête.
+            ech(masquerPrixPref ? res.formule_courant.replace(/\s*\(cote courante[^)]*\)/, '') : res.formule_courant)}</p>
+          ${masquerPrixPref ? '' : `<p class="prix-suggere-formule">Préférentiel (sans cadre) : <strong>${res.prix_preferentiel.toLocaleString('fr-CA')} $</strong></p>`}
         </div>
       `;
       const btnUtiliser = zonePrixSuggere.querySelector('#btn-utiliser-prix-suggere');

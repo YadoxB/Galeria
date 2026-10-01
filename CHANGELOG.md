@@ -10,6 +10,34 @@ identifiants.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Masquer le prix préférentiel sur les fiches d'œuvre** (demande des parents, 2026-09-30 —
+  un écran de galerie est souvent vu par le client qui est devant). Case dans **Réglages →
+  Application → Affichage** (`affichage.masquer_prix_preferentiel`, décochée par défaut).
+  Cochée, la fiche d'œuvre n'affiche plus que le **prix courant** : la paire Courant /
+  Préférentiel en lecture, et dans le bloc de prix suggéré du formulaire la ligne
+  « Préférentiel (sans cadre) », sa formule, **et** la mention « (cote courante = préf + 2 $) »
+  — qui laisserait déduire le tarif de tête. Le **calculateur de prix** (Outils) le montre
+  toujours : on y va exprès. Portée choisie par Dave parmi trois options.
+  - Vérifié dans l'application réelle sur une copie de la base (9 contrôles — présent au
+    départ en lecture et dans le détail, absent des deux une fois coché, revenu après
+    décochage, réglage bien enregistré).
+
+### Modifié
+
+- **Les brouillons du site sont ignorés dans la comparaison** (demande des parents,
+  2026-09-30). Un produit que le site n'a pas publié n'est pas une différence à corriger :
+  c'est un travail en cours de l'autre côté. Il encombrait la liste « Seulement sur le site »
+  et, s'il portait le numéro d'inventaire d'une œuvre, la « reliait » en inventant des écarts
+  de titre et de prix. Seuls les produits **publiés** sont désormais comparés, et la ligne
+  d'information dit combien de brouillons ont été écartés.
+  - Vérifié dans l'application réelle sur une copie de la base, avec un faux serveur qui
+    relaie la vraie boutique publique en y ajoutant deux brouillons — le site public n'en
+    sert jamais (8 contrôles : les deux comptés et écartés, le total des produits en ligne
+    inchangé, l'œuvre au même SKU restée « Seulement dans Galeria », le reste identique,
+    la mention à l'écran).
+
 ## [0.25.0] — 2026-09-28
 
 ### Modifié

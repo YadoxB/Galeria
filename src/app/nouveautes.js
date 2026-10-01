@@ -17,6 +17,22 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
+    // ⚠ Numéro à ajuster si la prochaine version publiée n'est pas la 0.26.0 :
+    // `npm run release` refuse de publier si elle ne correspond pas à
+    // package.json.
+    version: '0.26.0',
+    diapos: [
+      {
+        titre: 'Masquer le prix préférentiel',
+        texte: "Dans <b>Réglages → Application → Affichage</b>, une case masque le <b>prix préférentiel</b> sur les fiches d'œuvre&nbsp;: pratique quand l'écran est vu par le client devant vous. La fiche n'affiche alors que le prix courant. Le calculateur de prix des Outils, lui, continue de montrer les deux.",
+      },
+      {
+        titre: 'Les brouillons du site ne comptent plus',
+        texte: "À la comparaison avec le site, les produits <b>en brouillon</b> sont maintenant ignorés&nbsp;: une fiche que le site n'a pas publiée n'est pas une différence à corriger. La ligne du haut vous dit combien ont été écartés.",
+      },
+    ],
+  },
+  {
     version: '0.25.0',
     diapos: [
       {

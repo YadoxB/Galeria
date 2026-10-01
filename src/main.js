@@ -1472,6 +1472,13 @@ async function demarrerApplication() {
     } else {
       produits = await woo.listerProduits(creds);
     }
+    // Brouillons du site : écartés de la comparaison (demande des parents,
+    // 2026-09-30). Une fiche que le site n'a pas publiée n'est pas une
+    // différence à corriger, c'est un travail en cours de l'autre côté — elle
+    // encombrait la liste « Seulement sur le site ». On les compte pour le
+    // dire. (`status` vide = API publique, qui ne sert que du publié.)
+    const brouillonsIgnores = produits.filter((p) => p.status && p.status !== 'publish').length;
+    produits = produits.filter((p) => !p.status || p.status === 'publish');
     // La version anglaise passe par l'API PUBLIQUE : elle n'a pas besoin des
     // clés, et un échec de ce côté ne doit pas emporter toute la comparaison.
     let produitsEn = [];
@@ -1497,6 +1504,7 @@ async function demarrerApplication() {
         produits.filter((p) => p.status === 'publish' && p.permalink)
       ).remplies;
     } catch (err) { journaliserErreur('Adresses des œuvres sur le site', err); }
+    res.brouillons_ignores = brouillonsIgnores;
     res.portee = portee;
     res.duree_ms = Date.now() - debut;
     return res;

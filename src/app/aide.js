@@ -147,6 +147,10 @@ const ARTICLES = [
      <p>Exemple : cote 25 $/po linéaire, œuvre 24 × 36 (base 60) → préférentiel 1 500 $, courant 1 620 $.</p>
      <div class="astuce">Les deux prix apparaissent sur la fiche ; le prix retenu se remplit tant que tu ne l'écris pas à la main.</div>
      <div class="voir-aussi"><b>Voir aussi :</b> <a data-go="Pourquoi le prix ne se calcule pas automatiquement ?">Pourquoi le prix ne se calcule pas</a> · <a data-go="Configurer les cotes d'un artiste">Configurer les cotes</a></div>`),
+  A('prix', 'Masquer le prix préférentiel sur les fiches d\'œuvre', 'masquer cacher prix préférentiel fiche œuvre client réglages affichage discrétion',
+    `<p><b>Réglages → Application → Affichage</b> : la case « <b>Masquer le prix préférentiel sur les fiches d'œuvre</b> ». Utile quand l'écran est vu par le client qui est devant vous.</p>
+     <p>La fiche n'affiche alors que le <b>prix courant</b> — en lecture comme en modification, formule comprise. Le <b>calculateur de prix</b> (Outils) continue de montrer les deux : on y va exprès.</p>
+     <div class="astuce">Rien n'est perdu ni modifié : c'est seulement un affichage. Décochez la case pour revoir le tarif préférentiel.</div>`),
   A('prix', 'Configurer les cotes d\'un artiste', 'cote configurer ajouter médium taille unité prix tarif tous repli fallback',
     `<p>Les cotes se définissent sur la <b>fiche de l'artiste</b>, section <b>Conditions galerie</b>.</p>
      <ol><li><b>+ Ajouter une cote</b>.</li><li>Choisis le <b>médium</b> (précis ou « Tous »), la <b>taille</b> (précise ou « Toutes »), l'<b>unité</b> (linéaire / carré) et le <b>tarif</b> par unité.</li></ol>
@@ -277,6 +281,7 @@ const ARTICLES = [
      <ul><li><b>Reprendre la valeur du site →</b> remplace la valeur dans l'app. Pour le titre et la description, une fenêtre vous laisse d'abord <b>ajuster le texte avant de remplacer</b>.</li>
      <li><b>Garder la version de l'app</b> : la différence est mémorisée et ne revient plus, tant que le site ne change pas cette valeur.</li>
      <li>Les <b>filtres</b> et les cases à cocher permettent de <b>reprendre plusieurs valeurs en lot</b> : cochez (ou <b>Tout cocher</b>), puis <b>Reprendre la sélection</b>, en bas de l'écran.</li></ul>
+     <div class="astuce">Les <b>brouillons</b> du site sont ignorés : une fiche que le site n'a pas publiée n'est pas une différence à corriger. La ligne du haut dit combien ont été écartés.</div>
      <div class="attention">Galeria ne fait que <b>lire</b> le site ; aucune modification n'y est apportée.</div>`),
   A('web', 'Œuvres présentes d\'un seul côté', 'seulement app site créer fiche corriger sku doublon retirer vendre supprimer manquante onglet',
     `<p>Sur l'écran de synchronisation, deux onglets listent ce qui est <b>d'un seul côté</b> :</p>

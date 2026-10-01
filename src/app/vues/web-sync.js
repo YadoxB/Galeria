@@ -349,6 +349,8 @@ export async function rendreWebSync(contenu, params = {}) {
           : " — aucune catégorie du site à son nom : seules ses œuvres déjà reliées sont comparées")
         : ''}${dureeLecture(data.duree_ms)}${data.adresses_mises_a_jour
         ? ` · ${pluriel(data.adresses_mises_a_jour, 'adresse du site enregistrée', 'adresses du site enregistrées')}`
+        : ''}${data.brouillons_ignores
+        ? ` · ${pluriel(data.brouillons_ignores, 'brouillon du site ignoré', 'brouillons du site ignorés')}`
         : ''}</p>`;
 
     // Les types sans écart sont masqués (ils s'affichaient à zéro, grisés).

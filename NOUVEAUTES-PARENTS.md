@@ -11,6 +11,34 @@
 
 ---
 
+## Masquer le prix préférentiel sur les fiches d'œuvre
+
+Dans **Réglages → Application → Affichage**, une nouvelle case : **« Masquer le
+prix préférentiel sur les fiches d'œuvre »**. Pratique quand l'écran est vu par
+le client qui est devant vous.
+
+Cochée, la fiche d'une œuvre n'affiche plus que le **prix courant**, autant en
+lecture qu'en modification. Le **calculateur de prix** (Outils) continue, lui, de
+montrer les deux prix : on y va exprès, ce n'est pas un écran qu'on laisse
+ouvert devant quelqu'un.
+
+Rien n'est perdu ni changé dans vos données : décochez la case et tout revient.
+
+---
+
+## Les brouillons du site ne comptent plus dans la comparaison
+
+Quand vous comparez vos œuvres avec le site, les produits encore **en brouillon**
+sur le site sont maintenant **ignorés**. Une fiche que le site n'a pas publiée
+n'est pas une différence à corriger.
+
+Avant, un brouillon s'ajoutait à la liste « Seulement sur le site », et s'il
+portait le numéro d'inventaire d'une de vos œuvres, il faisait apparaître de
+faux écarts de titre ou de prix. La ligne du haut vous dit maintenant combien de
+brouillons ont été écartés.
+
+---
+
 ## Les œuvres réservées se voient sur la fiche de l'artiste
 
 Quand vous réserviez une toile, elle disparaissait des **Disponibles** sans
