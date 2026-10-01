@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.26.0] — 2026-10-01
+
 ### Ajouté
 
 - **Masquer le prix préférentiel sur les fiches d'œuvre** (demande des parents, 2026-09-30 —
