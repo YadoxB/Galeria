@@ -1,7 +1,7 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-09-28 (0.23.0, 0.24.0 et 0.25.0 publiées le même jour ou presque ; rien en attente de publication).
+> Date de cette sauvegarde : 2026-10-02 (cinq versions en douze jours, de la 0.23.0 à la 0.27.0 ; rien en attente de publication, aucun signalement ouvert).
 >
 > **Tableau de bord du chantier** (signalements des parents + étapes restantes) :
 > <https://claude.ai/artifact/2fBkxU3MEnkZwQHj5Vv2Kz>. Les signalements y arrivent seuls
@@ -12,28 +12,28 @@
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-09-28)
+## ▶ Reprise — par où commencer (préparé le 2026-10-02)
 
-**✅ Dernière version PUBLIÉE : v0.25.0 (2026-09-28).** `origin/master` = tag `v0.25.0` =
-`b7bfd3d`. Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
+**✅ Dernière version PUBLIÉE : v0.27.0 (2026-10-02).** `origin/master` = tag `v0.27.0` =
+`52c06f9`. Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
 **Rien n'est en attente de publication** : l'arbre de travail est propre, tout ce qui est
-fait est en ligne.
+fait est en ligne, et **aucun signalement n'est ouvert** au tableau de bord.
 
-Trois versions depuis la 0.22.0 :
+Cinq versions depuis la 0.22.0 :
 
 | Version | Date | Contenu |
 |---|---|---|
 | 0.23.0 | 2026-09-21 | Courriel de la facture artiste (brouillon Outlook, PDF joint) + son message modifiable dans les Réglages |
 | 0.24.0 | 2026-09-28 | N'importe quel numéro de taxes s'enregistre ; facture artiste au tarif préférentiel |
 | 0.25.0 | 2026-09-28 | Une œuvre réservée a sa place sur la fiche de l'artiste |
+| 0.26.0 | 2026-10-01 | Prix préférentiel masquable sur les fiches d'œuvre ; brouillons du site ignorés à la comparaison |
+| 0.27.0 | 2026-10-02 | Comparaison : confirmer avant, annuler après |
 
 **Ce qui attend quelqu'un d'autre que le code :**
 
 - ⚠ **L'ouverture réelle dans Outlook n'a jamais été essayée** (Outlook sans profil chez
   Dave) : le premier envoi chez les parents est le vrai test. Repli `.eml` si Outlook ne
   répond pas.
-- **Signalement du 2026-09-24, en attente d'un appel** : ils veulent discuter de l'affichage
-  du prix préférentiel sur la fiche d'œuvre. Ce n'est pas un défaut ; ne rien coder avant.
 - ⚠ **Non vérifié faute de clés** : que `wc/v3/products?sku=A,B,C` accepte la liste
   (comparaison d'un seul artiste). Une sonde de repli couvre le cas contraire.
 - **À faire chez les parents** : remplir « Dernier certificat délivré » pour chaque artiste
@@ -42,7 +42,59 @@ Trois versions depuis la 0.22.0 :
   leur biographie, à corriger à la main.
 
 Le libellé de l'étape Google du suivi est **confirmé tel quel** par Dave (2026-09-11) : ne
-plus le lui redemander.
+plus le lui redemander. Le signalement du 2026-09-24 (affichage du prix préférentiel) s'est
+refermé **sans appel** : leur note du 30 septembre disait ce qu'ils voulaient — un réglage
+pour le masquer, livré dans la 0.26.0.
+
+> ### ✅ PUBLIÉ DANS LA 0.27.0 — confirmer avant, annuler après (2026-10-02)
+>
+> Demande des parents relayée par Dave : « une option pour annuler quand on choisit une
+> option » dans les comparaisons. Dave a choisi **les deux filets**.
+>
+> **Avant** : reprendre un prix (tout champ sans fenêtre d'édition) et changer un statut
+> demandent confirmation, en montrant « Galeria : … / Site : … ». Le titre et la description
+> gardent leur **seule** fenêtre d'édition — elle sert déjà de confirmation, en demander deux
+> ferait cliquer sans lire.
+>
+> **Après** : un bandeau doré (`.sw-annuler`) annonce le dernier geste et offre **Annuler**,
+> qui remet la valeur d'avant **et** fait réapparaître la différence dans la liste. Vaut pour
+> une valeur seule, un **lot**, un **changement de statut**, sur les deux onglets. Pas de
+> minuterie : il tient jusqu'au geste suivant ou jusqu'à la prochaine comparaison.
+>
+> ⚠ **Un seul geste en mémoire** (`dernierGeste`, dans `web-sync.js` et
+> `web-sync-artistes.js`) : assez pour rattraper un clic de travers, sans promettre un
+> historique qu'on ne tiendrait pas.
+>
+> ⚠ **Pas de « Annuler » quand la citation reprise a été retirée de la biographie** (onglet
+> Artistes) : remettre la citation ne remettrait pas la biographie. Mieux vaut ne rien offrir
+> qu'un retour en arrière incomplet.
+>
+> ⚠ **`dernierGeste` doit être déclaré AVANT le premier `charger()`** de l'initialisation :
+> plus bas dans la fonction, il serait encore dans sa zone morte (`let`) et la vue planterait
+> au chargement. Le piège s'est présenté dans `web-sync-artistes.js`.
+>
+> Bancs : 19 contrôles côté Œuvres (écarts de prix et de statut provoqués exprès, lot de
+> 38 valeurs annulé d'un coup), 9 côté Fiches d'artistes.
+>
+> ### ✅ PUBLIÉ DANS LA 0.26.0 — prix préférentiel masquable, brouillons ignorés (2026-10-01)
+>
+> Deux demandes des parents (2026-09-30).
+>
+> **Masquer le prix préférentiel** : Réglages → Application → Affichage
+> (`affichage.masquer_prix_preferentiel`). Un écran de galerie est souvent vu par le client
+> qui est devant. Coché, la fiche d'œuvre n'affiche que le prix courant — en lecture, dans le
+> bloc de prix suggéré, formule comprise, **et sans la mention « (cote courante = préf + 2
+> $) »** qui laisserait le déduire de tête. Le calculateur des Outils le montre toujours : on
+> y va exprès. Portée choisie par Dave parmi trois options.
+>
+> **Brouillons du site ignorés** : seuls les produits `status === 'publish'` sont comparés.
+> Un brouillon encombrait « Seulement sur le site » et, s'il portait le numéro d'inventaire
+> d'une œuvre, la « reliait » en inventant des écarts. La ligne d'information dit combien ont
+> été écartés.
+>
+> ⚠ **Banc utile** : la boutique publique ne sert jamais de brouillon. Le faux serveur relaie
+> le vrai site et **injecte** deux produits en brouillon — le seul moyen d'en avoir un à
+> comparer.
 
 > ### ✅ PUBLIÉ DANS LA 0.25.0 — les œuvres réservées sur la fiche d'artiste (2026-09-28)
 >
