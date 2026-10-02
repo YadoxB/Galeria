@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.27.0] — 2026-10-02
+
 ### Ajouté
 
 - **Se tromper n'est plus grave dans la comparaison avec le site** (demande des parents,
