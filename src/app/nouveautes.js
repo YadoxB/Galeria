@@ -17,6 +17,18 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
+    // ⚠ Numéro à ajuster si la prochaine version publiée n'est pas la 0.27.0 :
+    // `npm run release` refuse de publier si elle ne correspond pas à
+    // package.json.
+    version: '0.27.0',
+    diapos: [
+      {
+        titre: 'Annuler, dans la comparaison avec le site',
+        texte: "Avant de remplacer une valeur, Galeria vous montre <b>ce qui remplace quoi</b> et attend votre accord. Et juste après, un bandeau doré propose <b>Annuler</b>&nbsp;: la valeur d'avant revient, et la différence réapparaît dans la liste. Vrai aussi pour une reprise <b>en lot</b> et pour un changement de statut.",
+      },
+    ],
+  },
+  {
     version: '0.26.0',
     diapos: [
       {

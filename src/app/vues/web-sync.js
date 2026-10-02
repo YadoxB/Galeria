@@ -273,7 +273,45 @@ export async function rendreWebSync(contenu, params = {}) {
   let nature = 'tous'; // 'tous' | 'manquant' | 'different'
   const selection = new Set(); // clés `${oeuvreId}:${champ}` (champs de copie only)
 
+  // Le dernier geste, et de quoi le défaire (demande des parents, 2026-10-02).
+  // Reprendre une valeur du site écrasait celle de Galeria sans filet : on
+  // garde la valeur d'avant et une barre propose de la remettre, tant qu'on
+  // n'a pas fait autre chose. Un seul geste en mémoire — assez pour rattraper
+  // un clic de travers, sans promettre un historique qu'on ne tiendrait pas.
+  let dernierGeste = null;
+
   const cle = (oeuvreId, champ) => `${oeuvreId}:${champ}`;
+  // Valeur montrée dans la fenêtre de confirmation : courte, et « (vide) »
+  // plutôt qu'un blanc qui ne dit pas s'il y a quelque chose.
+  const apercuValeur = (v) => {
+    const s = v == null ? '' : String(v).trim();
+    if (!s) return '(vide)';
+    return s.length > 140 ? `${s.slice(0, 140)}…` : s;
+  };
+  const nomFiche = (l) => `« ${(l && l.titre) || 'sans titre'} »`;
+
+  function barreAnnulerHtml() {
+    if (!dernierGeste) return '';
+    return `<div class="sw-annuler">
+      <span class="sw-annuler-txt">${ech(dernierGeste.libelle)}</span>
+      <button type="button" class="btn-lien" id="wsync-annuler">Annuler</button>
+    </div>`;
+  }
+
+  async function annulerDernierGeste() {
+    const g = dernierGeste;
+    if (!g) return;
+    dernierGeste = null;
+    try {
+      await g.retablir();
+    } catch (err) {
+      dernierGeste = g;            // raté : la barre reste, le geste aussi
+      await alerter({ type: 'error', title: 'Annulation impossible', message: nettoyerErreur(err) });
+      return;
+    }
+    if (g.remettre) g.remettre();  // la différence réapparaît dans la liste
+    dessiner();
+  }
   const correspond = (...champs) => {
     const q = sansAccents(recherche.trim());
     return !q || sansAccents(champs.filter(Boolean).join(' ')).includes(q);
@@ -289,6 +327,7 @@ export async function rendreWebSync(contenu, params = {}) {
 
   async function charger() {
     const moi = ++jeton;
+    dernierGeste = null;           // une nouvelle lecture referme le filet
     btnComparer.disabled = true;
     const avecAnglais = !!(caseAnglais && caseAnglais.checked);
     const quoi = portee ? `des produits de ${nomPortee()}` : 'de la boutique';
@@ -437,7 +476,8 @@ export async function rendreWebSync(contenu, params = {}) {
     // et la position du curseur, sans quoi chaque lettre tapée le ferait perdre.
     const rechActif = document.activeElement && document.activeElement.id === 'wsync-rech';
     const curseur = rechActif ? document.activeElement.selectionStart : null;
-    corps.innerHTML = infoHtml + tuilesHtml(onglets, ongletActif) + `<div class="wsync-panneau">${panneauHtml}</div>`;
+    corps.innerHTML = infoHtml + barreAnnulerHtml() + tuilesHtml(onglets, ongletActif) + `<div class="wsync-panneau">${panneauHtml}</div>`;
+    corps.querySelector('#wsync-annuler')?.addEventListener('click', annulerDernierGeste);
     if (rechActif) {
       const r = corps.querySelector('#wsync-rech');
       r.focus();
@@ -705,28 +745,60 @@ export async function rendreWebSync(contenu, params = {}) {
     } catch (err) { await alerter({ type: 'error', title: 'Échec', message: nettoyerErreur(err) }); }
   }
 
+  // Retire la différence de la liste et REND l'objet retiré : il sert à la
+  // remettre si on annule.
   function retirerChamp(oeuvreId, champ) {
     const l = dataCourant.lignes.find((x) => x.oeuvre_id === oeuvreId);
+    const retire = l ? l.champs.find((c) => c.champ === champ) : null;
     if (l) l.champs = l.champs.filter((c) => c.champ !== champ);
     selection.delete(cle(oeuvreId, champ));
+    return retire || null;
+  }
+
+  function remettreChamp(oeuvreId, champObj) {
+    if (!champObj) return;
+    const l = dataCourant.lignes.find((x) => x.oeuvre_id === oeuvreId);
+    if (l && !l.champs.some((c) => c.champ === champObj.champ)) l.champs.push(champObj);
   }
 
   async function importerUn(btn, oeuvreId, champ) {
     const l = dataCourant.lignes.find((x) => x.oeuvre_id === oeuvreId);
     const c = l?.champs.find((x) => x.champ === champ);
     if (!c) return;
-    // Titre et description : édition possible avant remplacement. Prix : direct.
+    // Titre et description : la fenêtre d'édition sert déjà de confirmation
+    // (on y relit le texte, et « Annuler » y renonce). Les autres champs
+    // partaient sans rien demander : ils ont maintenant leur fenêtre, qui
+    // montre ce qui remplace quoi (demande des parents, 2026-10-02).
     let valeur = c.site;
     if (champ === 'titre' || champ === 'description') {
       const edite = await editerTexteImport(c.libelle || champ, c.site == null ? '' : String(c.site));
       if (edite == null) return; // annulé
       valeur = edite;
+    } else {
+      const rep = await confirmer({
+        type: 'question',
+        title: 'Reprendre la valeur du site ?',
+        message: [
+          `${c.libelle || champ} de ${nomFiche(l)}`,
+          `Galeria : ${apercuValeur(c.app)}`,
+          `Site : ${apercuValeur(c.site)}`,
+        ].join('\n'),
+        detail: "La valeur de Galeria sera remplacée ; le site n'est pas touché. Vous pourrez annuler juste après.",
+        buttons: ['Reprendre', 'Annuler'], defaultId: 0, cancelId: 1,
+      });
+      if (rep !== 0) return;
     }
+    const ancienne = c.app;
     btn.disabled = true;
     btn.textContent = 'Import…';
     try {
       await window.api.webImporterChamp(oeuvreId, champ, valeur);
-      retirerChamp(oeuvreId, champ);
+      const retire = retirerChamp(oeuvreId, champ);
+      dernierGeste = {
+        libelle: `${c.libelle || champ} de ${nomFiche(l)} : valeur du site reprise.`,
+        retablir: () => window.api.webImporterChamp(oeuvreId, champ, ancienne),
+        remettre: () => remettreChamp(oeuvreId, retire),
+      };
       dessiner();
     } catch (err) {
       btn.disabled = false;
@@ -743,7 +815,7 @@ export async function rendreWebSync(contenu, params = {}) {
       const oeuvreId = Number(idStr);
       const l = dataCourant.lignes.find((x) => x.oeuvre_id === oeuvreId);
       const c = l?.champs.find((x) => x.champ === champ);
-      if (c) items.push({ oeuvreId, champ, valeur: c.site });
+      if (c) items.push({ oeuvreId, champ, valeur: c.site, ancienne: c.app });
     }
     if (!items.length) return;
     const rep = await confirmer({
@@ -755,13 +827,29 @@ export async function rendreWebSync(contenu, params = {}) {
     if (rep !== 0) return;
     let res;
     try {
-      res = await window.api.webImporterLot(items);
+      // `ancienne` reste ici : le processus principal ne reçoit que ce qu'il
+      // doit écrire.
+      res = await window.api.webImporterLot(items.map(({ oeuvreId, champ, valeur }) => ({ oeuvreId, champ, valeur })));
     } catch (err) {
       await alerter({ type: 'error', title: 'Import échoué', message: nettoyerErreur(err) });
       return;
     }
     const enErreur = new Set((res.erreurs || []).map((e) => cle(e.oeuvreId, e.champ)));
-    items.forEach((it) => { if (!enErreur.has(cle(it.oeuvreId, it.champ))) retirerChamp(it.oeuvreId, it.champ); });
+    // De quoi tout remettre : les valeurs d'avant, et les différences
+    // elles-mêmes pour qu'elles réapparaissent dans la liste.
+    const defaits = [];
+    items.forEach((it) => {
+      if (enErreur.has(cle(it.oeuvreId, it.champ))) return;
+      const retire = retirerChamp(it.oeuvreId, it.champ);
+      defaits.push({ oeuvreId: it.oeuvreId, champ: it.champ, valeur: it.ancienne, retire });
+    });
+    if (defaits.length) {
+      dernierGeste = {
+        libelle: `${pluriel(defaits.length, 'valeur reprise', 'valeurs reprises')} du site.`,
+        retablir: () => window.api.webImporterLot(defaits.map(({ oeuvreId, champ, valeur }) => ({ oeuvreId, champ, valeur }))),
+        remettre: () => defaits.forEach((d) => remettreChamp(d.oeuvreId, d.retire)),
+      };
+    }
     dessiner();
     if (res.erreurs && res.erreurs.length) {
       await alerter({ type: 'warning', title: 'Import partiel', message: `${res.reussis}/${res.total} importée(s). ${res.erreurs.length} en erreur.` });
@@ -775,13 +863,33 @@ export async function rendreWebSync(contenu, params = {}) {
     const btn = carte.querySelector('.wsync-statut-appliquer');
     if (!select) return;
     const statut = select.value;
+    const l = dataCourant.lignes.find((x) => x.oeuvre_id === oeuvreId);
+    const ancienStatut = l ? (l.statut_app || 'disponible') : null;
+    const ancienneRecon = l ? l.statut_reconcilier : null;
+    const libStatut = (s) => (STATUTS[s] ? STATUTS[s].libelle : s);
+    const rep = await confirmer({
+      type: 'question',
+      title: 'Changer le statut dans Galeria ?',
+      message: [
+        `${nomFiche(l)}`,
+        `Galeria : ${libStatut(ancienStatut)}`,
+        `Nouveau statut : ${libStatut(statut)}`,
+      ].join('\n'),
+      detail: "L'étiquette de statut change dans Galeria ; aucune vente n'est enregistrée et le site n'est pas touché. Vous pourrez annuler juste après.",
+      buttons: ['Changer le statut', 'Annuler'], defaultId: 0, cancelId: 1,
+    });
+    if (rep !== 0) return;
     btn.disabled = true;
     const libelle = btn.textContent;
     btn.textContent = 'Application…';
     try {
       await window.api.webDefinirStatut(oeuvreId, statut);
-      const l = dataCourant.lignes.find((x) => x.oeuvre_id === oeuvreId);
       if (l) { l.statut_app = statut; l.statut_reconcilier = null; }
+      dernierGeste = {
+        libelle: `Statut de ${nomFiche(l)} mis à « ${libStatut(statut)} ».`,
+        retablir: () => window.api.webDefinirStatut(oeuvreId, ancienStatut),
+        remettre: () => { if (l) { l.statut_app = ancienStatut; l.statut_reconcilier = ancienneRecon; } },
+      };
       dessiner();
     } catch (err) {
       btn.disabled = false;

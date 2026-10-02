@@ -282,6 +282,10 @@ const ARTICLES = [
      <li><b>Garder la version de l'app</b> : la différence est mémorisée et ne revient plus, tant que le site ne change pas cette valeur.</li>
      <li>Les <b>filtres</b> et les cases à cocher permettent de <b>reprendre plusieurs valeurs en lot</b> : cochez (ou <b>Tout cocher</b>), puis <b>Reprendre la sélection</b>, en bas de l'écran.</li></ul>
      <div class="astuce">Les <b>brouillons</b> du site sont ignorés : une fiche que le site n'a pas publiée n'est pas une différence à corriger. La ligne du haut dit combien ont été écartés.</div>
+     <h4>Se tromper n'est pas grave</h4>
+     <p>Avant de remplacer quoi que ce soit, Galeria vous montre <b>ce qui remplace quoi</b> et attend votre accord (pour un titre ou une description, c'est la fenêtre où vous pouvez relire et ajuster le texte).</p>
+     <p>Une fois la valeur reprise, un bandeau doré apparaît en haut : « <b>… valeur du site reprise. Annuler</b> ». Un clic sur <b>Annuler</b> remet ce que Galeria avait avant, et la différence revient dans la liste. Le bandeau tient jusqu'à votre geste suivant ou jusqu'à la prochaine comparaison.</p>
+     <div class="astuce">Le bandeau ne garde que <b>le dernier geste</b> — y compris une reprise en lot (« 12 valeurs reprises du site. Annuler ») ou un changement de statut.</div>
      <div class="attention">Galeria ne fait que <b>lire</b> le site ; aucune modification n'y est apportée.</div>`),
   A('web', 'Œuvres présentes d\'un seul côté', 'seulement app site créer fiche corriger sku doublon retirer vendre supprimer manquante onglet',
     `<p>Sur l'écran de synchronisation, deux onglets listent ce qui est <b>d'un seul côté</b> :</p>

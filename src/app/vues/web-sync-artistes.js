@@ -74,6 +74,13 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
   };
 
   let dataCourant = null;
+  // Même filet que l'onglet Œuvres (parents, 2026-10-02) : le dernier geste
+  // reste défaisable tant qu'on n'a rien fait d'autre. Déclaré ICI, avant le
+  // premier `charger()` de l'initialisation — plus bas, il serait encore dans
+  // sa zone morte. Exception assumée : une citation retirée de la biographie
+  // au passage — la remettre ne remettrait pas la biographie, donc on n'offre
+  // rien plutôt que de promettre un retour en arrière incomplet.
+  let dernierGeste = null;
   let ongletActif = 'diff';
   let afficherReglees = false;
   const filtres = new Set(TYPES_DIFF.map((t) => t.cle));
@@ -140,6 +147,7 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
   }
 
   async function charger() {
+    dernierGeste = null;           // une nouvelle lecture referme le filet
     btnComparer.disabled = true;
     const avecAnglais = !!(caseAnglais && caseAnglais.checked);
     corps.innerHTML = `<p class="chargement">⏳ Lecture des fiches d'artistes du site${avecAnglais ? ' (français puis anglais)' : ''}…</p>`;
@@ -237,7 +245,8 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
     // et la position du curseur.
     const rechActif = document.activeElement && document.activeElement.id === 'wsync-rech';
     const curseur = rechActif ? document.activeElement.selectionStart : null;
-    corps.innerHTML = infoHtml + tuilesHtml(onglets, ongletActif) + `<div class="wsync-panneau">${panneauHtml}</div>`;
+    corps.innerHTML = infoHtml + barreAnnulerHtml() + tuilesHtml(onglets, ongletActif) + `<div class="wsync-panneau">${panneauHtml}</div>`;
+    corps.querySelector('#wsync-annuler')?.addEventListener('click', annulerDernierGeste);
     if (rechActif) {
       const rr = corps.querySelector('#wsync-rech');
       if (rr) { rr.focus(); if (curseur != null) rr.setSelectionRange(curseur, curseur); }
@@ -355,25 +364,66 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
       b.addEventListener('click', () => delierArtiste(Number(b.dataset.artiste))));
   }
 
+  const nomFiche = (l) => `« ${(l && l.nom) || 'sans nom'} »`;
+
+  function barreAnnulerHtml() {
+    if (!dernierGeste) return '';
+    return `<div class="sw-annuler">
+      <span class="sw-annuler-txt">${ech(dernierGeste.libelle)}</span>
+      <button type="button" class="btn-lien" id="wsync-annuler">Annuler</button>
+    </div>`;
+  }
+
+  async function annulerDernierGeste() {
+    const g = dernierGeste;
+    if (!g) return;
+    dernierGeste = null;
+    try {
+      await g.retablir();
+    } catch (err) {
+      dernierGeste = g;
+      await alerter({ type: 'error', title: 'Annulation impossible', message: nettoyerErreur(err) });
+      return;
+    }
+    if (g.remettre) g.remettre();
+    dessiner();
+  }
+
+  function remettreChamp(artisteId, champObjet) {
+    if (!champObjet) return;
+    const l = dataCourant.lignes.find((x) => x.artiste_id === artisteId);
+    if (l && !l.champs.some((c) => c.champ === champObjet.champ)) l.champs.push(champObjet);
+  }
+
   const champObj = (artisteId, champ) => {
     const l = dataCourant.lignes.find((x) => x.artiste_id === artisteId);
     return { l, c: l ? l.champs.find((x) => x.champ === champ) : null };
   };
   const retirerChamp = (artisteId, champ) => {
     const l = dataCourant.lignes.find((x) => x.artiste_id === artisteId);
+    const retire = l ? l.champs.find((c) => c.champ === champ) : null;
     if (l) l.champs = l.champs.filter((c) => c.champ !== champ);
+    return retire || null;
   };
 
   async function importerTexte(btn, artisteId, champ) {
-    const { c } = champObj(artisteId, champ);
+    const { l, c } = champObj(artisteId, champ);
     if (!c) return;
+    const ancienne = c.app;
     // Édition avant remplacement : on ouvre le texte du site, modifiable.
     const edite = await editerTexteImport(c.libelle || champ, c.site);
     if (edite == null) return; // annulé
     btn.disabled = true; btn.textContent = 'Import…';
     try {
       const r = await window.api.webImporterChampArtiste(artisteId, champ, edite);
-      retirerChamp(artisteId, champ);
+      const retire = retirerChamp(artisteId, champ);
+      // Pas de filet quand la biographie a été nettoyée au passage : on ne
+      // saurait pas la remettre (voir le commentaire de `dernierGeste`).
+      dernierGeste = (r && r.bio_nettoyee) ? null : {
+        libelle: `${c.libelle || champ} de ${nomFiche(l)} : valeur du site reprise.`,
+        retablir: () => window.api.webImporterChampArtiste(artisteId, champ, ancienne),
+        remettre: () => remettreChamp(artisteId, retire),
+      };
       // La citation était recopiée dans la biographie : Galeria l'en a
       // retirée. On le dit, et on relit — la biographie affichée a changé.
       if (r && r.bio_nettoyee) {
@@ -452,7 +502,7 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
       const [idStr, champ] = k.split(':');
       const artisteId = Number(idStr);
       const { c } = champObj(artisteId, champ);
-      if (c) items.push({ artisteId, champ, valeur: c.site, libelle: c.libelle, manquant: !!c.manquant });
+      if (c) items.push({ artisteId, champ, valeur: c.site, ancienne: c.app, libelle: c.libelle, manquant: !!c.manquant });
     }
     if (!items.length) return;
     const nbManquants = items.filter((i) => i.manquant).length;
@@ -473,14 +523,24 @@ export async function rendreWebSyncArtistes(contenu, params = {}) {
     let reussis = 0;
     let biosNettoyees = 0;
     const erreurs = [];
+    const defaits = [];
     for (const it of items) {
       try {
         const r = await window.api.webImporterChampArtiste(it.artisteId, it.champ, it.valeur);
         if (r && r.bio_nettoyee) biosNettoyees += 1;
-        retirerChamp(it.artisteId, it.champ);
+        const retire = retirerChamp(it.artisteId, it.champ);
+        defaits.push({ artisteId: it.artisteId, champ: it.champ, valeur: it.ancienne, retire });
         reussis += 1;
       } catch (err) { erreurs.push(`${it.libelle} : ${nettoyerErreur(err)}`); }
     }
+    // Une biographie nettoyée en chemin : pas de retour en arrière promis.
+    dernierGeste = (biosNettoyees || !defaits.length) ? null : {
+      libelle: `${pluriel(defaits.length, 'valeur reprise', 'valeurs reprises')} du site.`,
+      retablir: async () => {
+        for (const d of defaits) await window.api.webImporterChampArtiste(d.artisteId, d.champ, d.valeur);
+      },
+      remettre: () => defaits.forEach((d) => remettreChamp(d.artisteId, d.retire)),
+    };
     selection.clear();
     // Des biographies ont changé (citation retirée) : on relit plutôt que
     // d'afficher des écarts qui ne sont plus vrais.

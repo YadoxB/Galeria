@@ -11,6 +11,31 @@
 
 ---
 
+## Annuler, dans la comparaison avec le site
+
+Deux filets de sécurité quand vous reprenez des valeurs du site :
+
+**Avant.** Reprendre un prix, ou changer un statut, ouvre maintenant une petite
+fenêtre qui montre **ce qui remplace quoi** : « Galeria : 1 260 $ / Site :
+1 200 $ ». Vous dites oui ou non. (Pour un titre ou une description, c'est la
+fenêtre où vous relisez le texte qui joue ce rôle, comme avant.)
+
+**Après.** Une fois la valeur reprise, un bandeau doré apparaît en haut de
+l'écran : « Prix de « … » : valeur du site reprise. **Annuler** ». Un clic, et
+Galeria remet ce qu'elle avait avant ; la différence revient dans la liste.
+
+Ça vaut aussi pour une reprise **en lot** (« 12 valeurs reprises du site ») et
+pour un **changement de statut**. Le bandeau reste à l'écran jusqu'à votre geste
+suivant, ou jusqu'à la prochaine comparaison — il n'y a pas de minuterie à
+battre de vitesse.
+
+Même chose dans l'onglet **Fiches d'artistes**. Une seule exception : si la
+citation que vous reprenez se trouvait aussi dans la biographie, Galeria l'en
+retire au passage — et là, elle ne propose pas d'annuler, parce qu'elle ne
+saurait pas remettre la biographie exactement comme elle était.
+
+---
+
 ## Masquer le prix préférentiel sur les fiches d'œuvre
 
 Dans **Réglages → Application → Affichage**, une nouvelle case : **« Masquer le

@@ -10,6 +10,30 @@ identifiants.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Se tromper n'est plus grave dans la comparaison avec le site** (demande des parents,
+  2026-10-02 : « une option pour annuler quand on choisit une option »). Dave a demandé les
+  deux filets.
+  - **Avant** : reprendre un prix (ou tout champ sans fenêtre d'édition) et changer un statut
+    demandent maintenant confirmation, en montrant **ce qui remplace quoi** — « Galeria : …
+    / Site : … ». Le titre et la description avaient déjà leur fenêtre d'édition, qui sert
+    de confirmation : rien n'y est ajouté, pour ne pas demander deux fois.
+  - **Après** : un bandeau doré annonce le dernier geste et offre **Annuler**, qui remet la
+    valeur d'avant et fait réapparaître la différence dans la liste. Vaut pour une valeur
+    seule, une **reprise en lot** (« 12 valeurs reprises du site ») et un **changement de
+    statut**. Il tient jusqu'au geste suivant ou jusqu'à la prochaine comparaison.
+  - Même filet sur l'onglet **Fiches d'artistes**. ⚠ Une exception assumée : quand la
+    citation reprise était aussi dans la biographie, Galeria l'en retire — remettre la
+    citation ne remettrait pas la biographie, donc aucun « Annuler » n'est offert dans ce
+    cas plutôt que de promettre un retour en arrière incomplet.
+  - Un seul geste en mémoire : assez pour rattraper un clic de travers, sans promettre un
+    historique qu'on ne tiendrait pas.
+  - Vérifié dans l'application réelle sur une copie de la base : 19 contrôles côté Œuvres
+    (faux serveur relayant la vraie boutique, écarts de prix et de statut provoqués exprès —
+    refus sans effet, reprise puis annulation, lot de 38 valeurs annulé, barre effacée par
+    une nouvelle comparaison) et 9 côté Fiches d'artistes.
+
 ## [0.26.0] — 2026-10-01
 
 ### Ajouté
