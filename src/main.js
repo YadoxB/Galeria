@@ -1406,6 +1406,9 @@ async function demarrerApplication() {
   ipcMain.handle('suivi:donnees', () => ({
     preparation: oeuvresAPreparer(),
     ventes: ventesSuivi(),
+    // Marquées vendues, vente pas encore saisie : sans cette liste, elles
+    // sortaient de « À préparer » sans entrer nulle part (parents, 2026-10-12).
+    a_enregistrer: require('./db/requetes').oeuvresVenduesSansVente(),
   }));
   ipcMain.handle('ia:copier-pour-chatgpt', (_e, oeuvreId) => preparerCopiePourChatGPT(oeuvreId));
   ipcMain.handle('ia:copier-pour-chatgpt-inline', (_e, params) => preparerCopiePourChatGPTInline(params || {}));

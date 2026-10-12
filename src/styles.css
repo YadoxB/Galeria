@@ -5523,6 +5523,10 @@ details.bloc.pliable > .bloc-corps {
 .suivi-groupe-titre .ico-g svg { width: 15px; height: 15px; }
 .suivi-groupe-titre .ic-prep { background: #E3E9F0; color: var(--gallery-navy); }
 .suivi-groupe-titre .ic-cours { background: #F4E3D8; color: var(--terracotta); }
+/* « Ventes à enregistrer » : un oubli à rattraper, pas une étape à cocher —
+   d'où le doré des remarques plutôt que le bleu de la préparation. */
+.suivi-groupe-titre .ic-saisir { background: rgba(201, 154, 61, 0.16); color: #8a6d15; }
+.suivi-ligne .suivi-enregistrer { white-space: nowrap; }
 .suivi-groupe-titre .nb { background: var(--cloud); color: var(--slate); border-radius: 999px; padding: 1px 10px; font-size: 12px; font-weight: 600; }
 
 /* Cartes liste */

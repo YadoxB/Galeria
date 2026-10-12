@@ -457,6 +457,12 @@ export async function rendreOeuvreFiche(contenu, params) {
           ${o.statut !== 'vendu' && o.statut !== 'vendue' && o.statut !== 'reserve'
             ? `<button class="btn-action btn-principal" id="btn-vendre">Vendre</button>`
             : ''}
+          <!-- Marquée vendue mais aucune vente saisie : c'est ici qu'on la
+               rattrape (parents, 2026-10-12). Le bouton disparaît dès que la
+               vente existe — « Voir la vente » prend alors le relais. -->
+          ${(o.statut === 'vendu' || o.statut === 'vendue') && !venteLiee && !o.archive
+            ? `<button class="btn-action btn-principal" id="btn-enregistrer-vente">Enregistrer la vente</button>`
+            : ''}
         </div>
       </div>
     `;
@@ -775,6 +781,12 @@ export async function rendreOeuvreFiche(contenu, params) {
     const btnVendre = contenu.querySelector('#btn-vendre');
     if (btnVendre) {
       btnVendre.addEventListener('click', () =>
+        naviguer('vente-fiche', { nouveau: true, oeuvre_id: o.id })
+      );
+    }
+    const btnEnregistrerVente = contenu.querySelector('#btn-enregistrer-vente');
+    if (btnEnregistrerVente) {
+      btnEnregistrerVente.addEventListener('click', () =>
         naviguer('vente-fiche', { nouveau: true, oeuvre_id: o.id })
       );
     }

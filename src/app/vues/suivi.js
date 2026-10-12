@@ -167,6 +167,8 @@ export async function rendreSuivi(contenu) {
     return sansAccents(champs.filter(Boolean).join(' ')).includes(filtre);
   }
   const oeuvresPrep = () => data.preparation.filter((o) => ligneMatch([o.titre, o.artiste_nom, o.numero_inventaire]));
+  // Marquées vendues, vente pas encore saisie (parents, 2026-10-12).
+  const aEnregistrer = () => (data.a_enregistrer || []).filter((o) => ligneMatch([o.titre, o.artiste_nom, o.numero_inventaire]));
   const ventesEnCours = () => data.ventes.filter((v) => !venteComplete(v) && ligneMatch([v.oeuvre_titre, v.artiste_nom, v.client_nom, v.numero_facture, v.numero_inventaire]));
   const ventesCompletees = () => data.ventes.filter((v) => venteComplete(v) && ligneMatch([v.oeuvre_titre, v.artiste_nom, v.client_nom, v.numero_facture, v.numero_inventaire]));
 
@@ -187,6 +189,27 @@ export async function rendreSuivi(contenu) {
         <div class="suivi-stepper">${stepperHTML(PREP_STEPS, (cle) => etatPrep(o, cle), 'oeuvre', o.id)}</div>
       </div>`;
   }
+  // Une œuvre marquée vendue dont la vente reste à saisir : pas d'étapes à
+  // cocher, un seul geste qui compte — enregistrer la vente.
+  function ligneAEnregistrer(o) {
+    return `
+      <div class="suivi-ligne prep">
+        <div class="suivi-vignette suivi-ouvrir" data-open="oeuvre" data-open-id="${o.id}">
+          ${o.image_path ? `<img src="${urlPhoto(o.image_path)}" loading="lazy" alt="">` : '<span>&#9635;</span>'}
+        </div>
+        <div class="suivi-col-titre suivi-ouvrir" data-open="oeuvre" data-open-id="${o.id}">
+          <p class="o">${ech(o.titre)}</p><p class="a">${ech(o.artiste_nom || '')}</p>
+        </div>
+        <div class="suivi-col-client">
+          <p class="c">${ech(o.numero_inventaire || '—')}</p>
+          <p class="f">Marquée vendue${o.vendue_le ? ` le ${formaterDate(String(o.vendue_le).slice(0, 10))}` : ''}</p>
+        </div>
+        <div class="suivi-col-fin">
+          <button type="button" class="btn-action btn-principal suivi-enregistrer" data-oeuvre="${o.id}">Enregistrer la vente</button>
+        </div>
+      </div>`;
+  }
+
   function ligneVente(v) {
     // La prochaine étape parcourt le client PUIS la galerie : une vente livrée
     // dont l'artiste n'est pas payé n'est pas terminée.
@@ -220,9 +243,11 @@ export async function rendreSuivi(contenu) {
 
   function peindre() {
     const prep = oeuvresPrep();
+    const saisir = aEnregistrer();
     const cours = ventesEnCours();
     const comp = ventesCompletees();
     const totalPrep = data.preparation.length;
+    const totalSaisir = (data.a_enregistrer || []).length;
     const totalCours = data.ventes.filter((v) => !venteComplete(v)).length;
     const totalComp = data.ventes.filter(venteComplete).length;
 
@@ -236,6 +261,7 @@ export async function rendreSuivi(contenu) {
           ${tuile('sage', ICO.sage, data.preparation.filter((o) => !o.sage_cree).length, 'À créer dans Sage')}
           ${tuile('stock', ICO.stock, data.preparation.filter((o) => !o.stock_fait).length, 'À mettre en stock')}
           ${tuile('site', ICO.site, data.preparation.filter((o) => !o.site_publie).length, 'À publier au site')}
+          ${tuile('encaisser', ICO.paiement, totalSaisir, 'Ventes à enregistrer')}
         </div>
       </div>
       <div class="suivi-files-groupe post">
@@ -256,16 +282,23 @@ export async function rendreSuivi(contenu) {
         </div>
       </div>`;
 
-    btActif.textContent = `Actif (${totalPrep + totalCours})`;
+    btActif.textContent = `Actif (${totalPrep + totalSaisir + totalCours})`;
     btComp.textContent = `Complétées (${totalComp})`;
     btActif.classList.toggle('actif', onglet === 'actif');
     btComp.classList.toggle('actif', onglet === 'comp');
 
     if (onglet === 'actif') {
-      if (prep.length + cours.length === 0) {
+      if (prep.length + saisir.length + cours.length === 0) {
         elCorps.innerHTML = carte(vide(filtre ? 'Aucun résultat actif pour cette recherche.' : 'Rien à préparer ni à expédier — tout est à jour. 🎉'));
       } else {
         let html = '';
+        // En tête : une vente pas encore saisie bloque tout le reste du suivi.
+        if (saisir.length) {
+          html += `<div class="suivi-groupe">
+            <div class="suivi-groupe-titre"><span class="ico-g ic-saisir">${ICO.paiement}</span><span>Ventes à enregistrer</span><span class="nb">${saisir.length}</span></div>
+            ${carte(saisir.map(ligneAEnregistrer).join(''))}
+          </div>`;
+        }
         if (prep.length) {
           html += `<div class="suivi-groupe">
             <div class="suivi-groupe-titre"><span class="ico-g ic-prep">${ICO.sage}</span><span>À préparer</span><span class="nb">${prep.length}</span></div>
@@ -351,6 +384,11 @@ export async function rendreSuivi(contenu) {
 
   // ----- Branchement des interactions -----
   function brancher() {
+    elCorps.querySelectorAll('.suivi-enregistrer').forEach((b) => b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      naviguer('vente-fiche', { nouveau: true, oeuvre_id: Number(b.dataset.oeuvre) });
+    }));
+
     elCorps.querySelectorAll('.suivi-ouvrir').forEach((el) => el.addEventListener('click', () => {
       const type = el.dataset.open;
       const id = Number(el.dataset.openId);

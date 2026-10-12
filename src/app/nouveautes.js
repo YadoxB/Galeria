@@ -17,6 +17,18 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
+    // ⚠ Numéro à ajuster si la prochaine version publiée n'est pas la 0.28.0 :
+    // `npm run release` refuse de publier si elle ne correspond pas à
+    // package.json.
+    version: '0.28.0',
+    diapos: [
+      {
+        titre: 'Marquer vendue maintenant, enregistrer la vente plus tard',
+        texte: "Vous pouvez mettre une œuvre à <b>vendue</b> tout de suite et saisir la vente quand vous avez le temps&nbsp;: plus besoin de la remettre « disponible » avant. Elle vous attend dans <b>Suivi → Ventes à enregistrer</b>, avec un bouton qui ouvre le formulaire, l'œuvre déjà choisie. Impossible pour autant d'enregistrer deux fois la même vente.",
+      },
+    ],
+  },
+  {
     version: '0.27.0',
     diapos: [
       {

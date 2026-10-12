@@ -69,6 +69,11 @@ CREATE TABLE IF NOT EXISTS oeuvres (
   frais_production       REAL,           -- reproductions : frais récupérés par la galerie avant le partage
   statut                 TEXT NOT NULL DEFAULT 'disponible'
                          CHECK (statut IN ('disponible', 'reserve', 'vendu', 'pretee', 'exposee')),
+  -- Date où l'œuvre a été marquée « vendue » DANS Galeria (voir majVendueLe).
+  -- Vide pour les centaines d'œuvres vendues avant Galeria, importées avec
+  -- leur historique : c'est ce qui distingue une vente à saisir d'un passé
+  -- qui ne réclame rien.
+  vendue_le              TEXT,
   format                 TEXT,
   orientation            TEXT,
   style                  TEXT,

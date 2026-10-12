@@ -252,6 +252,11 @@ const ARTICLES = [
   // ═══════ SUIVI ═══════
   A('suivi', 'La section Suivi', 'suivi cycle de vie actif complétées files attente préparation expédition',
     `<p><b>Suivi</b> rassemble les œuvres <b>à préparer</b> et les ventes <b>en cours</b>, avec un onglet <b>Complétées</b>. Un bandeau résume les files d'attente (à créer dans Sage, à mettre en stock, à publier, à encaisser, à emballer, à expédier, à livrer). Tout est éditable d'un clic et se sauvegarde aussitôt.</p>`),
+  A('suivi', 'Marquer une œuvre vendue et saisir la vente plus tard', 'vendue marquer statut vente à enregistrer plus tard oublier suivi comptoir',
+    `<p>Vous pouvez mettre une œuvre à <b>vendue</b> tout de suite — sur sa fiche, en lot, ou depuis l'écran <b>Site web</b> — et enregistrer la vente quand vous avez le temps. Plus besoin de la remettre « disponible » avant.</p>
+     <p>Elle apparaît alors dans <b>Suivi → Ventes à enregistrer</b>, tout en haut, avec un bouton <b>Enregistrer la vente</b> qui ouvre le formulaire, l'œuvre déjà choisie. Le même bouton est sur la fiche de l'œuvre.</p>
+     <div class="astuce">La liste ne contient que les œuvres marquées vendues <b>dans Galeria</b> : les centaines d'œuvres vendues avant l'application, arrivées avec le catalogue, n'y figurent pas.</div>
+     <p>Si vous remettez l'œuvre « disponible », elle quitte la liste. Et une œuvre qui a déjà sa vente enregistrée ne peut pas en recevoir une deuxième.</p>`),
 
   // ═══════ SITE WEB & SYNCHRONISATION ═══════
   A('web', 'Relier Galeria à votre site web', 'site web woocommerce wordpress connexion clés api rest lecture configurer adresse tester',
@@ -366,8 +371,9 @@ const ARTICLES = [
     `<p>Une œuvre doit être marquée <b>« Créée dans Sage 50 »</b> avant d'être vendue.</p>
      <ol><li>Ouvre la fiche de l'œuvre.</li><li>Carte <b>Préparation</b> → marque l'étape <b>Sage 50</b>.</li><li>Reprends la vente.</li></ol>
      <p>L'avertissement apparaît dès la sélection de l'œuvre et indique son nom de référence (= numéro d'item Sage).</p>`),
-  A('depannage', 'Impossible de vendre une œuvre déjà vendue', 'déjà vendue double vente statut vendu impossible',
-    `<p>Une œuvre au statut <b>vendu</b> ne peut pas être revendue. Si la première vente était une erreur, <b>supprime-la</b> d'abord (l'œuvre redevient disponible), puis refais la vente.</p>`),
+  A('depannage', 'Impossible de vendre une œuvre déjà vendue', 'déjà vendue double vente statut vendu impossible deuxième',
+    `<p>Ce qui bloque, c'est une <b>vente déjà enregistrée</b> pour cette œuvre — pas l'étiquette « vendu ». Si cette première vente était une erreur, <b>supprimez-la</b> d'abord, puis refaites-la.</p>
+     <div class="astuce">Une œuvre simplement <b>marquée vendue</b>, sans vente enregistrée, se vend normalement : elle vous attend même dans <b>Suivi → Ventes à enregistrer</b>.</div>`),
   A('depannage', 'Je ne trouve plus une œuvre, un artiste ou un client', 'introuvable disparu archivé retiré filtre recherche caché masqué',
     `<p>Vérifie, dans l'ordre :</p>
      <ol><li>une <b>recherche</b> ou un <b>filtre</b> encore actif (réinitialise) ;</li>

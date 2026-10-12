@@ -1225,14 +1225,17 @@ export async function rendreVenteFiche(contenu, params) {
     // Mode recherche
     zone.innerHTML = `
       <div class="bloc-recherche">
-        <input type="search" id="rech-oeuvre" class="rech-inline" placeholder="Rechercher une œuvre disponible (titre, artiste, numéro)..." autocomplete="off">
+        <input type="search" id="rech-oeuvre" class="rech-inline" placeholder="Rechercher une œuvre (titre, artiste, numéro)..." autocomplete="off">
         <div class="resultats-recherche" id="res-oeuvre"></div>
       </div>
     `;
 
     let oeuvres;
     try {
-      oeuvres = await window.api.oeuvresListe({ statut: 'disponible' });
+      // Les disponibles, plus celles déjà marquées vendues dont la vente n'a
+      // pas encore été saisie (parents, 2026-10-12). Celles qui ont déjà leur
+      // vente n'y sont jamais : c'est ce qui empêche la double vente.
+      oeuvres = await window.api.oeuvresListe({ vendables: true });
     } catch (err) {
       const res0 = contenu.querySelector('#res-oeuvre');
       if (res0) res0.innerHTML = `<p class="liste-vide">La liste des œuvres n'a pas pu être chargée. ${ech(nettoyerErreur(err))}</p>`;
@@ -1261,7 +1264,7 @@ export async function rendreVenteFiche(contenu, params) {
               ? `<div class="vignette avec-photo"><img src="${urlPhoto(o.image_path)}" loading="lazy" alt=""></div>`
               : `<div class="vignette"><span>&#9635;</span></div>`}
             <div class="info">
-              <p class="ligne-titre">${ech(o.titre)}</p>
+              <p class="ligne-titre">${ech(o.titre)}${o.statut === 'vendu' ? ' <span class="pastille-bento">Marquée vendue</span>' : ''}</p>
               <p class="ligne-meta">
                 ${ech(o.artiste_nom)}
                 ${o.numero_inventaire ? `&nbsp;&middot;&nbsp;${ech(o.numero_inventaire)}` : ''}

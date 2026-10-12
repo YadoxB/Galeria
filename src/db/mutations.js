@@ -336,6 +336,22 @@ function _valeursOeuvre(data) {
   return { cols, valeurs };
 }
 
+// « Vendue » posée DANS Galeria : on note la date. Toute autre valeur de
+// statut l'efface. C'est ce qui distingue une toile vendue au comptoir
+// aujourd'hui — dont la vente reste à saisir — des centaines d'œuvres vendues
+// avant Galeria, importées avec leur historique : celles-là n'ont pas de date
+// et ne réclament rien (demande des parents, 2026-10-12).
+//
+// COALESCE : repasser par « vendue » sans en être sorti ne décale pas la date.
+function majVendueLe(db, oeuvreId, statut) {
+  if (!statut) return;
+  if (statut === 'vendu') {
+    db.prepare("UPDATE oeuvres SET vendue_le = COALESCE(vendue_le, date('now')) WHERE id = ?").run(oeuvreId);
+  } else {
+    db.prepare('UPDATE oeuvres SET vendue_le = NULL WHERE id = ?').run(oeuvreId);
+  }
+}
+
 function modifierOeuvre(id, data) {
   const { cols, valeurs } = _valeursOeuvre(data);
   const db = openDatabase();
@@ -343,6 +359,7 @@ function modifierOeuvre(id, data) {
   db.prepare(
     `UPDATE oeuvres SET ${set}, modifie_le = datetime('now') WHERE id = ?`
   ).run(...valeurs, id);
+  majVendueLe(db, entier(id), vide(data.statut));
   return obtenirOeuvre(id);
 }
 
@@ -468,6 +485,7 @@ function majStatutOeuvre(id, statut) {
     `UPDATE oeuvres SET statut = ?, modifie_le = datetime('now') WHERE id = ?`
   ).run(st, oid);
   if (!info.changes) throw new Error('Œuvre introuvable.');
+  majVendueLe(db, oid, st);
   return obtenirOeuvre(oid);
 }
 
@@ -560,6 +578,10 @@ function modifierOeuvresLot(modifs) {
       const info = db.prepare(
         `UPDATE oeuvres SET ${setSql}, modifie_le = datetime('now') WHERE id = ?`
       ).run(...valeurs, id);
+      // Changer le statut en lot pose ou efface la date de mise en vendue,
+      // comme ailleurs (voir majVendueLe).
+      const idxStatut = cols.indexOf('statut');
+      if (idxStatut >= 0) majVendueLe(db, id, valeurs[idxStatut]);
       n += info.changes;
     }
     db.exec('COMMIT');
@@ -863,11 +885,15 @@ function creerVente(data) {
 
   db.exec('BEGIN');
   try {
-    // Vérifier que l'œuvre existe et n'est pas déjà vendue
+    // Garde-fou : une SEULE vente par œuvre. On regarde les ventes
+    // enregistrées, pas l'étiquette de statut — marquer une toile « vendue »
+    // au comptoir puis saisir la vente plus tard est le cas normal (demande
+    // des parents, 2026-10-12). L'ancien contrôle sur le statut obligeait à
+    // la remettre « disponible » avant de pouvoir enregistrer la vente.
     const oeuvre = db.prepare('SELECT id, statut, sage_cree FROM oeuvres WHERE id = ?').get(oeuvreId);
     if (!oeuvre) throw new Error("Œuvre introuvable.");
-    if (oeuvre.statut === 'vendu') {
-      throw new Error("Cette œuvre est déjà marquée comme vendue. Vérifie la liste des ventes existantes.");
+    if (db.prepare('SELECT COUNT(*) AS n FROM ventes WHERE oeuvre_id = ?').get(oeuvreId).n > 0) {
+      throw new Error("Une vente est déjà enregistrée pour cette œuvre. Ouvre-la depuis la fiche de l'œuvre plutôt que d'en créer une seconde.");
     }
     if (!oeuvre.sage_cree) {
       const nomFichier = construireNomFichier(obtenirOeuvre(oeuvreId));
@@ -884,6 +910,7 @@ function creerVente(data) {
     const info = db.prepare(`INSERT INTO ventes (${colNames}) VALUES (${placeholders})`).run(...valeurs);
 
     db.prepare(`UPDATE oeuvres SET statut = 'vendu', reservation_client_id = NULL, reservation_date = NULL, reservation_echeance = NULL, reservation_notes = NULL, modifie_le = datetime('now') WHERE id = ?`).run(oeuvreId);
+    majVendueLe(db, oeuvreId, 'vendu');
 
     db.exec('COMMIT');
     return obtenirVente(info.lastInsertRowid);
@@ -944,8 +971,10 @@ function modifierVente(id, data) {
     if (ancienneOeuvreId !== nouvelleOeuvreId) {
       const nouvelle = db.prepare('SELECT id, statut, sage_cree FROM oeuvres WHERE id = ?').get(nouvelleOeuvreId);
       if (!nouvelle) throw new Error('Œuvre introuvable.');
-      if (nouvelle.statut === 'vendu') {
-        throw new Error("Cette œuvre est déjà marquée comme vendue. Vérifie la liste des ventes existantes.");
+      // Même règle qu'à la création : ce qui compte, c'est qu'aucune AUTRE
+      // vente ne porte déjà cette œuvre (celle qu'on modifie ne compte pas).
+      if (db.prepare('SELECT COUNT(*) AS n FROM ventes WHERE oeuvre_id = ? AND id <> ?').get(nouvelleOeuvreId, id).n > 0) {
+        throw new Error("Une vente est déjà enregistrée pour cette œuvre. Ouvre-la depuis la fiche de l'œuvre plutôt que d'en créer une seconde.");
       }
       if (!nouvelle.sage_cree) {
         const nomFichier = construireNomFichier(obtenirOeuvre(nouvelleOeuvreId));
@@ -962,9 +991,11 @@ function modifierVente(id, data) {
       if (nbAutres === 0) {
         db.prepare(`UPDATE oeuvres SET statut = 'disponible', modifie_le = datetime('now') WHERE id = ?`)
           .run(ancienneOeuvreId);
+        majVendueLe(db, ancienneOeuvreId, 'disponible');
       }
       db.prepare(`UPDATE oeuvres SET statut = 'vendu', reservation_client_id = NULL, reservation_date = NULL, reservation_echeance = NULL, reservation_notes = NULL, modifie_le = datetime('now') WHERE id = ?`)
         .run(nouvelleOeuvreId);
+      majVendueLe(db, nouvelleOeuvreId, 'vendu');
     }
 
     db.exec('COMMIT');

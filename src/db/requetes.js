@@ -204,6 +204,16 @@ function listerOeuvres(filtres = {}) {
     where.push('o.statut = ?');
     params.push(filtres.statut);
   }
+  // Choix d'une œuvre dans une vente : les disponibles, PLUS celles déjà
+  // marquées « vendue » dont la vente n'a jamais été enregistrée (demande des
+  // parents, 2026-10-12 : marquer vendue au comptoir, saisir la vente plus
+  // tard). Une œuvre qui a déjà sa ligne de vente n'y est jamais : c'est ce
+  // qui empêche la double vente.
+  if (filtres.vendables) {
+    where.push(`(o.statut = 'disponible'
+      OR (o.statut = 'vendu' AND o.vendue_le IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM ventes v WHERE v.oeuvre_id = o.id)))`);
+  }
   if (filtres.type) {
     where.push('o.type = ?');
     params.push(filtres.type);
@@ -474,6 +484,29 @@ function oeuvresAPreparer() {
       AND o.statut <> 'vendu'
       AND (o.sage_cree = 0 OR o.stock_fait = 0 OR o.site_publie = 0)
     ORDER BY o.cree_le DESC, o.id DESC
+  `).all();
+}
+
+// Section Suivi — œuvres marquées « vendue » dont la vente reste à saisir.
+// Sans cette liste, marquer une toile vendue au comptoir la faisait sortir de
+// « À préparer » (qui exclut les vendues) sans la faire entrer nulle part :
+// elle disparaissait du suivi, et la vente s'oubliait (parents, 2026-10-12).
+function oeuvresVenduesSansVente() {
+  const db = openDatabase();
+  return db.prepare(`
+    SELECT o.id, o.titre, o.numero_inventaire, o.image_path, o.prix,
+           o.vendue_le, o.sage_cree,
+           a.id AS artiste_id, TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom
+    FROM oeuvres o
+    JOIN artistes a ON a.id = o.artiste_id
+    WHERE o.statut = 'vendu' AND o.archive = 0
+      -- ⚠ vendue_le : marquée vendue DANS Galeria. Sans ce filtre, les
+      -- centaines d'œuvres vendues avant l'app (catalogue importé avec son
+      -- historique : 190 au 2026-10-12) rempliraient la liste et noieraient
+      -- la poignée de ventes vraiment à saisir.
+      AND o.vendue_le IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM ventes v WHERE v.oeuvre_id = o.id)
+    ORDER BY o.vendue_le DESC, o.id DESC
   `).all();
 }
 
@@ -1036,6 +1069,7 @@ function oeuvresParIds(ids) {
 }
 
 module.exports = {
+  oeuvresVenduesSansVente,
   listerExpositions, obtenirExposition, oeuvresEligiblesExposition,
   listerArtistes,
   obtenirArtiste,

@@ -11,6 +11,24 @@
 
 ---
 
+## Marquer une œuvre vendue, enregistrer la vente plus tard
+
+Vous pouvez maintenant mettre une œuvre à **vendue** tout de suite — sur sa
+fiche, en lot, ou depuis l'écran Site web — et enregistrer la vente plus tard,
+**sans avoir à la remettre « disponible » avant**.
+
+Pour ne pas l'oublier, elle apparaît dans **Suivi**, tout en haut de l'onglet
+Actif, dans une file **Ventes à enregistrer** : la date où vous l'avez marquée
+vendue, et un bouton **Enregistrer la vente** qui ouvre le formulaire avec
+l'œuvre déjà choisie. Le même bouton se trouve sur la fiche de l'œuvre.
+
+Rien ne change pour le reste : une œuvre dont la vente est déjà enregistrée ne
+peut toujours pas être vendue une deuxième fois. Et les centaines d'œuvres
+vendues **avant** Galeria, arrivées avec le catalogue, n'encombrent pas la
+liste : seules celles que vous marquez vendues dans l'application y entrent.
+
+---
+
 ## Annuler, dans la comparaison avec le site
 
 Deux filets de sécurité quand vous reprenez des valeurs du site :

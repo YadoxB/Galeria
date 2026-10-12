@@ -10,6 +10,31 @@ identifiants.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Marquer une œuvre vendue, saisir la vente plus tard** (demande des parents, 2026-10-12).
+  Enregistrer une vente ne demande plus que l'œuvre soit « disponible » : on peut la marquer
+  **vendue** au comptoir, puis saisir la vente quand on a le temps.
+  - Le garde-fou contre la **double vente** reste entier, mais il regarde ce qui compte :
+    une **vente déjà enregistrée** pour cette œuvre, et non l'étiquette de statut.
+  - **Suivi → « Ventes à enregistrer »** : nouvelle file en tête de l'onglet Actif (et sa
+    tuile dans « Préparation »), avec la date où l'œuvre a été marquée vendue et un bouton
+    **Enregistrer la vente** qui ouvre le formulaire, l'œuvre déjà choisie. Même bouton sur
+    la fiche de l'œuvre. Sans cette liste, marquer une toile vendue la faisait sortir de « À
+    préparer » (qui exclut les vendues) sans la faire entrer nulle part : la vente s'oubliait.
+  - Le choix d'œuvre d'une vente propose ces œuvres, marquées « Marquée vendue ».
+  - ⚠ **Nouvelle colonne `oeuvres.vendue_le`** (migration additive), posée quand le statut
+    passe à « vendu » DANS Galeria et effacée quand il en sort — par le formulaire, l'édition
+    en lot, l'écran Site web ou l'enregistrement d'une vente. Sans elle, la file aurait
+    affiché les **190 œuvres vendues avant Galeria** (catalogue importé avec son historique),
+    noyant la poignée de ventes vraiment à saisir. ⚠ Volontairement ABSENTE de
+    `COLONNES_OEUVRE` : le formulaire réécrit toutes les colonnes qu'il connaît et effacerait
+    la date.
+  - Vérifié dans l'application réelle sur une copie de la base (16 contrôles — la file et sa
+    tuile, les deux boutons, le formulaire pré-rempli, la vente enregistrée sur une œuvre
+    déjà marquée vendue, la deuxième vente toujours refusée, l'aller-retour vendue/disponible
+    depuis l'écran Site web, et les 190 œuvres de l'historique qui ne remplissent pas la liste).
+
 ## [0.27.0] — 2026-10-02
 
 ### Ajouté

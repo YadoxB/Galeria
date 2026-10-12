@@ -35,6 +35,11 @@ const COLONNES_ATTENDUES = {
     ['certificat_dernier', 'INTEGER'],
   ],
   oeuvres: [
+    // Marquée vendue DANS Galeria, et quand. ⚠ Volontairement ABSENTE de
+    // COLONNES_OEUVRE (mutations.js) : le formulaire réécrit toutes les
+    // colonnes qu'il connaît et effacerait la date. Elle se pose et s'efface
+    // par majVendueLe, à chaque changement de statut.
+    ['vendue_le', 'TEXT'],
     ['description_en', 'TEXT'],
     ['format', 'TEXT'],
     ['orientation', 'TEXT'],
