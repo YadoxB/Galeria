@@ -24,6 +24,11 @@ identifiants.
     un client, c'est le bouton **Réserver** qui s'en charge.
   - Nouvelle IPC `oeuvres:maj-statut` (même chemin que la réconciliation : `majStatutOeuvre`,
     donc `vendue_le` se pose et s'efface comme ailleurs, et les photos suivent le dossier).
+  - Le menu se replie en re-cliquant la pastille, en cliquant ailleurs, ou avec **Échap**.
+    ⚠ Signalé par Dave le même jour : un clic sur le **chevron** ne repliait rien. L'écouteur
+    de fermeture comparait `e.target !== bouton`, mais le clic tombe sur le chevron, un
+    ENFANT du bouton : il fermait (phase de capture) puis la bascule du bouton rouvrait.
+    `bouton.contains(e.target)` règle le cas ; Échap manquait aussi.
   - Vérifié dans l'application réelle sur une copie de la base (11 contrôles — le menu et ses
     options, le clic qui marque vendue, le bandeau, l'entrée puis la sortie de « Ventes à
     enregistrer », l'annulation, et les deux cas où la pastille reste figée).

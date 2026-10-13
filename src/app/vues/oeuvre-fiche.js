@@ -446,14 +446,26 @@ export async function rendreOeuvreFiche(contenu, params) {
         pop.hidden = true;
         bouton.setAttribute('aria-expanded', 'false');
         document.removeEventListener('click', surClicAilleurs, true);
+        document.removeEventListener('keydown', surEchap, true);
       };
-      function surClicAilleurs(e) { if (!pop.contains(e.target) && e.target !== bouton) fermer(); }
+      // ⚠ `contains`, pas `e.target !== bouton` : le clic tombe souvent sur le
+      // CHEVRON, un enfant du bouton. Avec l'égalité stricte, ce clic fermait
+      // le menu (écouteur en capture) puis le rouvrait (bascule du bouton) —
+      // la pastille ne se repliait jamais quand on visait la petite flèche.
+      function surClicAilleurs(e) { if (!pop.contains(e.target) && !bouton.contains(e.target)) fermer(); }
+      function surEchap(e) { if (e.key === 'Escape') { e.preventDefault(); fermer(); bouton.focus(); } }
       bouton.addEventListener('click', (e) => {
         e.stopPropagation();
         const ouvrir = pop.hidden;
         pop.hidden = !ouvrir;
         bouton.setAttribute('aria-expanded', String(ouvrir));
-        if (ouvrir) document.addEventListener('click', surClicAilleurs, true);
+        if (ouvrir) {
+          document.addEventListener('click', surClicAilleurs, true);
+          document.addEventListener('keydown', surEchap, true);
+        } else {
+          document.removeEventListener('click', surClicAilleurs, true);
+          document.removeEventListener('keydown', surEchap, true);
+        }
       });
       pop.querySelectorAll('.statut-menu-item').forEach((b) => b.addEventListener('click', () => {
         fermer();
