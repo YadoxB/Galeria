@@ -25,10 +25,18 @@ identifiants.
   - Nouvelle IPC `oeuvres:maj-statut` (même chemin que la réconciliation : `majStatutOeuvre`,
     donc `vendue_le` se pose et s'efface comme ailleurs, et les photos suivent le dossier).
   - Le menu se replie en re-cliquant la pastille, en cliquant ailleurs, ou avec **Échap**.
-    ⚠ Signalé par Dave le même jour : un clic sur le **chevron** ne repliait rien. L'écouteur
-    de fermeture comparait `e.target !== bouton`, mais le clic tombe sur le chevron, un
-    ENFANT du bouton : il fermait (phase de capture) puis la bascule du bouton rouvrait.
-    `bouton.contains(e.target)` règle le cas ; Échap manquait aussi.
+    ⚠ Deux défauts signalés par Dave le même jour, l'un derrière l'autre :
+    - un clic sur le **chevron** ne repliait rien — l'écouteur de fermeture comparait
+      `e.target !== bouton`, or le clic tombe sur le chevron, un ENFANT du bouton : il
+      fermait (phase de capture) puis la bascule du bouton rouvrait. `bouton.contains(...)`
+      règle le cas ; Échap, qui manquait, referme aussi ;
+    - le menu **restait affiché en permanence** : `display: flex` écrase la règle `[hidden]`
+      du navigateur, il faut `.statut-menu-pop[hidden] { display: none; }` (le piège est déjà
+      commenté ailleurs dans la feuille de style — oublié ici).
+    ⚠ **Le premier banc ne l'a pas vu** : il lisait l'attribut (`!pop.hidden`), pas ce que
+    l'écran montre. Il mesure maintenant `getComputedStyle(...).display` et `offsetParent`,
+    et il part d'une fiche fraîchement ouverte pour vérifier que le menu est replié au
+    départ. Contrôle du contrôle : sans la règle CSS, le banc tombe sur 5 échecs.
   - Vérifié dans l'application réelle sur une copie de la base (11 contrôles — le menu et ses
     options, le clic qui marque vendue, le bandeau, l'entrée puis la sortie de « Ventes à
     enregistrer », l'annulation, et les deux cas où la pastille reste figée).

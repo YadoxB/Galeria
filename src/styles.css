@@ -5967,6 +5967,10 @@ select.lot-in.st-pretee { color: var(--info); }
   border-radius: var(--r-btn); box-shadow: var(--ombre-flottante, 0 10px 30px rgba(7, 26, 47, 0.16));
   padding: 6px;
 }
+/* ⚠ Indispensable : le `display: flex` ci-dessus écrase la règle `[hidden]`
+   du navigateur. Sans cette ligne, le menu reste affiché en permanence —
+   l'attribut change, l'écran non. */
+.statut-menu-pop[hidden] { display: none; }
 .statut-menu-item { border: 0; background: none; padding: 2px; cursor: pointer; text-align: left; }
 .statut-menu-item:hover { background: var(--cloud); border-radius: 6px; }
 /* Filet d'annulation d'une fiche : même langage que celui de la comparaison. */
