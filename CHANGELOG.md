@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.28.0] — 2026-10-12
+
 ### Ajouté
 
 - **Changer le statut d'une œuvre en un clic** (question de Dave, 2026-10-12 : « doit-on
