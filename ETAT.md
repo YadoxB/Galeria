@@ -1,7 +1,7 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-10-02 (cinq versions en douze jours, de la 0.23.0 à la 0.27.0 ; rien en attente de publication, aucun signalement ouvert).
+> Date de cette sauvegarde : 2026-10-12 (six versions depuis la 0.22.0, jusqu'à la 0.28.0 ; rien en attente de publication, aucun signalement ouvert).
 >
 > **Tableau de bord du chantier** (signalements des parents + étapes restantes) :
 > <https://claude.ai/artifact/2fBkxU3MEnkZwQHj5Vv2Kz>. Les signalements y arrivent seuls
@@ -12,14 +12,14 @@
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-10-02)
+## ▶ Reprise — par où commencer (préparé le 2026-10-12)
 
-**✅ Dernière version PUBLIÉE : v0.27.0 (2026-10-02).** `origin/master` = tag `v0.27.0` =
-`52c06f9`. Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
+**✅ Dernière version PUBLIÉE : v0.28.0 (2026-10-12).** `origin/master` = tag `v0.28.0` =
+`6566f1e`. Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
 **Rien n'est en attente de publication** : l'arbre de travail est propre, tout ce qui est
 fait est en ligne, et **aucun signalement n'est ouvert** au tableau de bord.
 
-Cinq versions depuis la 0.22.0 :
+Six versions depuis la 0.22.0 :
 
 | Version | Date | Contenu |
 |---|---|---|
@@ -28,12 +28,19 @@ Cinq versions depuis la 0.22.0 :
 | 0.25.0 | 2026-09-28 | Une œuvre réservée a sa place sur la fiche de l'artiste |
 | 0.26.0 | 2026-10-01 | Prix préférentiel masquable sur les fiches d'œuvre ; brouillons du site ignorés à la comparaison |
 | 0.27.0 | 2026-10-02 | Comparaison : confirmer avant, annuler après |
+| 0.28.0 | 2026-10-12 | Marquer vendue puis saisir la vente plus tard (file « Ventes à enregistrer ») ; pastille de statut devenue menu |
 
 **Ce qui attend quelqu'un d'autre que le code :**
 
 - ⚠ **L'ouverture réelle dans Outlook n'a jamais été essayée** (Outlook sans profil chez
   Dave) : le premier envoi chez les parents est le vrai test. Repli `.eml` si Outlook ne
   répond pas.
+- ⚠ **À regarder au premier lancement de la 0.28.0 chez les parents** : la file **Ventes à
+  enregistrer** du Suivi doit être **vide**. Si elle affiche des dizaines d'œuvres, c'est que
+  `vendue_le` ne s'est pas comportée comme prévu sur leur base (elle doit rester vide pour
+  les 190 œuvres vendues avant Galeria) — à corriger aussitôt.
+- ⚠ **La pastille de statut est à voir sur leur écran** : deux défauts d'affichage y ont
+  échappé aux bancs le 2026-10-12 (voir plus bas).
 - ⚠ **Non vérifié faute de clés** : que `wc/v3/products?sku=A,B,C` accepte la liste
   (comparaison d'un seul artiste). Une sonde de repli couvre le cas contraire.
 - **À faire chez les parents** : remplir « Dernier certificat délivré » pour chaque artiste
@@ -46,6 +53,46 @@ plus le lui redemander. Le signalement du 2026-09-24 (affichage du prix préfér
 refermé **sans appel** : leur note du 30 septembre disait ce qu'ils voulaient — un réglage
 pour le masquer, livré dans la 0.26.0.
 
+> ### ✅ PUBLIÉ DANS LA 0.28.0 — marquer vendue, saisir la vente plus tard (2026-10-12)
+>
+> Demande des parents. Enregistrer une vente n'exige plus que l'œuvre soit « disponible » :
+> le garde-fou de `creerVente` / `modifierVente` regarde maintenant une **vente déjà
+> enregistrée** pour cette œuvre, pas l'étiquette de statut. La double vente reste
+> impossible.
+>
+> **Suivi → « Ventes à enregistrer »** : file en tête de l'onglet Actif (+ sa tuile), avec la
+> date de mise en vendue et un bouton qui ouvre le formulaire, l'œuvre déjà choisie ; même
+> bouton sur la fiche de l'œuvre ; le choix d'œuvre d'une vente les propose
+> (`oeuvresListe({ vendables: true })`).
+>
+> ⚠ **Colonne `oeuvres.vendue_le`** (migration additive), posée par `majVendueLe` à chaque
+> passage à « vendu » DANS l'app et effacée en sortant. Sans elle, la file aurait listé les
+> **190 œuvres vendues avant Galeria** (catalogue importé avec son historique) au lieu de la
+> poignée à saisir — le premier banc l'a montré. ⚠ Volontairement ABSENTE de
+> `COLONNES_OEUVRE`, comme `nom_site` : le formulaire l'effacerait à chaque enregistrement.
+>
+> **La pastille de statut est devenue un MENU** sur la fiche (IPC `oeuvres:maj-statut`,
+> `majStatutOeuvre` : `vendue_le` suit, et les photos changent de dossier). Elle reste une
+> simple étiquette, infobulle à l'appui, quand une vente est enregistrée ou quand l'œuvre est
+> réservée. « Réservée » n'est pas au menu : réserver demande un client.
+>
+> ### 🟥 DEUX DÉFAUTS D'AFFICHAGE QUE LES BANCS N'ONT PAS VUS (2026-10-12)
+>
+> Dave a signalé coup sur coup deux défauts du menu de la pastille, tous deux invisibles pour
+> mes premiers bancs. À retenir avant d'écrire le prochain :
+>
+> 1. **Clic sur le chevron** : l'écouteur de fermeture comparait `e.target !== bouton`, or le
+>    clic tombe sur le chevron, un **enfant** du bouton — il fermait (phase de capture) puis
+>    la bascule du bouton rouvrait. Toujours `bouton.contains(e.target)`.
+> 2. **`display: flex` écrase `[hidden]`** : le menu restait affiché en permanence. Il faut
+>    `.X[hidden] { display: none; }` — le piège est déjà commenté ailleurs dans `styles.css`.
+>
+> ⚠ **Leçon de banc** : mesurer ce que l'ÉCRAN montre — `getComputedStyle(el).display` et
+> `offsetParent` — jamais l'attribut `hidden`, qui changeait sagement pendant que l'écran ne
+> bougeait pas. Et **vérifier le banc en retirant le correctif** : sans la règle CSS, il doit
+> tomber en échec (5 échecs sur 6 ici). Un banc qui ne teste que l'ouverture ne prouve rien
+> sur la fermeture.
+>
 > ### ✅ PUBLIÉ DANS LA 0.27.0 — confirmer avant, annuler après (2026-10-02)
 >
 > Demande des parents relayée par Dave : « une option pour annuler quand on choisit une
