@@ -1737,6 +1737,9 @@ async function demarrerApplication() {
     }
     return { ok: true, reussis, total: liste.length, erreurs };
   });
+  // Changer le statut depuis la fiche d'une œuvre (pastille-menu). Même
+  // chemin que la réconciliation : majStatutOeuvre pose ou efface vendue_le.
+  ipcMain.handle('oeuvres:maj-statut', (_e, oeuvreId, statut) => rangerApres(majStatutOeuvre(oeuvreId, statut), [oeuvreId]));
   // Mettre à jour l'étiquette de statut d'une œuvre depuis la réconciliation.
   ipcMain.handle('web:definir-statut', (_e, oeuvreId, statut) => {
     const oeuvre = majStatutOeuvre(oeuvreId, statut);

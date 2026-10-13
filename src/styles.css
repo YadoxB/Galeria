@@ -5954,6 +5954,28 @@ select.lot-in.st-pretee { color: var(--info); }
 /* Barre « dernier geste » : ce qui vient d'être repris du site, et de quoi le
    remettre. Dorée comme les remarques — ce n'est ni une erreur ni un succès à
    fêter, c'est une porte de sortie offerte un instant. */
+/* Pastille de statut cliquable : elle garde l'allure d'une étiquette, avec
+   juste le chevron qui annonce le menu. */
+.statut-menu-enveloppe { position: relative; display: inline-flex; }
+.badge-statut-menu { border: 0; cursor: pointer; font: inherit; font-size: 11.5px; display: inline-flex; align-items: center; gap: 5px; }
+.badge-statut-menu:hover { filter: brightness(0.96); }
+.badge-statut-chev { font-size: 9px; opacity: 0.75; }
+.statut-menu-pop {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 40;
+  display: flex; flex-direction: column; gap: 4px;
+  background: var(--porcelain); border: 1px solid var(--mist);
+  border-radius: var(--r-btn); box-shadow: var(--ombre-flottante, 0 10px 30px rgba(7, 26, 47, 0.16));
+  padding: 6px;
+}
+.statut-menu-item { border: 0; background: none; padding: 2px; cursor: pointer; text-align: left; }
+.statut-menu-item:hover { background: var(--cloud); border-radius: 6px; }
+/* Filet d'annulation d'une fiche : même langage que celui de la comparaison. */
+.fiche-annuler {
+  display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap;
+  margin: 8px 0 0; font-size: 12.5px; color: var(--ink);
+}
+.fiche-annuler-txt { color: var(--slate); }
+
 .sw-annuler {
   display: flex;
   align-items: center;

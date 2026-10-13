@@ -11,6 +11,25 @@
 
 ---
 
+## Le statut se change d'un clic
+
+Sur la fiche d'une œuvre, la **pastille de statut** (« Disponible », « Vendue »…)
+s'ouvre maintenant comme un petit menu. Vous choisissez, c'est fait — et un
+bandeau vous propose **Annuler** juste après, au cas où. Plus besoin d'ouvrir
+« Modifier ».
+
+La pastille reste une simple étiquette dans deux cas, et vous dit pourquoi si
+vous posez la souris dessus :
+
+- **la vente est déjà enregistrée** : le statut suit la vente ;
+- **l'œuvre est réservée** : passez par la carte Réservation (Convertir en
+  vente, ou Libérer), qui efface aussi la réservation.
+
+Pour réserver, c'est toujours le bouton **Réserver** : une réservation demande
+un client.
+
+---
+
 ## Marquer une œuvre vendue, enregistrer la vente plus tard
 
 Vous pouvez maintenant mettre une œuvre à **vendue** tout de suite — sur sa

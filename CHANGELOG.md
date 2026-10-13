@@ -12,6 +12,22 @@ identifiants.
 
 ### Ajouté
 
+- **Changer le statut d'une œuvre en un clic** (question de Dave, 2026-10-12 : « doit-on
+  modifier la fiche pour changer son statut ? » — oui, jusqu'ici). Sur la fiche, la
+  **pastille de statut devient un menu** (Disponible, Vendue, Prêtée, En exposition) ; le
+  changement s'applique aussitôt et un bandeau offre **Annuler**, comme dans la comparaison
+  avec le site. Aucun bouton de plus sur une fiche qui en portait déjà sept.
+  - La pastille **reste une étiquette** dans deux cas, avec l'explication en infobulle :
+    quand une **vente est enregistrée** (le statut suit la vente, le forcer désaccorderait
+    les deux) et quand l'œuvre est **réservée** (la carte Réservation a ses propres gestes,
+    qui eux effacent la réservation). « Réservée » n'est pas dans le menu : réserver demande
+    un client, c'est le bouton **Réserver** qui s'en charge.
+  - Nouvelle IPC `oeuvres:maj-statut` (même chemin que la réconciliation : `majStatutOeuvre`,
+    donc `vendue_le` se pose et s'efface comme ailleurs, et les photos suivent le dossier).
+  - Vérifié dans l'application réelle sur une copie de la base (11 contrôles — le menu et ses
+    options, le clic qui marque vendue, le bandeau, l'entrée puis la sortie de « Ventes à
+    enregistrer », l'annulation, et les deux cas où la pastille reste figée).
+
 - **Marquer une œuvre vendue, saisir la vente plus tard** (demande des parents, 2026-10-12).
   Enregistrer une vente ne demande plus que l'œuvre soit « disponible » : on peut la marquer
   **vendue** au comptoir, puis saisir la vente quand on a le temps.

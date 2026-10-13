@@ -1,6 +1,6 @@
 import { naviguer, retour, poserGardien, leverGardien, modifierParamsCourants, remplacerCourant } from '../router.js';
 import {
-  ech, formaterPrix, badgeStatut, STATUTS,
+  ech, formaterPrix, STATUTS,
   champTexte, champTextarea, champSelect, champCheckbox, datalist, urlPhoto,
   champMedium, brancherDropdownMedium, chargerMediumsConnus,
   champListe, brancherDropdownListe, chargerValeursConnues,
@@ -384,6 +384,100 @@ export async function rendreOeuvreFiche(contenu, params) {
     contenu.querySelectorAll('.btn-regen-pdf-certif').forEach((btn) => btn.addEventListener('click', genererCertif));
   }
 
+  // La pastille de statut est un MENU : marquer une toile vendue au comptoir
+  // ne doit pas coûter « Modifier → Statut → Enregistrer » (demande des
+  // parents, 2026-10-12). Deux cas où elle reste une simple étiquette :
+  //   — une vente est enregistrée : le statut suit la vente, le changer à la
+  //     main désaccorderait les deux ;
+  //   — l'œuvre est réservée : la carte Réservation a ses propres gestes
+  //     (Convertir en vente, Libérer), qui eux effacent la réservation.
+  // « Réservée » n'est pas dans le menu : réserver demande un client, c'est le
+  // bouton Réserver qui s'en charge.
+  const STATUTS_MENU = ['disponible', 'vendu', 'pretee', 'exposee'];
+
+  function statutFige() {
+    if (ventes.length > 0) return 'Le statut suit la vente enregistrée.';
+    if (o.statut === 'reserve') return 'Œuvre réservée : voir la carte Réservation.';
+    return null;
+  }
+
+  function pastilleStatutHtml() {
+    const fige = statutFige();
+    if (fige) return `<span class="badge-statut ${(STATUTS[o.statut] || {}).classe || 'statut-defaut'}" title="${ech(fige)}">${ech((STATUTS[o.statut] || {}).libelle || o.statut)}</span>`;
+    const s = STATUTS[o.statut] || { libelle: o.statut || '—', classe: 'statut-defaut' };
+    return `
+      <span class="statut-menu-enveloppe">
+        <button type="button" class="badge-statut ${s.classe} badge-statut-menu" id="btn-statut"
+                aria-haspopup="true" aria-expanded="false" title="Changer le statut">
+          ${ech(s.libelle)}<span class="badge-statut-chev">▾</span>
+        </button>
+        <span class="statut-menu-pop" id="statut-menu-pop" hidden>
+          ${STATUTS_MENU.filter((k) => k !== o.statut).map((k) => `
+            <button type="button" class="statut-menu-item" data-statut="${k}">
+              <span class="badge-statut ${STATUTS[k].classe}">${ech(STATUTS[k].libelle)}</span>
+            </button>`).join('')}
+        </span>
+      </span>`;
+  }
+
+  // Le dernier changement de statut, et de quoi le défaire — même filet que la
+  // comparaison avec le site. Effacé dès qu'on quitte la fiche ou qu'on
+  // recharge : il ne vaut que pour le geste qu'on vient de faire.
+  let dernierStatut = null;
+
+  async function changerStatut(nouveau) {
+    const ancien = o.statut;
+    if (!nouveau || nouveau === ancien) return;
+    try {
+      await window.api.oeuvreMajStatut(o.id, nouveau);
+      await rechargerBundle();
+      dernierStatut = { ancien, nouveau };
+      dessiner();
+    } catch (err) {
+      await alerter({ type: 'error', title: 'Statut non modifié', message: nettoyerErreur(err) });
+    }
+  }
+
+  function brancherPastilleStatut() {
+    const bouton = contenu.querySelector('#btn-statut');
+    const pop = contenu.querySelector('#statut-menu-pop');
+    if (bouton && pop) {
+      const fermer = () => {
+        pop.hidden = true;
+        bouton.setAttribute('aria-expanded', 'false');
+        document.removeEventListener('click', surClicAilleurs, true);
+      };
+      function surClicAilleurs(e) { if (!pop.contains(e.target) && e.target !== bouton) fermer(); }
+      bouton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const ouvrir = pop.hidden;
+        pop.hidden = !ouvrir;
+        bouton.setAttribute('aria-expanded', String(ouvrir));
+        if (ouvrir) document.addEventListener('click', surClicAilleurs, true);
+      });
+      pop.querySelectorAll('.statut-menu-item').forEach((b) => b.addEventListener('click', () => {
+        fermer();
+        changerStatut(b.dataset.statut);
+      }));
+    }
+    const annuler = contenu.querySelector('#btn-annuler-statut');
+    if (annuler) {
+      annuler.addEventListener('click', async () => {
+        const g = dernierStatut;
+        if (!g) return;
+        dernierStatut = null;
+        try {
+          await window.api.oeuvreMajStatut(o.id, g.ancien);
+          await rechargerBundle();
+        } catch (err) {
+          dernierStatut = g;
+          await alerter({ type: 'error', title: 'Annulation impossible', message: nettoyerErreur(err) });
+        }
+        dessiner();
+      });
+    }
+  }
+
   function dessinerLecture() {
     // Helper champ (label + value) pour les sous-sections du bento.
     const champ = (libelle, valeur) => {
@@ -436,9 +530,13 @@ export async function rendreOeuvreFiche(contenu, params) {
           <p class="zone-identite-artiste">par <button type="button" class="btn-lien" id="lien-artiste">${ech(o.artiste_nom)}</button></p>
           <div class="prix-statut-bloc">
             ${prixBloc}
-            ${badgeStatut(o.statut)}
+            ${pastilleStatutHtml()}
             ${o.archive ? '<span class="badge-archive">Retirée</span>' : ''}
           </div>
+          ${dernierStatut ? `<p class="fiche-annuler">
+            <span class="fiche-annuler-txt">Statut passé à « ${ech(STATUTS[dernierStatut.nouveau] ? STATUTS[dernierStatut.nouveau].libelle : dernierStatut.nouveau)} ».</span>
+            <button type="button" class="btn-lien" id="btn-annuler-statut">Annuler</button>
+          </p>` : ''}
           ${o.url_site ? `<p class="zone-identite-lien"><button type="button" class="btn-lien" id="btn-voir-sur-site">Voir sur le site &rsaquo;</button></p>` : ''}
           ${venteLiee ? `<p class="zone-identite-lien"><button type="button" class="btn-lien" id="btn-voir-vente">Voir la vente ${venteLiee.numero_facture ? ech(venteLiee.numero_facture) + ' ' : ''}${clientNom ? '(' + ech(clientNom) + ') ' : ''}&rsaquo;</button></p>` : ''}
         </div>
@@ -784,6 +882,8 @@ export async function rendreOeuvreFiche(contenu, params) {
         naviguer('vente-fiche', { nouveau: true, oeuvre_id: o.id })
       );
     }
+    brancherPastilleStatut();
+
     const btnEnregistrerVente = contenu.querySelector('#btn-enregistrer-vente');
     if (btnEnregistrerVente) {
       btnEnregistrerVente.addEventListener('click', () =>

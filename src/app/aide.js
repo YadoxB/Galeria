@@ -102,8 +102,12 @@ const ARTICLES = [
      <li><b>Support</b> (toile, papier…) : descriptif seulement.</li>
      <li><b>Style</b> (Figuratif / Abstrait / Mi-figuratif) : descriptif et filtre ; <b>n'influence pas le prix</b> et se saisit à la main.</li></ul>
      <div class="attention">Si tu attendais un prix automatique, vérifie le <b>médium</b> (pas le style) : c'est lui qui doit correspondre à une cote.</div>`),
-  A('oeuvres', 'Statut d\'une œuvre (disponible, réservé, vendu, prêté)', 'statut disponible réservé vendu prêté changer',
-    `<p>Le statut indique où en est l'œuvre. Il passe à <b>vendu</b> automatiquement à l'enregistrement d'une vente. « Réservé » sert à mettre de côté (l'œuvre apparaît dans « à relancer » du tableau de bord).</p>`),
+  A('oeuvres', 'Statut d\'une œuvre (disponible, réservé, vendu, prêté)', 'statut disponible réservé vendu prêté changer pastille menu clic rapide',
+    `<p>Le statut indique où en est l'œuvre. Il passe à <b>vendu</b> automatiquement à l'enregistrement d'une vente. « Réservé » sert à mettre de côté (l'œuvre apparaît dans « à relancer » du tableau de bord).</p>
+     <h4>Le changer en un clic</h4>
+     <p>Sur la fiche, la <b>pastille de statut</b> s'ouvre comme un menu : Disponible, Vendue, Prêtée, En exposition. Le changement s'applique aussitôt, et un bandeau propose <b>Annuler</b> juste après. Plus besoin de passer par Modifier.</p>
+     <p>Deux cas où la pastille reste une simple étiquette : quand une <b>vente est enregistrée</b> (le statut suit la vente) et quand l'œuvre est <b>réservée</b> (la carte Réservation a ses propres gestes : Convertir en vente, Libérer). Pour réserver, utilisez le bouton <b>Réserver</b> : une réservation demande un client.</p>
+     <div class="astuce">Marquer « vendue » ici inscrit l'œuvre dans <b>Suivi → Ventes à enregistrer</b>, pour ne pas oublier de saisir la vente.</div>`),
   A('oeuvres', 'Réserver une œuvre pour un client', 'réservation réserver client échéance libérer convertir vente mettre de côté relancer',
     `<p>Sur une œuvre disponible, le bouton <b>Réserver</b> la met de côté pour un client.</p>
      <ol><li>Choisis le <b>client</b> (ou crée-le), une <b>date d'échéance</b> (optionnelle) et des <b>notes</b>.</li>

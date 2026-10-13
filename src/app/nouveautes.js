@@ -23,6 +23,10 @@ export const VERSIONS = [
     version: '0.28.0',
     diapos: [
       {
+        titre: 'Le statut se change d’un clic',
+        texte: "Sur la fiche d'une œuvre, la <b>pastille de statut</b> s'ouvre maintenant comme un menu&nbsp;: Disponible, Vendue, Prêtée, En exposition. Le changement s'applique aussitôt, et un bandeau propose <b>Annuler</b> juste après. Plus besoin de passer par «&nbsp;Modifier&nbsp;».",
+      },
+      {
         titre: 'Marquer vendue maintenant, enregistrer la vente plus tard',
         texte: "Vous pouvez mettre une œuvre à <b>vendue</b> tout de suite et saisir la vente quand vous avez le temps&nbsp;: plus besoin de la remettre « disponible » avant. Elle vous attend dans <b>Suivi → Ventes à enregistrer</b>, avec un bouton qui ouvre le formulaire, l'œuvre déjà choisie. Impossible pour autant d'enregistrer deux fois la même vente.",
       },
