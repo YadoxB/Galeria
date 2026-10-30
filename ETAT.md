@@ -1,7 +1,7 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-10-12 (six versions depuis la 0.22.0, jusqu'à la 0.28.0 ; rien en attente de publication, aucun signalement ouvert).
+> Date de cette sauvegarde : 2026-10-30 (0.28.0 en service chez les parents ; rien en attente de publication, **quatre demandes ouvertes**).
 >
 > **Tableau de bord du chantier** (signalements des parents + étapes restantes) :
 > <https://claude.ai/artifact/2fBkxU3MEnkZwQHj5Vv2Kz>. Les signalements y arrivent seuls
@@ -12,12 +12,51 @@
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-10-12)
+## ▶ Reprise — par où commencer (préparé le 2026-10-30)
 
 **✅ Dernière version PUBLIÉE : v0.28.0 (2026-10-12).** `origin/master` = tag `v0.28.0` =
-`6566f1e`. Poussée et publiée sur GitHub Releases avec `latest.yml` — auto-update actif.
-**Rien n'est en attente de publication** : l'arbre de travail est propre, tout ce qui est
-fait est en ligne, et **aucun signalement n'est ouvert** au tableau de bord.
+`6566f1e` (suivi du seul commit de documentation `e52a77b`). Publiée sur GitHub Releases
+avec `latest.yml` — auto-update actif. **Rien n'est en attente de publication** : l'arbre de
+travail est propre, tout ce qui est fait est en ligne.
+
+### 🟦 PAR OÙ COMMENCER — quatre demandes ouvertes (au 2026-10-30)
+
+Elles viennent du tableau de bord du chantier (lien en tête de ce fichier), où chacune a son
+étape. L'ordre proposé va du défaut visible au chantier de fond :
+
+| # | Demande | Qui | Pourquoi cet ordre |
+|---|---|---|---|
+| 1 | **Cadrage des toiles verticales** à la création d'une fiche depuis le site (16 oct., ex. HEL2260 et HEL2258) | Claude | Un vrai défaut, visible à chaque création |
+| 2 | **Clients par ordre alphabétique** (30 oct.) | Claude | Petit et net ; trouver d'abord QUELLE liste |
+| 3 | **Suivi : demander avant de classer** un item terminé (30 oct.) | Claude | Demande de confort — la forme est à cadrer avec Dave |
+| 4 | **Galeria sur plusieurs ordinateurs ?** (8 oct.) | Dave | Décision de fond, pas un réglage : à trancher avant tout code |
+
+**1. Cadrage vertical — ce qui est déjà établi** (lecture seule, aucune ligne touchée) :
+
+- Les deux exemples **n'existent pas dans la base de Dave** : ces œuvres ont été créées chez
+  les parents depuis le site. Pour reproduire, partir des **SKU sur la boutique publique**
+  (aucune clé nécessaire) : `HEL2260` = « L'heure sereine », `HEL2258` = « Floraison
+  minérale ».
+- Leurs images font **784 × 1600** et **783 × 1600** px, soit un rapport proche de **1:2**.
+- `recadrerCarre` (`src/app/recadrage.js`) pose au départ un carré **centré verticalement**
+  (`y = (imgH - taille) / 2`). Sur une toile aussi haute, ce carré coupe donc le haut ET le
+  bas — il faut le déplacer à la main à chaque fois.
+- ⚠ **Reste à décider avec Dave** avant de coder : un carré ancré **en haut** par défaut pour
+  les images très verticales, ou **conserver la proportion** de l'œuvre plutôt que forcer le
+  carré (ce qui toucherait les vignettes partout). Ne pas trancher seul.
+
+**2. Clients par ordre alphabétique** : le signalement vient de la page d'accueil ; vérifier
+d'abord laquelle des listes n'est pas triée (tableau de bord, choix d'un client dans une
+vente, page Clients) avant de corriger.
+
+**3. Suivi, classer un item** : aujourd'hui une vente dont toutes les étapes sont cochées
+passe seule dans l'onglet « Complétées ». Ils veulent qu'on **demande** avant. À préciser :
+une question à chaque fois, ou un bouton « Classer » qu'ils actionnent eux-mêmes.
+
+**4. Plusieurs ordinateurs** : la base est **un seul fichier local** (Loi 25, aucun nuage) et
+OneDrive est déconseillé pour un SQLite ouvert. Les voies possibles — partage réseau avec un
+seul écrivain à la fois, ou vraie synchronisation — sont un **chantier**, pas un réglage.
+C'est une décision de Dave, à prendre avant d'écrire quoi que ce soit.
 
 Six versions depuis la 0.22.0 :
 
