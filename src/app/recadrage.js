@@ -13,9 +13,11 @@ export function recadrerCarre(sourceDataUrl) {
       <div class="modale-recadrage" role="dialog" aria-label="Cadrer la photo">
         <h3>Cadrer la photo</h3>
         <p class="aide-modale">Glisse le cadre pour le positionner. Ajuste la taille avec la barre.</p>
-        <div class="zone-recadrage" id="zone-recadrage">
-          <img id="img-source" alt="" draggable="false">
-          <div class="cadre-selection" id="cadre-selection"></div>
+        <div class="zone-recadrage">
+          <div class="toile-recadrage" id="toile-recadrage">
+            <img id="img-source" alt="" draggable="false">
+            <div class="cadre-selection" id="cadre-selection"></div>
+          </div>
         </div>
         <div class="controles-recadrage">
           <label for="ctrl-taille">Taille du cadre</label>
@@ -31,7 +33,7 @@ export function recadrerCarre(sourceDataUrl) {
 
     const img = overlay.querySelector('#img-source');
     const cadre = overlay.querySelector('#cadre-selection');
-    const zone = overlay.querySelector('#zone-recadrage');
+    const toile = overlay.querySelector('#toile-recadrage');
     const ctrlTaille = overlay.querySelector('#ctrl-taille');
 
     let imgW = 0, imgH = 0;
@@ -75,7 +77,7 @@ export function recadrerCarre(sourceDataUrl) {
 
     cadre.addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      const rect = zone.getBoundingClientRect();
+      const rect = toile.getBoundingClientRect();
       const offX = e.clientX - rect.left - x;
       const offY = e.clientY - rect.top - y;
       const onMove = (ev) => {

@@ -10,6 +10,34 @@ identifiants.
 
 ## [Non publié]
 
+### Ajouté
+
+- **« Comparer avec le site » propose de reprendre l'image d'une œuvre**, depuis sa fiche : les
+  deux images côte à côte, puis « Reprendre l'image du site » ou « Garder la version de l'app ».
+  La ligne paraît si la fiche n'a pas d'image, ou si elle porte encore le carré de 800 × 800 de
+  l'ancien cadrage alors que l'image du site n'est pas carrée. C'est la voie de réparation des
+  fiches déjà coupées.
+
+### Modifié
+
+- **Créer une fiche depuis le site garde l'image entière** (signalement du 2026-10-16, HEL2260 et
+  HEL2258). Ce chemin était le seul à forcer une œuvre en carré : une toile 1:2 y perdait 52 % de
+  sa surface, signature comprise, et l'original n'était pas conservé. Plus de fenêtre de cadrage,
+  comme pour une œuvre ajoutée à la main. Le bouton dit que l'image descend, et ni Échap ni un
+  clic dehors n'annulent plus une création lancée.
+- **Aide** : la photo d'une œuvre n'est plus décrite comme recadrée en carré avec un original
+  conservé, ce qui n'a jamais été vrai pour les œuvres.
+
+### Corrigé
+
+- **Fenêtre « Cadrer la photo » : le cadre tombait à côté de l'image sur une toile étroite**
+  (signalement du 2026-10-16, HEL2260 et HEL2258). Il se plaçait par rapport à la zone, dans
+  laquelle l'image est centrée : décalage de 47 à 87 px selon la fenêtre, et sur une image très
+  étroite, le cadre ne touchait plus du tout l'image. Ce qu'on voyait n'était donc pas ce qui
+  était gardé. Vaut aussi pour les portraits d'artistes.
+- **Même fenêtre, écran bas : le haut et le bas de l'image étaient coupés**, la modale écrasant
+  la zone.
+
 ## [0.28.0] — 2026-10-12
 
 ### Ajouté

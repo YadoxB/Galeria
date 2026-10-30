@@ -5170,9 +5170,19 @@ details.bloc.pliable > .bloc-corps {
   max-height: 60vh;
 }
 
+/* Le cadre se place par rapport à l'IMAGE, jamais par rapport à la zone : une toile
+   étroite est centrée dans une zone plus large qu'elle (la zone prend la largeur du
+   texte d'aide), et le cadre tombait à côté de ce qui était réellement gardé. */
+.toile-recadrage {
+  position: relative;
+  flex: none;
+}
+
+/* 230px : le titre, l'aide, la barre et les boutons. Sur une fenêtre basse, la modale
+   (max 90vh) écrasait la zone et coupait le haut et le bas de l'image. */
 .zone-recadrage img {
   max-width: 700px;
-  max-height: 60vh;
+  max-height: min(60vh, calc(90vh - 230px));
   display: block;
   -webkit-user-drag: none;
 }
@@ -6122,6 +6132,8 @@ select.lot-in.st-pretee { color: var(--info); }
 /* Modale « Comparer avec le site » depuis une fiche */
 .sf-liste { max-height: 60vh; overflow: auto; display: flex; flex-direction: column; gap: 4px; margin: 4px 0 6px; }
 .sf-liste .wsync-champ:first-of-type { border-top: none; }
+.wsync-val.sf-image { max-height: none; overflow: visible; }
+.sf-image img { display: block; max-width: 100%; max-height: 200px; margin: 0 auto; }
 
 .edit-import-txt { width: 100%; font-family: var(--font-ui); font-size: 13.5px; line-height: 1.5; padding: 10px 12px; border: 1px solid var(--mist); border-radius: 10px; background: var(--porcelain); color: var(--ink); resize: vertical; max-height: 55vh; }
 .edit-import-txt:focus { outline: none; border-color: var(--warm-gold); box-shadow: 0 0 0 3px rgba(201, 154, 61, .15); }

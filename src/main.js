@@ -615,6 +615,29 @@ function obtenirClesWoo() {
   };
 }
 
+// Écart d'IMAGE d'une œuvre, proposé seulement depuis sa fiche : il faut télécharger
+// l'image du site pour en juger, impensable pour 500 produits d'un coup.
+// Deux cas : la fiche n'a pas d'image, ou elle porte encore le carré de 800 × 800 que
+// la création depuis le site imposait avant (haut et bas de la toile perdus, original
+// non conservé). Un site muet ne prive pas du reste de la comparaison : pas d'écart.
+async function ecartImageOeuvre(oeuvre, produit, dejaGardee) {
+  if (!produit.image || dejaGardee === produit.image) return null;
+  const sansImage = !oeuvre.image_path;
+  if (!sansImage) {
+    const app = nativeImage.createFromPath(path.join(getPhotosDir(), oeuvre.image_path)).getSize();
+    if (app.width !== 800 || app.height !== 800) return null;
+  }
+  let apercu;
+  try { apercu = await require('./web/woocommerce').telechargerImage(produit.image); }
+  catch { return null; }
+  if (!sansImage) {
+    // Une toile carrée sur le site : le carré ne lui a rien coupé.
+    const site = nativeImage.createFromDataURL(apercu).getSize();
+    if (site.height && Math.abs(site.width / site.height - 1) <= 0.02) return null;
+  }
+  return { champ: 'image', libelle: 'Image', app_image: oeuvre.image_path || null, site_apercu: apercu, site_cle: produit.image, manquant: sansImage };
+}
+
 // Clé de comparaison pour DÉTECTER une vraie différence, en ignorant les
 // variantes purement cosmétiques (casse, espaces multiples ou insécables,
 // apostrophes/guillemets courbes vs droits, tirets, points de suspension,
@@ -1517,11 +1540,11 @@ async function demarrerApplication() {
   // Annuler un « garder » (la différence pourra de nouveau être proposée).
   ipcMain.handle('web:retirer-ignore', (_e, oeuvreId, champ) => retirerIgnoreWeb(oeuvreId, champ));
   // Réconciliation « un seul côté ».
-  // Télécharger l'image d'un produit (URL publique) → data URL pour le recadrage.
+  // Télécharger l'image d'un produit (URL publique) → data URL.
   ipcMain.handle('web:telecharger-image', (_e, url) => require('./web/woocommerce').telechargerImage(url));
   // Créer une fiche d'œuvre à partir d'un produit du site (l'artiste est choisi
   // dans l'app). Le SKU devient le numéro d'inventaire. Image gérée ensuite côté
-  // renderer (téléchargement + recadrage habituel).
+  // renderer (téléchargée et gardée entière).
   // Caractéristiques d'un produit du site, prêtes à entrer dans une fiche, et
   // l'artiste suggéré d'après la CATÉGORIE du produit (vraie pour 494 œuvres
   // sur 510 au 2026-09-10). Lu par l'API publique : aucune clé nécessaire.
@@ -1700,7 +1723,10 @@ async function demarrerApplication() {
     const ignores = new Map(require('./db/requetes').listerWebSyncIgnore()
       .filter((r) => r.oeuvre_id === oeuvre.id).map((r) => [`${r.oeuvre_id}:${r.champ}`, r.site_cle]));
     const res = comparerSiteEtApp([produit], [oeuvre], ignores);
-    return { relie: true, sku, ligne: res.lignes[0] || null };
+    const ligne = res.lignes[0] || { titre: oeuvre.titre || '', champs: [] };
+    const image = await ecartImageOeuvre(oeuvre, produit, ignores.get(`${oeuvre.id}:image`));
+    if (image) ligne.champs.push(image);
+    return { relie: true, sku, ligne };
   });
   ipcMain.handle('web:comparer-artiste', async (_e, artisteId) => {
     const creds = obtenirClesWoo();

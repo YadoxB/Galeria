@@ -11,6 +11,22 @@
 
 ---
 
+## Les toiles verticales gardent toute leur image
+
+Quand vous créez une fiche depuis le site, l'image de l'œuvre est maintenant gardée
+**entière**. Plus de fenêtre de cadrage, plus de toile coupée en haut et en bas : c'est
+la même chose que pour une œuvre que vous ajoutez vous-mêmes.
+
+**Une fiche déjà créée a une image coupée ?** C'est le cas de HEL2260 et HEL2258.
+Ouvrez la fiche, cliquez **Comparer avec le site**, puis **Reprendre l'image du site**.
+Galeria vous montre les deux images côte à côte et attend votre accord avant de
+remplacer quoi que ce soit.
+
+Et pour les portraits d'artistes, le cadre de la fenêtre **Cadrer la photo** tombe
+maintenant pile sur l'image : ce que vous voyez dans le cadre est bien ce qui est gardé.
+
+---
+
 ## Le statut se change d'un clic
 
 Sur la fiche d'une œuvre, la **pastille de statut** (« Disponible », « Vendue »…)

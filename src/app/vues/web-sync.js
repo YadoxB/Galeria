@@ -7,7 +7,6 @@
 import { ech, formaterPrix, nettoyerErreur, pluriel, urlPhoto, badgeStatut, STATUTS, sansAccents, nomComplet } from '../commun.js';
 import { naviguer } from '../router.js';
 import { alerter, confirmer, editerTexteImport } from '../dialogue.js';
-import { recadrerCarre } from '../recadrage.js';
 
 const TYPES_DIFF = [
   { cle: 'titre', libelle: 'Titre' },
@@ -992,7 +991,7 @@ async function ouvrirApercuOeuvre(oeuvreId) {
 
 // Modale : créer une fiche d'œuvre à partir d'un produit du site. L'artiste est
 // choisi ici ; titre/description/prix sont pré-remplis et modifiables ; l'image
-// du site peut être téléchargée puis recadrée. Retourne { cree, oeuvre } ou null.
+// du site peut être téléchargée, entière. Retourne { cree, oeuvre } ou null.
 function modalCreerFiche(produit) {
   return new Promise(async (resolve) => {
     let artistes = [];
@@ -1024,7 +1023,7 @@ function modalCreerFiche(produit) {
              création : une fiche remplie à l'insu de celui qui la crée est
              une fiche qu'on ne relit pas. -->
         <div class="cf-carac" id="cf-carac"><p class="aide-champ">Lecture des caractéristiques sur le site…</p></div>
-        ${produit.image ? `<label class="cf-image-choix"><input type="checkbox" id="cf-image" checked> Télécharger l'image du site (recadrage ensuite)</label>` : ''}
+        ${produit.image ? `<label class="cf-image-choix"><input type="checkbox" id="cf-image" checked> Télécharger l'image du site</label>` : ''}
         <div class="dialogue-actions">
           <button type="button" class="btn-action btn-secondaire-action" id="cf-annuler">Annuler</button>
           <button type="button" class="btn-action btn-principal" id="cf-creer">Créer la fiche</button>
@@ -1032,9 +1031,13 @@ function modalCreerFiche(produit) {
       </div>`;
 
     let fini = false;
+    // Une fois la création lancée, plus d'annulation : la fiche existe, et la
+    // liste doit l'apprendre même si l'image met du temps à descendre.
+    let occupe = false;
     const fermer = (r) => { if (fini) return; fini = true; window.removeEventListener('keydown', onKey); overlay.remove(); resolve(r); };
-    const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); fermer(null); } };
-    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) fermer(null); });
+    const annuler = () => { if (!occupe) fermer(null); };
+    const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); annuler(); } };
+    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) annuler(); });
     window.addEventListener('keydown', onKey);
     document.body.appendChild(overlay);
     overlay.querySelector('#cf-titre').focus();
@@ -1073,7 +1076,7 @@ function modalCreerFiche(produit) {
         `<p class="aide-champ">Caractéristiques illisibles sur le site : la fiche sera créée sans elles, à compléter à la main.</p>`;
     });
 
-    overlay.querySelector('#cf-annuler').addEventListener('click', () => fermer(null));
+    overlay.querySelector('#cf-annuler').addEventListener('click', annuler);
     overlay.querySelector('#cf-creer').addEventListener('click', async (e) => {
       const titre = overlay.querySelector('#cf-titre').value.trim();
       const artiste_id = overlay.querySelector('#cf-artiste').value;
@@ -1084,6 +1087,7 @@ function modalCreerFiche(produit) {
       const veutImage = produit.image && overlay.querySelector('#cf-image') && overlay.querySelector('#cf-image').checked;
       const btn = e.currentTarget;
       btn.disabled = true; btn.textContent = 'Création…';
+      occupe = true;
       let oeuvre;
       try {
         const r = await window.api.webCreerOeuvreDepuisSite({
@@ -1093,21 +1097,25 @@ function modalCreerFiche(produit) {
         });
         oeuvre = r.oeuvre;
       } catch (err) {
+        occupe = false;
         btn.disabled = false; btn.textContent = 'Créer la fiche';
         await alerter({ type: 'error', title: 'Création échouée', message: nettoyerErreur(err) });
         return;
       }
-      // Fiche créée : on ferme, puis on gère l'image seule (recadrage par-dessus).
-      fermer({ cree: true, oeuvre });
+      // L'image reste ENTIÈRE, comme celle d'une œuvre ajoutée à la main. Ce
+      // chemin était le seul à forcer une œuvre en carré : une toile 1:2 y perdait
+      // la moitié de sa surface, signature comprise, sans retour possible
+      // (signalement du 2026-10-16, HEL2260 et HEL2258).
       if (veutImage) {
+        btn.textContent = "Téléchargement de l'image…";
         try {
           const dataUrl = await window.api.webTelechargerImage(produit.image);
-          const crop = await recadrerCarre(dataUrl);
-          if (crop) await window.api.photoEnregistrerRecadree('oeuvres', oeuvre.id, crop, dataUrl);
+          await window.api.photoEnregistrerRecadree('oeuvres', oeuvre.id, dataUrl, null);
         } catch (err) {
           await alerter({ type: 'warning', title: 'Image non ajoutée', message: `${nettoyerErreur(err)} La fiche est créée ; tu pourras ajouter la photo plus tard sur sa fiche.` });
         }
       }
+      fermer({ cree: true, oeuvre });
       await alerter({ type: 'succes', title: 'Fiche créée', message: `« ${oeuvre.titre} » ajoutée (Nº ${oeuvre.numero_inventaire}).` });
     });
   });

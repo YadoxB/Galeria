@@ -26,24 +26,55 @@ Elles viennent du tableau de bord du chantier (lien en tête de ce fichier), où
 
 | # | Demande | Qui | Pourquoi cet ordre |
 |---|---|---|---|
-| 1 | **Cadrage des toiles verticales** à la création d'une fiche depuis le site (16 oct., ex. HEL2260 et HEL2258) | Claude | Un vrai défaut, visible à chaque création |
+| 1 | **Cadrage des toiles verticales** à la création d'une fiche depuis le site (16 oct., ex. HEL2260 et HEL2258) — **code prêt dans la branche, à commiter puis publier** | Claude | Un vrai défaut, visible à chaque création |
 | 2 | **Clients par ordre alphabétique** (30 oct.) | Claude | Petit et net ; trouver d'abord QUELLE liste |
 | 3 | **Suivi : demander avant de classer** un item terminé (30 oct.) | Claude | Demande de confort — la forme est à cadrer avec Dave |
 | 4 | **Galeria sur plusieurs ordinateurs ?** (8 oct.) | Dave | Décision de fond, pas un réglage : à trancher avant tout code |
 
-**1. Cadrage vertical — ce qui est déjà établi** (lecture seule, aucune ligne touchée) :
+**1. Cadrage vertical — diagnostic refait au banc le 2026-10-30** (le précédent, tiré de la
+seule lecture du code, passait à côté de l'essentiel) :
 
 - Les deux exemples **n'existent pas dans la base de Dave** : ces œuvres ont été créées chez
-  les parents depuis le site. Pour reproduire, partir des **SKU sur la boutique publique**
-  (aucune clé nécessaire) : `HEL2260` = « L'heure sereine », `HEL2258` = « Floraison
-  minérale ».
-- Leurs images font **784 × 1600** et **783 × 1600** px, soit un rapport proche de **1:2**.
-- `recadrerCarre` (`src/app/recadrage.js`) pose au départ un carré **centré verticalement**
-  (`y = (imgH - taille) / 2`). Sur une toile aussi haute, ce carré coupe donc le haut ET le
-  bas — il faut le déplacer à la main à chaque fois.
-- ⚠ **Reste à décider avec Dave** avant de coder : un carré ancré **en haut** par défaut pour
-  les images très verticales, ou **conserver la proportion** de l'œuvre plutôt que forcer le
-  carré (ce qui toucherait les vignettes partout). Ne pas trancher seul.
+  les parents depuis le site. Leurs images publiques font **784 × 1600** et **783 × 1600** px.
+- **Vrai défaut n° 1, corrigé dans cette branche (non commité) : le cadre tombait à côté de
+  l'image.** Il se plaçait par rapport à la ZONE, or l'image y est centrée et la zone fait au
+  moins 388 px de large (le texte d'aide). Toute image affichée plus étroite décalait le
+  cadre : −47 px à 1600 × 1000, −87 px à 1366 × 728, et sur HEL2063 (249 × 1600) il ne touchait
+  **plus du tout** l'image. Correctif : `.toile-recadrage`, qui épouse l'image. Il sert aussi
+  aux portraits d'artistes (même fenêtre). Banc : vrai module et vraie feuille de style dans
+  Electron, écran comparé au fichier produit, 30 cas sur 5 tailles de fenêtre, 0 échec ;
+  le même banc échouait avant le correctif.
+- **Vrai défaut n° 2, tranché par Dave le 2026-10-30 : l'image reste ENTIÈRE (fait dans cette
+  branche, non commité).** La création depuis le site était le SEUL chemin qui forçait une
+  œuvre en carré : **52 % de la toile perdue** sur un format 1:2, signature comprise, et sans
+  retour, car `TABLES.oeuvres.colonneOriginale` vaut `null` et l'original était **jeté sans un
+  mot**. `modalCreerFiche` (`web-sync.js`) enregistre désormais l'image telle quelle, comme une
+  œuvre ajoutée à la main. `recadrerCarre` ne sert plus qu'aux portraits d'artistes.
+- **La crainte notée ici auparavant (« toucherait les vignettes partout ») ne tient pas.** Sur
+  les 538 photos d'œuvres du poste de Dave, **2 seulement** font 800 × 800 ; **200** sont
+  verticales, dont 51 plus hautes que 1:1,5 (HEL2067, 787 × 1600, a la même proportion que
+  HEL2260). Les gabarits et la fiche sont en `contain`, les cartes recadrent à l'affichage sans
+  toucher au fichier : tout le reste de l'app vit déjà avec ces proportions.
+- **Réparer les fiches déjà coupées : une ligne « Image » dans « Comparer avec le site »**, depuis
+  la fiche seulement (`ecartImageOeuvre`, `main.js`) : il faut télécharger l'image du site pour
+  en juger, impensable pour 500 produits. Elle paraît si la fiche n'a pas d'image, ou si son
+  image fait exactement 800 × 800 (la signature de l'ancien cadrage) alors que celle du site
+  n'est pas carrée. ⚠ **À faire chez les parents après publication** : reprendre l'image de
+  HEL2260, HEL2258 et de toute fiche créée depuis le site. Aucune réparation automatique :
+  remplacer une photo reste leur geste.
+- **Vérifié** : la vraie application isolée face à un faux site local, 24 contrôles, 0 échec. Le
+  même banc sur l'ancien code : 10 échecs sur 12 avant de bloquer. ⚠ **Pas essayé contre la vraie
+  boutique avec les clés.**
+- ⚠ **À la publication** : l'entrée de `src/app/nouveautes.js` reste à écrire, avec le numéro de
+  version (texte de base dans `NOUVEAUTES-PARENTS.md`).
+- **Quatre pièges de ce banc**, à connaître avant le prochain : ① un code copié hors du projet
+  ne trouve pas `electron-updater`, et l'erreur s'affiche en fenêtre sur l'écran de Dave.
+  `NODE_PATH` n'a pas suffi ; une amorce qui complète `Module._nodeModulePaths` règle la chose.
+  ② Au-delà de 260 caractères de chemin, Chromium ne lit plus les photos, alors que `fs` y
+  arrive : garder le dossier de données court. ③ Au premier lancement, le tutoriel est ouvert et
+  Échap le referme, ce qui renvoie à l'accueil : le fermer d'abord. ④ Après une navigation, la
+  fiche précédente reste un instant à l'écran : retirer son bouton avant d'attendre le nouveau,
+  sinon on la compare elle, et le « À jour » obtenu ne prouve rien.
 
 **2. Clients par ordre alphabétique** : le signalement vient de la page d'accueil ; vérifier
 d'abord laquelle des listes n'est pas triée (tableau de bord, choix d'un client dans une

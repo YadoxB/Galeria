@@ -123,9 +123,10 @@ const ARTICLES = [
      <div class="attention"><b>Sage 50 est obligatoire avant de vendre</b> l'œuvre (voir « Vente refusée »).</div>`),
   A('oeuvres', 'Sujets (mots-clés de l\'œuvre)', 'sujets thèmes chips marine portrait paysage mots-clés',
     `<p>Dans le formulaire, les <b>sujets</b> sont des pastilles cliquables (marine, portrait, paysage…). Tu peux en ajouter. Ils servent à décrire et retrouver l'œuvre.</p>`),
-  A('oeuvres', 'Photo de l\'œuvre', 'photo image importer recadrer carré visionner agrandir original',
-    `<p>Choisis une image, puis recadre-la (carré). Galeria garde l'<b>original pleine résolution</b>. Sur la fiche, un clic sur l'image l'ouvre en grand. La photo sert aussi au certificat, au catalogue et à la pochette.</p>
-     <div class="attention">Pense à <b>Enregistrer</b> après avoir ajouté/recadré la photo, sinon elle n'est pas conservée.</div>`),
+  A('oeuvres', 'Photo de l\'œuvre', 'photo image importer recadrer carré coupée verticale site visionner agrandir original',
+    `<p>Choisis une image : elle est gardée <b>entière</b>, sans recadrage. Sur la fiche, un clic sur l'image l'ouvre en grand. La photo sert aussi au certificat, au catalogue et à la pochette.</p>
+     <p>Une image coupée en carré sur une fiche créée depuis le site ? Sur cette fiche, clique <b>Comparer avec le site</b>, puis <b>Reprendre l'image du site</b>.</p>
+     <div class="attention">Sur une nouvelle œuvre, pense à <b>Enregistrer</b> après avoir ajouté la photo, sinon elle n'est pas conservée.</div>`),
   A('oeuvres', 'Lien vers la fiche du site web', 'url site web lien woocommerce boutique voir en ligne',
     `<p>Le champ <b>URL de la fiche sur le site</b> ajoute un bouton « Voir sur le site › » sous le prix, qui ouvre la page dans le navigateur.</p>`),
   A('oeuvres', 'Retirer une œuvre (la rendre à l\'artiste)', 'retrait retirer rendre extrant sortir catalogue réintégrer lot motif',
@@ -395,8 +396,8 @@ const ARTICLES = [
     `<p>C'est un <b>avertissement connu d'Acrobat</b> qui apparaît quelques secondes après l'ouverture de n'importe quel PDF généré. <b>Le PDF est valide</b> et imprimable. Si l'avis te gêne, ouvre le PDF avec <b>Microsoft Edge</b>.</p>`),
   A('depannage', '« Impossible de générer/remplacer le PDF »', 'pdf verrouillé occupé ebusy fermer visionneur régénérer',
     `<p>Le fichier est probablement <b>encore ouvert</b> dans un lecteur (Acrobat). <b>Ferme</b> le PDF puis réessaie. Galeria ajoute aussi un horodatage aux noms pour éviter les conflits.</p>`),
-  A('depannage', 'La photo de l\'œuvre ne s\'affiche pas', 'photo image manquante vide ne s\'affiche pas recadrage enregistrer',
-    `<p>Le plus souvent, l'image a été choisie mais pas <b>enregistrée</b> : après l'avoir recadrée, clique <b>Enregistrer</b>. Si le fichier d'origine a été déplacé hors du dossier Photos, ré-importe-le.</p>`),
+  A('depannage', 'La photo de l\'œuvre ne s\'affiche pas', 'photo image manquante vide ne s\'affiche pas enregistrer',
+    `<p>Le plus souvent, l'image a été choisie mais pas <b>enregistrée</b> : sur une nouvelle œuvre, clique <b>Enregistrer</b> après l'avoir choisie. Si le fichier d'origine a été déplacé hors du dossier Photos, ré-importe-le.</p>`),
   A('depannage', 'Les taxes sont absentes ou fausses sur la facture artiste', 'taxes tps tvq manquantes facture artiste percoit taux numéros',
     `<p>Elles dépendent de l'<b>artiste</b> : ouvre sa fiche et vérifie qu'il <b>perçoit les taxes</b> et que ses <b>numéros TPS/TVQ</b> sont saisis et valides. Les <b>taux</b> viennent de <b>Réglages → Documents</b>.</p>`),
   A('depannage', 'La reproduction est facturée sans déduire les frais', 'reproduction frais production commission facture artiste 50',

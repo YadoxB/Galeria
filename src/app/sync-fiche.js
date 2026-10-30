@@ -1,8 +1,8 @@
 // Comparaison « site web » d'un SEUL élément, depuis sa fiche (œuvre ou artiste).
 // Réutilise les mêmes IPC que l'écran de synchronisation. Lecture seule côté site.
 
-import { ech, formaterPrix, nettoyerErreur, STATUTS, badgeStatut } from './commun.js';
-import { alerter, editerTexteImport } from './dialogue.js';
+import { ech, formaterPrix, nettoyerErreur, STATUTS, badgeStatut, urlPhoto } from './commun.js';
+import { alerter, confirmer, editerTexteImport } from './dialogue.js';
 import { recadrerCarre } from './recadrage.js';
 
 const CHAMPS_TEXTE = new Set(['titre', 'description', 'citation', 'biographie', 'demarche', 'curriculum']);
@@ -85,6 +85,16 @@ function ouvrirModale({ type, id, titre, diffs, apresMaj }) {
         </div>
       </div>`;
     }
+    if (c.champ === 'image') {
+      return `<div class="wsync-champ" data-champ="image">
+        <div class="wsync-lib">${ech(c.libelle)}</div>
+        <div class="wsync-cols">
+          <div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val sf-image">${c.app_image ? `<img src="${urlPhoto(c.app_image)}" alt="">` : '<span class="wsync-vide">— (aucune image)</span>'}</div></div>
+          <div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val sf-image"><img src="${c.site_apercu}" alt=""></div></div>
+        </div>
+        <div class="wsync-champ-actions"><button type="button" class="btn-action btn-secondaire-action" data-image>Reprendre l'image du site →</button> <button type="button" class="btn-lien" data-garder>Garder la version de l'app</button></div>
+      </div>`;
+    }
     const estPhoto = c.champ === 'photo';
     const btnReprendre = estPhoto
       ? '<button type="button" class="btn-action btn-secondaire-action" data-photo>Télécharger la photo du site →</button>'
@@ -140,6 +150,20 @@ function ouvrirModale({ type, id, titre, diffs, apresMaj }) {
           if (crop) { await window.api.photoEnregistrerRecadree('artistes', id, crop, dataUrl); retirer('photo'); }
           else { btn.disabled = false; btn.textContent = 'Télécharger la photo du site →'; }
         } catch (err) { btn.disabled = false; btn.textContent = 'Télécharger la photo du site →'; await alerter({ type: 'error', title: 'Photo non ajoutée', message: nettoyerErreur(err) }); }
+      });
+      bloc.querySelector('[data-image]')?.addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        if (c.app_image) {
+          const reponse = await confirmer({
+            type: 'question', title: "Reprendre l'image du site ?",
+            message: "L'image actuelle de cette fiche sera effacée et remplacée par l'image entière du site.",
+            buttons: ['Remplacer', 'Annuler'], defaultId: 0, cancelId: 1,
+          });
+          if (reponse !== 0) return;
+        }
+        btn.disabled = true;
+        try { await window.api.photoEnregistrerRecadree('oeuvres', id, c.site_apercu, null); retirer('image'); }
+        catch (err) { btn.disabled = false; await alerter({ type: 'error', title: 'Image non reprise', message: nettoyerErreur(err) }); }
       });
       bloc.querySelector('[data-statut-ok]')?.addEventListener('click', async (e) => {
         const btn = e.currentTarget;

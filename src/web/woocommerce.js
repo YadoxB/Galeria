@@ -348,8 +348,8 @@ async function listerArtistesSite({ url, langue }) {
   return artistes;
 }
 
-// Télécharge une image (URL publique du site) et la renvoie en data URL, pour la
-// passer au recadrage. Lecture seule ; vérifie le type et la taille.
+// Télécharge une image (URL publique du site) et la renvoie en data URL. Lecture
+// seule ; vérifie le type et la taille.
 async function telechargerImage(url) {
   const u = String(url == null ? '' : url).trim();
   if (!/^https?:\/\//i.test(u)) throw new Error("Adresse d'image invalide.");
