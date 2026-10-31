@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.30.0] — 2026-10-31
+
 ### Modifié
 
 - **Le Suivi demande avant de classer ce qui est terminé** (signalement du 2026-10-30). Une

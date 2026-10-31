@@ -17,6 +17,15 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
+    version: '0.30.0',
+    diapos: [
+      {
+        titre: 'Dans le Suivi, rien ne part sans vous demander',
+        texte: "Quand vous cochez la dernière étape d'une commande ou d'une œuvre à préparer, Galeria pose la question&nbsp;: <b>Classer</b> la commande dans Complétées, ou <b>Retirer du suivi</b> l'œuvre, qui reste au catalogue. <b>Pas encore</b> laisse la ligne à sa place, avec un bouton pour le faire plus tard. Coché trop vite&nbsp;? Décochez une étape&nbsp;: la ligne revient parmi les choses à faire.",
+      },
+    ],
+  },
+  {
     version: '0.29.0',
     diapos: [
       {
