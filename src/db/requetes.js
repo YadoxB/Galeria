@@ -312,17 +312,48 @@ function voisinsOeuvre(id) {
   };
 }
 
+// Ordre alphabétique français des clients. COLLATE NOCASE ne plie que les lettres
+// sans accent : Élie et Émond passaient après Zuniga, et Cyr avant Côté. On remet
+// donc la liste en ordre côté JavaScript, comme pour les numéros d'inventaire.
+// ⚠ Une copie de cet ordre vit dans src/app/clients-tri.js pour l'interface : les
+// deux processus ne partagent pas de module. Les modifier ensemble.
+function comparerClients(a, b) {
+  return comparerInventaire(a.nom, b.nom) || comparerInventaire(a.prenom, b.prenom) || a.id - b.id;
+}
+
+// Les chiffres d'achat et les artistes servent aux tris et aux filtres de la liste.
+// Le total inclut les taxes, comme le « total dépensé » de la fiche du client.
 function listerClients(filtres = {}) {
   const db = openDatabase();
   const where = filtres.inclureArchives ? '' : 'WHERE c.archive = 0';
-  return db.prepare(`
+  const clients = db.prepare(`
     SELECT c.id, c.nom, c.prenom, c.courriel, c.telephone, c.ville,
-           c.consentement_courriel, c.consentement_date, c.archive,
-           (SELECT COUNT(*) FROM ventes v WHERE v.client_id = c.id) AS nb_ventes
+           c.consentement_courriel, c.consentement_date, c.archive, c.cree_le,
+           COUNT(v.id) AS nb_ventes,
+           MAX(v.date_vente) AS derniere_vente,
+           COALESCE(SUM(v.prix_vente + v.tps + v.tvq), 0) AS total_achats
     FROM clients c
+    LEFT JOIN ventes v ON v.client_id = c.id
     ${where}
-    ORDER BY c.nom COLLATE NOCASE, c.prenom COLLATE NOCASE
+    GROUP BY c.id
   `).all();
+
+  const artistesParClient = new Map();
+  const achats = db.prepare(`
+    SELECT DISTINCT v.client_id, a.id,
+           TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS nom
+    FROM ventes v
+    JOIN oeuvres o ON o.id = v.oeuvre_id
+    JOIN artistes a ON a.id = o.artiste_id
+  `).all();
+  for (const { client_id: clientId, id, nom } of achats) {
+    if (!artistesParClient.has(clientId)) artistesParClient.set(clientId, []);
+    artistesParClient.get(clientId).push({ id, nom });
+  }
+
+  return clients
+    .map((c) => ({ ...c, artistes: artistesParClient.get(c.id) || [] }))
+    .sort(comparerClients);
 }
 
 function obtenirClient(id) {
@@ -378,8 +409,9 @@ function listerVentesClient(clientId) {
 function voisinsClient(id) {
   const db = openDatabase();
   const liste = db
-    .prepare('SELECT id, nom, prenom FROM clients ORDER BY nom COLLATE NOCASE, prenom COLLATE NOCASE')
-    .all();
+    .prepare('SELECT id, nom, prenom FROM clients')
+    .all()
+    .sort(comparerClients);
   const idx = liste.findIndex((c) => c.id === id);
   const label = (c) => c ? [c.prenom, c.nom].filter(Boolean).join(' ') : null;
   if (idx === -1) return { precedent: null, suivant: null, position: null, total: liste.length };

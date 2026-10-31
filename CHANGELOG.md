@@ -12,6 +12,13 @@ identifiants.
 
 ### Ajouté
 
+- **Trier et filtrer les clients**, sur la page Clients et au choix d'un client dans une vente
+  (signalement du 2026-10-30, élargi par Dave). « Trier par » : nom, prénom, ville, dernier achat,
+  montant acheté, ajoutés récemment ; le choix est retenu d'un écran à l'autre. « Filtres » : ville
+  (Québec, Quebec et QUÉBEC regroupés), courriels, achats, artiste acheté, et les archivés sur la
+  page seulement. Un filtre actif reste visible, avec un × pour l'enlever, et le compteur dit
+  « 17 clients sur 45 ». Repères A, B, C dans les deux tris alphabétiques. Maquette :
+  `demos/clients-tri-filtres.html`.
 - **« Comparer avec le site » propose de reprendre l'image d'une œuvre**, depuis sa fiche : les
   deux images côte à côte, puis « Reprendre l'image du site » ou « Garder la version de l'app ».
   La ligne paraît si la fiche n'a pas d'image, ou si elle porte encore le carré de 800 × 800 de
@@ -20,6 +27,9 @@ identifiants.
 
 ### Modifié
 
+- **Le nom d'un client se lit dans l'ordre du tri** : « Bouchard, Zoé » dans les listes et le menu
+  « Réserver l'œuvre » ; trié par prénom, « Zoé Bouchard ». La recherche le retrouve dans les deux
+  sens. « Inclure les archivés » passe dans le bouton Filtres de la page Clients.
 - **Créer une fiche depuis le site garde l'image entière** (signalement du 2026-10-16, HEL2260 et
   HEL2258). Ce chemin était le seul à forcer une œuvre en carré : une toile 1:2 y perdait 52 % de
   sa surface, signature comprise, et l'original n'était pas conservé. Plus de fenêtre de cadrage,
@@ -30,6 +40,11 @@ identifiants.
 
 ### Corrigé
 
+- **Les clients sont classés selon l'ordre français.** `COLLATE NOCASE` ne connaît pas les accents :
+  Élie et Émond passaient après Zuniga, Cyr avant Côté. Touche les listes de clients, le menu
+  « Réserver l'œuvre » et Précédent / Suivant sur une fiche de client.
+- **Une vente montre tous les clients.** Sans recherche, la liste s'arrêtait aux 30 premiers, et
+  rien ne le disait.
 - **Fenêtre « Cadrer la photo » : le cadre tombait à côté de l'image sur une toile étroite**
   (signalement du 2026-10-16, HEL2260 et HEL2258). Il se plaçait par rapport à la zone, dans
   laquelle l'image est centrée : décalage de 47 à 87 px selon la fenêtre, et sur une image très

@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette — Trier et filtrer les clients</title>
+<!-- Les VRAIES feuilles de style de l'application : la maquette montre ce que
+     l'écran donnera, elle ne l'imite pas. Tous les clients sont FICTIFS. -->
+<link rel="stylesheet" href="../src/theme.css">
+<link rel="stylesheet" href="../src/styles.css">
+<style>
+  body{padding:30px 34px;overflow:auto;height:auto;user-select:text;}
+  .doc{max-width:1120px;margin:0 auto;}
+  h1{font-family:var(--font-titre);font-weight:500;font-size:30px;margin:0 0 8px;}
+  .sous{color:var(--slate);font-size:14px;line-height:1.65;margin:0 0 6px;max-width:900px;}
+  .journal{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:16px 21px;margin-top:18px;}
+  .journal h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+              margin:0 0 9px;font-weight:700;}
+  .journal ul{margin:0;padding-left:19px;font-size:13.5px;color:var(--slate);line-height:1.8;}
+  .journal em{color:var(--ink);font-style:normal;font-weight:600;}
+  .maquette{background:var(--soft-ivory);border:1px dashed var(--mist);border-radius:16px;padding:20px;margin-top:12px;}
+  .faux-chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;}
+  .faux-chips .t{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+                 font-weight:700;margin-right:4px;}
+  .faux-chips button{font-family:var(--font-ui);font-size:12.5px;border:1px solid var(--mist);
+    background:#fff;border-radius:999px;padding:5px 13px;cursor:pointer;color:var(--slate);}
+  .faux-chips button.on{background:var(--gallery-navy);border-color:var(--gallery-navy);color:#fff;}
+  .faux-chips .espace{width:18px;}
+  .faux-bloc{background:var(--porcelain);border:1px solid var(--mist);border-radius:var(--r-carte);
+             padding:18px 20px;max-width:760px;}
+  .faux-bloc h3{margin:0 0 12px;}
+  .defaut{font-size:12.5px;color:#7a4a00;background:#fff8e8;border:1px solid #e8d9a8;border-radius:10px;
+          padding:8px 12px;margin:0 0 12px;}
+
+/* =====================================================================
+   PROPOSITION — à reporter dans src/styles.css.
+   ===================================================================== */
+  .controles-clients{flex-wrap:wrap;gap:var(--s2);}
+  .controles-clients .compteur{color:var(--slate);font-size:13px;}
+  .filtres-nb{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;
+              padding:0 5px;border-radius:999px;background:var(--gallery-navy);color:#fff;
+              font-size:11px;font-weight:600;}
+  .filtres-actifs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 var(--s3);}
+  .filtre-pastille{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 11px;border-radius:999px;
+                   background:var(--cloud);border:1px solid var(--mist);font-family:var(--font-ui);
+                   font-size:12.5px;color:var(--ink);}
+  .filtre-pastille button{border:none;background:none;cursor:pointer;color:var(--slate);font-size:14px;
+                          line-height:1;width:20px;height:20px;border-radius:50%;}
+  .filtre-pastille button:hover{background:var(--mist);color:var(--ink);}
+  .repere-lettre{font-family:var(--font-titre);font-size:17px;font-weight:600;color:var(--warm-gold);
+                 padding:8px 4px 1px;}
+  .resultats-recherche .repere-lettre{position:sticky;top:0;background:var(--porcelain);z-index:1;padding-top:4px;}
+  /* Dans le formulaire de vente, la barre est serrée contre la recherche. */
+  .bloc-recherche .controles-clients,
+  .bloc-recherche .filtres-actifs{margin:0;}
+  .nom-famille{font-weight:600;}
+  .liste-vide .btn-lien{margin-left:6px;}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<h1>Trier et filtrer les clients</h1>
+<p class="sous">Demande du 30 octobre : « Mettre les clients par ordre alphabétique », élargie par Dave au tri et au
+filtrage, sur la page Clients comme au moment de choisir un client dans une vente. Tous les clients ci-dessous sont
+<strong>fictifs</strong>.</p>
+
+<div class="journal">
+  <h4>Pourquoi la liste paraît en désordre aujourd'hui</h4>
+  <ul>
+    <li><em>Triée sur le nom, affichée prénom d'abord.</em> « Zoé Bouchard » précède « Alain Tremblay » : l'ordre est juste, mais il se lit Z, puis A.</li>
+    <li><em>Les accents faussent l'ordre.</em> Élie et Émond passent après Zuniga, et Cyr passe avant Côté. Le défaut vient de la base de données.</li>
+    <li><em>Dans une vente, seuls les 30 premiers clients s'affichent.</em> Sans recherche, tous les autres restent invisibles, et rien ne le dit.</li>
+  </ul>
+</div>
+
+<div class="faux-chips" id="commandes">
+  <span class="t">Montrer</span>
+  <button type="button" data-mode="propose" class="on">Proposé</button>
+  <button type="button" data-mode="actuel">Aujourd'hui</button>
+  <span class="espace"></span>
+  <span class="t">Écran</span>
+  <button type="button" data-ecran="page" class="on">Page Clients</button>
+  <button type="button" data-ecran="vente">Choisir un client dans une vente</button>
+  <span class="espace"></span>
+  <span class="t">Repères A, B, C</span>
+  <button type="button" data-reperes="1" class="on">Oui</button>
+  <button type="button" data-reperes="0">Non</button>
+</div>
+
+<div class="maquette" id="scene"></div>
+
+<div class="journal">
+  <h4>Ce que la proposition change</h4>
+  <ul>
+    <li><em>Les mêmes outils aux deux endroits</em> : la recherche, « Trier par » et « Filtres ». Le tri choisi est retenu d'une fois à l'autre et d'un écran à l'autre ; les filtres repartent à zéro, comme sur la page Œuvres.</li>
+    <li><em>Le nom se lit dans l'ordre du tri</em> : « <span class="nom-famille">Bouchard</span>, Zoé ». Trié par prénom, il redevient « Zoé Bouchard ».</li>
+    <li><em>Un filtre actif reste toujours visible</em>, avec un × pour l'enlever, et le compteur dit « 17 clients sur 45 ». Personne ne croira qu'un client a disparu.</li>
+    <li><em>La vente montre tous les clients</em>, plus seulement les 30 premiers. Les clients archivés restent exclus, comme aujourd'hui.</li>
+    <li><em>Les villes écrites différemment sont regroupées</em> : Québec, Quebec et QUÉBEC donnent un seul choix.</li>
+    <li><em>Aussi, sans nouvel outil</em> : la flèche Précédent/Suivant d'une fiche client et le menu « Réserver l'œuvre » suivent le même ordre.</li>
+  </ul>
+</div>
+
+<div class="journal">
+  <h4>Ce que Dave tranche</h4>
+  <ul>
+    <li><em>Le filtre « Artiste acheté »</em> : retrouver qui a déjà acheté tel artiste, par exemple pour un vernissage. C'est le seul qui demande plus que la fiche du client. Proposé : on le garde.</li>
+    <li><em>Les repères A, B, C</em> dans la liste, à comparer avec les boutons ci-dessus. Proposé : oui.</li>
+  </ul>
+</div>
+
+</div>
+
+<script>
+// Tous fictifs : téléphones en 555, courriels en example.com.
+const c = (prenom, nom, ville, consentement, ventes, ajout, extra = {}) => ({
+  prenom, nom, ville, consentement,
+  achats: ventes,
+  nb_ventes: ventes.length,
+  total: ventes.reduce((s, v) => s + v.prix, 0),
+  derniere: ventes.map((v) => v.date).sort().pop() || '',
+  artistes: [...new Set(ventes.map((v) => v.artiste))],
+  ajout,
+  archive: !!extra.archive,
+  courriel: extra.sansCourriel ? '' : `${(prenom || nom).toLowerCase().normalize('NFD').replace(/[^a-z]/g, '')}@example.com`,
+  telephone: extra.sansTel ? '' : `418 555-01${String(nom.length * 7 + (prenom || '').length * 3).padStart(2, '0').slice(0, 2)}`,
+});
+const v = (artiste, prix, date) => ({ artiste, prix, date });
+const LACASSE = 'Anne Lacasse', MOREAU = 'Julien Moreau', ROY = 'Sylvie Roy', VERT = 'Marc Vertefeuille';
+
+const CLIENTS = [
+  c('Zoé', 'Bouchard', 'Québec', 1, [v(LACASSE, 2400, '2026-09-14')], '2026-02-11'),
+  c('Alain', 'Tremblay', 'Lévis', 1, [v(MOREAU, 1800, '2025-11-02'), v(ROY, 950, '2026-06-20')], '2025-10-30'),
+  c('Marc', 'Émond', 'Québec', 0, [], '2026-10-04'),
+  c('Rose', 'Élie', 'Montréal', 1, [v(ROY, 3200, '2026-03-08')], '2026-03-08'),
+  c('Ana', 'Zuniga', 'Saint-Jean-sur-Richelieu', 1, [v(VERT, 5400, '2026-10-21')], '2026-10-21'),
+  c('Luc', 'Côté', 'Quebec', 0, [v(LACASSE, 1250, '2024-08-17')], '2024-08-17'),
+  c('Paul', 'Cyr', 'Rimouski', 1, [], '2025-05-19'),
+  c('Anne', 'Lévesque', 'QUÉBEC', 1, [v(MOREAU, 2100, '2026-07-03'), v(LACASSE, 1400, '2026-08-29'), v(VERT, 7800, '2025-12-12')], '2025-12-12'),
+  c('Guy', 'Leduc', 'Sherbrooke', 0, [], '2026-01-22', { sansCourriel: true }),
+  c('Max', 'lemieux', 'Lévis', 0, [v(ROY, 780, '2026-05-30')], '2026-05-30'),
+  c('Ève', 'Lemay', 'Québec', 1, [], '2026-09-30'),
+  c('Claire', 'de la Chevrotière', 'Boston', 1, [v(VERT, 9600, '2026-06-11')], '2026-06-11'),
+  c('Thomas', "O'Brien", 'Ottawa', 0, [v(MOREAU, 1650, '2025-07-26')], '2025-07-26'),
+  c('Sophie', 'St-Pierre', 'Québec', 1, [v(LACASSE, 2950, '2026-04-18')], '2026-04-18'),
+  c('Hugo', 'Sainte-Marie', 'Trois-Rivières', 0, [], '2024-11-09', { sansTel: true }),
+  c(null, 'Cabinet Morin et associés', 'Québec', 0, [v(VERT, 12400, '2025-09-05')], '2025-09-05'),
+  c('Nadia', 'Gagnon', 'Saguenay', 1, [v(ROY, 1100, '2026-02-14')], '2026-02-14'),
+  c('Gilles', 'Gagné', 'Québec', 0, [], '2023-06-30', { archive: true }),
+  c('Julie', 'Fortin', 'Lévis', 1, [v(LACASSE, 3300, '2026-10-02')], '2026-10-02'),
+  c('Éric', 'Bélanger', 'Québec', 1, [v(MOREAU, 2250, '2024-12-20')], '2024-12-20'),
+  c('Martine', 'Bergeron', 'Gatineau', 1, [], '2026-08-07'),
+  c('Olivier', 'Pelletier', 'Rimouski', 0, [v(VERT, 4100, '2025-03-15')], '2025-03-15'),
+  c('Isabelle', 'Pépin', 'Québec', 1, [v(ROY, 1900, '2026-09-02')], '2026-09-02'),
+  c('François', 'Ouellet', '', 0, [], '2026-04-25', { sansCourriel: true }),
+  c('Catherine', 'Nadeau', 'Montréal', 1, [v(LACASSE, 880, '2023-10-10')], '2023-10-10'),
+  c('Bruno', 'Michaud', 'Lévis', 0, [v(MOREAU, 3600, '2026-01-09')], '2026-01-09'),
+  c('Hélène', 'Morin', 'Québec', 1, [v(ROY, 2700, '2025-06-28'), v(LACASSE, 1500, '2026-05-05')], '2025-06-28'),
+  c('Denis', 'Lapointe', 'Sherbrooke', 1, [], '2024-03-12', { archive: true }),
+  c('Geneviève', 'Lachance', 'Québec', 1, [v(VERT, 6200, '2026-08-16')], '2026-08-16'),
+  c('Yves', 'Jobin', 'Lévis', 0, [], '2026-10-19'),
+  c('Marie', 'Hébert', 'Montréal', 1, [v(MOREAU, 1350, '2025-02-22')], '2025-02-22'),
+  c('Pierre', 'Girard', 'Québec', 0, [v(ROY, 990, '2024-05-04')], '2024-05-04'),
+  c('Lucie', 'Fournier', 'Trois-Rivières', 1, [], '2025-08-13'),
+  c('André', 'Dubois', 'Québec', 1, [v(LACASSE, 4200, '2026-07-27')], '2026-07-27'),
+  c('Carole', 'Drolet', 'Saguenay', 0, [], '2025-01-31'),
+  c('Simon', 'Demers', 'Lévis', 1, [v(VERT, 2800, '2025-10-11')], '2025-10-11'),
+  c('Annie', 'Caron', 'Québec', 1, [v(MOREAU, 1700, '2026-03-30')], '2026-03-30'),
+  c('Michel', 'Boucher', 'Rimouski', 0, [], '2024-07-07', { sansTel: true }),
+  c('Louise', 'Blais', 'Québec', 1, [v(ROY, 3500, '2026-06-02')], '2026-06-02'),
+  c('Robert', 'Audet', 'Lévis', 0, [v(LACASSE, 1200, '2023-09-23')], '2023-09-23'),
+  c('Élise', 'Thibault', 'Québec', 1, [], '2026-10-26'),
+  c('Vincent', 'Vaillancourt', 'Montréal', 0, [v(VERT, 8300, '2026-02-02')], '2026-02-02'),
+  c('Josée', 'Veilleux', 'Sherbrooke', 1, [], '2025-11-18'),
+  c('Patrick', 'Tanguay', 'Québec', 0, [v(MOREAU, 2050, '2024-10-29')], '2024-10-29'),
+  c('Sarah', 'Roy', 'Québec', 1, [], '2026-07-15', { archive: true }),
+  c('Daniel', 'Rioux', 'Rimouski', 1, [v(ROY, 1450, '2025-04-06')], '2025-04-06'),
+  c('Nathalie', 'Paquet', 'Lévis', 0, [], '2026-09-11'),
+  c('Stéphane', 'Ouimet', 'Gatineau', 1, [v(LACASSE, 2600, '2026-01-27')], '2026-01-27'),
+].map((x, i) => ({ ...x, id: i + 1 }));
+
+const ech = (s) => String(s ?? '').replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+const sansAccents = (s) => (s ?? '').toString().normalize('NFD').replace(/\p{Mn}/gu, '').toLowerCase();
+const pluriel = (n, sing) => `${n.toLocaleString('fr-CA')} ${n === 1 ? sing : sing + 's'}`;
+const prix = (n) => `${Math.round(n).toLocaleString('fr-CA')} $`;
+const dateCourte = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', year: 'numeric' });
+
+const COLLATEUR = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
+const cmpTexte = (a, b) => {
+  const x = String(a ?? '').trim();
+  const y = String(b ?? '').trim();
+  if (!x && !y) return 0;
+  if (!x) return 1;
+  if (!y) return -1;
+  return COLLATEUR.compare(x, y);
+};
+const parNom = (a, b) => cmpTexte(a.nom, b.nom) || cmpTexte(a.prenom, b.prenom) || a.id - b.id;
+const parDateDesc = (a, b) => (!a && !b) ? 0 : !a ? 1 : !b ? -1 : b.localeCompare(a);
+
+const TRIS = {
+  nom:     { libelle: 'Nom A→Z',           cmp: parNom },
+  prenom:  { libelle: 'Prénom A→Z',        cmp: (a, b) => cmpTexte(a.prenom || a.nom, b.prenom || b.nom) || parNom(a, b) },
+  ville:   { libelle: 'Ville A→Z',         cmp: (a, b) => cmpTexte(a.ville, b.ville) || parNom(a, b) },
+  achat:   { libelle: 'Dernier achat',     cmp: (a, b) => parDateDesc(a.derniere, b.derniere) || parNom(a, b) },
+  montant: { libelle: 'Montant acheté',    cmp: (a, b) => (b.total - a.total) || parNom(a, b) },
+  ajout:   { libelle: 'Ajoutés récemment', cmp: (a, b) => parDateDesc(a.ajout, b.ajout) || parNom(a, b) },
+};
+
+// L'ordre d'aujourd'hui, à l'identique de SQLite (COLLATE NOCASE) : seules les
+// lettres sans accent sont ramenées en minuscules, puis on compare octet par octet.
+const nocase = (s) => (s || '').replace(/[A-Z]/g, (m) => m.toLowerCase());
+const brut = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+const ordreActuel = (a, b) => brut(nocase(a.nom), nocase(b.nom)) || brut(nocase(a.prenom), nocase(b.prenom));
+
+const nomComplet = (x) => [x.prenom, x.nom].filter(Boolean).join(' ');
+const initiales = (n) => { const m = n.trim().split(/\s+/); return (m.length === 1 ? m[0].slice(0, 2) : m[0][0] + m[m.length - 1][0]).toUpperCase(); };
+
+function nomLigne(x, tri) {
+  if (tri === 'prenom' || !x.prenom) return ech(nomComplet(x));
+  return `<span class="nom-famille">${ech(x.nom)}</span>, ${ech(x.prenom)}`;
+}
+function lettre(x, tri) {
+  const base = tri === 'prenom' ? (x.prenom || x.nom) : x.nom;
+  const l = sansAccents(base).trim().charAt(0).toUpperCase();
+  return /[A-Z]/.test(l) ? l : '#';
+}
+// Le renseignement sur lequel on trie apparaît dans la ligne : on comprend l'ordre.
+function metaTri(x, tri) {
+  if (tri === 'achat') return x.derniere ? `dernier achat le ${dateCourte(x.derniere)}` : 'aucun achat';
+  if (tri === 'montant') return x.total ? `${prix(x.total)} achetés` : 'aucun achat';
+  if (tri === 'ajout') return `ajouté le ${dateCourte(x.ajout)}`;
+  return '';
+}
+
+// Regroupe Québec / Quebec / QUÉBEC en un seul choix : on garde l'écriture la
+// plus fréquente, à égalité celle qui porte des accents et des minuscules.
+function villesDe(liste) {
+  const groupes = new Map();
+  for (const x of liste) {
+    const brute = (x.ville || '').trim();
+    if (!brute) continue;
+    const cle = sansAccents(brute);
+    if (!groupes.has(cle)) groupes.set(cle, new Map());
+    const g = groupes.get(cle);
+    g.set(brute, (g.get(brute) || 0) + 1);
+  }
+  return [...groupes.entries()].map(([cle, g]) => {
+    const libelle = [...g.entries()].sort((a, b) => b[1] - a[1]
+      || (b[0] !== b[0].toUpperCase()) - (a[0] !== a[0].toUpperCase())
+      || b[0].localeCompare(a[0], 'fr'))[0][0];
+    return { cle, libelle };
+  }).sort((a, b) => cmpTexte(a.libelle, b.libelle));
+}
+
+const etat = { mode: 'propose', ecran: 'page', reperes: true, texte: '', tri: 'nom', ville: '', courriel: '', achats: '', artiste: '', archives: false, choisi: null };
+const scene = document.getElementById('scene');
+const ARTISTES = [...new Set(CLIENTS.flatMap((x) => x.artistes))].sort(cmpTexte);
+
+const LIB_COURRIEL = { oui: 'Accepte les courriels', non: "N'a pas accepté" };
+const LIB_ACHATS = { oui: 'A déjà acheté', non: 'Aucun achat' };
+
+function clientsDeLEcran() {
+  const avecArchives = etat.ecran === 'page' && etat.archives;
+  return CLIENTS.filter((x) => avecArchives || !x.archive);
+}
+function correspondTexte(x, f) {
+  return !f || sansAccents([x.prenom, x.nom, x.courriel, x.telephone, x.ville].filter(Boolean).join(' ')).includes(f);
+}
+function filtresActifs() {
+  const l = [];
+  if (etat.ville) {
+    const lib = villesDe(CLIENTS).find((g) => g.cle === etat.ville)?.libelle || etat.ville;
+    l.push({ cle: 'ville', texte: `Ville : ${lib}` });
+  }
+  if (etat.courriel) l.push({ cle: 'courriel', texte: LIB_COURRIEL[etat.courriel] });
+  if (etat.achats) l.push({ cle: 'achats', texte: LIB_ACHATS[etat.achats] });
+  if (etat.artiste) l.push({ cle: 'artiste', texte: `A acheté : ${etat.artiste}` });
+  return l;
+}
+function appliquer(liste) {
+  const f = sansAccents(etat.texte);
+  return liste.filter((x) => correspondTexte(x, f)
+    && (!etat.ville || sansAccents((x.ville || '').trim()) === etat.ville)
+    && (!etat.courriel || (etat.courriel === 'oui') === !!x.consentement)
+    && (!etat.achats || (etat.achats === 'oui') === x.nb_ventes > 0)
+    && (!etat.artiste || x.artistes.includes(etat.artiste)));
+}
+
+const ICONE_FILTRES = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>`;
+const CHEVRON = `<svg class="chevron-bas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>`;
+
+function barreControles() {
+  return `
+    <div class="controles-vue controles-clients">
+      <span class="compteur" id="compteur"></span>
+      <div class="controles-vue-droite">
+        <button type="button" class="btn-filtres-compact" id="btn-filtres">${ICONE_FILTRES} Filtres <span id="filtres-nb"></span> ${CHEVRON}</button>
+        <div class="tri-deroulant">
+          <label for="tri-clients" class="tri-deroulant-libelle">Trier par</label>
+          <select id="tri-clients">
+            ${Object.entries(TRIS).map(([k, t]) => `<option value="${k}" ${etat.tri === k ? 'selected' : ''}>${t.libelle}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="filtres-actifs" id="filtres-actifs"></div>`;
+}
+
+function dessinerScene() {
+  fermerPanneau();
+  if (etat.mode === 'actuel') return dessinerActuel();
+  if (etat.ecran === 'page') {
+    scene.innerHTML = `
+      <div class="vue-liste">
+        <div class="entete-page">
+          <h2 class="entete-page-titre">Clients</h2>
+          <div class="entete-page-recherche-wrap"><div class="recherche-pillule">
+            <svg class="recherche-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+            <input type="search" id="recherche" placeholder="Rechercher un client (nom, courriel, téléphone)…" autocomplete="off" value="${ech(etat.texte)}">
+          </div></div>
+          <div class="entete-page-actions"><button type="button" class="btn-primaire">+ Ajouter un client</button></div>
+        </div>
+        ${barreControles()}
+        <div class="liste" id="liste"></div>
+      </div>`;
+  } else if (etat.choisi) {
+    const x = CLIENTS.find((k) => k.id === etat.choisi);
+    scene.innerHTML = `
+      <section class="faux-bloc"><h3>Client <span class="requis">*</span></h3>
+        <div class="carte-selection">
+          <div class="vignette"><span>&#128100;</span></div>
+          <div class="info"><p class="ligne-titre">${ech(nomComplet(x))}</p>
+            <p class="ligne-meta">${ech(x.courriel)}${x.telephone ? `&nbsp;&middot;&nbsp;${ech(x.telephone)}` : ''}</p></div>
+          <button type="button" class="btn-action btn-secondaire-action" id="btn-changer">Changer</button>
+        </div>
+      </section>`;
+    scene.querySelector('#btn-changer').addEventListener('click', () => { etat.choisi = null; dessinerScene(); });
+    return;
+  } else {
+    scene.innerHTML = `
+      <section class="faux-bloc"><h3>Client <span class="requis">*</span></h3>
+        <div class="bloc-recherche">
+          <div class="ligne-dossier">
+            <input type="search" id="recherche" class="rech-inline" placeholder="Rechercher un client (nom, courriel, téléphone)..." autocomplete="off" value="${ech(etat.texte)}">
+            <button type="button" class="btn-action btn-secondaire-action">+ Nouveau client</button>
+          </div>
+          ${barreControles()}
+          <div class="resultats-recherche" id="liste"></div>
+        </div>
+      </section>`;
+  }
+  scene.querySelector('#recherche').addEventListener('input', (e) => { etat.texte = e.target.value; dessinerListe(); });
+  scene.querySelector('#tri-clients').addEventListener('change', (e) => { etat.tri = e.target.value; dessinerListe(); });
+  scene.querySelector('#btn-filtres').addEventListener('click', basculerPanneau);
+  dessinerListe();
+}
+
+function dessinerListe() {
+  const base = clientsDeLEcran();
+  const liste = appliquer(base).sort(TRIS[etat.tri].cmp);
+  const zone = scene.querySelector('#liste');
+  const actifs = filtresActifs();
+
+  scene.querySelector('#compteur').textContent = liste.length === base.length
+    ? pluriel(base.length, 'client')
+    : `${pluriel(liste.length, 'client')} sur ${base.length.toLocaleString('fr-CA')}`;
+  scene.querySelector('#filtres-nb').innerHTML = actifs.length ? `<span class="filtres-nb">${actifs.length}</span>` : '';
+
+  const rangee = scene.querySelector('#filtres-actifs');
+  rangee.style.display = actifs.length ? '' : 'none';
+  rangee.innerHTML = actifs.map((a) => `<span class="filtre-pastille">${ech(a.texte)}<button type="button" data-enlever="${a.cle}" aria-label="Enlever ce filtre">×</button></span>`).join('')
+    + (actifs.length > 1 ? `<button type="button" class="btn-lien" id="tout-effacer">Tout effacer</button>` : '');
+  rangee.querySelectorAll('[data-enlever]').forEach((b) => b.addEventListener('click', () => { etat[b.dataset.enlever] = ''; rafraichirPanneau(); dessinerListe(); }));
+  rangee.querySelector('#tout-effacer')?.addEventListener('click', effacerFiltres);
+
+  if (!liste.length) {
+    zone.innerHTML = `<p class="liste-vide">Aucun client ne correspond.${actifs.length ? ` <button type="button" class="btn-lien" id="vide-effacer">Effacer les filtres</button>` : ''}</p>`;
+    zone.querySelector('#vide-effacer')?.addEventListener('click', effacerFiltres);
+    return;
+  }
+
+  const avecReperes = etat.reperes && (etat.tri === 'nom' || etat.tri === 'prenom');
+  let precedente = null;
+  zone.innerHTML = liste.map((x) => {
+    let repere = '';
+    if (avecReperes) {
+      const l = lettre(x, etat.tri);
+      if (l !== precedente) repere = `<div class="repere-lettre">${l}</div>`;
+      precedente = l;
+    }
+    const meta = [
+      x.courriel ? ech(x.courriel) : '<em>aucun courriel</em>',
+      x.telephone && ech(x.telephone),
+      x.ville && ech(x.ville),
+      metaTri(x, etat.tri) || (etat.ecran === 'page' && x.nb_ventes > 0 ? pluriel(x.nb_ventes, 'vente') : ''),
+    ].filter(Boolean).join('&nbsp;&middot;&nbsp;');
+    if (etat.ecran === 'page') {
+      return `${repere}<button type="button" class="ligne-liste${x.archive ? ' ligne-archivee' : ''}">
+        <div class="avatar"><span>${ech(initiales(nomComplet(x)))}</span></div>
+        <div class="info"><p class="ligne-titre">${nomLigne(x, etat.tri)}${x.archive ? ' <span class="badge-archive">Archivée</span>' : ''}</p><p class="ligne-meta">${meta}</p></div>
+        ${x.consentement ? '<span class="badge-statut statut-disponible" title="Consentement courriel">✉ OK</span>' : ''}
+        <span class="chevron">&rsaquo;</span></button>`;
+    }
+    return `${repere}<button type="button" class="ligne-vente" data-id="${x.id}">
+      <div class="vignette"><span>&#128100;</span></div>
+      <div class="info"><p class="ligne-titre">${nomLigne(x, etat.tri)}</p><p class="ligne-meta">${meta}</p></div>
+      <span class="chevron">&rsaquo;</span></button>`;
+  }).join('');
+  if (etat.ecran === 'vente') {
+    zone.querySelectorAll('.ligne-vente').forEach((b) => b.addEventListener('click', () => { etat.choisi = Number(b.dataset.id); dessinerScene(); }));
+  }
+}
+
+function effacerFiltres() {
+  etat.ville = etat.courriel = etat.achats = etat.artiste = '';
+  rafraichirPanneau();
+  dessinerListe();
+}
+
+let panneau = null;
+function surExtClic(e) {
+  if (panneau && !panneau.contains(e.target) && !scene.querySelector('#btn-filtres')?.contains(e.target)) fermerPanneau();
+}
+function surEchap(e) { if (e.key === 'Escape') fermerPanneau(); }
+function fermerPanneau() {
+  if (!panneau) return;
+  panneau.remove();
+  panneau = null;
+  scene.querySelector('#btn-filtres')?.classList.remove('ouvert');
+  document.removeEventListener('mousedown', surExtClic);
+  document.removeEventListener('keydown', surEchap);
+}
+function select(id, titre, options, valeur) {
+  return `<div class="groupe-filtre"><h4>${titre}</h4><select id="${id}">
+    ${options.map(([val, lib]) => `<option value="${ech(val)}" ${val === valeur ? 'selected' : ''}>${ech(lib)}</option>`).join('')}
+  </select></div>`;
+}
+function contenuPanneau() {
+  return select('f-ville', 'Ville', [['', 'Toutes les villes'], ...villesDe(CLIENTS).map((g) => [g.cle, g.libelle])], etat.ville)
+    + select('f-courriel', 'Courriels', [['', 'Tous'], ['oui', LIB_COURRIEL.oui], ['non', LIB_COURRIEL.non]], etat.courriel)
+    + select('f-achats', 'Achats', [['', 'Tous'], ['oui', LIB_ACHATS.oui], ['non', LIB_ACHATS.non]], etat.achats)
+    + select('f-artiste', 'Artiste acheté', [['', 'Tous les artistes'], ...ARTISTES.map((a) => [a, a])], etat.artiste)
+    + (etat.ecran === 'page' ? `<div class="groupe-filtre"><label class="case-archives"><input type="checkbox" id="f-archives" ${etat.archives ? 'checked' : ''}><span>Inclure les archivés</span></label></div>` : '');
+}
+function brancherPanneau() {
+  for (const cle of ['ville', 'courriel', 'achats', 'artiste']) {
+    panneau.querySelector(`#f-${cle}`).addEventListener('change', (e) => { etat[cle] = e.target.value; dessinerListe(); });
+  }
+  panneau.querySelector('#f-archives')?.addEventListener('change', (e) => { etat.archives = e.target.checked; dessinerListe(); });
+}
+function rafraichirPanneau() {
+  if (!panneau) return;
+  panneau.innerHTML = contenuPanneau();
+  brancherPanneau();
+}
+function basculerPanneau() {
+  if (panneau) return fermerPanneau();
+  scene.querySelector('#btn-filtres').classList.add('ouvert');
+  panneau = document.createElement('div');
+  panneau.className = 'panneau-filtres';
+  panneau.innerHTML = contenuPanneau();
+  scene.querySelector('.controles-vue-droite').appendChild(panneau);
+  brancherPanneau();
+  setTimeout(() => {
+    document.addEventListener('mousedown', surExtClic);
+    document.addEventListener('keydown', surEchap);
+  }, 0);
+}
+
+// ===== Aujourd'hui : la liste telle qu'elle est dans la version 0.28.0 =====
+function dessinerActuel() {
+  const page = etat.ecran === 'page';
+  scene.innerHTML = page ? `
+    <div class="vue-liste">
+      <div class="entete-page">
+        <h2 class="entete-page-titre">Clients</h2>
+        <div class="entete-page-recherche-wrap"><div class="recherche-pillule">
+          <svg class="recherche-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+          <input type="search" id="recherche" placeholder="Rechercher un client (nom, courriel, téléphone)…" autocomplete="off">
+        </div></div>
+        <div class="entete-page-actions"><button type="button" class="btn-primaire">+ Ajouter un client</button></div>
+      </div>
+      <div class="controles-vue"><label class="case-archives"><input type="checkbox" id="case-archives" ${etat.archives ? 'checked' : ''}><span>Inclure les archivés</span></label></div>
+      <div class="barre-recherche"><span class="compteur" id="compteur"></span></div>
+      <div class="liste" id="liste"></div>
+    </div>` : `
+    <section class="faux-bloc"><h3>Client <span class="requis">*</span></h3>
+      <p class="defaut" id="defaut"></p>
+      <div class="bloc-recherche">
+        <div class="ligne-dossier">
+          <input type="search" id="recherche" class="rech-inline" placeholder="Rechercher un client (nom, courriel, téléphone)..." autocomplete="off">
+          <button type="button" class="btn-action btn-secondaire-action">+ Nouveau client</button>
+        </div>
+        <div class="resultats-recherche" id="liste"></div>
+      </div>
+    </section>`;
+  const zone = scene.querySelector('#liste');
+  const dessiner = () => {
+    const f = sansAccents(scene.querySelector('#recherche').value);
+    const base = CLIENTS.filter((x) => (page && etat.archives) || !x.archive).sort(ordreActuel);
+    let liste = base.filter((x) => correspondTexte(x, f));
+    if (page) {
+      scene.querySelector('#compteur').textContent = pluriel(liste.length, 'client');
+    } else {
+      scene.querySelector('#defaut').textContent = `La maquette contient ${base.length} clients, mais la liste n'en montre que 30 : elle s'arrête ${f ? 'aux 30 premiers résultats' : `à « ${nomComplet(liste[29])} »`}.`;
+      liste = liste.slice(0, 30);
+    }
+    zone.innerHTML = liste.map((x) => {
+      const meta = [x.courriel ? ech(x.courriel) : '<em>aucun courriel</em>', x.telephone && ech(x.telephone), x.ville && ech(x.ville), page && x.nb_ventes > 0 && pluriel(x.nb_ventes, 'vente')].filter(Boolean).join('&nbsp;&middot;&nbsp;');
+      return page
+        ? `<button type="button" class="ligne-liste${x.archive ? ' ligne-archivee' : ''}"><div class="avatar"><span>${ech(initiales(nomComplet(x)))}</span></div><div class="info"><p class="ligne-titre">${ech(nomComplet(x))}</p><p class="ligne-meta">${meta}</p></div>${x.consentement ? '<span class="badge-statut statut-disponible">✉ OK</span>' : ''}<span class="chevron">&rsaquo;</span></button>`
+        : `<button type="button" class="ligne-vente"><div class="vignette"><span>&#128100;</span></div><div class="info"><p class="ligne-titre">${ech(nomComplet(x))}</p><p class="ligne-meta">${meta}</p></div><span class="chevron">&rsaquo;</span></button>`;
+    }).join('');
+  };
+  scene.querySelector('#recherche').addEventListener('input', dessiner);
+  scene.querySelector('#case-archives')?.addEventListener('change', (e) => { etat.archives = e.target.checked; dessiner(); });
+  dessiner();
+}
+
+document.getElementById('commandes').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  const groupe = Object.keys(b.dataset)[0];
+  if (groupe === 'mode') etat.mode = b.dataset.mode;
+  if (groupe === 'ecran') { etat.ecran = b.dataset.ecran; etat.choisi = null; }
+  if (groupe === 'reperes') etat.reperes = b.dataset.reperes === '1';
+  document.querySelectorAll(`#commandes [data-${groupe}]`).forEach((x) => x.classList.toggle('on', x === b));
+  dessinerScene();
+});
+
+dessinerScene();
+</script>
+</body>
+</html>

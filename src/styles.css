@@ -616,6 +616,76 @@ footer {
 .controles-vue { position: relative; }
 .controles-vue-droite { position: relative; display: inline-flex; align-items: center; gap: var(--s2); }
 
+/* Tri et filtres des clients : page Clients et choix du client dans une vente.
+   Maquette : demos/clients-tri-filtres.html */
+.controles-clients { flex-wrap: wrap; gap: var(--s2); }
+.controles-clients .compteur { color: var(--slate); font-size: 13px; }
+.filtres-nb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--gallery-navy);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+.filtres-nb:empty { display: none; }
+.filtres-actifs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--s3);
+}
+.filtres-actifs:empty { display: none; }
+.filtre-pastille {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 11px;
+  border-radius: 999px;
+  background: var(--cloud);
+  border: 1px solid var(--mist);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.filtre-pastille button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--slate);
+  font-size: 14px;
+  line-height: 1;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+.filtre-pastille button:hover { background: var(--mist); color: var(--ink); }
+.repere-lettre {
+  font-family: var(--font-titre);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--warm-gold);
+  padding: 8px 4px 1px;
+}
+.resultats-recherche .repere-lettre {
+  position: sticky;
+  top: 0;
+  background: var(--porcelain);
+  z-index: 1;
+  padding-top: 4px;
+}
+/* Dans le formulaire de vente, la barre est serrée contre la recherche. */
+.bloc-recherche .controles-clients,
+.bloc-recherche .filtres-actifs { margin: 0; }
+.nom-famille { font-weight: 600; }
+.liste-vide .btn-lien { margin-left: 6px; }
+
 /* ====== Rangée de cartes statistiques ====== */
 
 .stats-row {

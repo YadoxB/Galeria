@@ -940,7 +940,8 @@ export async function rendreOeuvreFiche(contenu, params) {
       let clients = [];
       try { clients = await window.api.clientsListe(); } catch {}
       const optClients = clients.map((c) => {
-        const nom = [c.prenom, c.nom].filter(Boolean).join(' ');
+        // Écrit comme il est classé : le menu se lit dans l'ordre alphabétique.
+        const nom = [c.nom, c.prenom].filter(Boolean).join(', ');
         return `<option value="${c.id}">${ech(nom)}</option>`;
       }).join('');
       const overlay = document.createElement('div');

@@ -26,8 +26,8 @@ Elles viennent du tableau de bord du chantier (lien en tête de ce fichier), où
 
 | # | Demande | Qui | Pourquoi cet ordre |
 |---|---|---|---|
-| 1 | **Cadrage des toiles verticales** à la création d'une fiche depuis le site (16 oct., ex. HEL2260 et HEL2258) — **code prêt dans la branche, à commiter puis publier** | Claude | Un vrai défaut, visible à chaque création |
-| 2 | **Clients par ordre alphabétique** (30 oct.) | Claude | Petit et net ; trouver d'abord QUELLE liste |
+| 1 | **Cadrage des toiles verticales** à la création d'une fiche depuis le site (16 oct., ex. HEL2260 et HEL2258) — **commité dans la branche (7869aea), à publier** | Claude | Un vrai défaut, visible à chaque création |
+| 2 | **Trier et filtrer les clients** (30 oct.), page Clients et choix d'un client dans une vente — **codé et vérifié, à publier** (`demos/clients-tri-filtres.html`) | Claude | Publié avec la n° 1, à la demande de Dave |
 | 3 | **Suivi : demander avant de classer** un item terminé (30 oct.) | Claude | Demande de confort — la forme est à cadrer avec Dave |
 | 4 | **Galeria sur plusieurs ordinateurs ?** (8 oct.) | Dave | Décision de fond, pas un réglage : à trancher avant tout code |
 
@@ -76,9 +76,37 @@ seule lecture du code, passait à côté de l'essentiel) :
   fiche précédente reste un instant à l'écran : retirer son bouton avant d'attendre le nouveau,
   sinon on la compare elle, et le « À jour » obtenu ne prouve rien.
 
-**2. Clients par ordre alphabétique** : le signalement vient de la page d'accueil ; vérifier
-d'abord laquelle des listes n'est pas triée (tableau de bord, choix d'un client dans une
-vente, page Clients) avant de corriger.
+**2. Trier et filtrer les clients** : Dave a élargi le signalement (« Mettre les clients par
+ordre alphabétique ») le 2026-10-30 au tri et au filtrage, sur la page Clients ET au choix d'un
+client dans une vente. Maquette validée « telle quelle » par Dave le 2026-10-30 :
+`demos/clients-tri-filtres.html`. Outils communs aux deux écrans dans `src/app/clients-tri.js`.
+Le tableau de bord n'affiche aucune liste alphabétique de clients : la page d'où vient le
+signalement n'indique donc rien. Trois défauts expliquaient l'impression de désordre, tous réglés :
+
+- **Trié sur le nom, affiché prénom d'abord** (`listerClients`, `nomComplet`) : l'ordre était juste
+  mais se lisait Z puis A. Le nom s'écrit maintenant « Nom, Prénom ».
+- **`COLLATE NOCASE` ne connaît pas les accents** (mesuré sur SQLite) : `Élie` et `Émond` passaient
+  après `Zuniga`, `Cyr` avant `Côté`. Trié en JavaScript avec `Intl.Collator('fr')`, aussi dans
+  `voisinsClient`. ⚠ Les autres `ORDER BY ... COLLATE NOCASE` de `requetes.js` (voisins d'artiste
+  et d'œuvre, entre autres) gardent ce défaut : hors de cette demande.
+- **La vente coupait à 30 clients** (`vente-fiche.js`, `slice(0, 30)`) : sans recherche, les
+  suivants étaient invisibles, et rien ne le disait.
+
+- **Ajouts à la maquette, imposés par le vrai code** : un client sans prénom (une entreprise) se
+  classe à son nom dans le tri par prénom ; la recherche compare mot à mot, sinon « Bouchard, Zoé »
+  tel qu'affiché ne se retrouvait plus ; un filtre de ville ou d'artiste devenu sans objet quand on
+  décoche les archivés est retiré ; le montant est celui de la fiche du client, taxes comprises,
+  arrondi au dollar ; dans le formulaire de vente, la barre arrête `input` et `change`, sinon trier
+  marquait la vente comme modifiée.
+- **Vérifié** : la vraie application isolée, 49 clients fictifs, 78 contrôles, 0 échec, ordre
+  attendu écrit à la main. Le même banc sur l'ancien code : 16 échecs sur 21. Une copie sabotée
+  de 6 façons fait tomber 8 contrôles, dont chacun surveille un sabotage.
+- ⚠ **Non mesuré** : la base de Dave ne compte qu'un client et celle des parents n'est pas ici. On
+  ignore donc combien de fiches ont une ville, et l'utilité réelle du filtre Ville en dépend.
+- ⚠ **Défauts d'avant, vus au banc, laissés tels quels** : le champ de recherche du client paraît
+  grisé dans une vente (`.ligne-dossier input` l'emporte sur `.rech-inline`) ; `formaterPrix` écrit
+  « 14 256,9 $ », avec une seule décimale, sur la fiche du client ; `pluriel` écrit « 0 clients ».
+- ⚠ **À la publication** : l'entrée de `src/app/nouveautes.js` reste à écrire, comme pour la n° 1.
 
 **3. Suivi, classer un item** : aujourd'hui une vente dont toutes les étapes sont cochées
 passe seule dans l'onglet « Complétées ». Ils veulent qu'on **demande** avant. À préciser :

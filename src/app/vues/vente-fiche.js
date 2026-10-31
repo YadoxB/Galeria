@@ -6,6 +6,9 @@ import {
   formaterPrix, formaterDate, nomComplet, urlPhoto, nettoyerErreur,
   champNombreInvalide, soumissionUnique, ETAPES_GALERIE, venteTerminee,
 } from '../commun.js';
+import {
+  gabaritOutilsClients, monterOutilsClients, lignesAvecReperes, nomLigneClient, metaLigneClient,
+} from '../clients-tri.js';
 import { confirmer, alerter } from '../dialogue.js';
 import { chargerConfig } from '../marque.js';
 import { ouvrirCreationCertificat } from './certificat-creation.js';
@@ -1369,38 +1372,28 @@ export async function rendreVenteFiche(contenu, params) {
     }
     const input = contenu.querySelector('#rech-client');
     const res = contenu.querySelector('#res-client');
+    // Les outils n'apparaissent qu'une fois la liste chargée : sans elle, ils ne feraient rien.
+    res.insertAdjacentHTML('beforebegin', gabaritOutilsClients());
+    const outils = monterOutilsClients(zone, { clients, surChange: () => afficher() });
 
-    function afficher(filtre) {
-      const f = sansAccents(filtre);
-      const listFiltree = f
-        ? clients.filter((c) =>
-            sansAccents([c.prenom, c.nom, c.courriel, c.telephone, c.ville].filter(Boolean).join(' ')).includes(f)
-          ).slice(0, 30)
-        : clients.slice(0, 30);
+    function afficher() {
+      const { liste: listFiltree, tri } = outils.appliquer(input.value);
 
       if (listFiltree.length === 0) {
-        res.innerHTML = `<p class="liste-vide">${clients.length === 0 ? "Aucun client enregistré. Crée-en un avec le bouton ci-dessus." : "Aucun client ne correspond. Tu peux en créer un avec « + Nouveau client »."}</p>`;
+        outils.afficherAucun(res, clients.length === 0 ? "Aucun client enregistré. Crée-en un avec le bouton ci-dessus." : "Aucun client ne correspond. Tu peux en créer un avec « + Nouveau client ».");
         return;
       }
 
-      res.innerHTML = listFiltree
-        .map((c) => {
-          const nom = nomComplet(c);
-          return `
-            <button type="button" class="ligne-vente" data-id="${c.id}">
-              <div class="vignette"><span>&#128100;</span></div>
-              <div class="info">
-                <p class="ligne-titre">${ech(nom)}</p>
-                <p class="ligne-meta">
-                  ${c.courriel ? ech(c.courriel) : '<em>aucun courriel</em>'}
-                  ${c.telephone ? `&nbsp;&middot;&nbsp;${ech(c.telephone)}` : ''}
-                  ${c.ville ? `&nbsp;&middot;&nbsp;${ech(c.ville)}` : ''}
-                </p>
-              </div>
-              <span class="chevron">&rsaquo;</span>
-            </button>
-          `;
-        }).join('');
+      res.innerHTML = lignesAvecReperes(listFiltree, tri, (c) => `
+        <button type="button" class="ligne-vente" data-id="${c.id}">
+          <div class="vignette"><span>&#128100;</span></div>
+          <div class="info">
+            <p class="ligne-titre">${nomLigneClient(c, tri)}</p>
+            <p class="ligne-meta">${metaLigneClient(c, tri)}</p>
+          </div>
+          <span class="chevron">&rsaquo;</span>
+        </button>
+      `);
 
       res.querySelectorAll('.ligne-vente').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -1417,8 +1410,8 @@ export async function rendreVenteFiche(contenu, params) {
       });
     }
 
-    input.addEventListener('input', (e) => afficher(e.target.value));
-    afficher('');
+    input.addEventListener('input', () => afficher());
+    afficher();
 
     contenu.querySelector('#btn-nouveau-client').addEventListener('click', async () => {
       const cree = await ouvrirCreationClient();

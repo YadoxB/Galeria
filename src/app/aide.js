@@ -47,7 +47,7 @@ const ARTICLES = [
   A('demarrage', 'Galeria fonctionne hors ligne', 'internet local connexion réseau confidentialité données nuage cloud',
     `<p>Tout est sur cet ordinateur ; tu peux travailler <b>sans connexion</b>. Aucune donnée n'est envoyée en ligne. Les seules exceptions, optionnelles et explicites : la <b>mise à jour</b> de l'application et « <b>Copier pour ChatGPT</b> » (qui n'envoie que des informations d'œuvre, jamais de client).</p>`),
   A('demarrage', 'Naviguer : recherche, archivés, fiches voisines', 'recherche filtre archivé navigation précédent suivant trouver',
-    `<p>Dans chaque liste : une <b>recherche</b> en haut, et sur les fiches des flèches <b>Précédent / Suivant</b> (ordre alphabétique). Les fiches <b>archivées</b> ou <b>retirées</b> sont masquées par défaut — coche « Inclure les archivés / retirées » pour les revoir.</p>`),
+    `<p>Dans chaque liste : une <b>recherche</b> en haut, et sur les fiches des flèches <b>Précédent / Suivant</b> (ordre alphabétique). Les fiches <b>archivées</b> ou <b>retirées</b> sont masquées par défaut — coche « Inclure les archivés / retirées » pour les revoir (dans le bouton <b>Filtres</b> pour les clients et les œuvres).</p>`),
   A('demarrage', 'Couper, copier, coller (clic droit)', 'clic droit couper copier coller souris menu contextuel presse-papier texte',
     `<p>Dans n'importe quelle case de texte, un <b>clic droit</b> ouvre un petit menu <b>Couper / Copier / Coller / Tout sélectionner</b> — pratique pour coller un texte à la souris, sans passer par le clavier.</p>`),
 
@@ -176,6 +176,12 @@ const ARTICLES = [
     `<ol><li><b>Clients → + Ajouter</b> (ou « + Nouveau client » pendant une vente).</li>
      <li>Saisis nom (obligatoire), prénom, adresse (pays / province), courriel, téléphone.</li>
      <li>Coche le <b>consentement courriel</b> si le client accepte d'être contacté.</li></ol>`),
+  A('clients', 'Trier et filtrer les clients', 'trier tri ordre alphabétique filtre filtrer ville courriel consentement achat artiste acheté vente archivés montant',
+    `<p>Sur la page <b>Clients</b>, et aussi quand tu choisis un client dans une <b>vente</b> :</p>
+     <ul><li><b>Trier par</b> : nom, prénom, ville, dernier achat, montant acheté ou clients ajoutés récemment. Ton choix est retenu d'une fois à l'autre.</li>
+     <li><b>Filtres</b> : ville, consentement aux courriels, achats et artiste acheté. Chaque filtre actif reste affiché sous la barre, avec un × pour l'enlever.</li>
+     <li><b>Inclure les archivés</b> se trouve dans les Filtres de la page Clients. Une vente ne montre jamais les clients archivés.</li></ul>
+     <p>Les filtres repartent à zéro quand tu quittes l'écran.</p>`),
   A('clients', 'Adresse du client (pays, province, code postal)', 'adresse pays province état code postal civique rue ville héritée',
     `<p>L'adresse est en champs séparés (numéro civique, rue, app., ville, pays, province/état, code postal). Le menu <b>Pays</b> ajuste la liste des provinces/états. Une ancienne adresse en texte libre, si présente, est affichée pour t'aider à la recopier.</p>`),
   A('clients', 'Consentement courriel (Loi 25)', 'consentement courriel loi 25 infolettre vernissage date contacter',

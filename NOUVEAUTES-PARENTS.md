@@ -11,6 +11,26 @@
 
 ---
 
+## Retrouver un client, c'est plus simple
+
+La liste des clients est maintenant vraiment en ordre alphabétique, accents compris, et le
+nom se lit dans l'ordre : **Bouchard, Zoé**. Des lettres A, B, C vous repèrent dans la liste.
+
+Deux nouveaux outils, sur la page Clients et quand vous choisissez un client dans une vente :
+
+- **Trier par** : nom, prénom, ville, dernier achat, montant acheté ou ajoutés récemment.
+  Galeria retient votre choix.
+- **Filtres** : ville, courriels acceptés, déjà acheté ou non, artiste acheté. Par exemple,
+  retrouver qui a déjà acheté tel artiste avant un vernissage. Un filtre actif reste affiché,
+  avec un × pour l'enlever.
+
+**Dans une vente, tous vos clients sont là.** Avant, la liste s'arrêtait aux 30 premiers sans
+le dire.
+
+« Inclure les archivés » se trouve maintenant dans le bouton **Filtres** de la page Clients.
+
+---
+
 ## Les toiles verticales gardent toute leur image
 
 Quand vous créez une fiche depuis le site, l'image de l'œuvre est maintenant gardée

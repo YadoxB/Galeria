@@ -603,7 +603,7 @@ export function gabaritEntetePage(options) {
 }
 
 // Bouton Filtres compact, à placer dans la barre des contrôles de vue à côté de Tri.
-export function gabaritBoutonFiltres(idBouton = 'btn-filtres') {
+export function gabaritBoutonFiltres(idBouton = 'btn-filtres', { avecCompteur = false } = {}) {
   return `
     <button type="button" class="btn-filtres-compact" id="${ech(idBouton)}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -612,6 +612,7 @@ export function gabaritBoutonFiltres(idBouton = 'btn-filtres') {
         <line x1="10" y1="18" x2="14" y2="18"/>
       </svg>
       Filtres
+      ${avecCompteur ? '<span class="filtres-nb"></span>' : ''}
       <svg class="chevron-bas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <polyline points="6 9 12 15 18 9"/>
       </svg>
