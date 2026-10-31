@@ -1,7 +1,7 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-10-30 (0.28.0 en service chez les parents ; rien en attente de publication, **quatre demandes ouvertes**).
+> Date de cette sauvegarde : 2026-10-30 (0.29.0 publiée ce jour-là ; rien en attente de publication, **deux demandes ouvertes**).
 >
 > **Tableau de bord du chantier** (signalements des parents + étapes restantes) :
 > <https://claude.ai/artifact/2fBkxU3MEnkZwQHj5Vv2Kz>. Les signalements y arrivent seuls
@@ -14,20 +14,22 @@
 
 ## ▶ Reprise — par où commencer (préparé le 2026-10-30)
 
-**✅ Dernière version PUBLIÉE : v0.28.0 (2026-10-12).** `origin/master` = tag `v0.28.0` =
-`6566f1e` (suivi du seul commit de documentation `e52a77b`). Publiée sur GitHub Releases
-avec `latest.yml` — auto-update actif. **Rien n'est en attente de publication** : l'arbre de
-travail est propre, tout ce qui est fait est en ligne.
+**✅ Dernière version PUBLIÉE : v0.29.0 (2026-10-30).** Tag `v0.29.0` = `c82d3ba`, suivi du
+seul commit de documentation qui écrit ces lignes. Publiée sur GitHub Releases avec `latest.yml`
+— auto-update actif. **Rien n'est en attente de publication.** Les parents étaient à la 0.28.0 :
+trois diapos les attendent à l'ouverture. Depuis un worktree, `npm --prefix
+F:/Galerie/Automatisation/GalerieApp run release` lance la publication dans le dossier principal,
+le seul qui a `node_modules`, sur `master` déjà avancé et poussé.
 
-### 🟦 PAR OÙ COMMENCER — quatre demandes ouvertes (au 2026-10-30)
+### 🟦 PAR OÙ COMMENCER — deux demandes ouvertes (au 2026-10-30)
 
 Elles viennent du tableau de bord du chantier (lien en tête de ce fichier), où chacune a son
-étape. L'ordre proposé va du défaut visible au chantier de fond :
+étape. L'ordre proposé va du confort au chantier de fond :
 
 | # | Demande | Qui | Pourquoi cet ordre |
 |---|---|---|---|
-| 1 | **Cadrage des toiles verticales** à la création d'une fiche depuis le site (16 oct., ex. HEL2260 et HEL2258) — **commité dans la branche (7869aea), à publier** | Claude | Un vrai défaut, visible à chaque création |
-| 2 | **Trier et filtrer les clients** (30 oct.), page Clients et choix d'un client dans une vente — **codé et vérifié, à publier** (`demos/clients-tri-filtres.html`) | Claude | Publié avec la n° 1, à la demande de Dave |
+| 1 | **Cadrage des toiles verticales** à la création d'une fiche depuis le site (16 oct., ex. HEL2260 et HEL2258) — **publié, 0.29.0** | Claude | Fait |
+| 2 | **Trier et filtrer les clients** (30 oct.), page Clients et choix d'un client dans une vente — **publié, 0.29.0** (`demos/clients-tri-filtres.html`) | Claude | Fait |
 | 3 | **Suivi : demander avant de classer** un item terminé (30 oct.) | Claude | Demande de confort — la forme est à cadrer avec Dave |
 | 4 | **Galeria sur plusieurs ordinateurs ?** (8 oct.) | Dave | Décision de fond, pas un réglage : à trancher avant tout code |
 
@@ -59,14 +61,12 @@ seule lecture du code, passait à côté de l'essentiel) :
   la fiche seulement (`ecartImageOeuvre`, `main.js`) : il faut télécharger l'image du site pour
   en juger, impensable pour 500 produits. Elle paraît si la fiche n'a pas d'image, ou si son
   image fait exactement 800 × 800 (la signature de l'ancien cadrage) alors que celle du site
-  n'est pas carrée. ⚠ **À faire chez les parents après publication** : reprendre l'image de
+  n'est pas carrée. ⚠ **À faire chez les parents** : reprendre l'image de
   HEL2260, HEL2258 et de toute fiche créée depuis le site. Aucune réparation automatique :
   remplacer une photo reste leur geste.
 - **Vérifié** : la vraie application isolée face à un faux site local, 24 contrôles, 0 échec. Le
   même banc sur l'ancien code : 10 échecs sur 12 avant de bloquer. ⚠ **Pas essayé contre la vraie
   boutique avec les clés.**
-- ⚠ **À la publication** : l'entrée de `src/app/nouveautes.js` reste à écrire, avec le numéro de
-  version (texte de base dans `NOUVEAUTES-PARENTS.md`).
 - **Quatre pièges de ce banc**, à connaître avant le prochain : ① un code copié hors du projet
   ne trouve pas `electron-updater`, et l'erreur s'affiche en fenêtre sur l'écran de Dave.
   `NODE_PATH` n'a pas suffi ; une amorce qui complète `Module._nodeModulePaths` règle la chose.
@@ -106,7 +106,6 @@ signalement n'indique donc rien. Trois défauts expliquaient l'impression de dé
 - ⚠ **Défauts d'avant, vus au banc, laissés tels quels** : le champ de recherche du client paraît
   grisé dans une vente (`.ligne-dossier input` l'emporte sur `.rech-inline`) ; `formaterPrix` écrit
   « 14 256,9 $ », avec une seule décimale, sur la fiche du client ; `pluriel` écrit « 0 clients ».
-- ⚠ **À la publication** : l'entrée de `src/app/nouveautes.js` reste à écrire, comme pour la n° 1.
 
 **3. Suivi, classer un item** : aujourd'hui une vente dont toutes les étapes sont cochées
 passe seule dans l'onglet « Complétées ». Ils veulent qu'on **demande** avant. À préciser :
@@ -117,7 +116,7 @@ OneDrive est déconseillé pour un SQLite ouvert. Les voies possibles — partag
 seul écrivain à la fois, ou vraie synchronisation — sont un **chantier**, pas un réglage.
 C'est une décision de Dave, à prendre avant d'écrire quoi que ce soit.
 
-Six versions depuis la 0.22.0 :
+Sept versions depuis la 0.22.0 :
 
 | Version | Date | Contenu |
 |---|---|---|
@@ -127,6 +126,7 @@ Six versions depuis la 0.22.0 :
 | 0.26.0 | 2026-10-01 | Prix préférentiel masquable sur les fiches d'œuvre ; brouillons du site ignorés à la comparaison |
 | 0.27.0 | 2026-10-02 | Comparaison : confirmer avant, annuler après |
 | 0.28.0 | 2026-10-12 | Marquer vendue puis saisir la vente plus tard (file « Ventes à enregistrer ») ; pastille de statut devenue menu |
+| 0.29.0 | 2026-10-30 | Trier et filtrer les clients, sur la page et dans une vente ; toiles verticales gardées entières à la création depuis le site |
 
 **Ce qui attend quelqu'un d'autre que le code :**
 
