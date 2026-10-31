@@ -1,7 +1,7 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-10-31 (0.29.0 publiée le 30 ; **la demande n° 3 est codée, non commitée** ; la n° 4 attend une décision de Dave).
+> Date de cette sauvegarde : 2026-10-31 (0.30.0 publiée ce jour-là ; rien en attente de publication ; **la demande n° 4 attend une décision de Dave**).
 >
 > **Tableau de bord du chantier** (signalements des parents + étapes restantes) :
 > <https://claude.ai/artifact/2fBkxU3MEnkZwQHj5Vv2Kz>. Les signalements y arrivent seuls
@@ -12,25 +12,25 @@
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-10-30)
+## ▶ Reprise — par où commencer (préparé le 2026-10-31)
 
-**✅ Dernière version PUBLIÉE : v0.29.0 (2026-10-30).** Tag `v0.29.0` = `c82d3ba`, suivi du
+**✅ Dernière version PUBLIÉE : v0.30.0 (2026-10-31).** Tag `v0.30.0` = `9c8791d`, suivi du
 seul commit de documentation qui écrit ces lignes. Publiée sur GitHub Releases avec `latest.yml`
-— auto-update actif. Les parents étaient à la 0.28.0 :
-trois diapos les attendent à l'ouverture. Depuis un worktree, `npm --prefix
-F:/Galerie/Automatisation/GalerieApp run release` lance la publication dans le dossier principal,
-le seul qui a `node_modules`, sur `master` déjà avancé et poussé.
+— auto-update actif. **Rien n'est en attente de publication.** Une diapo attend les parents à
+l'ouverture, plus celles de la 0.29.0 s'ils ne l'ont pas encore ouverte. Depuis un worktree,
+`npm --prefix F:/Galerie/Automatisation/GalerieApp run release` lance la publication dans le dossier
+principal, le seul qui a `node_modules`, sur `master` déjà avancé et poussé.
 
-### 🟦 PAR OÙ COMMENCER — deux demandes ouvertes (au 2026-10-31)
+### 🟦 PAR OÙ COMMENCER — une demande ouverte (au 2026-10-31)
 
-Elles viennent du tableau de bord du chantier (lien en tête de ce fichier), où chacune a son
-étape. L'ordre proposé va du confort au chantier de fond :
+Elle vient du tableau de bord du chantier (lien en tête de ce fichier), où chaque demande a son
+étape. Il ne reste que la n° 4, une décision de Dave :
 
 | # | Demande | Qui | Pourquoi cet ordre |
 |---|---|---|---|
 | 1 | **Cadrage des toiles verticales** à la création d'une fiche depuis le site (16 oct., ex. HEL2260 et HEL2258) — **publié, 0.29.0** | Claude | Fait |
 | 2 | **Trier et filtrer les clients** (30 oct.), page Clients et choix d'un client dans une vente — **publié, 0.29.0** (`demos/clients-tri-filtres.html`) | Claude | Fait |
-| 3 | **Suivi : demander avant de classer** un item terminé (30 oct.) — **codé et vérifié, non commité, non publié** (`demos/suivi-classer.html`) | Claude | Commit et publication à décider par Dave |
+| 3 | **Suivi : demander avant de classer** un item terminé (30 oct.) — **publié, 0.30.0** (`demos/suivi-classer.html`) | Claude | Fait |
 | 4 | **Galeria sur plusieurs ordinateurs ?** (8 oct.) | Dave | Décision de fond, pas un réglage : à trancher avant tout code |
 
 **1. Cadrage vertical — diagnostic refait au banc le 2026-10-30** (le précédent, tiré de la
@@ -107,7 +107,7 @@ signalement n'indique donc rien. Trois défauts expliquaient l'impression de dé
   grisé dans une vente (`.ligne-dossier input` l'emporte sur `.rech-inline`) ; `formaterPrix` écrit
   « 14 256,9 $ », avec une seule décimale, sur la fiche du client ; `pluriel` écrit « 0 clients ».
 
-**3. Suivi, classer un item — codé le 2026-10-31, NON COMMITÉ, non publié.** Maquette validée
+**3. Suivi, classer un item — publié dans la 0.30.0, le 2026-10-31.** Maquette validée
 « telle quelle » par Dave : `demos/suivi-classer.html`. Une invite (« Classer » ou « Retirer du
 suivi » / « Pas encore ») s'ouvre quand la dernière étape est cochée dans le Suivi. Depuis une fiche
 ou le formulaire, rien n'est demandé : la ligne attend dans le Suivi, avec son bouton.
@@ -134,15 +134,18 @@ ou le formulaire, rien n'est demandé : la ligne attend dans le Suivi, avec son 
   application isolée, données fictives, 89 contrôles, 0 échec, de 1600 à 1024 px, réouverture
   comprise. Le même banc sur la 0.29.0 : 21 échecs sur 31 avant de bloquer. Onze sabotages, dont deux
   repris seuls parce que leurs voisins les masquaient, font tous tomber le contrôle qui les surveille.
-  Un défaut de ce banc, en plus : les clics passent par `.click()`, pas par une vraie souris.
+  Limite de ce banc : les clics passent par `.click()`, pas par une vraie souris. Le paquet publié
+  a été comparé au tag : 89 fichiers de `src` sur 89 identiques. La fenêtre « Quoi de neuf » depuis
+  la 0.29.0 : 9 contrôles, 0 échec.
 - ⚠ **Non vérifié** : la base des parents n'est pas ici, et personne n'a encore essayé l'invite.
+  L'installation de la mise à jour elle-même n'a pas été essayée chez eux.
 
 **4. Plusieurs ordinateurs** : la base est **un seul fichier local** (Loi 25, aucun nuage) et
 OneDrive est déconseillé pour un SQLite ouvert. Les voies possibles — partage réseau avec un
 seul écrivain à la fois, ou vraie synchronisation — sont un **chantier**, pas un réglage.
 C'est une décision de Dave, à prendre avant d'écrire quoi que ce soit.
 
-Sept versions depuis la 0.22.0 :
+Huit versions depuis la 0.22.0 :
 
 | Version | Date | Contenu |
 |---|---|---|
@@ -153,6 +156,7 @@ Sept versions depuis la 0.22.0 :
 | 0.27.0 | 2026-10-02 | Comparaison : confirmer avant, annuler après |
 | 0.28.0 | 2026-10-12 | Marquer vendue puis saisir la vente plus tard (file « Ventes à enregistrer ») ; pastille de statut devenue menu |
 | 0.29.0 | 2026-10-30 | Trier et filtrer les clients, sur la page et dans une vente ; toiles verticales gardées entières à la création depuis le site |
+| 0.30.0 | 2026-10-31 | Le Suivi demande avant de classer ce qui est terminé ; plus de débordement à 1024 px |
 
 **Ce qui attend quelqu'un d'autre que le code :**
 
