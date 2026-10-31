@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.29.0] — 2026-10-30
+
 ### Ajouté
 
 - **Trier et filtrer les clients**, sur la page Clients et au choix d'un client dans une vente

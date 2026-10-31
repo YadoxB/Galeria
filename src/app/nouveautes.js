@@ -17,6 +17,23 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
+    version: '0.29.0',
+    diapos: [
+      {
+        titre: 'Vos clients, vraiment en ordre alphabétique',
+        texte: "Accents compris, et le nom se lit dans l'ordre&nbsp;: <b>Bouchard, Zoé</b>. Des lettres A, B, C vous repèrent dans la liste. Avec <b>Trier par</b>, vous pouvez aussi classer par prénom, ville, dernier achat, montant acheté ou clients ajoutés récemment. Galeria retient votre choix.",
+      },
+      {
+        titre: 'Filtrer vos clients, même pendant une vente',
+        texte: "Le bouton <b>Filtres</b> retrouve vos clients par ville, courriels acceptés, achats ou artiste acheté&nbsp;: pratique avant un vernissage. Un filtre actif reste affiché, avec un × pour l'enlever. Dans une vente, <b>tous vos clients sont là</b>&nbsp;: avant, la liste s'arrêtait aux 30 premiers sans le dire. Sur la page Clients, « Inclure les archivés » se trouve maintenant dans ce bouton.",
+      },
+      {
+        titre: 'Les toiles verticales gardent toute leur image',
+        texte: "Quand vous créez une fiche depuis le site, l'image de l'œuvre est gardée <b>entière</b>&nbsp;: plus de fenêtre de cadrage, plus de toile coupée en haut et en bas. Une fiche déjà coupée, comme HEL2260 ou HEL2258&nbsp;? Ouvrez-la, cliquez <b>Comparer avec le site</b>, puis <b>Reprendre l'image du site</b>. Galeria attend votre accord avant de remplacer quoi que ce soit.",
+      },
+    ],
+  },
+  {
     version: '0.28.0',
     diapos: [
       {
