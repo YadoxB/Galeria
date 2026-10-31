@@ -5575,7 +5575,7 @@ details.bloc.pliable > .bloc-corps {
 .suivi-files-wrap { display: flex; gap: var(--s3); margin-bottom: var(--s5); align-items: stretch; flex-wrap: wrap; }
 .suivi-files-groupe { background: var(--porcelain); border: 1px solid var(--mist); border-radius: 14px; padding: 12px 16px; }
 .suivi-files-groupe > .titre-g { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--stone); margin: 0 0 10px; font-weight: 600; }
-.suivi-files-groupe.prep { flex: 0 0 auto; }
+.suivi-files-groupe.prep { flex: 0 0 auto; max-width: 100%; }
 .suivi-files-groupe.post { flex: 1; min-width: 320px; }
 .suivi-files { display: flex; gap: 18px; flex-wrap: wrap; }
 .suivi-file-tuile { display: flex; align-items: center; gap: 11px; padding: 4px 8px; border-radius: 10px; }
@@ -5613,8 +5613,11 @@ details.bloc.pliable > .bloc-corps {
 .suivi-liste { background: var(--porcelain); border: 1px solid var(--mist); border-radius: 16px; overflow: hidden; }
 .suivi-ligne { display: grid; gap: 18px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--mist); }
 .suivi-ligne:last-child { border-bottom: 0; }
-.suivi-ligne.prep { grid-template-columns: 52px 1.6fr 1.4fr auto; }
-.suivi-ligne.post { grid-template-columns: 52px 1.4fr 1fr 2.4fr auto; }
+/* minmax(0, …) : un long titre passe en points de suspension au lieu d'élargir sa
+   colonne, ce qui décalerait les étapes par rapport aux autres lignes. */
+.suivi-ligne.prep { grid-template-columns: 52px minmax(0, 1.6fr) minmax(0, 1.4fr) auto 140px; }
+.suivi-ligne.saisir { grid-template-columns: 52px minmax(0, 1.6fr) minmax(0, 1.4fr) auto; }
+.suivi-ligne.post { grid-template-columns: 52px minmax(0, 1.4fr) minmax(0, 1fr) 2.4fr auto; }
 .suivi-ouvrir { cursor: pointer; }
 .suivi-ouvrir:hover .o { color: var(--warm-gold); }
 .suivi-vignette { width: 52px; height: 52px; border-radius: 8px; background: var(--cloud); display: grid; place-items: center; color: var(--stone); overflow: hidden; }
@@ -5639,10 +5642,22 @@ details.bloc.pliable > .bloc-corps {
 .suivi-conn.fait { background: var(--succes); }
 
 .suivi-col-fin { text-align: right; min-width: 140px; }
+.suivi-col-fin-classer { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+.suivi-col-fin-classer .btn-action { height: 32px; padding: 0 14px; font-size: 13px; white-space: nowrap; }
 .suivi-chip-prochaine { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: #F4E3D8; color: var(--terracotta); white-space: nowrap; }
 .suivi-chip-prochaine svg { width: 13px; height: 13px; }
 .suivi-etat-ok { font-size: 12px; color: var(--succes); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .suivi-etat-ok svg { width: 14px; height: 14px; }
+
+/* Fenêtre étroite : la fin de ligne passe sous les étapes. Sur une seule rangée,
+   elle écrase le texte et pousse le bouton de classement hors de la carte. */
+@media (max-width: 1200px) {
+  .suivi-ligne { row-gap: 8px; }
+  .suivi-ligne.prep { grid-template-columns: 52px minmax(0, 1.6fr) minmax(0, 1.4fr) auto; }
+  .suivi-ligne.post { grid-template-columns: 52px minmax(0, 1.4fr) minmax(0, 1fr) auto; }
+  .suivi-ligne.prep .suivi-col-fin, .suivi-ligne.post .suivi-col-fin { grid-column: 4; min-width: 0; }
+  .suivi-col-fin-classer { flex-direction: row; align-items: center; justify-content: flex-end; gap: 12px; }
+}
 
 .suivi-vide { padding: 28px; text-align: center; color: var(--stone); font-size: 13px; }
 

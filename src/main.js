@@ -71,10 +71,10 @@ const {
 const {
   modifierArtiste, creerArtiste, supprimerArtiste, relierArtisteAuSite, delierArtisteDuSite,
   formaterDimensionsTexte,
-  modifierOeuvre, majChampOeuvre, majStatutOeuvre, corrigerNumeroInventaire, ignorerDiffWeb, retirerIgnoreWeb, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre,
+  modifierOeuvre, majChampOeuvre, majStatutOeuvre, corrigerNumeroInventaire, ignorerDiffWeb, retirerIgnoreWeb, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre, classerPreparationOeuvre,
   majChampArtiste, ignorerDiffArtisteWeb, retirerIgnoreArtisteWeb,
   modifierClient, creerClient, supprimerClient,
-  creerVente, modifierVente, supprimerVente, majCycleVente,
+  creerVente, modifierVente, supprimerVente, majCycleVente, classerVente,
   apercuProchainNumeroFacture, reserverProchainNumeroFacture,
   creerCertificat, supprimerCertificat,
   apercuNumeroCertificat,
@@ -1427,7 +1427,7 @@ async function demarrerApplication() {
   ipcMain.handle('oeuvres:reserver', (_e, id, data) => rangerApres(reserverOeuvre(id, data), [id]));
   ipcMain.handle('oeuvres:liberer', (_e, id) => rangerApres(libererOeuvre(id), [id]));
   ipcMain.handle('suivi:donnees', () => ({
-    preparation: oeuvresAPreparer(),
+    preparation: oeuvresAPreparer({ avecAClasser: true }),
     ventes: ventesSuivi(),
     // Marquées vendues, vente pas encore saisie : sans cette liste, elles
     // sortaient de « À préparer » sans entrer nulle part (parents, 2026-10-12).
@@ -1984,6 +1984,7 @@ async function demarrerApplication() {
   ipcMain.handle('oeuvres:creer', (_e, data) => creerOeuvre(data));
   ipcMain.handle('oeuvres:supprimer', (_e, id) => supprimerOeuvre(id));
   ipcMain.handle('oeuvres:maj-preparation', (_e, id, data) => majPreparationOeuvre(id, data));
+  ipcMain.handle('oeuvres:classer-preparation', (_e, id) => classerPreparationOeuvre(id));
   ipcMain.handle('oeuvres:nom-fichier', (_e, id) => {
     const { construireNomFichier } = require('./db/nomenclature');
     return construireNomFichier(obtenirOeuvre(id));
@@ -2188,6 +2189,7 @@ async function demarrerApplication() {
   ipcMain.handle('ventes:creer', (_e, data) => rangerApres(creerVente(data)));
   ipcMain.handle('ventes:modifier', (_e, id, data) => rangerApres(modifierVente(id, data)));
   ipcMain.handle('ventes:maj-cycle', (_e, id, data) => rangerApres(majCycleVente(id, data)));
+  ipcMain.handle('ventes:classer', (_e, id) => classerVente(id));
   ipcMain.handle('ventes:supprimer', (_e, id) => rangerApres(supprimerVente(id)));
   ipcMain.handle('ventes:apercu-numero-facture', () => apercuProchainNumeroFacture());
   ipcMain.handle('oeuvres:apercu-numero-inventaire', (_e, artisteId) => apercuProchainNumeroInventaire(artisteId));

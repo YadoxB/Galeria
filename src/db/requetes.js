@@ -503,18 +503,22 @@ function commandesNonCompletees(limite = 10) {
 // Section Suivi — œuvres non vendues pas encore prêtes (à créer dans Sage
 // ou à publier sur le site). Le catalogue existant a été backfillé prêt,
 // donc cette liste ne contient que les œuvres ajoutées depuis.
-function oeuvresAPreparer() {
+//
+// `avecAClasser` : la page Suivi veut aussi les œuvres complétées qui attendent
+// d'être retirées de sa liste. L'accueil, lui, ne montre que ce qui reste à faire.
+function oeuvresAPreparer({ avecAClasser = false } = {}) {
   const db = openDatabase();
   return db.prepare(`
     SELECT o.id, o.titre, o.numero_inventaire, o.image_path, o.statut,
            o.sage_cree, o.sage_cree_date, o.stock_fait, o.stock_fait_date,
-           o.site_publie, o.site_publie_date,
+           o.site_publie, o.site_publie_date, o.preparation_a_classer,
            TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom
     FROM oeuvres o
     JOIN artistes a ON a.id = o.artiste_id
     WHERE o.archive = 0
       AND o.statut <> 'vendu'
-      AND (o.sage_cree = 0 OR o.stock_fait = 0 OR o.site_publie = 0)
+      AND (o.sage_cree = 0 OR o.stock_fait = 0 OR o.site_publie = 0
+           ${avecAClasser ? 'OR o.preparation_a_classer = 1' : ''})
     ORDER BY o.cree_le DESC, o.id DESC
   `).all();
 }
@@ -544,7 +548,7 @@ function oeuvresVenduesSansVente() {
 
 // Section Suivi — toutes les ventes avec leurs champs de cycle de vie.
 // Le renderer sépare « en cours » et « complétées » côté affichage
-// (venteTerminee() dans commun.js).
+// (venteTerminee() dans commun.js, et a_classer pour celles qui attendent).
 function ventesSuivi() {
   const db = openDatabase();
   return db.prepare(`
@@ -553,6 +557,7 @@ function ventesSuivi() {
            v.paiement_statut, v.paiement_date,
            v.emballage_date, v.envoi_date, v.livraison_date,
            v.sage_inactif_date, v.google_retire_date, v.artiste_paye_date,
+           v.a_classer,
            o.titre AS oeuvre_titre, o.image_path, o.numero_inventaire,
            TRIM(COALESCE(a.prenom || ' ', '') || a.nom) AS artiste_nom,
            c.id AS client_id,
@@ -1142,6 +1147,7 @@ module.exports = {
   oeuvresRecentes,
   ventesRecentes,
   oeuvresReservees,
+  VENTE_EN_COURS_SQL,
   commandesNonCompletees,
   oeuvresAPreparer,
   ventesSuivi,

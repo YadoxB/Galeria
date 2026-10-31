@@ -1,5 +1,5 @@
 const { openDatabase } = require('./database');
-const { obtenirArtiste, obtenirOeuvre, obtenirClient, obtenirVente, obtenirCertificat, obtenirExposition, sequenceCertificatsArtiste } = require('./requetes');
+const { obtenirArtiste, obtenirOeuvre, obtenirClient, obtenirVente, obtenirCertificat, obtenirExposition, sequenceCertificatsArtiste, VENTE_EN_COURS_SQL } = require('./requetes');
 const { obtenirConfig, mettreAJourConfig } = require('../config');
 const { construireNomFichier } = require('./nomenclature');
 
@@ -352,14 +352,64 @@ function majVendueLe(db, oeuvreId, statut) {
   }
 }
 
+// ===== Classement du Suivi =====
+//
+// Une ligne qu'on vient de compléter ne quitte plus le Suivi d'elle-même : elle
+// y attend, drapeau levé, qu'on la classe (demande des parents, 2026-10-30).
+//
+// Le drapeau ne se lève que sur un VRAI passage « incomplète → complète » : ce
+// qui était déjà complet (l'onglet Complétées, tout le catalogue) garde sa place
+// sans aucune reprise de données, et réenregistrer une fiche ne le ramène pas.
+// Décocher une étape l'abaisse : recocher reposera la question.
+//
+// ⚠ Colonnes absentes de COLONNES_OEUVRE et COLONNES_VENTE : le formulaire
+// complet réécrit toutes les colonnes qu'il connaît et effacerait le drapeau.
+const preparationComplete = (db, id) => !!db
+  .prepare('SELECT 1 FROM oeuvres WHERE id = ? AND sage_cree = 1 AND stock_fait = 1 AND site_publie = 1')
+  .get(id);
+const venteComplete = (db, id) => {
+  const v = db.prepare(`SELECT ${VENTE_EN_COURS_SQL} AS en_cours FROM ventes v WHERE v.id = ?`).get(id);
+  return !!v && !v.en_cours;
+};
+function majClassementPreparation(db, id, etaitComplete) {
+  if (!preparationComplete(db, id)) {
+    db.prepare('UPDATE oeuvres SET preparation_a_classer = 0 WHERE id = ?').run(id);
+  } else if (!etaitComplete) {
+    db.prepare('UPDATE oeuvres SET preparation_a_classer = 1 WHERE id = ?').run(id);
+  }
+}
+function majClassementVente(db, id, etaitComplete) {
+  if (!venteComplete(db, id)) {
+    db.prepare('UPDATE ventes SET a_classer = 0 WHERE id = ?').run(id);
+  } else if (!etaitComplete) {
+    db.prepare('UPDATE ventes SET a_classer = 1 WHERE id = ?').run(id);
+  }
+}
+// Classer ne change rien à l'œuvre ni à la vente : `modifie_le` reste intact.
+function classerPreparationOeuvre(id) {
+  const oid = entier(id);
+  if (!oid) throw new Error('Identifiant invalide.');
+  openDatabase().prepare('UPDATE oeuvres SET preparation_a_classer = 0 WHERE id = ?').run(oid);
+  return obtenirOeuvre(oid);
+}
+function classerVente(id) {
+  const vid = entier(id);
+  if (!vid) throw new Error('Identifiant invalide.');
+  openDatabase().prepare('UPDATE ventes SET a_classer = 0 WHERE id = ?').run(vid);
+  return obtenirVente(vid);
+}
+
 function modifierOeuvre(id, data) {
   const { cols, valeurs } = _valeursOeuvre(data);
   const db = openDatabase();
+  const oid = entier(id);
+  const etaitComplete = preparationComplete(db, oid);
   const set = cols.map((c) => `${c} = ?`).join(', ');
   db.prepare(
     `UPDATE oeuvres SET ${set}, modifie_le = datetime('now') WHERE id = ?`
   ).run(...valeurs, id);
-  majVendueLe(db, entier(id), vide(data.statut));
+  majVendueLe(db, oid, vide(data.statut));
+  majClassementPreparation(db, oid, etaitComplete);
   return obtenirOeuvre(id);
 }
 
@@ -617,6 +667,7 @@ function majPreparationOeuvre(id, data = {}) {
   const oid = entier(id);
   if (!oid) throw new Error('Identifiant invalide.');
   const db = openDatabase();
+  const etaitComplete = preparationComplete(db, oid);
   db.prepare(`
     UPDATE oeuvres SET
       sage_cree = ?, sage_cree_date = ?,
@@ -630,6 +681,7 @@ function majPreparationOeuvre(id, data = {}) {
     bool(data.site_publie), vide(data.site_publie_date),
     oid
   );
+  majClassementPreparation(db, oid, etaitComplete);
   return obtenirOeuvre(oid);
 }
 
@@ -941,10 +993,12 @@ function majCycleVente(id, data = {}) {
   const cols = COLONNES_CYCLE.filter((c) => Object.prototype.hasOwnProperty.call(data, c));
   if (!cols.length) return obtenirVente(vid);
   const db = openDatabase();
+  const etaitComplete = venteComplete(db, vid);
   db.prepare(`
     UPDATE ventes SET ${cols.map((c) => `${c} = ?`).join(', ')}, modifie_le = datetime('now')
     WHERE id = ?
   `).run(...cols.map((c) => vide(data[c])), vid);
+  majClassementVente(db, vid, etaitComplete);
   return obtenirVente(vid);
 }
 
@@ -958,11 +1012,13 @@ function modifierVente(id, data) {
     const venteExistante = db.prepare('SELECT oeuvre_id FROM ventes WHERE id = ?').get(id);
     if (!venteExistante) throw new Error('Vente introuvable.');
     const ancienneOeuvreId = venteExistante.oeuvre_id;
+    const etaitComplete = venteComplete(db, id);
 
     const set = cols.map((c) => `${c} = ?`).join(', ');
     db.prepare(
       `UPDATE ventes SET ${set}, modifie_le = datetime('now') WHERE id = ?`
     ).run(...valeurs, id);
+    majClassementVente(db, id, etaitComplete);
 
     // Si on change d'œuvre : appliquer à la nouvelle les mêmes garde-fous que
     // la création (existe, pas déjà vendue, créée dans Sage), remettre
@@ -1552,10 +1608,10 @@ module.exports = {
   enregistrerAnnexe, majAnnexePdfPath, annulerAnnexe, majPresentationArtiste,
   modifierArtiste, creerArtiste, supprimerArtiste, relierArtisteAuSite, delierArtisteDuSite,
   formaterDimensionsTexte,
-  modifierOeuvre, majChampOeuvre, majStatutOeuvre, corrigerNumeroInventaire, ignorerDiffWeb, retirerIgnoreWeb, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre,
+  modifierOeuvre, majChampOeuvre, majStatutOeuvre, corrigerNumeroInventaire, ignorerDiffWeb, retirerIgnoreWeb, creerOeuvre, modifierOeuvresLot, supprimerOeuvre, majPreparationOeuvre, classerPreparationOeuvre,
   majChampArtiste, ignorerDiffArtisteWeb, retirerIgnoreArtisteWeb,
   modifierClient, creerClient, supprimerClient,
-  creerVente, modifierVente, supprimerVente, majCycleVente,
+  creerVente, modifierVente, supprimerVente, majCycleVente, classerVente,
   apercuProchainNumeroFacture, reserverProchainNumeroFacture,
   apercuProchainNumeroFactureArtiste, reserverProchainNumeroFactureArtiste,
   obtenirOuReserverNumeroFactureArtisteVente,

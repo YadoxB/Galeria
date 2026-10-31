@@ -51,6 +51,10 @@ const GALERIE_STEPS = ETAPES_GALERIE.map((e) => ({ cle: e.cle, lbl: e.lbl, icone
 // Terminée = client servi ET galerie réglée (voir venteTerminee dans commun.js,
 // et son pendant VENTE_EN_COURS_SQL côté base).
 const venteComplete = venteTerminee;
+// Classée = complète, et on a dit de la classer. Complète sans l'être encore :
+// elle reste parmi les commandes en cours, avec son bouton.
+const venteClassee = (v) => venteComplete(v) && !v.a_classer;
+const prepComplete = (o) => PREP_STEPS.every((s) => etatPrep(o, s.cle) === 'fait');
 
 export async function rendreSuivi(contenu) {
   let data = await window.api.suiviDonnees();
@@ -102,6 +106,45 @@ export async function rendreSuivi(contenu) {
     peindre();
   }
 
+  // ----- Classement -----
+  // Rien ne quitte le Suivi sans qu'on l'ait demandé (parents, 2026-10-30). La
+  // ligne reste visible derrière l'invite ; « Pas encore » la laisse à sa place,
+  // avec un bouton pour la classer plus tard.
+  async function classer(type, id) {
+    try {
+      if (type === 'oeuvre') await window.api.oeuvreClasserPreparation(id);
+      else await window.api.venteClasser(id);
+    } catch (err) {
+      await alerter({
+        type: 'error',
+        title: 'Enregistrement échoué',
+        message: 'Le classement n\'a pas été enregistré.',
+        detail: nettoyerErreur(err),
+      });
+    }
+    await recharger();
+  }
+  async function inviterVente(v) {
+    const r = await confirmer({
+      type: 'question', title: 'Commande complète',
+      message: `Toutes les étapes de « ${v.oeuvre_titre} » (${v.client_nom}) sont cochées. La classer dans « Complétées » ?`,
+      detail: 'Elle restera consultable dans cet onglet.',
+      buttons: ['Classer', 'Pas encore'], defaultId: 0, cancelId: 1,
+    });
+    if (r === 0) await classer('vente', v.id);
+  }
+  // ⚠ type 'question' : en 'warning', le dialogue peint en rouge un bouton qui
+  // contient « retirer ». Ici, rien de dangereux : l'œuvre reste au catalogue.
+  async function inviterOeuvre(o) {
+    const r = await confirmer({
+      type: 'question', title: 'Préparation complète',
+      message: `« ${o.titre} » est créée dans Sage, en stock et publiée sur le site. La retirer du Suivi ?`,
+      detail: 'L\'œuvre reste au catalogue : elle quitte seulement cette liste.',
+      buttons: ['Retirer du suivi', 'Pas encore'], defaultId: 0, cancelId: 1,
+    });
+    if (r === 0) await classer('oeuvre', o.id);
+  }
+
   // ----- Sauvegardes inline -----
   // En cas d'échec, on avertit puis on repeint l'état réel (recharger) pour
   // que l'affichage ne laisse jamais croire qu'un statut a été enregistré.
@@ -124,6 +167,8 @@ export async function rendreSuivi(contenu) {
       });
     }
     await recharger();
+    const maj = data.preparation.find((x) => x.id === o.id);
+    if (maj && prepComplete(maj) && !prepComplete(o)) await inviterOeuvre(maj);
   }
   async function sauverCycle(v, changes) {
     const payload = {
@@ -148,6 +193,8 @@ export async function rendreSuivi(contenu) {
       });
     }
     await recharger();
+    const maj = data.ventes.find((x) => x.id === v.id);
+    if (maj && venteComplete(maj) && !venteComplete(v)) await inviterVente(maj);
   }
 
   // ----- Stepper -----
@@ -169,11 +216,18 @@ export async function rendreSuivi(contenu) {
   const oeuvresPrep = () => data.preparation.filter((o) => ligneMatch([o.titre, o.artiste_nom, o.numero_inventaire]));
   // Marquées vendues, vente pas encore saisie (parents, 2026-10-12).
   const aEnregistrer = () => (data.a_enregistrer || []).filter((o) => ligneMatch([o.titre, o.artiste_nom, o.numero_inventaire]));
-  const ventesEnCours = () => data.ventes.filter((v) => !venteComplete(v) && ligneMatch([v.oeuvre_titre, v.artiste_nom, v.client_nom, v.numero_facture, v.numero_inventaire]));
-  const ventesCompletees = () => data.ventes.filter((v) => venteComplete(v) && ligneMatch([v.oeuvre_titre, v.artiste_nom, v.client_nom, v.numero_facture, v.numero_inventaire]));
+  const ventesEnCours = () => data.ventes.filter((v) => !venteClassee(v) && ligneMatch([v.oeuvre_titre, v.artiste_nom, v.client_nom, v.numero_facture, v.numero_inventaire]));
+  const ventesCompletees = () => data.ventes.filter((v) => venteClassee(v) && ligneMatch([v.oeuvre_titre, v.artiste_nom, v.client_nom, v.numero_facture, v.numero_inventaire]));
 
   // ----- Rendu des lignes -----
+  const finAClasser = (etat, type, id, bouton) => `
+        <div class="suivi-col-fin suivi-col-fin-classer">
+          <span class="suivi-etat-ok">${ICO.check} ${etat}</span>
+          <button type="button" class="btn-action btn-secondaire-action suivi-classer" data-type="${type}" data-id="${id}">${bouton}</button>
+        </div>`;
+
   function ligneOeuvre(o) {
+    const fin = prepComplete(o) ? finAClasser('Prête', 'oeuvre', o.id, 'Retirer du suivi') : '';
     return `
       <div class="suivi-ligne prep">
         <div class="suivi-vignette suivi-ouvrir" data-open="oeuvre" data-open-id="${o.id}">
@@ -187,13 +241,14 @@ export async function rendreSuivi(contenu) {
           <p class="f">${o.statut === 'reserve' ? 'Réservée' : 'Disponible'}</p>
         </div>
         <div class="suivi-stepper">${stepperHTML(PREP_STEPS, (cle) => etatPrep(o, cle), 'oeuvre', o.id)}</div>
+        ${fin}
       </div>`;
   }
   // Une œuvre marquée vendue dont la vente reste à saisir : pas d'étapes à
   // cocher, un seul geste qui compte — enregistrer la vente.
   function ligneAEnregistrer(o) {
     return `
-      <div class="suivi-ligne prep">
+      <div class="suivi-ligne saisir">
         <div class="suivi-vignette suivi-ouvrir" data-open="oeuvre" data-open-id="${o.id}">
           ${o.image_path ? `<img src="${urlPhoto(o.image_path)}" loading="lazy" alt="">` : '<span>&#9635;</span>'}
         </div>
@@ -215,9 +270,10 @@ export async function rendreSuivi(contenu) {
     // dont l'artiste n'est pas payé n'est pas terminée.
     const prochaine = [...POST_STEPS, ...GALERIE_STEPS].find((s) => etatVente(v, s.cle) !== 'fait');
     const partiel = prochaine && etatVente(v, prochaine.cle) === 'partiel';
-    const fin = venteComplete(v)
-      ? `<span class="suivi-etat-ok">${ICO.check} Terminée</span>`
-      : `<span class="suivi-chip-prochaine">${ICO.fleche}${partiel ? 'Finir ' : ''}${prochaine.lbl}</span>`;
+    let fin;
+    if (!venteComplete(v)) fin = `<div class="suivi-col-fin"><span class="suivi-chip-prochaine">${ICO.fleche}${partiel ? 'Finir ' : ''}${prochaine.lbl}</span></div>`;
+    else if (v.a_classer) fin = finAClasser('Terminée', 'vente', v.id, 'Classer');
+    else fin = `<div class="suivi-col-fin"><span class="suivi-etat-ok">${ICO.check} Terminée</span></div>`;
     return `
       <div class="suivi-ligne post">
         <div class="suivi-vignette suivi-ouvrir" data-open="vente" data-open-id="${v.id}">
@@ -234,7 +290,7 @@ export async function rendreSuivi(contenu) {
           <div class="suivi-stepper-rangee"><span class="suivi-stepper-lib">Client</span>${stepperHTML(POST_STEPS, (cle) => etatVente(v, cle), 'vente', v.id)}</div>
           <div class="suivi-stepper-rangee"><span class="suivi-stepper-lib">Galerie</span>${stepperHTML(GALERIE_STEPS, (cle) => etatVente(v, cle), 'vente', v.id)}</div>
         </div>
-        <div class="suivi-col-fin">${fin}</div>
+        ${fin}
       </div>`;
   }
 
@@ -248,10 +304,11 @@ export async function rendreSuivi(contenu) {
     const comp = ventesCompletees();
     const totalPrep = data.preparation.length;
     const totalSaisir = (data.a_enregistrer || []).length;
-    const totalCours = data.ventes.filter((v) => !venteComplete(v)).length;
-    const totalComp = data.ventes.filter(venteComplete).length;
+    const totalCours = data.ventes.filter((v) => !venteClassee(v)).length;
+    const totalComp = data.ventes.filter(venteClassee).length;
 
-    // Files d'attente (sur l'ensemble, non filtré)
+    // Files d'attente (sur l'ensemble, non filtré). Une ligne complète qui attend
+    // d'être classée n'y compte pas : il ne reste rien à y faire.
     const tuile = (cls, ico, val, lbl) => `<div class="suivi-file-tuile"><div class="suivi-ico ${cls}">${ico}</div><div><div class="val">${val}</div><div class="lbl">${lbl}</div></div></div>`;
     const cs = data.ventes.filter((v) => !venteComplete(v));
     elFiles.innerHTML = `
@@ -389,6 +446,10 @@ export async function rendreSuivi(contenu) {
       naviguer('vente-fiche', { nouveau: true, oeuvre_id: Number(b.dataset.oeuvre) });
     }));
 
+    elCorps.querySelectorAll('.suivi-classer').forEach((b) => b.addEventListener('click', () => {
+      classer(b.dataset.type, Number(b.dataset.id));
+    }));
+
     elCorps.querySelectorAll('.suivi-ouvrir').forEach((el) => el.addEventListener('click', () => {
       const type = el.dataset.open;
       const id = Number(el.dataset.openId);
@@ -433,14 +494,10 @@ export async function rendreSuivi(contenu) {
           buttons: ['Décocher', 'Annuler'], defaultId: 0, cancelId: 1,
         }).then((i) => { if (i === 0) appliquer(); });
       } else if (cle === 'livraison') {
-        // Livrer ne termine plus la vente à coup sûr : il faut aussi les
-        // tâches de la galerie. Le message ne promet donc que ce qui arrivera.
-        const termineraAussi = ETAPES_GALERIE.every((e) => !!v[`${e.cle}_date`]);
+        // Si c'était la dernière étape, l'invite de classement suit.
         confirmer({
           type: 'question', title: 'Confirmer la livraison ?',
-          message: termineraAussi
-            ? `La commande « ${v.oeuvre_titre} » sera marquée livrée et déplacée dans « Complétées ».`
-            : `La commande « ${v.oeuvre_titre} » sera marquée livrée. Elle reste en suivi jusqu'à ce que les tâches de la galerie soient faites.`,
+          message: `La commande « ${v.oeuvre_titre} » sera marquée livrée.`,
           buttons: ['Confirmer la livraison', 'Annuler'], defaultId: 0, cancelId: 1,
         }).then((i) => { if (i === 0) appliquer(); });
       } else {

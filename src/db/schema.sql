@@ -97,6 +97,9 @@ CREATE TABLE IF NOT EXISTS oeuvres (
   site_publie            INTEGER NOT NULL DEFAULT 0
                          CHECK (site_publie IN (0, 1)),
   site_publie_date       TEXT,
+  -- Préparation complétée qui attend d'être retirée du Suivi (voir
+  -- majClassementPreparation). ⚠ Absente de COLONNES_OEUVRE.
+  preparation_a_classer  INTEGER NOT NULL DEFAULT 0,
   archive                INTEGER NOT NULL DEFAULT 0
                          CHECK (archive IN (0, 1)),
   retrait_date           TEXT,
@@ -171,6 +174,9 @@ CREATE TABLE IF NOT EXISTS ventes (
   sage_inactif_date    TEXT,
   google_retire_date   TEXT,
   artiste_paye_date    TEXT,
+  -- Commande complétée qui attend d'être classée dans « Complétées » (voir
+  -- majClassementVente). ⚠ Absente de COLONNES_VENTE.
+  a_classer            INTEGER NOT NULL DEFAULT 0,
   notes                TEXT,
   cree_le              TEXT NOT NULL DEFAULT (datetime('now')),
   modifie_le           TEXT NOT NULL DEFAULT (datetime('now'))

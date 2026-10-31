@@ -40,6 +40,10 @@ const COLONNES_ATTENDUES = {
     // colonnes qu'il connaît et effacerait la date. Elle se pose et s'efface
     // par majVendueLe, à chaque changement de statut.
     ['vendue_le', 'TEXT'],
+    // Préparation complétée qui attend d'être retirée du Suivi. Défaut 0 : ce
+    // qui est déjà complet ne revient pas dans la liste. ⚠ Absente de
+    // COLONNES_OEUVRE : voir majClassementPreparation (mutations.js).
+    ['preparation_a_classer', 'INTEGER NOT NULL DEFAULT 0'],
     ['description_en', 'TEXT'],
     ['format', 'TEXT'],
     ['orientation', 'TEXT'],
@@ -99,6 +103,10 @@ const COLONNES_ATTENDUES = {
     ['sage_inactif_date', 'TEXT'],
     ['google_retire_date', 'TEXT'],
     ['artiste_paye_date', 'TEXT'],
+    // Commande complétée qui attend d'être classée dans « Complétées ». Défaut
+    // 0 : ce qui s'y trouve déjà y reste. ⚠ Absente de COLONNES_VENTE : voir
+    // majClassementVente (mutations.js).
+    ['a_classer', 'INTEGER NOT NULL DEFAULT 0'],
     // Pochette de vente : sélection de la lettre de remerciement.
     ['type_achat', 'TEXT'],          // 'personne' | 'web'
     ['est_cadeau', 'INTEGER NOT NULL DEFAULT 0'],

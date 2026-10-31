@@ -10,6 +10,27 @@ identifiants.
 
 ## [Non publié]
 
+### Modifié
+
+- **Le Suivi demande avant de classer ce qui est terminé** (signalement du 2026-10-30). Une
+  commande sautait dans « Complétées » dès sa dernière coche, et une œuvre à préparer disparaissait
+  sans trace. Une invite pose maintenant la question : « Classer » ou « Retirer du suivi », ou
+  « Pas encore », qui laisse la ligne à sa place avec un bouton pour le faire plus tard. Une ligne
+  complétée depuis une fiche ou le formulaire ne pose pas la question : elle attend dans le Suivi,
+  avec son bouton. Décocher une étape ramène la ligne aux choses à faire, et recocher redemande.
+  Ce qui était déjà complété ne bouge pas, et l'accueil et le rapport ne listent toujours que ce
+  qui reste à faire. Maquette : `demos/suivi-classer.html`.
+- **« Confirmer la livraison » ne promet plus de déplacement** : si c'était la dernière étape,
+  l'invite de classement suit.
+
+### Corrigé
+
+- **Suivi dans une fenêtre étroite** : à moins de 1200 px, la fin de ligne passe sous les étapes,
+  et plus rien ne déborde à la largeur minimale de 1024 px, où il fallait faire défiler la page de
+  côté pour voir la prochaine étape d'une commande.
+- **Suivi, long titre** : il passe en points de suspension au lieu d'élargir sa colonne et de
+  décaler les étapes par rapport aux autres lignes.
+
 ## [0.29.0] — 2026-10-30
 
 ### Ajouté

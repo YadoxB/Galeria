@@ -1,7 +1,7 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-10-30 (0.29.0 publiée ce jour-là ; rien en attente de publication, **deux demandes ouvertes**).
+> Date de cette sauvegarde : 2026-10-31 (0.29.0 publiée le 30 ; **la demande n° 3 est codée, non commitée** ; la n° 4 attend une décision de Dave).
 >
 > **Tableau de bord du chantier** (signalements des parents + étapes restantes) :
 > <https://claude.ai/artifact/2fBkxU3MEnkZwQHj5Vv2Kz>. Les signalements y arrivent seuls
@@ -16,12 +16,12 @@
 
 **✅ Dernière version PUBLIÉE : v0.29.0 (2026-10-30).** Tag `v0.29.0` = `c82d3ba`, suivi du
 seul commit de documentation qui écrit ces lignes. Publiée sur GitHub Releases avec `latest.yml`
-— auto-update actif. **Rien n'est en attente de publication.** Les parents étaient à la 0.28.0 :
+— auto-update actif. Les parents étaient à la 0.28.0 :
 trois diapos les attendent à l'ouverture. Depuis un worktree, `npm --prefix
 F:/Galerie/Automatisation/GalerieApp run release` lance la publication dans le dossier principal,
 le seul qui a `node_modules`, sur `master` déjà avancé et poussé.
 
-### 🟦 PAR OÙ COMMENCER — deux demandes ouvertes (au 2026-10-30)
+### 🟦 PAR OÙ COMMENCER — deux demandes ouvertes (au 2026-10-31)
 
 Elles viennent du tableau de bord du chantier (lien en tête de ce fichier), où chacune a son
 étape. L'ordre proposé va du confort au chantier de fond :
@@ -30,7 +30,7 @@ Elles viennent du tableau de bord du chantier (lien en tête de ce fichier), où
 |---|---|---|---|
 | 1 | **Cadrage des toiles verticales** à la création d'une fiche depuis le site (16 oct., ex. HEL2260 et HEL2258) — **publié, 0.29.0** | Claude | Fait |
 | 2 | **Trier et filtrer les clients** (30 oct.), page Clients et choix d'un client dans une vente — **publié, 0.29.0** (`demos/clients-tri-filtres.html`) | Claude | Fait |
-| 3 | **Suivi : demander avant de classer** un item terminé (30 oct.) | Claude | Demande de confort — la forme est à cadrer avec Dave |
+| 3 | **Suivi : demander avant de classer** un item terminé (30 oct.) — **codé et vérifié, non commité, non publié** (`demos/suivi-classer.html`) | Claude | Commit et publication à décider par Dave |
 | 4 | **Galeria sur plusieurs ordinateurs ?** (8 oct.) | Dave | Décision de fond, pas un réglage : à trancher avant tout code |
 
 **1. Cadrage vertical — diagnostic refait au banc le 2026-10-30** (le précédent, tiré de la
@@ -107,9 +107,35 @@ signalement n'indique donc rien. Trois défauts expliquaient l'impression de dé
   grisé dans une vente (`.ligne-dossier input` l'emporte sur `.rech-inline`) ; `formaterPrix` écrit
   « 14 256,9 $ », avec une seule décimale, sur la fiche du client ; `pluriel` écrit « 0 clients ».
 
-**3. Suivi, classer un item** : aujourd'hui une vente dont toutes les étapes sont cochées
-passe seule dans l'onglet « Complétées ». Ils veulent qu'on **demande** avant. À préciser :
-une question à chaque fois, ou un bouton « Classer » qu'ils actionnent eux-mêmes.
+**3. Suivi, classer un item — codé le 2026-10-31, NON COMMITÉ, non publié.** Maquette validée
+« telle quelle » par Dave : `demos/suivi-classer.html`. Une invite (« Classer » ou « Retirer du
+suivi » / « Pas encore ») s'ouvre quand la dernière étape est cochée dans le Suivi. Depuis une fiche
+ou le formulaire, rien n'est demandé : la ligne attend dans le Suivi, avec son bouton.
+
+- **Écart assumé avec le plan** : pas de date de classement ni de reprise des données. Un simple
+  drapeau, `ventes.a_classer` et `oeuvres.preparation_a_classer`, défaut 0, levé seulement sur un vrai
+  passage « incomplète → complète » (`majClassementVente`, `majClassementPreparation`). Ce qui est
+  déjà complet ne peut donc pas revenir, sans `user_version`, et un catalogue rechargé, une
+  importation ou une œuvre créée complète n'envahissent pas le Suivi. En contrepartie, un nouveau
+  chemin d'écriture de ces étapes doit appeler ces fonctions, sinon la ligne repart sans question.
+- ⚠ Colonnes hors de `COLONNES_VENTE` et `COLONNES_OEUVRE` : le formulaire effacerait le drapeau.
+- `oeuvresAPreparer({ avecAClasser: true })` pour la seule page Suivi : l'accueil et le rapport ne
+  listent que ce qui reste à faire. `VENTE_EN_COURS_SQL` ne change pas, et il est exporté pour que
+  les mutations appliquent la même règle.
+- **Vu au banc, absent de la maquette** (elle n'a pas de barre latérale) : à 1024 px, la largeur
+  minimale de la fenêtre, la colonne du bouton désalignait les étapes des œuvres. Les lignes de
+  commande débordaient déjà dans la 0.29.0 et poussaient le bouton hors de vue. Réglé : à moins de
+  1200 px, la fin de ligne passe sous les étapes, et les colonnes de texte en `minmax(0, …)` mettent
+  un long titre en points de suspension. Le bandeau de tuiles ne dépasse plus non plus.
+- L'invite qui paraissait translucide dans mes captures de la maquette était son fondu d'apparition,
+  figé par une fenêtre cachée : mesurée opaque une fois le fondu terminé, et vue sans défaut dans
+  une vraie fenêtre.
+- **Vérifié** : une base créée par la vraie 0.29.0 puis ouverte par le nouveau code, dans la vraie
+  application isolée, données fictives, 89 contrôles, 0 échec, de 1600 à 1024 px, réouverture
+  comprise. Le même banc sur la 0.29.0 : 21 échecs sur 31 avant de bloquer. Onze sabotages, dont deux
+  repris seuls parce que leurs voisins les masquaient, font tous tomber le contrôle qui les surveille.
+  Un défaut de ce banc, en plus : les clics passent par `.click()`, pas par une vraie souris.
+- ⚠ **Non vérifié** : la base des parents n'est pas ici, et personne n'a encore essayé l'invite.
 
 **4. Plusieurs ordinateurs** : la base est **un seul fichier local** (Loi 25, aucun nuage) et
 OneDrive est déconseillé pour un SQLite ouvert. Les voies possibles — partage réseau avec un

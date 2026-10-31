@@ -263,6 +263,11 @@ const ARTICLES = [
   // ═══════ SUIVI ═══════
   A('suivi', 'La section Suivi', 'suivi cycle de vie actif complétées files attente préparation expédition',
     `<p><b>Suivi</b> rassemble les œuvres <b>à préparer</b> et les ventes <b>en cours</b>, avec un onglet <b>Complétées</b>. Un bandeau résume les files d'attente (à créer dans Sage, à mettre en stock, à publier, à encaisser, à emballer, à expédier, à livrer). Tout est éditable d'un clic et se sauvegarde aussitôt.</p>`),
+  A('suivi', 'Classer ce qui est terminé', 'classer complété complète terminée disparaît disparu retirer suivi pas encore invite préparation commande',
+    `<p>Rien ne quitte le Suivi sans que vous l'ayez demandé. Quand vous cochez la <b>dernière étape</b> d'une commande ou d'une œuvre à préparer, Galeria demande quoi faire.</p>
+     <p><b>Classer</b> range la commande dans l'onglet <b>Complétées</b>. <b>Retirer du suivi</b> fait quitter la liste à l'œuvre, qui reste au catalogue. <b>Pas encore</b> laisse la ligne à sa place, avec un bouton pour le faire plus tard.</p>
+     <p>Si la dernière étape est cochée depuis une fiche, rien n'est demandé : la ligne vous attend dans le Suivi, avec son bouton.</p>
+     <div class="astuce">Classé trop vite ? Décochez une étape, dans l'onglet Complétées ou sur la fiche de l'œuvre : la ligne revient parmi les choses à faire.</div>`),
   A('suivi', 'Marquer une œuvre vendue et saisir la vente plus tard', 'vendue marquer statut vente à enregistrer plus tard oublier suivi comptoir',
     `<p>Vous pouvez mettre une œuvre à <b>vendue</b> tout de suite — sur sa fiche, en lot, ou depuis l'écran <b>Site web</b> — et enregistrer la vente quand vous avez le temps. Plus besoin de la remettre « disponible » avant.</p>
      <p>Elle apparaît alors dans <b>Suivi → Ventes à enregistrer</b>, tout en haut, avec un bouton <b>Enregistrer la vente</b> qui ouvre le formulaire, l'œuvre déjà choisie. Le même bouton est sur la fiche de l'œuvre.</p>

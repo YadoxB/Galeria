@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette — Classer un suivi complété</title>
+<!-- Les VRAIES feuilles de style de l'application : la maquette montre ce que
+     l'écran donnera, elle ne l'imite pas. Toutes les données sont FICTIVES. -->
+<link rel="stylesheet" href="../src/theme.css">
+<link rel="stylesheet" href="../src/styles.css">
+<style>
+  body{padding:30px 34px;overflow:auto;height:auto;user-select:text;}
+  .doc{max-width:1240px;margin:0 auto;}
+  h1{font-family:var(--font-titre);font-weight:500;font-size:30px;margin:0 0 8px;}
+  .sous{color:var(--slate);font-size:14px;line-height:1.65;margin:0 0 6px;max-width:900px;}
+  .journal{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:16px 21px;margin-top:18px;}
+  .journal h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+              margin:0 0 9px;font-weight:700;}
+  .journal ul{margin:0;padding-left:19px;font-size:13.5px;color:var(--slate);line-height:1.8;}
+  .journal em{color:var(--ink);font-style:normal;font-weight:600;}
+  .maquette{background:var(--soft-ivory);border:1px dashed var(--mist);border-radius:16px;padding:20px;margin-top:12px;}
+  .faux-chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;}
+  .faux-chips .t{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+                 font-weight:700;margin-right:4px;}
+  .faux-chips button{font-family:var(--font-ui);font-size:12.5px;border:1px solid var(--mist);
+    background:#fff;border-radius:999px;padding:5px 13px;cursor:pointer;color:var(--slate);}
+  .faux-chips button.on{background:var(--gallery-navy);border-color:var(--gallery-navy);color:#fff;}
+  .faux-chips .remettre{margin-left:auto;}
+  .note-scene{font-size:13px;color:#7a4a00;background:#fff8e8;border:1px solid #e8d9a8;border-radius:10px;
+              padding:8px 12px;margin:0 0 14px;}
+  .note-scene:empty{display:none;}
+  .vue-suivi{max-width:none;}
+
+/* =====================================================================
+   PROPOSITION — à reporter dans src/styles.css.
+   ===================================================================== */
+  .suivi-ligne.prep{grid-template-columns:52px 1.6fr 1.4fr auto 140px;}
+  .suivi-col-fin-classer{display:flex;flex-direction:column;align-items:flex-end;gap:7px;}
+  .suivi-col-fin-classer .btn-action{height:32px;padding:0 14px;font-size:13px;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<h1>Classer un suivi complété</h1>
+<p class="sous">Demande du 30 octobre : « demander si on veut enlever l'item lorsqu'il est complet plutôt qu'il
+disparaisse automatiquement ». <strong>Essayez</strong> : cliquez sur le rond vide d'une ligne presque finie. Toutes les
+œuvres et tous les clients ci-dessous sont <strong>fictifs</strong>.</p>
+
+<div class="journal">
+  <h4>Ce qui se passe aujourd'hui</h4>
+  <ul>
+    <li><em>Une commande</em> dont la dernière étape est cochée saute aussitôt dans l'onglet « Complétées ».</li>
+    <li><em>Une œuvre à préparer</em> disparaît du Suivi dès que Sage, Stock et Site sont cochés, sans laisser de trace : c'est le cas le plus déroutant.</li>
+  </ul>
+</div>
+
+<div class="faux-chips" id="commandes">
+  <span class="t">Montrer</span>
+  <button type="button" data-mode="propose" class="on">Proposé</button>
+  <button type="button" data-mode="actuel">Aujourd'hui</button>
+  <button type="button" class="remettre" id="remettre">Tout remettre à zéro</button>
+</div>
+
+<div class="maquette">
+  <p class="note-scene" id="note"></p>
+  <div class="vue-suivi">
+    <div class="suivi-onglets">
+      <button type="button" data-onglet="actif" id="bt-actif"></button>
+      <button type="button" data-onglet="comp" id="bt-comp"></button>
+    </div>
+    <div id="corps"></div>
+  </div>
+</div>
+
+<div class="journal">
+  <h4>Ce que la proposition change</h4>
+  <ul>
+    <li><em>Rien ne part sans qu'on le demande.</em> Quand la dernière étape est cochée, une invite pose la question : « Classer » ou « Pas encore ».</li>
+    <li><em>« Pas encore » laisse la ligne à sa place</em>, avec tout coché et un bouton pour la classer plus tard. Elle ne compte plus dans les choses à faire.</li>
+    <li><em>Les commandes et les œuvres à préparer suivent la même règle.</em> Une commande classée reste consultable dans « Complétées ». Une œuvre classée quitte le Suivi et reste au catalogue.</li>
+    <li><em>Coché depuis une fiche ?</em> La fiche ne pose pas la question, puisque rien ne disparaît sous vos yeux : la ligne attend dans le Suivi, avec son bouton.</li>
+    <li><em>Décocher une étape</em> ramène la ligne parmi les choses à faire. Quand on la recoche, l'invite revient.</li>
+    <li><em>Ce qui est déjà complété aujourd'hui ne bouge pas</em> : ni les commandes de l'onglet « Complétées », ni le catalogue ne reviennent dans le Suivi.</li>
+  </ul>
+</div>
+
+</div>
+
+<script>
+const ICO = {
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  rond: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/></svg>',
+  fleche: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
+  sage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>',
+  boite: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8l2-4h12l2 4"/><rect x="4" y="8" width="16" height="12" rx="1"/><line x1="12" y1="4" x2="12" y2="20"/></svg>',
+  question: '<circle cx="12" cy="12" r="9.5" stroke-width="1.6"/><path d="M9 9.5c0-1.8 1.4-3 3-3s3 1.2 3 3-3 2-3 4.5" stroke-width="2"/><circle cx="12" cy="17.2" r="1" fill="white" stroke="none"/>',
+};
+const PREP = [['sage', 'Sage 50'], ['stock', 'Stock'], ['site', 'Site web']];
+const CLIENT = [['paiement', 'Paiement'], ['emballage', 'Emballage'], ['envoi', 'Envoi'], ['livraison', 'Livraison']];
+const GALERIE = [['sage_inactif', 'Inactive dans Sage'], ['google_retire', 'Retirée de Google'], ['artiste_paye', 'Artiste payé']];
+const TOUT_VENTE = [...CLIENT, ...GALERIE];
+
+const coches = (...cles) => Object.fromEntries(cles.map((c) => [c, true]));
+const SAUF = (...exclus) => coches(...TOUT_VENTE.map(([c]) => c).filter((c) => !exclus.includes(c)));
+const depart = () => ({
+  prep: [
+    { id: 'p1', titre: 'Matin sur le quai', artiste: 'Marc Vertefeuille', inv: 'VER412', statut: 'Disponible', fait: coches('sage', 'stock') },
+    { id: 'p2', titre: 'Nature morte aux poires', artiste: 'Sylvie Roy', inv: 'ROY208', statut: 'Disponible', fait: coches('sage') },
+  ],
+  ventes: [
+    { id: 'v1', titre: "Lumière d'automne", artiste: 'Anne Lacasse', client: 'Zoé Bouchard', facture: 'FC-2026-041', date: '12 octobre 2026', fait: SAUF('artiste_paye') },
+    { id: 'v2', titre: 'Le fleuve en mars', artiste: 'Julien Moreau', client: 'Alain Tremblay', facture: 'FC-2026-044', date: '18 octobre 2026', fait: SAUF('livraison') },
+    { id: 'v3', titre: 'Hiver à Lévis', artiste: 'Sylvie Roy', client: 'Rose Élie', facture: 'FC-2026-047', date: '26 octobre 2026', fait: coches('paiement', 'emballage') },
+    { id: 'v0', titre: 'Les érables', artiste: 'Anne Lacasse', client: 'Luc Côté', facture: 'FC-2026-031', date: '2 septembre 2026', fait: SAUF(), classee: true },
+  ],
+});
+
+const etat = { mode: 'propose', onglet: 'actif', ...depart() };
+const corps = document.getElementById('corps');
+const ech = (s) => String(s ?? '').replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+
+const prepComplete = (o) => PREP.every(([c]) => o.fait[c]);
+const venteComplete = (v) => TOUT_VENTE.every(([c]) => v.fait[c]);
+
+// ===== Aujourd'hui : compléter suffit. Proposé : il faut aussi l'avoir classée. =====
+const venteClassee = (v) => venteComplete(v) && (etat.mode === 'actuel' || v.classee);
+const prepVisible = (o) => !prepComplete(o) || (etat.mode === 'propose' && !o.classee);
+
+function steppeur(steps, o, type) {
+  return steps.map(([cle, lbl], i) => {
+    const fait = !!o.fait[cle];
+    const conn = i < steps.length - 1 ? `<span class="suivi-conn ${fait && o.fait[steps[i + 1][0]] ? 'fait' : ''}"></span>` : '';
+    return `<span class="suivi-step ${fait ? 'fait' : 'attente'}"><button type="button" class="suivi-rond" data-type="${type}" data-id="${o.id}" data-cle="${cle}" title="Changer le statut">${fait ? ICO.check : ICO.rond}</button><span class="suivi-lbl">${lbl}</span></span>${conn}`;
+  }).join('');
+}
+
+function ligneOeuvre(o) {
+  const fin = prepComplete(o) && etat.mode === 'propose'
+    ? `<div class="suivi-col-fin suivi-col-fin-classer"><span class="suivi-etat-ok">${ICO.check} Prête</span><button type="button" class="btn-action btn-secondaire-action suivi-classer" data-classer="${o.id}">Retirer du suivi</button></div>`
+    : '<div class="suivi-col-fin"></div>';
+  return `
+    <div class="suivi-ligne prep" data-ligne="${o.id}">
+      <div class="suivi-vignette"><span>&#9635;</span></div>
+      <div class="suivi-col-titre"><p class="o">${ech(o.titre)}</p><p class="a">${ech(o.artiste)}</p></div>
+      <div class="suivi-col-client"><p class="c">${ech(o.inv)}</p><p class="f">${ech(o.statut)}</p></div>
+      <div class="suivi-stepper">${steppeur(PREP, o, 'oeuvre')}</div>
+      ${fin}
+    </div>`;
+}
+
+function ligneVente(v) {
+  const prochaine = TOUT_VENTE.find(([c]) => !v.fait[c]);
+  let fin;
+  if (!venteComplete(v)) fin = `<div class="suivi-col-fin"><span class="suivi-chip-prochaine">${ICO.fleche}${ech(prochaine[1])}</span></div>`;
+  else if (venteClassee(v)) fin = `<div class="suivi-col-fin"><span class="suivi-etat-ok">${ICO.check} Terminée</span></div>`;
+  else fin = `<div class="suivi-col-fin suivi-col-fin-classer"><span class="suivi-etat-ok">${ICO.check} Terminée</span><button type="button" class="btn-action btn-secondaire-action suivi-classer" data-classer="${v.id}">Classer</button></div>`;
+  return `
+    <div class="suivi-ligne post" data-ligne="${v.id}">
+      <div class="suivi-vignette"><span>&#9635;</span></div>
+      <div class="suivi-col-titre"><p class="o">${ech(v.titre)}</p><p class="a">${ech(v.artiste)}</p></div>
+      <div class="suivi-col-client"><p class="c">${ech(v.client)}</p><p class="f">${ech(v.facture)} · ${ech(v.date)}</p></div>
+      <div class="suivi-stepper suivi-stepper-double">
+        <div class="suivi-stepper-rangee"><span class="suivi-stepper-lib">Client</span>${steppeur(CLIENT, v, 'vente')}</div>
+        <div class="suivi-stepper-rangee"><span class="suivi-stepper-lib">Galerie</span>${steppeur(GALERIE, v, 'vente')}</div>
+      </div>
+      ${fin}
+    </div>`;
+}
+
+const carte = (html) => `<div class="suivi-liste">${html}</div>`;
+const vide = (msg) => `<div class="suivi-vide">${msg}</div>`;
+
+function peindre() {
+  const prep = etat.prep.filter(prepVisible);
+  const cours = etat.ventes.filter((v) => !venteClassee(v));
+  const comp = etat.ventes.filter(venteClassee);
+  document.getElementById('bt-actif').textContent = `Actif (${prep.length + cours.length})`;
+  document.getElementById('bt-comp').textContent = `Complétées (${comp.length})`;
+  document.getElementById('bt-actif').classList.toggle('actif', etat.onglet === 'actif');
+  document.getElementById('bt-comp').classList.toggle('actif', etat.onglet === 'comp');
+  document.getElementById('note').textContent = etat.mode === 'actuel'
+    ? "Aujourd'hui : cochez la dernière étape, et la ligne part aussitôt, sans rien demander."
+    : '';
+
+  if (etat.onglet === 'comp') {
+    corps.innerHTML = comp.length ? carte(comp.map(ligneVente).join('')) : carte(vide("Aucune commande complétée pour l'instant."));
+    return;
+  }
+  let html = '';
+  if (prep.length) {
+    html += `<div class="suivi-groupe"><div class="suivi-groupe-titre"><span class="ico-g ic-prep">${ICO.sage}</span><span>À préparer</span><span class="nb">${prep.length}</span></div>${carte(prep.map(ligneOeuvre).join(''))}</div>`;
+  }
+  if (cours.length) {
+    html += `<div class="suivi-groupe"><div class="suivi-groupe-titre"><span class="ico-g ic-cours">${ICO.boite}</span><span>Commandes en cours</span><span class="nb">${cours.length}</span></div>${carte(cours.map(ligneVente).join(''))}</div>`;
+  }
+  corps.innerHTML = html || carte(vide('Rien à préparer ni à expédier — tout est à jour. 🎉'));
+}
+
+// Le même dialogue que celui de l'application (src/app/dialogue.js).
+function confirmer({ title, message, detail, buttons, type = 'question' }) {
+  return new Promise((resolve) => {
+    const fonds = { question: '#b8943a', warning: '#c98a1f' };
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay-modale overlay-dialogue';
+    overlay.innerHTML = `
+      <div class="dialogue" role="alertdialog" aria-modal="true">
+        <div class="dialogue-entete">
+          <div class="dialogue-icone" style="background:${fonds[type]}"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round">${ICO.question}</svg></div>
+          <h3 class="dialogue-titre">${ech(title)}</h3>
+        </div>
+        <p class="dialogue-message">${ech(message)}</p>
+        ${detail ? `<p class="dialogue-detail">${ech(detail)}</p>` : ''}
+        <div class="dialogue-actions">
+          ${buttons.map((b, i) => `<button type="button" class="btn-action ${i === 0 ? 'btn-principal' : 'btn-secondaire-action'}" data-i="${i}">${ech(b)}</button>`).join('')}
+        </div>
+      </div>`;
+    overlay.querySelectorAll('[data-i]').forEach((b) => b.addEventListener('click', () => { overlay.remove(); resolve(Number(b.dataset.i)); }));
+    document.body.appendChild(overlay);
+  });
+}
+
+async function proposerClassement(ligne, type) {
+  if (etat.mode !== 'propose') return;
+  const r = type === 'vente'
+    ? await confirmer({
+        title: 'Commande complète',
+        message: `Toutes les étapes de « ${ligne.titre} » (${ligne.client}) sont cochées. La classer dans « Complétées » ?`,
+        detail: 'Elle restera consultable dans cet onglet.',
+        buttons: ['Classer', 'Pas encore'],
+      })
+    : await confirmer({
+        title: 'Préparation complète',
+        message: `« ${ligne.titre} » est créée dans Sage, en stock et publiée sur le site. La retirer du Suivi ?`,
+        detail: "L'œuvre reste au catalogue : elle quitte seulement cette liste.",
+        buttons: ['Retirer du suivi', 'Pas encore'],
+      });
+  if (r === 0) { ligne.classee = true; peindre(); }
+}
+
+corps.addEventListener('click', async (e) => {
+  const classer = e.target.closest('[data-classer]');
+  if (classer) {
+    const ligne = [...etat.prep, ...etat.ventes].find((x) => x.id === classer.dataset.classer);
+    ligne.classee = true;
+    peindre();
+    return;
+  }
+  const rond = e.target.closest('.suivi-rond');
+  if (!rond) return;
+  const type = rond.dataset.type;
+  const ligne = (type === 'vente' ? etat.ventes : etat.prep).find((x) => x.id === rond.dataset.id);
+  const cle = rond.dataset.cle;
+  const complet = type === 'vente' ? venteComplete : prepComplete;
+  if (ligne.fait[cle]) {
+    const lbl = [...PREP, ...TOUT_VENTE].find(([c]) => c === cle)[1];
+    const r = await confirmer({ type: 'warning', title: 'Revenir en arrière ?', message: `L'étape « ${lbl} » sera décochée.`, buttons: ['Décocher', 'Annuler'] });
+    if (r !== 0) return;
+    ligne.fait[cle] = false;
+    ligne.classee = false;
+    if (etat.onglet === 'comp' && !etat.ventes.some(venteClassee)) etat.onglet = 'actif';
+    peindre();
+    return;
+  }
+  if (cle === 'livraison') {
+    const r = await confirmer({ title: 'Confirmer la livraison ?', message: `La commande « ${ligne.titre} » sera marquée livrée.`, buttons: ['Confirmer la livraison', 'Annuler'] });
+    if (r !== 0) return;
+  }
+  ligne.fait[cle] = true;
+  peindre();
+  if (complet(ligne)) await proposerClassement(ligne, type);
+});
+
+document.querySelector('.suivi-onglets').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-onglet]');
+  if (b) { etat.onglet = b.dataset.onglet; peindre(); }
+});
+document.getElementById('commandes').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-mode]');
+  if (!b) return;
+  etat.mode = b.dataset.mode;
+  document.querySelectorAll('[data-mode]').forEach((x) => x.classList.toggle('on', x === b));
+  Object.assign(etat, depart());
+  etat.onglet = 'actif';
+  peindre();
+});
+document.getElementById('remettre').addEventListener('click', () => {
+  Object.assign(etat, depart());
+  etat.onglet = 'actif';
+  peindre();
+});
+
+peindre();
+</script>
+</body>
+</html>

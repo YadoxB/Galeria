@@ -11,6 +11,19 @@
 
 ---
 
+## Dans le Suivi, rien ne part sans vous demander
+
+Avant, une commande ou une œuvre à préparer quittait la liste dès la dernière coche. Maintenant,
+Galeria pose la question :
+
+- **Classer** range la commande dans **Complétées**. Pour une œuvre, **Retirer du suivi** l'enlève
+  de la liste ; elle reste au catalogue.
+- **Pas encore** laisse la ligne à sa place, avec un bouton pour le faire plus tard.
+
+Vous avez coché trop vite ? Décochez une étape : la ligne revient parmi les choses à faire.
+
+---
+
 ## Retrouver un client, c'est plus simple
 
 La liste des clients est maintenant vraiment en ordre alphabétique, accents compris, et le
