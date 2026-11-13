@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette — Cote « prix fixe »</title>
+<!-- Les VRAIES feuilles de style de l'application : la maquette montre ce que
+     l'écran donnera, elle ne l'imite pas. L'artiste et l'œuvre sont FICTIVES. -->
+<link rel="stylesheet" href="../src/theme.css">
+<link rel="stylesheet" href="../src/styles.css">
+<style>
+  body{padding:30px 34px;overflow:auto;height:auto;user-select:text;}
+  .doc{max-width:1240px;margin:0 auto;}
+  h1{font-family:var(--font-titre);font-weight:500;font-size:30px;margin:0 0 8px;}
+  h2.etape{font-family:var(--font-ui);font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--stone);
+           font-weight:700;margin:26px 0 8px;}
+  .sous{color:var(--slate);font-size:14px;line-height:1.65;margin:0 0 6px;max-width:900px;}
+  .journal{background:#fff;border:1px solid var(--mist);border-radius:14px;padding:16px 21px;margin-top:18px;}
+  .journal h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);
+              margin:0 0 9px;font-weight:700;}
+  .journal ul{margin:0;padding-left:19px;font-size:13.5px;color:var(--slate);line-height:1.8;}
+  .journal em{color:var(--ink);font-style:normal;font-weight:600;}
+  .maquette{background:var(--soft-ivory);border:1px dashed var(--mist);border-radius:16px;padding:20px;}
+  .maquette .grille-bento{margin:0;}
+  .facture-ligne{display:flex;gap:28px;flex-wrap:wrap;font-family:var(--font-ui);font-size:14px;color:var(--slate);}
+  .facture-ligne strong{color:var(--ink);font-size:16px;}
+  .facture-ligne .avant{text-decoration:line-through;color:var(--stone);}
+
+/* =====================================================================
+   PROPOSITION — à reporter dans src/styles.css.
+   ===================================================================== */
+  .ligne-cote .cote-prix-fixe{font-family:var(--font-ui);font-size:12.5px;color:var(--slate);font-style:italic;
+                              padding-left:4px;line-height:1.25;}
+  .prix-fixe-saisie{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:10px;}
+  .prix-fixe-saisie label{font-family:var(--font-ui);font-size:13px;color:var(--ink);font-weight:600;}
+  .prix-fixe-champ{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+  .prix-fixe-saisie input{width:120px;height:36px;font-family:var(--font-ui);font-size:15px;text-align:right;
+                          border:1px solid var(--mist);border-radius:8px;background:var(--porcelain);padding:0 10px;}
+  .prix-fixe-saisie input:focus{outline:none;border-color:var(--warm-gold);box-shadow:0 0 0 3px rgba(201,154,61,.18);}
+  .prix-fixe-saisie .dollar{font-family:var(--font-ui);font-size:14px;color:var(--slate);}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<h1>Cote « prix fixe »</h1>
+<p class="sous">Demande du 1<sup>er</sup> novembre (fiche de Pamela Comeau) : « faudrait ajouter &lt;fixe&gt; lorsque l'artiste
+nous donne un prix qui ne sera pas calculé. On doit quand même ajouter le 2 $/po/li pour le cadre. »
+<strong>Essayez</strong> : changez l'unité de la cote, les dimensions ou le prix de l'artiste. L'artiste et l'œuvre sont
+<strong>fictives</strong>.</p>
+
+<div class="journal">
+  <h4>Ce qui se passe aujourd'hui</h4>
+  <ul>
+    <li><em>Une cote se calcule toujours au pouce</em> : linéaire (H + L) ou carré (H × L). Un artiste qui donne son prix œuvre par œuvre n'a pas de cote possible.</li>
+    <li><em>Sans cote, le prix se tape à la main</em>, cadre compris, et Galeria ne sait pas quelle part revient au cadre.</li>
+    <li><em>Sur la facture artiste</em>, ce supplément n'est donc pas retiré : l'artiste est payé sur le prix encadré.</li>
+    <li><em>Sur l'annexe A</em>, la colonne « sans cadre » reste vide pour ces œuvres.</li>
+  </ul>
+</div>
+
+<h2 class="etape">1 · Fiche de l'artiste, en modification</h2>
+<div class="maquette">
+  <form class="formulaire" onsubmit="return false">
+    <div class="grille-bento">
+      <div class="carte span-12">
+        <h3>Cotes (calcul de prix)</h3>
+        <p class="aide-champ">Tarif <strong>préférentiel</strong> (sans encadrement) appliqué selon le médium et la taille de l'œuvre. La version <strong>courante</strong> ajoute automatiquement 2 $ à la cote. <strong>Prix fixe</strong> : l'artiste donne son prix sur chaque œuvre, et Galeria ajoute 2 $ par pouce linéaire pour le cadre.</p>
+        <div id="zone-cotes">
+          <div class="ligne-cote">
+            <div class="select-edit-wrap"><input type="text" class="cote-medium" value="Tous" autocomplete="off"></div>
+            <select class="cote-taille"><option>Tous</option><option>Petit</option><option>Moyen</option><option>Grand</option><option>Très grand</option><option>Hors normes</option></select>
+            <select class="cote-unite" id="d-unite">
+              <option value="lineaire">$/po linéaire</option>
+              <option value="carre">$/po²</option>
+              <option value="fixe" selected>Prix fixe</option>
+            </select>
+            <span id="d-cellule-prix"></span>
+            <button type="button" class="btn-supprimer-ligne" title="Retirer cette cote" aria-label="Retirer">&times;</button>
+          </div>
+        </div>
+        <button type="button" class="btn-ajouter">+ Ajouter une cote</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<h2 class="etape">2 · Fiche de l'artiste, en lecture</h2>
+<div class="maquette">
+  <div class="carte" style="max-width:560px;">
+    <div id="d-cotes-lecture"></div>
+  </div>
+</div>
+
+<h2 class="etape">3 · Fiche de l'œuvre, en modification</h2>
+<div class="maquette">
+  <form class="formulaire" onsubmit="return false">
+    <div class="grille-bento">
+      <div class="carte span-8">
+        <h3>Dimensions</h3>
+        <div class="grille-form">
+          <div class="form-champ"><label for="d-h">Hauteur (po)</label><input type="number" id="d-h" value="24" min="0" step="0.25"></div>
+          <div class="form-champ"><label for="d-l">Largeur (po)</label><input type="number" id="d-l" value="36" min="0" step="0.25"></div>
+        </div>
+        <p class="aide-champ">Dans l'application, ce sont les champs habituels de la fiche.</p>
+      </div>
+      <div class="carte span-4">
+        <h3>Commerce et localisation</h3>
+        <div class="grille-form">
+          <div class="form-champ"><label for="d-prix">Prix régulier ($)</label><input type="number" id="d-prix" value="1958" min="0" step="0.01"></div>
+          <div class="form-champ"><label for="d-statut">Statut</label><select id="d-statut"><option>Disponible</option></select></div>
+        </div>
+        <div id="zone-prix-suggere"></div>
+        <div class="form-champ"><label style="display:flex;gap:8px;align-items:center;font-weight:400;"><input type="checkbox" disabled> Cote hors-normes (œuvre exceptionnelle, prix saisi à la main)</label></div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<h2 class="etape">4 · Fiche de l'œuvre, en lecture, et facture artiste</h2>
+<div class="maquette">
+  <div class="formulaire"><div class="grille-bento">
+    <div class="carte span-6">
+      <div id="d-prix-lecture"></div>
+    </div>
+    <div class="carte span-6">
+      <h3>Facture artiste</h3>
+      <div class="facture-ligne" id="d-facture"></div>
+      <p class="aide-champ" style="margin-top:10px;">Le cadre est retiré en silence, comme pour les autres cotes : l'artiste voit directement son prix.</p>
+    </div>
+  </div></div>
+</div>
+
+<div class="journal">
+  <h4>Ce que la proposition change</h4>
+  <ul>
+    <li><em>Une troisième unité, « Prix fixe »,</em> dans les cotes de l'artiste. Elle se combine avec le médium et la taille comme les autres, et n'a pas de tarif : le prix se donne sur chaque œuvre.</li>
+    <li><em>Sur la fiche de l'œuvre</em>, on tape le prix de l'artiste. Galeria ajoute 2 $ × (H + L) pour le cadre et remplit le prix régulier, comme il le fait déjà avec les autres cotes. Taper le prix régulier à la main reste possible.</li>
+    <li><em>Le prix de l'artiste n'est pas un champ de plus à tenir</em> : c'est le prix régulier moins le cadre. Les œuvres déjà au catalogue le montrent donc tout de suite, sans rien ressaisir. À vérifier œuvre par œuvre : si un prix avait été bâti autrement, il suffit de corriger le prix de l'artiste.</li>
+    <li><em>La facture artiste</em> retire le cadre comme pour les autres cotes, et <em>l'annexe A</em> remplit sa colonne « sans cadre ».</li>
+    <li><em>Le calculateur de la page Outils</em> demande le prix de l'artiste quand sa cote est fixe.</li>
+    <li><em>Sculptures et reproductions</em> : pas de cadre, comme aujourd'hui sur la facture. Le prix régulier égale alors le prix de l'artiste.</li>
+    <li><em>« Masquer le prix préférentiel »</em> le cache toujours sur la fiche en lecture. En modification, la case du prix de l'artiste reste visible, puisqu'il faut la remplir.</li>
+  </ul>
+</div>
+
+</div>
+
+<script>
+const fmt = (n) => Math.round(n).toLocaleString('fr-CA') + ' $';
+const $ = (id) => document.getElementById(id);
+const el = { unite: $('d-unite'), h: $('d-h'), l: $('d-l'), prix: $('d-prix') };
+const TARIF_LIN = 30;               // pour montrer les autres unités
+let prixArtiste = 1838;             // tapé par la personne
+let prixSaisiMain = false;
+
+const cadre = () => {
+  const h = Number(el.h.value) || 0, l = Number(el.l.value) || 0;
+  return h > 0 && l > 0 ? Math.round(2 * (h + l)) : null;
+};
+
+function celluleTarif() {
+  $('d-cellule-prix').innerHTML = el.unite.value === 'fixe'
+    ? '<span class="cote-prix-fixe">Sur chaque œuvre</span>'
+    : `<input type="number" class="cote-prix" value="${TARIF_LIN}" min="0" step="0.01" style="width:100%">`;
+}
+
+function lectureArtiste() {
+  const u = el.unite.value;
+  const pref = u === 'fixe' ? 'Fixé par l\'artiste' : fmt(TARIF_LIN);
+  const unite = u === 'fixe' ? 'par œuvre' : (u === 'carre' ? '$/po²' : '$/po lin');
+  $('d-cotes-lecture').innerHTML = `
+    <table class="cotes-table">
+      <thead><tr><th>Cible</th><th>Préférentiel</th><th>Unité</th></tr></thead>
+      <tbody><tr><td class="cote-cible">Toutes œuvres</td><td class="cote-prix">${pref}</td><td class="cote-unite">${unite}</td></tr></tbody>
+    </table>
+    <p class="cotes-note">Le prix courant ajoute automatiquement <strong>+2 $/unité</strong> (encadrement)${u === 'fixe' ? ', soit <strong>+2 $ par pouce linéaire</strong> pour un prix fixe' : ''}.</p>`;
+}
+
+// La zone est construite UNE fois ; ensuite on ne met à jour que les textes autour.
+// Reconstruire la case pendant qu'on y tape remettait le curseur au début : 1234
+// s'écrivait 4321 (signalé par Dave sur la première version de la maquette).
+function zoneSuggestion() {
+  const z = $('zone-prix-suggere');
+  if (el.unite.value !== 'fixe') {
+    z.innerHTML = '<p class="prix-suggere prix-suggere-aucun">Choisissez « Prix fixe » à l\'étape 1 pour voir la proposition.</p>';
+    lecture();
+    return;
+  }
+  z.innerHTML = `
+    <div class="prix-suggere prix-suggere-actif">
+      <div class="prix-suggere-entete" id="d-entete">
+        <span class="prix-suggere-libelle"><span class="prix-suggere-note" id="d-note"></span>Prix courant (encadré)</span>
+        <span class="prix-suggere-valeur" id="d-valeur"></span>
+        <button type="button" class="btn-action btn-secondaire-action" id="d-reappliquer">Réappliquer</button>
+      </div>
+      <div class="prix-fixe-saisie">
+        <label for="d-artiste">Prix de l'artiste (sans cadre)</label>
+        <span class="prix-fixe-champ"><input type="number" id="d-artiste" value="${prixArtiste}" min="0" step="1"><span class="dollar">$</span></span>
+      </div>
+      <p class="prix-suggere-formule" id="d-formule"></p>
+    </div>`;
+  $('d-artiste').oninput = (e) => {
+    prixArtiste = Number(e.target.value) || 0;
+    prixSaisiMain = false;
+    actualiser();
+  };
+  $('d-reappliquer').onclick = () => { prixSaisiMain = false; actualiser(); };
+  actualiser();
+}
+
+function actualiser() {
+  const entete = $('d-entete');
+  if (!entete) { lecture(); return; }
+  const c = cadre();
+  if (c == null) {
+    entete.style.display = 'none';
+    $('d-formule').textContent = 'Entrez la hauteur et la largeur : le cadre se calcule sur H + L.';
+    lecture();
+    return;
+  }
+  entete.style.display = '';
+  const courant = prixArtiste + c;
+  if (!prixSaisiMain) el.prix.value = courant;
+  $('d-note').textContent = `${prixSaisiMain ? 'Prix actuel saisi à la main' : 'Appliqué automatiquement'} · `;
+  $('d-valeur').textContent = `${courant.toLocaleString('fr-CA')} $`;
+  $('d-formule').textContent = `${fmt(prixArtiste)} (prix de l'artiste) + cadre 2 $ × (${Number(el.h.value)} + ${Number(el.l.value)}) po lin = ${fmt(c)}`;
+  lecture();
+}
+
+function lecture() {
+  const prix = Number(el.prix.value) || 0;
+  const c = el.unite.value === 'fixe' ? cadre() : null;
+  const pref = c != null && c < prix ? prix - c : null;
+  $('d-prix-lecture').innerHTML = `
+    <div class="prix-paire">
+      <div class="prix-item"><span class="prix-label">Courant</span><span class="prix-val">${fmt(prix)}</span></div>
+      ${pref != null ? `<div class="prix-item prix-item-pref"><span class="prix-label">Préférentiel</span><span class="prix-val">${fmt(pref)}</span></div>` : ''}
+    </div>`;
+  $('d-facture').innerHTML = pref != null
+    ? `<span>Payée sur <strong>${fmt(pref)}</strong></span><span>Aujourd'hui : <span class="avant">${fmt(prix)}</span>, cadre compris</span>`
+    : `<span>Payée sur <strong>${fmt(prix)}</strong></span>`;
+}
+
+function tout() { celluleTarif(); lectureArtiste(); zoneSuggestion(); }
+
+el.unite.onchange = tout;
+el.h.oninput = el.l.oninput = actualiser;
+el.prix.oninput = () => {
+  prixSaisiMain = true;
+  // Le prix de l'artiste suit le prix régulier tapé à la main : c'est ce que la facture paiera.
+  const c = cadre();
+  if (c != null && Number(el.prix.value) > c) {
+    prixArtiste = Number(el.prix.value) - c;
+    const caseArtiste = $('d-artiste');
+    if (caseArtiste) caseArtiste.value = prixArtiste;
+  }
+  actualiser();
+};
+tout();
+</script>
+</body>
+</html>

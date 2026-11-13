@@ -8,8 +8,9 @@
 //   ]
 //   - medium : 'Tous' ou un médium spécifique (ex. 'Acrylique')
 //   - taille : 'Tous' ou 'Petit' / 'Moyen' / 'Grand' / 'Très grand'
-//   - unite  : 'lineaire' (H + L) ou 'carre' (H × L)
-//   - prix_pref : tarif préférentiel par unité, en $/po (linéaire) ou $/po²
+//   - unite  : 'lineaire' (H + L), 'carre' (H × L) ou 'fixe'
+//   - prix_pref : tarif préférentiel par unité, en $/po (linéaire) ou $/po² ;
+//                 aucun pour 'fixe'
 //
 // Formule :
 //   base              = (unite === 'carre' ? H × L : H + L)
@@ -20,11 +21,19 @@
 //                       H+L = 70, ça revient au même qu'un supplément de
 //                       2 × (H+L) ; sur une cote en $/po², c'est différent.
 //
+// Cote 'fixe' (demande du 2026-11-01) : l'artiste donne son prix œuvre par
+// œuvre. Rien ne se calcule au pouce ; Galeria ajoute seulement le cadre,
+// 2 $ × (H + L). Le prix de l'artiste n'est pas stocké : c'est le prix régulier
+// moins le cadre, la règle même de la facture artiste (src/prix-cadre.js).
+//
 // Si plusieurs cotes matchent, on prend la plus spécifique :
 //   1. medium === oeuvre.medium ET taille === oeuvre.taille
 //   2. medium === 'Tous'        ET taille === oeuvre.taille
 //   3. medium === oeuvre.medium ET taille === 'Tous'
 //   4. medium === 'Tous'        ET taille === 'Tous'
+
+const UNITES_COTES = new Set(['lineaire', 'carre', 'fixe']);
+const SUPPLEMENT_CADRE = 2;
 
 export function parserCotes(brut) {
   if (!brut) return [];
@@ -39,10 +48,18 @@ export function parserCotes(brut) {
     .map((c) => ({
       medium: (c?.medium || 'Tous').trim() || 'Tous',
       taille: (c?.taille || 'Tous').trim() || 'Tous',
-      unite: c?.unite === 'carre' ? 'carre' : 'lineaire',
+      unite: UNITES_COTES.has(c?.unite) ? c.unite : 'lineaire',
       prix_pref: Number(c?.prix_pref) || 0,
     }))
-    .filter((c) => c.prix_pref > 0);
+    .filter((c) => c.unite === 'fixe' || c.prix_pref > 0);
+}
+
+// Sculptures et reproductions : jamais encadrées, donc pas de cadre à ajouter.
+// ⚠ Miroir de estEncadrable() dans src/prix-cadre.js, qui fait la facture
+// artiste : les deux doivent rester identiques.
+export function estEncadrable(typeOeuvre) {
+  const t = String(typeOeuvre || '').toLowerCase();
+  return !t.includes('sculpt') && !/reprod|gicl/.test(t);
 }
 
 // Comparaison normalisée (insensible à la casse, aux accents et aux espaces
@@ -90,6 +107,7 @@ export function calculerPrixSuggere({ artiste, oeuvre } = {}) {
     taille: oeuvre.format,
   });
   if (!cote) return null;
+  if (cote.unite === 'fixe') return prixFixe(cote, oeuvre, h, l);
 
   const base = cote.unite === 'carre' ? h * l : h + l;
   const prix_preferentiel = cote.prix_pref * base;
@@ -107,6 +125,25 @@ export function calculerPrixSuggere({ artiste, oeuvre } = {}) {
     base,
     formule_preferentiel: `${cote.prix_pref} $/${uniteLib} × ${baseLib} = ${formaterMontant(prix_preferentiel)}`,
     formule_courant: `${cote_courante} $/${uniteLib} (cote courante = préf + 2 $) × ${baseLib} = ${formaterMontant(prix_courant)}`,
+  };
+}
+
+// Cote « prix fixe » : le cadre seul se calcule. Le prix préférentiel se lit
+// dans le prix régulier de l'œuvre, comme le fait la facture artiste
+// (prixRegulierPreferentiel) : un cadre qui atteindrait le prix ne se retire pas.
+function prixFixe(cote, oeuvre, h, l) {
+  const cadre = estEncadrable(oeuvre.type) ? Math.round(SUPPLEMENT_CADRE * (h + l)) : 0;
+  const prix = Number(oeuvre.prix) || 0;
+  return {
+    cote,
+    fixe: true,
+    base: h + l,
+    cadre,
+    prix_courant: prix > 0 ? arrondiPrix(prix) : null,
+    prix_preferentiel: prix > 0 ? arrondiPrix(cadre > 0 && cadre < prix ? prix - cadre : prix) : null,
+    formule_cadre: cadre > 0
+      ? `cadre ${SUPPLEMENT_CADRE} $ × (${h} + ${l}) po lin = ${formaterMontant(cadre)}`
+      : 'pas de cadre pour une sculpture ou une reproduction',
   };
 }
 

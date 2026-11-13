@@ -1,6 +1,6 @@
 import { ech, sansAccents, nomComplet, brancherDropdownMedium, chargerMediumsConnus } from '../commun.js';
 import {
-  calculerPrixSuggere, parserCotes, TAILLES_COTES,
+  calculerPrixSuggere, parserCotes, TAILLES_COTES, formaterMontant,
   calculerFormat, coteGaleriePourType,
 } from '../calcul-prix.js';
 
@@ -66,7 +66,7 @@ export async function rendreOutils(contenu) {
 
         <div class="carte zone-outil-calc">
           <h3>Calculateur de prix</h3>
-          <p class="aide-champ">Sélectionne un artiste et saisis les dimensions de l'œuvre. Le prix préférentiel (sans encadrement) et courant (encadré, +2 $/po linéaire) s'affichent automatiquement à partir des cotes.</p>
+          <p class="aide-champ">Sélectionne un artiste et saisis les dimensions de l'œuvre. Le prix préférentiel (sans encadrement) et courant (encadré, +2 $/po linéaire) s'affichent automatiquement à partir des cotes. Pour une cote à prix fixe, entre aussi le prix de l'artiste.</p>
 
           <div class="grille-form">
             <div class="form-champ">
@@ -115,6 +115,11 @@ export async function rendreOutils(contenu) {
             </select>
           </div>
           <p class="aide-champ calc-note-taille" id="calc-note-taille"></p>
+
+          <div class="form-champ" id="calc-zone-prix-artiste" hidden>
+            <label for="calc-prix-artiste">Prix de l'artiste (sans cadre)</label>
+            <input type="number" id="calc-prix-artiste" min="0" step="1" placeholder="0">
+          </div>
 
           <div id="calc-resultat" class="calc-resultat"></div>
         </div>
@@ -386,6 +391,10 @@ export async function rendreOutils(contenu) {
   const zoneCotes = contenu.querySelector('#calc-cotes-artiste');
   const selTaille = contenu.querySelector('#calc-taille');
   const noteTaille = contenu.querySelector('#calc-note-taille');
+  // Cote « prix fixe » : la case vit hors de la zone de résultat, qui se
+  // redessine à chaque frappe (sinon le curseur reviendrait au début).
+  const zonePrixArtiste = contenu.querySelector('#calc-zone-prix-artiste');
+  const inPrixArtiste = contenu.querySelector('#calc-prix-artiste');
 
   let artisteCharge = null;
   let mediumsArtisteCalc = [];
@@ -425,21 +434,30 @@ export async function rendreOutils(contenu) {
         </thead>
         <tbody>
           ${cotes.map((c) => {
-            const uniteLib = c.unite === 'carre' ? '$/po²' : '$/po lin';
+            const fixe = c.unite === 'fixe';
+            const uniteLib = fixe ? 'par œuvre' : (c.unite === 'carre' ? '$/po²' : '$/po lin');
             const cible = (c.medium === 'Tous' && c.taille === 'Tous')
               ? 'Toutes œuvres'
               : `${ech(c.medium)}${c.taille !== 'Tous' ? ` &middot; ${ech(c.taille)}` : ''}`;
             const estRetenue = coteRetenue
               && c.medium === coteRetenue.medium && c.taille === coteRetenue.taille
               && c.unite === coteRetenue.unite && c.prix_pref === coteRetenue.prix_pref;
-            return `<tr class="${estRetenue ? 'cote-retenue' : ''}"><td class="cote-cible">${cible}</td><td class="cote-prix">${c.prix_pref} $</td><td class="cote-unite">${uniteLib}</td></tr>`;
+            return `<tr class="${estRetenue ? 'cote-retenue' : ''}"><td class="cote-cible">${cible}</td><td class="cote-prix">${fixe ? 'Fixé par l\'artiste' : `${c.prix_pref} $`}</td><td class="cote-unite">${uniteLib}</td></tr>`;
           }).join('')}
         </tbody>
       </table>
     `;
   }
 
+  // La case du prix de l'artiste ne paraît que pour une cote à prix fixe. On ne
+  // la masque pas puis la réaffiche à chaque frappe : elle perdrait le focus.
   function calculer() {
+    const fixe = calculerPrix() === true;
+    if (zonePrixArtiste.hidden === fixe) zonePrixArtiste.hidden = !fixe;
+  }
+
+  // Renvoie true quand la cote retenue est à prix fixe.
+  function calculerPrix() {
     if (!artisteCharge) {
       zoneResultat.innerHTML = `<p class="aide-champ" style="font-style:italic;">Choisis un artiste pour démarrer.</p>`;
       noteTaille.textContent = '';
@@ -484,6 +502,28 @@ export async function rendreOutils(contenu) {
       return;
     }
     afficherCotesArtiste(res.cote);
+    if (res.fixe) {
+      // Cote « prix fixe » : le prix vient de l'artiste, Galeria ajoute le cadre.
+      const saisi = inPrixArtiste.value.trim();
+      if (saisi === '') {
+        zoneResultat.innerHTML = `<p class="aide-champ" style="font-style:italic;">Cote à prix fixe : entre le prix de l'artiste pour obtenir le prix courant.</p>`;
+        return true;
+      }
+      const prixArtiste = Number(saisi) || 0;
+      const courant = Math.round(prixArtiste + res.cadre);
+      zoneResultat.innerHTML = `
+        <div class="prix-suggere prix-suggere-actif">
+          <div class="prix-suggere-entete">
+            <span class="prix-suggere-libelle">Prix courant (encadré)</span>
+            <span class="prix-suggere-valeur">${courant.toLocaleString('fr-CA')} $</span>
+          </div>
+          <p class="prix-suggere-formule">Format : <strong>${ech(taille)}</strong> · Cote utilisée : ${ech(res.cote.medium)} / ${ech(res.cote.taille)}, prix fixé par l'artiste.</p>
+          <p class="prix-suggere-formule">${ech(`${formaterMontant(prixArtiste)} (prix de l'artiste) + ${res.formule_cadre}`)}</p>
+          <p class="prix-suggere-formule">Préférentiel (sans cadre) : <strong>${Math.round(prixArtiste).toLocaleString('fr-CA')} $</strong></p>
+        </div>
+      `;
+      return true;
+    }
     zoneResultat.innerHTML = `
       <div class="prix-suggere prix-suggere-actif">
         <div class="prix-suggere-entete">
@@ -523,6 +563,7 @@ export async function rendreOutils(contenu) {
   selArtiste.addEventListener('change', () => chargerArtiste(selArtiste.value));
   inMedium.addEventListener('input', calculer);
   selTaille.addEventListener('change', calculer);
+  inPrixArtiste.addEventListener('input', calculer);
   [inHauteur, inLargeur].forEach((el) => el.addEventListener('input', () => { lireSaisieCalc(); calculer(); }));
   contenu.querySelectorAll('[data-unite]').forEach((b) => {
     b.addEventListener('click', () => {

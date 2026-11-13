@@ -142,7 +142,7 @@ const ARTICLES = [
     `<p><b>Supprimer</b> est définitif et <b>refusé si l'œuvre a une vente</b> (historique comptable). Dans ce cas, <b>retire</b>-la ou archive-la plutôt.</p>`),
 
   // ═══════ COTES & PRIX ═══════
-  A('prix', 'Comment Galeria calcule le prix d\'une œuvre', 'prix calcul cote préférentiel courant formule po linéaire carré médium taille format priorité',
+  A('prix', 'Comment Galeria calcule le prix d\'une œuvre', 'prix calcul cote préférentiel courant formule po linéaire carré fixe médium taille format priorité',
     `<p>Le prix peut se calculer <b>automatiquement</b> à partir des <b>cotes de l'artiste</b> et des <b>dimensions</b>.</p>
      <h4>1. La cote utilisée</h4>
      <p>Une cote = un tarif par unité, défini par <b>médium</b> (ex. Acrylique, ou « Tous ») × <b>taille</b> (Petit / Moyen / Grand / Très grand, ou « Toutes »), avec une <b>unité</b> : pouce <b>linéaire</b> (H + L) ou pouce <b>carré</b> (H × L).</p>
@@ -151,15 +151,20 @@ const ARTICLES = [
      <ul><li><b>Préférentiel</b> (sans cadre) = cote × base ;</li><li><b>Courant</b> (encadré) = (cote <b>+ 2 $</b> par unité) × base.</li></ul>
      <p>Exemple : cote 25 $/po linéaire, œuvre 24 × 36 (base 60) → préférentiel 1 500 $, courant 1 620 $.</p>
      <div class="astuce">Les deux prix apparaissent sur la fiche ; le prix retenu se remplit tant que tu ne l'écris pas à la main.</div>
+     <h4>3. Quand l'artiste donne son prix : la cote « Prix fixe »</h4>
+     <p>Rien ne se calcule au pouce. Sur la fiche de l'œuvre, tape le <b>prix de l'artiste</b> : Galeria ajoute le cadre, <b>2 $ × (H + L)</b>, et remplit le prix courant. Exemple : prix de l'artiste 1 838 $, œuvre 24 × 36 → cadre 120 $, courant 1 958 $.</p>
+     <p>Le prix de l'artiste n'est pas gardé à part : c'est toujours le prix courant moins le cadre. Si tu changes le prix courant à la main, le prix de l'artiste suit, et c'est ce montant que la facture artiste paiera. Pas de cadre pour une sculpture ou une reproduction.</p>
      <div class="voir-aussi"><b>Voir aussi :</b> <a data-go="Pourquoi le prix ne se calcule pas automatiquement ?">Pourquoi le prix ne se calcule pas</a> · <a data-go="Configurer les cotes d'un artiste">Configurer les cotes</a></div>`),
   A('prix', 'Masquer le prix préférentiel sur les fiches d\'œuvre', 'masquer cacher prix préférentiel fiche œuvre client réglages affichage discrétion',
     `<p><b>Réglages → Application → Affichage</b> : la case « <b>Masquer le prix préférentiel sur les fiches d'œuvre</b> ». Utile quand l'écran est vu par le client qui est devant vous.</p>
      <p>La fiche n'affiche alors que le <b>prix courant</b> — en lecture comme en modification, formule comprise. Le <b>calculateur de prix</b> (Outils) continue de montrer les deux : on y va exprès.</p>
+     <p>Une exception : pour un artiste à <b>prix fixe</b>, la case du prix de l'artiste reste visible quand on modifie la fiche, puisqu'il faut la remplir.</p>
      <div class="astuce">Rien n'est perdu ni modifié : c'est seulement un affichage. Décochez la case pour revoir le tarif préférentiel.</div>`),
-  A('prix', 'Configurer les cotes d\'un artiste', 'cote configurer ajouter médium taille unité prix tarif tous repli fallback',
+  A('prix', 'Configurer les cotes d\'un artiste', 'cote configurer ajouter médium taille unité prix tarif tous repli fallback fixe',
     `<p>Les cotes se définissent sur la <b>fiche de l'artiste</b>, section <b>Conditions galerie</b>.</p>
      <ol><li><b>+ Ajouter une cote</b>.</li><li>Choisis le <b>médium</b> (précis ou « Tous »), la <b>taille</b> (précise ou « Toutes »), l'<b>unité</b> (linéaire / carré) et le <b>tarif</b> par unité.</li></ol>
      <p>Seules les cotes avec un tarif > 0 sont enregistrées.</p>
+     <p>L'artiste donne son propre prix, œuvre par œuvre ? Choisis l'unité <b>Prix fixe</b> : la cote n'a pas de tarif, et le prix se tape sur la fiche de chaque œuvre. Galeria y ajoute 2 $ par pouce linéaire pour le cadre.</p>
      <div class="astuce"><b>Conseil :</b> crée toujours une cote de <b>repli</b> « Tous médiums / Toutes tailles ». Ainsi un prix est proposé même pour un médium inhabituel ou mal orthographié.</div>
      <div class="voir-aussi"><b>Voir aussi :</b> <a data-go="Comment Galeria calcule le prix d'une œuvre">Comment le prix est calculé</a></div>`),
   A('prix', 'Le calculateur de prix (Outils)', 'outils calculateur prix dimensions simulation estimer',
@@ -235,7 +240,7 @@ const ARTICLES = [
   A('documents', 'Produire la facture artiste', 'facture artiste versement commission relevé cote type taxes préférentiel encadrement 2 $',
     `<p>Fiche de vente → <b>Produire la facture artiste</b> : le relevé du versement à l'artiste après commission et taxes. La <b>cote</b> dépend du type de l'œuvre (sculpture 33 %, sinon 50 %), et les taxes dépendent du régime fiscal de l'artiste.</p>
      <h4>Le prix de départ est le tarif préférentiel</h4>
-     <p>Le prix affiché en galerie est le prix <b>courant</b> : la cote de l'artiste <b>+ 2 $ par unité</b> pour l'encadrement. L'encadrement étant le travail de la galerie, la facture part du prix <b>préférentiel</b> : Galeria retire ce supplément (2 $ × la base de la cote) avant la commission, sans l'écrire sur le document.</p>
+     <p>Le prix affiché en galerie est le prix <b>courant</b> : la cote de l'artiste <b>+ 2 $ par unité</b> pour l'encadrement. L'encadrement étant le travail de la galerie, la facture part du prix <b>préférentiel</b> : Galeria retire ce supplément (2 $ × la base de la cote) avant la commission, sans l'écrire sur le document. Pour une cote à <b>prix fixe</b>, le supplément retiré est 2 $ × (H + L).</p>
      <p>Rien n'est retiré pour une <b>sculpture</b> ou une <b>reproduction</b> (jamais encadrées), ni quand l'œuvre n'a pas de dimensions ou l'artiste pas de cote : le prix de vente sert alors tel quel.</p>
      <div class="voir-aussi"><b>Voir aussi :</b> <a data-go="Préférentiel vs courant">Préférentiel vs courant</a></div>`),
   A('documents', 'Envoyer la facture à l\'artiste par courriel', 'courriel email outlook envoyer facture artiste pièce jointe brouillon',

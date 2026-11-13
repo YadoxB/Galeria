@@ -12,8 +12,12 @@
 // même recherche de cote applicable et même base (H + L, ou H × L). Le
 // processus principal (CommonJS) et l'interface ne partagent pas de module ;
 // toute modification de la formule doit être reportée dans les DEUX fichiers.
+//
+// Une cote « fixe » (l'artiste donne son prix œuvre par œuvre) n'a pas de
+// tarif ; son cadre se compte au pouce linéaire, 2 $ × (H + L).
 
 const SUPPLEMENT_CADRE_PAR_UNITE = 2;
+const UNITES_COTES = new Set(['lineaire', 'carre', 'fixe']);
 
 const norm = (s) => String(s || '').normalize('NFD').replace(/\p{Mn}/gu, '').trim().toLowerCase();
 const eq = (a, b) => norm(a) === norm(b);
@@ -30,10 +34,10 @@ function parserCotes(brut) {
     .map((c) => ({
       medium: (c?.medium || 'Tous').trim() || 'Tous',
       taille: (c?.taille || 'Tous').trim() || 'Tous',
-      unite: c?.unite === 'carre' ? 'carre' : 'lineaire',
+      unite: UNITES_COTES.has(c?.unite) ? c.unite : 'lineaire',
       prix_pref: Number(c?.prix_pref) || 0,
     }))
-    .filter((c) => c.prix_pref > 0);
+    .filter((c) => c.unite === 'fixe' || c.prix_pref > 0);
 }
 
 // Du plus précis au plus général, comme le calculateur de prix de l'interface.
@@ -57,6 +61,7 @@ function coteApplicable(cotesBrut, { medium, taille } = {}) {
 
 // Sculptures et reproductions : la galerie ne les encadre pas, leur prix ne
 // porte pas le supplément (choix de Dave, 2026-09-28).
+// ⚠ Miroir de estEncadrable() dans src/app/calcul-prix.js (cote « fixe »).
 function estEncadrable(typeOeuvre) {
   const t = String(typeOeuvre || '').toLowerCase();
   return !t.includes('sculpt') && !/reprod|gicl/.test(t);

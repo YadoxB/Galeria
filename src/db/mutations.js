@@ -83,7 +83,8 @@ function formaterDimensionsTexte(h, l, p) {
 // ⚠ Doit rester aligné avec TAILLES_COTES de src/app/calcul-prix.js (interface).
 // « Hors normes » = taille attribuée à la main, jamais calculée.
 const TAILLES_COTES = new Set(['Tous', 'Petit', 'Moyen', 'Grand', 'Très grand', 'Hors normes']);
-const UNITES_COTES = new Set(['lineaire', 'carre']);
+// « fixe » : l'artiste donne son prix sur chaque œuvre ; la cote n'a pas de tarif.
+const UNITES_COTES = new Set(['lineaire', 'carre', 'fixe']);
 
 const normaliserCotes = (v) => {
   if (v == null || v === '') return null;
@@ -110,10 +111,10 @@ const normaliserCotes = (v) => {
         medium,
         taille: taille || 'Tous',
         unite: unite || 'lineaire',
-        prix_pref: prixPref,
+        prix_pref: unite === 'fixe' ? null : prixPref,
       };
     })
-    .filter((item) => item.prix_pref != null && item.prix_pref > 0);
+    .filter((item) => item.unite === 'fixe' || (item.prix_pref != null && item.prix_pref > 0));
   return nettoye.length ? JSON.stringify(nettoye) : null;
 };
 

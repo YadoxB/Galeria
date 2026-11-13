@@ -1,7 +1,7 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-10-31 (0.30.0 publiée ce jour-là ; rien en attente de publication ; **la demande n° 4 attend une décision de Dave**).
+> Date de cette sauvegarde : 2026-11-12 (0.30.0 publiée le 2026-10-31 ; **la cote « prix fixe » (n° 5) est codée, non publiée** ; le portable (n° 4) est mis de côté par Dave).
 >
 > **Tableau de bord du chantier** (signalements des parents + étapes restantes) :
 > <https://claude.ai/artifact/2fBkxU3MEnkZwQHj5Vv2Kz>. Les signalements y arrivent seuls
@@ -21,17 +21,18 @@ l'ouverture, plus celles de la 0.29.0 s'ils ne l'ont pas encore ouverte. Depuis 
 `npm --prefix F:/Galerie/Automatisation/GalerieApp run release` lance la publication dans le dossier
 principal, le seul qui a `node_modules`, sur `master` déjà avancé et poussé.
 
-### 🟦 PAR OÙ COMMENCER — une demande ouverte (au 2026-10-31)
+### 🟦 PAR OÙ COMMENCER — au 2026-11-12
 
-Elle vient du tableau de bord du chantier (lien en tête de ce fichier), où chaque demande a son
-étape. Il ne reste que la n° 4, une décision de Dave :
+Les demandes viennent du tableau de bord du chantier (lien en tête de ce fichier), où chaque
+demande a son étape. La n° 5 est codée et attend d'être publiée ; la n° 4 est mise de côté :
 
 | # | Demande | Qui | Pourquoi cet ordre |
 |---|---|---|---|
 | 1 | **Cadrage des toiles verticales** à la création d'une fiche depuis le site (16 oct., ex. HEL2260 et HEL2258) — **publié, 0.29.0** | Claude | Fait |
 | 2 | **Trier et filtrer les clients** (30 oct.), page Clients et choix d'un client dans une vente — **publié, 0.29.0** (`demos/clients-tri-filtres.html`) | Claude | Fait |
 | 3 | **Suivi : demander avant de classer** un item terminé (30 oct.) — **publié, 0.30.0** (`demos/suivi-classer.html`) | Claude | Fait |
-| 4 | **Galeria sur plusieurs ordinateurs ?** (8 oct.) | Dave | Décision de fond, pas un réglage : à trancher avant tout code |
+| 4 | **Galeria sur plusieurs ordinateurs ?** (8 oct.) — **mise de côté par Dave le 12 nov.** | Dave | Recommandation laissée : Galeria seulement sur le portable |
+| 5 | **Cote « prix fixe »** (1er nov., fiche de Pamela Comeau) — **codée, non publiée** (`demos/cote-fixe.html`) | Claude | Maquette validée « telle quelle » |
 
 **1. Cadrage vertical — diagnostic refait au banc le 2026-10-30** (le précédent, tiré de la
 seule lecture du code, passait à côté de l'essentiel) :
@@ -140,10 +141,47 @@ ou le formulaire, rien n'est demandé : la ligne attend dans le Suivi, avec son 
 - ⚠ **Non vérifié** : la base des parents n'est pas ici, et personne n'a encore essayé l'invite.
   L'installation de la mise à jour elle-même n'a pas été essayée chez eux.
 
-**4. Plusieurs ordinateurs** : la base est **un seul fichier local** (Loi 25, aucun nuage) et
-OneDrive est déconseillé pour un SQLite ouvert. Les voies possibles — partage réseau avec un
-seul écrivain à la fois, ou vraie synchronisation — sont un **chantier**, pas un réglage.
-C'est une décision de Dave, à prendre avant d'écrire quoi que ce soit.
+**4. Plusieurs ordinateurs — mis de côté le 2026-11-12.** Le besoin, précisé par Dave le
+31 octobre : utiliser Galeria **en voyage**, pendant que des bénévoles gèrent la galerie sans y
+toucher, et aussi aux entrées d'œuvres ou chez les artistes. Un seul ordinateur sert donc à la
+fois, avec tout Galeria (ventes et clients compris). Partage réseau et OneDrive écartés (pas de
+réseau chez un artiste ; SQLite en WAL ne marche pas sur un dossier partagé).
+
+- **Recommandation laissée** : Galeria **seulement sur le portable** ; rien ne reste sur
+  l'ordinateur de la galerie, donc rien que les bénévoles puissent ouvrir. Autre voie : un relais
+  entre les deux ordinateurs (plus de code, un oubli laisse des données périmées en voyage).
+- **À faire dans les deux cas** : (1) réparer les liens PDF — la base garde le chemin **complet**
+  des PDF, et un banc du 2026-10-31 a montré qu'après une copie du dossier **ou** le bouton existant
+  « Déplacer le dossier », **tous** les liens sont morts et des documents paraissent en double
+  (photos, fiches et compteurs suivent) ; (2) une copie complète (base, photos, documents,
+  réglages) avec reprise sur un autre ordinateur — les sauvegardes actuelles ne copient que la base.
+- À régler avec les parents : Sage reste à la galerie (une vente exige « Créée dans Sage », un
+  certificat le numéro de facture Sage) ; disque chiffré et verrou sur le portable ; les clés du
+  site sont liées à la session Windows (d'après le code, non essayé).
+
+**5. Cote « prix fixe » — codée le 2026-11-12, non publiée.** Une troisième unité dans les cotes
+(`unite: 'fixe'`, `prix_pref: null`), pour l'artiste qui donne son prix œuvre par œuvre. Sur la
+fiche de l'œuvre, on tape le prix de l'artiste ; Galeria ajoute 2 $ × (H + L) et remplit le prix
+courant (même règle d'auto-application). **Le prix de l'artiste n'est pas stocké** : c'est le prix
+courant moins le cadre, la règle même de `prixRegulierPreferentiel` (facture artiste), qui
+retire maintenant ce cadre pour ces artistes. Annexe A et calculateur des Outils suivent ; pas de
+cadre pour une sculpture ou une reproduction (`estEncadrable`, désormais en miroir dans
+`calcul-prix.js`).
+
+- ⚠ **Piège vu sur la première maquette** : redessiner la zone de prix pendant la frappe remettait
+  le curseur au début (1234 → 4321). La zone du formulaire est construite une fois, puis seuls ses
+  textes changent ; dans les Outils, la case vit hors de la zone de résultat.
+- ⚠ Les œuvres déjà au catalogue d'un artiste passé en prix fixe montrent comme prix de l'artiste
+  le prix courant moins le cadre : à vérifier une à une chez les parents (dit dans le résumé).
+- **Vérifié** dans la vraie application isolée, données fictives : 34 contrôles, 0 échec — fiche
+  d'artiste (lecture, éditeur, enregistrement de deux cotes fixes), fiche d'œuvre (frappes
+  clavier réelles par CDP dans le prix de l'artiste, le prix et les dimensions ; Réappliquer ;
+  sculpture ; nouvelle œuvre), un artiste au pouce linéaire inchangé, annexe A, calculateur des
+  Outils, « Masquer le prix préférentiel », et la règle de la facture sur les lignes de la base.
+  Le banc a trouvé un vrai défaut, corrigé : la case des Outils restait affichée pour un artiste au
+  pouce linéaire. Cinq sabotages (zone redessinée, facture, Outils, annexe sans type, filtre de la
+  fiche d'artiste) font tous tomber leur contrôle ; la copie intacte passe. Limites : les clics
+  passent par `.click()` ; la base des parents et les œuvres de Pamela Comeau ne sont pas ici.
 
 Huit versions depuis la 0.22.0 :
 

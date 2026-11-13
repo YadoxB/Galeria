@@ -11,6 +11,24 @@
 
 ---
 
+## Une cote « Prix fixe » pour les artistes qui donnent leur prix
+
+Certains artistes vous donnent leur prix œuvre par œuvre, sans tarif au pouce. Leur fiche peut
+maintenant avoir une cote **Prix fixe**.
+
+- Sur la fiche de l'œuvre, tapez le **prix de l'artiste** : Galeria ajoute le cadre,
+  **2 $ par pouce linéaire**, et remplit le prix courant.
+- La **facture artiste** retire ce cadre, comme pour les autres artistes : l'artiste est payé
+  sur son prix.
+- L'**annexe A** remplit la colonne « sans cadre », et le **calculateur** de la page Outils
+  vous demande le prix de l'artiste.
+
+**À vérifier une fois :** pour les œuvres déjà au catalogue, Galeria montre comme prix de l'artiste
+le prix courant moins le cadre. Si un prix avait été fixé autrement, corrigez le prix de l'artiste
+sur la fiche : le prix courant suivra.
+
+---
+
 ## Dans le Suivi, rien ne part sans vous demander
 
 Avant, une commande ou une œuvre à préparer quittait la liste dès la dernière coche. Maintenant,

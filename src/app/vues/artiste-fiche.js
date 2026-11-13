@@ -516,6 +516,15 @@ export async function rendreArtisteFiche(contenu, params) {
         const cible = (c.medium === 'Tous' && c.taille === 'Tous')
           ? 'Toutes œuvres'
           : `${ech(c.medium)}${c.taille !== 'Tous' ? ` &middot; ${ech(c.taille)}` : ''}`;
+        if (c.unite === 'fixe') {
+          return `
+            <tr>
+              <td class="cote-cible">${cible}</td>
+              <td class="cote-prix">Fixé par l'artiste</td>
+              <td class="cote-unite">par œuvre</td>
+            </tr>
+          `;
+        }
         const uniteLib = c.unite === 'carre' ? '$/po²' : '$/po lin';
         return `
           <tr>
@@ -525,12 +534,13 @@ export async function rendreArtisteFiche(contenu, params) {
           </tr>
         `;
       }).join('');
+      const avecFixe = cotesA.some((c) => c.unite === 'fixe');
       sousCotes = `
         <table class="cotes-table">
           <thead><tr><th>Cible</th><th>Préférentiel</th><th>Unité</th></tr></thead>
           <tbody>${lignesCotes}</tbody>
         </table>
-        <p class="cotes-note">Le prix courant ajoute automatiquement <strong>+2 $/unité</strong> (encadrement).</p>
+        <p class="cotes-note">Le prix courant ajoute automatiquement <strong>+2 $/unité</strong> (encadrement)${avecFixe ? ', soit <strong>+2 $ par pouce linéaire</strong> pour un prix fixe' : ''}.</p>
       `;
     }
 
@@ -1175,7 +1185,7 @@ export async function rendreArtisteFiche(contenu, params) {
             <!-- Cotes (12 col) -->
             <div class="carte span-12">
               <h3>Cotes (calcul de prix)</h3>
-              <p class="aide-champ">Tarif <strong>préférentiel</strong> (sans encadrement) appliqué selon le médium et la taille de l'œuvre. La version <strong>courante</strong> ajoute automatiquement 2 $ à la cote.</p>
+              <p class="aide-champ">Tarif <strong>préférentiel</strong> (sans encadrement) appliqué selon le médium et la taille de l'œuvre. La version <strong>courante</strong> ajoute automatiquement 2 $ à la cote. <strong>Prix fixe</strong> : l'artiste donne son prix sur chaque œuvre, et Galeria ajoute 2 $ par pouce linéaire pour le cadre.</p>
               <div id="zone-cotes"></div>
               <button type="button" id="btn-ajouter-cote" class="btn-ajouter">+ Ajouter une cote</button>
               <details class="aide-priorite-cotes" style="margin-top:12px;">
@@ -1429,8 +1439,12 @@ export async function rendreArtisteFiche(contenu, params) {
           <select class="cote-unite">
             <option value="lineaire" ${unite === 'lineaire' ? 'selected' : ''}>$/po linéaire</option>
             <option value="carre" ${unite === 'carre' ? 'selected' : ''}>$/po²</option>
+            <option value="fixe" ${unite === 'fixe' ? 'selected' : ''}>Prix fixe</option>
           </select>
-          <input type="number" class="cote-prix" placeholder="Prix" value="${prix}" min="0" step="0.01">
+          <div class="cote-cellule-prix">
+            <input type="number" class="cote-prix" placeholder="Prix" value="${prix || ''}" min="0" step="0.01"${unite === 'fixe' ? ' hidden' : ''}>
+            <span class="cote-prix-fixe"${unite === 'fixe' ? '' : ' hidden'}>Sur chaque œuvre</span>
+          </div>
           <button type="button" class="btn-supprimer-ligne" title="Retirer cette cote" aria-label="Retirer">&times;</button>
         </div>
       `;
@@ -1465,6 +1479,16 @@ export async function rendreArtisteFiche(contenu, params) {
       zoneCotes.querySelectorAll('[data-medium-wrap]').forEach(brancherMedium);
     }
     rendreCotes(parserCotes(a.cotes));
+    // « Prix fixe » n'a pas de tarif : la case du prix laisse place à un rappel.
+    zoneCotes.addEventListener('change', (e) => {
+      const sel = e.target.closest('.cote-unite');
+      if (!sel) return;
+      const cellule = sel.closest('.ligne-cote').querySelector('.cote-cellule-prix');
+      const fixe = sel.value === 'fixe';
+      cellule.querySelector('.cote-prix').hidden = fixe;
+      cellule.querySelector('.cote-prix-fixe').hidden = !fixe;
+      if (!fixe) cellule.querySelector('.cote-prix').focus();
+    });
     contenu.querySelector('#btn-ajouter-cote').addEventListener('click', () => {
       // Si message « Aucune cote… » présent, on le remplace par une vraie ligne.
       const aucune = zoneCotes.querySelector('.aide-champ');
@@ -1593,13 +1617,16 @@ export async function rendreArtisteFiche(contenu, params) {
       // majFormesTaxes plus haut — on signale, on n'empêche pas.)
 
       const lignesCotes = Array.from(zoneCotes.querySelectorAll('.ligne-cote'))
-        .map((l) => ({
-          medium: l.querySelector('.cote-medium').value.trim() || 'Tous',
-          taille: l.querySelector('.cote-taille').value,
-          unite: l.querySelector('.cote-unite').value,
-          prix_pref: Number(l.querySelector('.cote-prix').value) || 0,
-        }))
-        .filter((c) => c.prix_pref > 0);
+        .map((l) => {
+          const unite = l.querySelector('.cote-unite').value;
+          return {
+            medium: l.querySelector('.cote-medium').value.trim() || 'Tous',
+            taille: l.querySelector('.cote-taille').value,
+            unite,
+            prix_pref: unite === 'fixe' ? null : (Number(l.querySelector('.cote-prix').value) || 0),
+          };
+        })
+        .filter((c) => c.unite === 'fixe' || c.prix_pref > 0);
       data.cotes = lignesCotes.length ? JSON.stringify(lignesCotes) : null;
 
       const enchainerApresCreation = nouveau && e.submitter?.id === 'btn-creer-et-oeuvres';

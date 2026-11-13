@@ -1938,6 +1938,51 @@ footer {
   border-color: var(--warm-gold);
   box-shadow: 0 0 0 3px rgba(201, 154, 61, 0.18);
 }
+/* Cote « Prix fixe » : pas de tarif, la case du prix laisse place à un rappel. */
+.cote-cellule-prix { min-width: 0; }
+.cote-cellule-prix input { width: 100%; }
+.cote-cellule-prix [hidden] { display: none; }
+.cote-prix-fixe {
+  display: block;
+  padding-left: 4px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-style: italic;
+  line-height: 1.25;
+  color: var(--slate);
+}
+/* Fiche d'œuvre, cote « Prix fixe » : le prix de l'artiste, sous le prix suggéré. */
+.prix-fixe-saisie {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 10px;
+}
+.prix-fixe-saisie label {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.prix-fixe-champ { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.prix-fixe-champ input {
+  width: 120px;
+  height: 36px;
+  padding: 0 10px;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  text-align: right;
+  border: 1px solid var(--mist);
+  border-radius: 8px;
+  background: var(--porcelain);
+}
+.prix-fixe-champ input:focus {
+  outline: none;
+  border-color: var(--warm-gold);
+  box-shadow: 0 0 0 3px rgba(201, 154, 61, 0.18);
+}
+.prix-fixe-champ .dollar { font-family: var(--font-ui); font-size: 14px; color: var(--slate); }
 
 /* Trio H × L × P pour les dimensions d'œuvre */
 .dim-trio {

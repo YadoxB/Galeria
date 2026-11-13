@@ -10,6 +10,18 @@ identifiants.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Cote « Prix fixe »** (signalement du 2026-11-01, fiche de Pamela Comeau). Une troisième unité
+  dans les cotes de l'artiste, pour celui qui donne son propre prix œuvre par œuvre. Elle n'a pas de
+  tarif. Sur la fiche de l'œuvre, on tape le prix de l'artiste ; Galeria ajoute le cadre,
+  2 $ × (H + L), et remplit le prix courant avec la même règle d'auto-application que les autres
+  cotes. Le prix de l'artiste n'est pas stocké : c'est le prix courant moins le cadre, la règle même
+  de la facture artiste, qui retire désormais ce cadre pour ces artistes (sans cote, elle les payait
+  sur le prix encadré). L'annexe A remplit sa colonne « sans cadre », et le calculateur des Outils
+  demande le prix de l'artiste. Pas de cadre pour une sculpture ou une reproduction, comme sur la
+  facture. Maquette : `demos/cote-fixe.html`.
+
 ## [0.30.0] — 2026-10-31
 
 ### Modifié

@@ -26,9 +26,10 @@ function fmtPrix(n) {
 // Construit les lignes d'œuvres pour le gabarit d'annexe.
 export function construireLignesAnnexe(artiste, oeuvres) {
   return oeuvres.map((o) => {
+    // Type et prix servent à la cote « prix fixe » : sans cadre = prix moins le cadre.
     const calc = calculerPrixSuggere({
       artiste,
-      oeuvre: { hauteur: o.hauteur, largeur: o.largeur, medium: o.medium, format: o.format },
+      oeuvre: { hauteur: o.hauteur, largeur: o.largeur, medium: o.medium, format: o.format, type: o.type, prix: o.prix },
     });
     const prixSansCadre = calc ? calc.prix_preferentiel : null;
     // À défaut de cote applicable, on retombe sur le prix enregistré pour la

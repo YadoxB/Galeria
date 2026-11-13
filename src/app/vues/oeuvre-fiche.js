@@ -9,7 +9,7 @@ import {
   champNombreInvalide, soumissionUnique,
 } from '../commun.js';
 import {
-  calculerPrixSuggere,
+  calculerPrixSuggere, formaterMontant,
   calculerFormat, calculerOrientation, formaterDimensionsTexte,
 } from '../calcul-prix.js';
 import { visionner } from '../visionneuse.js';
@@ -1813,10 +1813,16 @@ export async function rendreOeuvreFiche(contenu, params) {
         largeur: dimPo.l || 0,
         medium: elMedium?.value || '',
         format: elFormat?.value || '',
+        type: form.elements.type?.value || '',
+        prix: elPrix?.value || '', // cote « prix fixe » : le prix de l'artiste s'en déduit
       };
       const res = calculerPrixSuggere({ artiste: artisteCote, oeuvre: oeuvreVirt });
       if (!res) {
         zonePrixSuggere.innerHTML = `<p class="prix-suggere prix-suggere-aucun">Aucune cote applicable (vérifie médium, format, dimensions).</p>`;
+        return;
+      }
+      if (res.fixe) {
+        rendrePrixFixe(res);
         return;
       }
 
@@ -1865,6 +1871,82 @@ export async function rendreOeuvreFiche(contenu, params) {
       }
     }
 
+    // Cote « prix fixe » : on tape le prix de l'artiste, Galeria ajoute le cadre
+    // et remplit le prix régulier, avec la même règle d'auto-application que les
+    // autres cotes. Le prix de l'artiste n'est pas enregistré : c'est le prix
+    // régulier moins le cadre, ce que paiera la facture artiste.
+    //
+    // La zone n'est construite qu'une fois, puis seuls ses textes changent : la
+    // redessiner pendant la frappe remettait le curseur au début de la case
+    // (1234 s'écrivait 4321, vu sur la maquette demos/cote-fixe.html).
+    let prixArtiste = null; // null tant qu'il n'est pas connu
+    let prixArtisteLu = false;
+    function rendrePrixFixe(res) {
+      let zone = zonePrixSuggere.querySelector('[data-prix-fixe]');
+      if (!zone) {
+        zonePrixSuggere.innerHTML = `
+          <div class="prix-suggere prix-suggere-actif" data-prix-fixe>
+            <div class="prix-suggere-entete" data-fixe-entete>
+              <span class="prix-suggere-libelle"><span class="prix-suggere-note" data-fixe-note></span>Prix courant (encadré)</span>
+              <span class="prix-suggere-valeur" data-fixe-valeur></span>
+              <button type="button" class="btn-action btn-secondaire-action" data-fixe-reappliquer>Réappliquer</button>
+            </div>
+            <div class="prix-fixe-saisie">
+              <label for="f-prix-artiste">Prix de l'artiste (sans cadre)</label>
+              <span class="prix-fixe-champ"><input type="number" id="f-prix-artiste" min="0" step="1"><span class="dollar">$</span></span>
+            </div>
+            <p class="prix-suggere-formule" data-fixe-formule></p>
+          </div>
+        `;
+        zone = zonePrixSuggere.querySelector('[data-prix-fixe]');
+        const elArtiste = zone.querySelector('#f-prix-artiste');
+        elArtiste.addEventListener('input', () => {
+          prixArtiste = elArtiste.value.trim() === '' ? null : (Number(elArtiste.value) || 0);
+          prixModifieManuellement = false;
+          modifie = true;
+          rendrePrixSuggere();
+        });
+        zone.querySelector('[data-fixe-reappliquer]').addEventListener('click', () => {
+          prixModifieManuellement = false;
+          rendrePrixSuggere();
+        });
+      }
+      const elArtiste = zone.querySelector('#f-prix-artiste');
+
+      // Première lecture (ou prix régulier tapé à la main) : le prix de l'artiste
+      // se déduit du prix régulier, comme sur la facture.
+      if (!prixArtisteLu || (prixModifieManuellement && document.activeElement === elPrix)) {
+        prixArtisteLu = true;
+        prixArtiste = res.prix_preferentiel;
+      }
+      if (document.activeElement !== elArtiste) {
+        elArtiste.value = prixArtiste == null ? '' : String(prixArtiste);
+      }
+
+      const entete = zone.querySelector('[data-fixe-entete]');
+      const formule = zone.querySelector('[data-fixe-formule]');
+      if (prixArtiste == null) {
+        entete.style.display = 'none';
+        formule.textContent = res.cadre > 0
+          ? `Tapez le prix de l'artiste : Galeria ajoute le ${res.formule_cadre}.`
+          : 'Tapez le prix de l\'artiste : pas de cadre pour une sculpture ou une reproduction, le prix régulier sera le même.';
+        return;
+      }
+      entete.style.display = '';
+      const courant = Math.round(prixArtiste + res.cadre);
+      const valeurActuelle = String(elPrix?.value || '').trim();
+      if (elPrix && !prixModifieManuellement && valeurActuelle !== String(courant)) {
+        elPrix.value = String(courant);
+        modifie = true;
+      }
+      if (!prixModifieManuellement) dernierPrixAuto = courant;
+      zone.querySelector('[data-fixe-note]').textContent = prixModifieManuellement
+        ? 'Prix actuel saisi à la main · '
+        : 'Appliqué automatiquement · ';
+      zone.querySelector('[data-fixe-valeur]').textContent = `${courant.toLocaleString('fr-CA')} $`;
+      formule.textContent = `${formaterMontant(prixArtiste)} (prix de l'artiste) + ${res.formule_cadre}`;
+    }
+
     // Chargement initial (artiste éventuellement déjà sélectionné)
     if (form.elements.artiste_id?.value) {
       // Si l'œuvre existe déjà avec un prix saisi, on présume qu'il est manuel.
@@ -1881,10 +1963,16 @@ export async function rendreOeuvreFiche(contenu, params) {
         rendrePrixSuggere();
       });
     }
-    [elHauteur, elLargeur, elFormat, elMedium].forEach((el) => {
+    [elHauteur, elLargeur, elFormat, elMedium, form.elements.type].forEach((el) => {
       if (el) el.addEventListener('input', rendrePrixSuggere);
       if (el && el.tagName === 'SELECT') el.addEventListener('change', rendrePrixSuggere);
     });
+    // Cote « prix fixe » : le prix de l'artiste suit le prix régulier tapé à la main.
+    if (elPrix) {
+      elPrix.addEventListener('input', () => {
+        if (zonePrixSuggere?.querySelector('[data-prix-fixe]')) rendrePrixSuggere();
+      });
+    }
     if (elHorsNormes) {
       elHorsNormes.addEventListener('change', () => {
         if (elHorsNormes.checked && elPrix) {

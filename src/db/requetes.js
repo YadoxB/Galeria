@@ -1081,7 +1081,7 @@ function oeuvresDetailArtiste(artisteId) {
     SELECT o.id, o.numero_inventaire, o.titre, o.format,
            o.hauteur, o.largeur, o.profondeur,
            o.medium, o.support, o.emplacement_signature, o.annee,
-           o.prix, o.statut, o.retrait_date
+           o.prix, o.statut, o.retrait_date, o.type
     FROM oeuvres o
     WHERE o.artiste_id = ? AND o.archive = 0
     ORDER BY o.numero_inventaire COLLATE NOCASE, o.titre COLLATE NOCASE
@@ -1098,7 +1098,7 @@ function oeuvresParIds(ids) {
     SELECT o.id, o.numero_inventaire, o.titre, o.format,
            o.hauteur, o.largeur, o.profondeur,
            o.medium, o.support, o.emplacement_signature, o.annee,
-           o.prix, o.statut, o.retrait_date
+           o.prix, o.statut, o.retrait_date, o.type
     FROM oeuvres o
     WHERE o.id IN (${ph})
     ORDER BY o.numero_inventaire COLLATE NOCASE, o.titre COLLATE NOCASE
