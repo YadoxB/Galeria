@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.31.0] — 2026-11-12
+
 ### Ajouté
 
 - **Cote « Prix fixe »** (signalement du 2026-11-01, fiche de Pamela Comeau). Une troisième unité

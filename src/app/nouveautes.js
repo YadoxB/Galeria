@@ -17,6 +17,15 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
+    version: '0.31.0',
+    diapos: [
+      {
+        titre: 'Une cote « Prix fixe » pour les artistes qui donnent leur prix',
+        texte: "Sur la fiche d'un artiste, une cote peut maintenant être au <b>Prix fixe</b>. Sur chaque œuvre, tapez alors le <b>prix de l'artiste</b>&nbsp;: Galeria ajoute le cadre, <b>2&nbsp;$ par pouce linéaire</b>, et remplit le prix courant. La facture artiste retire ce cadre&nbsp;; l'annexe A et le calculateur des Outils suivent la même règle. Pour les œuvres déjà au catalogue, vérifiez une fois le prix de l'artiste affiché.",
+      },
+    ],
+  },
+  {
     version: '0.30.0',
     diapos: [
       {
