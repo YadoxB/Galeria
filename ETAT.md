@@ -1,7 +1,7 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-11-12 (0.30.0 publiée le 2026-10-31 ; **la cote « prix fixe » (n° 5) est codée, non publiée** ; le portable (n° 4) est mis de côté par Dave).
+> Date de cette sauvegarde : 2026-11-12 (**0.31.0 publiée le 2026-11-12** : la cote « prix fixe » (n° 5) ; le portable (n° 4) est mis de côté par Dave).
 >
 > **Tableau de bord du chantier** (signalements des parents + étapes restantes) :
 > <https://claude.ai/artifact/2fBkxU3MEnkZwQHj5Vv2Kz>. Les signalements y arrivent seuls
@@ -12,19 +12,20 @@
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-10-31)
+## ▶ Reprise — par où commencer (préparé le 2026-11-12)
 
-**✅ Dernière version PUBLIÉE : v0.30.0 (2026-10-31).** Tag `v0.30.0` = `9c8791d`, suivi du
+**✅ Dernière version PUBLIÉE : v0.31.0 (2026-11-12).** Tag `v0.31.0` = `20ee907`, suivi du
 seul commit de documentation qui écrit ces lignes. Publiée sur GitHub Releases avec `latest.yml`
-— auto-update actif. **Rien n'est en attente de publication.** Une diapo attend les parents à
-l'ouverture, plus celles de la 0.29.0 s'ils ne l'ont pas encore ouverte. Depuis un worktree,
+— auto-update actif ; le paquet construit a été comparé au tag (89 fichiers, aucun écart).
+**Rien n'est en attente de publication.** Une diapo attend les parents à l'ouverture, plus
+celles des versions qu'ils n'ont pas encore ouvertes. Depuis un worktree,
 `npm --prefix F:/Galerie/Automatisation/GalerieApp run release` lance la publication dans le dossier
 principal, le seul qui a `node_modules`, sur `master` déjà avancé et poussé.
 
 ### 🟦 PAR OÙ COMMENCER — au 2026-11-12
 
 Les demandes viennent du tableau de bord du chantier (lien en tête de ce fichier), où chaque
-demande a son étape. La n° 5 est codée et attend d'être publiée ; la n° 4 est mise de côté :
+demande a son étape. La n° 5 est publiée dans la 0.31.0 ; la n° 4 est mise de côté :
 
 | # | Demande | Qui | Pourquoi cet ordre |
 |---|---|---|---|
@@ -32,7 +33,7 @@ demande a son étape. La n° 5 est codée et attend d'être publiée ; la n° 4 
 | 2 | **Trier et filtrer les clients** (30 oct.), page Clients et choix d'un client dans une vente — **publié, 0.29.0** (`demos/clients-tri-filtres.html`) | Claude | Fait |
 | 3 | **Suivi : demander avant de classer** un item terminé (30 oct.) — **publié, 0.30.0** (`demos/suivi-classer.html`) | Claude | Fait |
 | 4 | **Galeria sur plusieurs ordinateurs ?** (8 oct.) — **mise de côté par Dave le 12 nov.** | Dave | Recommandation laissée : Galeria seulement sur le portable |
-| 5 | **Cote « prix fixe »** (1er nov., fiche de Pamela Comeau) — **codée, non publiée** (`demos/cote-fixe.html`) | Claude | Maquette validée « telle quelle » |
+| 5 | **Cote « prix fixe »** (1er nov., fiche de Pamela Comeau) — **publiée, 0.31.0** (`demos/cote-fixe.html`) | Claude | Fait |
 
 **1. Cadrage vertical — diagnostic refait au banc le 2026-10-30** (le précédent, tiré de la
 seule lecture du code, passait à côté de l'essentiel) :
@@ -159,7 +160,7 @@ réseau chez un artiste ; SQLite en WAL ne marche pas sur un dossier partagé).
   certificat le numéro de facture Sage) ; disque chiffré et verrou sur le portable ; les clés du
   site sont liées à la session Windows (d'après le code, non essayé).
 
-**5. Cote « prix fixe » — codée le 2026-11-12, non publiée.** Une troisième unité dans les cotes
+**5. Cote « prix fixe » — publiée dans la 0.31.0, le 2026-11-12.** Une troisième unité dans les cotes
 (`unite: 'fixe'`, `prix_pref: null`), pour l'artiste qui donne son prix œuvre par œuvre. Sur la
 fiche de l'œuvre, on tape le prix de l'artiste ; Galeria ajoute 2 $ × (H + L) et remplit le prix
 courant (même règle d'auto-application). **Le prix de l'artiste n'est pas stocké** : c'est le prix
@@ -183,7 +184,7 @@ cadre pour une sculpture ou une reproduction (`estEncadrable`, désormais en mir
   fiche d'artiste) font tous tomber leur contrôle ; la copie intacte passe. Limites : les clics
   passent par `.click()` ; la base des parents et les œuvres de Pamela Comeau ne sont pas ici.
 
-Huit versions depuis la 0.22.0 :
+Neuf versions depuis la 0.22.0 :
 
 | Version | Date | Contenu |
 |---|---|---|
@@ -195,6 +196,7 @@ Huit versions depuis la 0.22.0 :
 | 0.28.0 | 2026-10-12 | Marquer vendue puis saisir la vente plus tard (file « Ventes à enregistrer ») ; pastille de statut devenue menu |
 | 0.29.0 | 2026-10-30 | Trier et filtrer les clients, sur la page et dans une vente ; toiles verticales gardées entières à la création depuis le site |
 | 0.30.0 | 2026-10-31 | Le Suivi demande avant de classer ce qui est terminé ; plus de débordement à 1024 px |
+| 0.31.0 | 2026-11-12 | Cote « Prix fixe » : prix de l'artiste plus 2 $ par pouce linéaire de cadre |
 
 **Ce qui attend quelqu'un d'autre que le code :**
 
