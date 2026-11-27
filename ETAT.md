@@ -1,7 +1,7 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-11-27 (**0.31.0 publiée le 2026-11-12** ; la demande n° 6 de Joanne — réservée en rouge, « M.A.J. site » — est codée, vérifiée et commitée dans la branche `claude/galeria-nouvelle-demande-294e6c`, **à publier en 0.32.0**).
+> Date de cette sauvegarde : 2026-11-27 (**0.32.0 publiée le 2026-11-27** : la demande n° 6 de Joanne — réservée en rouge, vendues repérables, « M.A.J. site » — avec la fiche d'artiste réorganisée et des boutons plus calmes sur les fiches).
 >
 > **Tableau de bord du chantier** (signalements des parents + étapes restantes) :
 > <https://claude.ai/artifact/2fBkxU3MEnkZwQHj5Vv2Kz>. Les signalements y arrivent seuls
@@ -12,21 +12,25 @@
 
 ---
 
-## ▶ Reprise — par où commencer (préparé le 2026-11-12)
+## ▶ Reprise — par où commencer (préparé le 2026-11-27)
 
-**✅ Dernière version PUBLIÉE : v0.31.0 (2026-11-12).** Tag `v0.31.0` = `20ee907`, suivi du
+**✅ Dernière version PUBLIÉE : v0.32.0 (2026-11-27).** Tag `v0.32.0` = `8fe8b47`, suivi du
 seul commit de documentation qui écrit ces lignes. Publiée sur GitHub Releases avec `latest.yml`
-— auto-update actif ; le paquet construit a été comparé au tag (89 fichiers, aucun écart).
-**En attente de publication : la demande n° 6 (0.32.0)**, dans la branche
-`claude/galeria-nouvelle-demande-294e6c` ; son « Quoi de neuf » est déjà écrit. Une diapo attend les parents à l'ouverture, plus
-celles des versions qu'ils n'ont pas encore ouvertes. Depuis un worktree,
+— auto-update actif ; le paquet construit a été comparé au tag (108 fichiers, aucun écart).
+⚠ Le paquet contient aussi `gabarits/actifs/splash-galeria BU.png`, une copie de secours **non
+suivie** par git qui traîne dans le dossier principal : `gabarits/**/*` l'a ramassée. Sans effet
+sur l'app, mais à supprimer ou déplacer hors de `gabarits/` (décision de Dave) avant la prochaine
+version. **Rien n'est en attente de publication.** Quatre diapos attendent les parents à
+l'ouverture, plus celles des versions qu'ils n'ont pas encore ouvertes. Depuis un worktree,
 `npm --prefix F:/Galerie/Automatisation/GalerieApp run release` lance la publication dans le dossier
 principal, le seul qui a `node_modules`, sur `master` déjà avancé et poussé.
 
-### 🟦 PAR OÙ COMMENCER — au 2026-11-12
+### 🟦 PAR OÙ COMMENCER — au 2026-11-27
 
 Les demandes viennent du tableau de bord du chantier (lien en tête de ce fichier), où chaque
-demande a son étape. La n° 5 est publiée dans la 0.31.0 ; la n° 4 est mise de côté :
+demande a son étape. La n° 6 est publiée dans la 0.32.0 ; la n° 4 est mise de côté. Pistes
+notées, non demandées : les boutons de la fiche d'exposition (Supprimer rouge encore en vue) et
+le bloc « Aperçu du catalogue » qui déborde à 1180 px :
 
 | # | Demande | Qui | Pourquoi cet ordre |
 |---|---|---|---|
@@ -35,9 +39,9 @@ demande a son étape. La n° 5 est publiée dans la 0.31.0 ; la n° 4 est mise d
 | 3 | **Suivi : demander avant de classer** un item terminé (30 oct.) — **publié, 0.30.0** (`demos/suivi-classer.html`) | Claude | Fait |
 | 4 | **Galeria sur plusieurs ordinateurs ?** (8 oct.) — **mise de côté par Dave le 12 nov.** | Dave | Recommandation laissée : Galeria seulement sur le portable |
 | 5 | **Cote « prix fixe »** (1er nov., fiche de Pamela Comeau) — **publiée, 0.31.0** (`demos/cote-fixe.html`) | Claude | Fait |
-| 6 | **Réservée en rouge, vendues repérables, « M.A.J. site »** (Joanne, 25 nov.) — **codée le 27 nov., à publier en 0.32.0** (`demos/pastille-reservee.html`, `demos/oeuvres-vendues.html`) | Dave | Essayer, puis publier |
+| 6 | **Réservée en rouge, vendues repérables, « M.A.J. site »** (Joanne, 25 nov.) — **publiée, 0.32.0** (`demos/pastille-reservee.html`, `demos/oeuvres-vendues.html`, `demos/artiste-entete.html`, `demos/artiste-actions.html`, `demos/oeuvre-actions.html`) | Claude | Fait |
 
-**6. Réservée en rouge — ce qui est fait (2026-11-27, branche `claude/galeria-nouvelle-demande-294e6c`) :**
+**6. Réservée en rouge — ce qui est fait (2026-11-27, publié en 0.32.0) :**
 
 - **Pastilles** : variante B de Dave. Réservée en rouge clair (`#F7C6C3` / `#900001`), Vendue en gris
   chaud. L'ancien beige reste pour ce qui avertit sans parler de réservation (`--avertissement-*` :
