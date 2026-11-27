@@ -10,6 +10,8 @@ identifiants.
 
 ## [Non publié]
 
+## [0.32.0] — 2026-11-27
+
 ### Modifié
 
 - **Pastille « Réservée » en rouge, « Vendue » en gris** (signalement de Joanne du 2026-11-25,
