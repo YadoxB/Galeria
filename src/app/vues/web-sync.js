@@ -4,7 +4,7 @@
 // (à l'unité ou EN LOT), et mettre le statut à jour d'après le site (avec choix).
 // Rien n'est jamais écrit sur le site depuis cette vue.
 
-import { ech, formaterPrix, nettoyerErreur, pluriel, urlPhoto, badgeStatut, STATUTS, sansAccents, nomComplet } from '../commun.js';
+import { ech, formaterPrix, nettoyerErreur, pluriel, urlPhoto, badgeStatut, STATUTS, sansAccents, nomComplet, CONSIGNE_RESERVEE } from '../commun.js';
 import { naviguer } from '../router.js';
 import { alerter, confirmer, editerTexteImport } from '../dialogue.js';
 
@@ -534,8 +534,23 @@ export async function rendreWebSync(contenu, params = {}) {
             ${cols}
             <div class="wsync-champ-actions"><button type="button" class="btn-lien wsync-statut-degarder">Ne plus garder</button></div>
           </div>`;
+      } else if (sr.reservee) {
+        // Réservée mais encore en vente : c'est le site qu'il faut corriger.
+        // Pas de changement de statut proposé ici — une réservation se libère
+        // par sa carte, sur la fiche de l'œuvre.
+        statutHtml = `
+          <div class="wsync-champ wsync-statut" data-champ="statut">
+            <div class="wsync-lib">Statut</div>
+            ${cols}
+            <p class="wsync-statut-aide consigne">${CONSIGNE_RESERVEE}</p>
+            <div class="wsync-champ-actions wsync-statut-actions">
+              <button type="button" class="btn-lien wsync-statut-garder">Garder la version de l'app</button>
+            </div>
+          </div>
+        `;
       } else {
-        const options = Object.entries(STATUTS).map(([k, v]) =>
+        // « Réservée » n'est pas au choix : une réservation demande un client.
+        const options = Object.entries(STATUTS).filter(([k]) => k !== 'reserve').map(([k, v]) =>
           `<option value="${k}" ${k === sr.suggere ? 'selected' : ''}>${ech(v.libelle)}</option>`).join('');
         statutHtml = `
           <div class="wsync-champ wsync-statut" data-champ="statut">

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Boutons de la fiche d'artiste</title>
+<style>
+  :root{--soft-ivory:#FCFAF4;--porcelain:#FFFFFF;--warm-gold:#C99A3D;--gallery-navy:#10263E;
+    --ink:#111827;--slate:#5D6875;--stone:#A79E91;--mist:#D8D2C8;--cloud:#EFE8DE;--erreur:#B6423C;
+    --font-titre:'Cormorant Garamond',Georgia,serif;--font-ui:'Inter',system-ui,sans-serif;
+    --ombre-modal:0 12px 32px rgba(7,26,47,.16);
+    --reserve:#900001;--expo:#6B3F86;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--soft-ivory);font-family:var(--font-ui);color:var(--ink);padding:28px;}
+  h1.demo{font-family:var(--font-titre);font-weight:600;font-size:28px;margin:0 0 2px;}
+  .sous-titre{color:var(--slate);font-size:13.5px;margin:4px 0 14px;max-width:900px;}
+  .demo-note{max-width:1222px;font-size:13px;color:var(--slate);background:#fff8e8;border:1px solid #e8d9a8;border-radius:10px;padding:10px 13px;margin:0 0 16px;}
+  .demo-note strong{color:var(--ink);}
+  .barre-choix{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin:0 0 8px;}
+  .choix{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .choix-lib{font-size:12px;color:var(--slate);margin-right:2px;}
+  .choix button{padding:6px 13px;border-radius:999px;border:1px solid var(--mist);background:var(--porcelain);color:var(--slate);font-size:13px;cursor:pointer;font-family:var(--font-ui);}
+  .choix button.actif{background:var(--gallery-navy);color:#fff;border-color:transparent;}
+  .explication{font-size:13px;color:var(--slate);margin:6px 0 18px;max-width:1000px;min-height:20px;}
+
+  /* ===== En-tête (nouvelle version, deux groupes) ===== */
+  .hero{max-width:1222px;background:#fff;border:1px solid var(--mist);border-radius:18px;padding:16px 24px;
+    display:grid;grid-template-columns:150px minmax(240px,1fr) fit-content(680px);grid-template-rows:auto 1fr;column-gap:24px;}
+  .photo{grid-row:1 / span 2;width:150px;height:150px;border-radius:14px;background:linear-gradient(135deg,#c94a2a 0 30%,#e9b23a 30% 55%,#3a62b8 55%);}
+  .corps{grid-column:2;grid-row:1;min-width:0;}
+  .nom{margin:0;font-family:var(--font-titre);font-weight:500;font-size:38px;line-height:1.05;}
+  .meta{margin:4px 0 0;color:var(--slate);font-size:14px;}
+  .archivee{display:inline-block;margin-left:8px;font-size:11px;padding:2px 9px;border-radius:999px;background:#E7E3DD;color:#6B6258;vertical-align:middle;font-family:var(--font-ui);}
+  .actions{grid-column:3;grid-row:1;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:flex-start;}
+  .infos{grid-column:2 / -1;grid-row:2;align-self:end;display:flex;border-top:1px solid var(--cloud);padding-top:12px;margin-top:14px;}
+  .grp{padding-right:28px;} .grp + .grp{border-left:1px solid var(--cloud);padding-left:28px;}
+  .grp-tit{margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--stone);}
+  .ligne{display:flex;align-items:baseline;gap:16px;}
+  .ch .v{font-family:var(--font-titre);font-size:26px;line-height:1;color:var(--gallery-navy);margin-right:5px;}
+  .ch .l{font-size:13px;color:var(--slate);}
+  .ch.gros .v{font-size:44px;color:var(--warm-gold);} .ch.gros .l{font-size:15px;color:var(--ink);}
+  .ch.res .v{color:var(--reserve);} .ch.exp .v{color:var(--expo);} .ch.h .v{font-size:21px;}
+  .val{margin:2px 0 0;font-size:12px;color:var(--slate);} .val span{color:var(--warm-gold);}
+
+  /* ===== Boutons (mêmes mesures que l'app) ===== */
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;font-size:14px;font-family:var(--font-ui);
+    border:1px solid var(--mist);background:#fff;color:var(--ink);white-space:nowrap;cursor:pointer;line-height:1.2;}
+  .btn:hover{border-color:var(--stone);}
+  .btn.danger{border-color:var(--erreur);color:var(--erreur);}
+  .btn.principal{background:var(--warm-gold);border-color:var(--warm-gold);color:#fff;font-weight:600;padding:9px 22px;}
+  .btn.principal:hover{background:#b8892f;}
+  .btn .chev{font-size:10px;opacity:.6;}
+  .btn svg{width:16px;height:16px;flex-shrink:0;}
+  /* B : discrets (sans bordure) */
+  .btn.fantome{border-color:transparent;background:transparent;color:var(--slate);padding:9px 11px;}
+  .btn.fantome:hover{background:var(--cloud);color:var(--ink);}
+
+  /* Menus */
+  .menu{position:relative;}
+  .pop{position:absolute;right:0;top:calc(100% + 6px);z-index:40;min-width:250px;padding:6px;background:#fff;border:1px solid var(--mist);border-radius:12px;box-shadow:var(--ombre-modal);}
+  .pop[hidden]{display:none;}
+  .pop button{display:block;width:100%;text-align:left;background:none;border:0;cursor:pointer;padding:9px 11px;border-radius:8px;font-family:var(--font-ui);font-size:13.5px;color:var(--ink);}
+  .pop button:hover{background:var(--soft-ivory);}
+  .pop button small{display:block;margin-top:2px;font-size:12px;color:var(--stone);}
+  .pop .danger{color:var(--erreur);}
+  .pop .sep{height:1px;background:var(--mist);margin:5px 4px;}
+  .pop .tit{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--stone);font-weight:600;padding:6px 11px 2px;}
+</style>
+</head>
+<body>
+<h1 class="demo">Boutons de la fiche d'artiste</h1>
+<p class="sous-titre">Aujourd'hui, cinq boutons de même poids — et c'est <b>Supprimer</b>, en rouge, qui attire l'œil, alors que c'est le geste le plus rare et le plus grave. Dans les nouvelles variantes, un seul bouton est en avant (<b>Modifier</b>) ; Archiver et Supprimer rentrent dans un menu.</p>
+<div class="demo-note"><strong>Cliquez les boutons à flèche</strong> pour ouvrir leurs menus. L'option « Artiste archivé » montre le cas où <b>Désarchiver</b> devient le geste utile : il remonte dans la barre.</div>
+
+<div class="barre-choix">
+  <div class="choix" id="choix-v"><span class="choix-lib">Variante</span>
+    <button data-v="0">Aujourd'hui</button>
+    <button data-v="a" class="actif">A — Menu « Plus »</button>
+    <button data-v="b">B — Boutons discrets</button>
+    <button data-v="c">C — Un seul menu</button>
+  </div>
+  <div class="choix" id="choix-e"><span class="choix-lib">Artiste</span>
+    <button data-e="0" class="actif">Actif</button>
+    <button data-e="1">Archivé</button>
+  </div>
+</div>
+<p class="explication" id="explication"></p>
+
+<div class="hero" id="hero"></div>
+
+<script>
+  const ICO = {
+    doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+    site: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>',
+  };
+  const EXPLICATIONS = {
+    0: "Cinq boutons pareils ; Supprimer, encadré de rouge, est le plus voyant.",
+    a: "Modifier en or, seul en avant. Documents et Comparer gardent leur bouton : on s'en sert de temps en temps. Archiver et Supprimer passent dans « Plus », Supprimer en rouge tout en bas.",
+    b: "Même rangement que A, mais Documents, Comparer et Plus perdent leur cadre : une icône et un mot. Plus léger, un peu moins évident à repérer.",
+    c: "Modifier, et un seul menu « Actions » qui range tout le reste par thème. Le plus calme ; il faut ouvrir le menu pour tout le reste.",
+  };
+  let v = 'a', archive = false, ouvert = null;
+
+  const menuDocs = `<div class="tit">Documents</div><button>Présentation PDF</button><button>Catalogue PDF</button><div class="sep"></div><button>Annexe A — dépôt…</button><button>Annexe A — retrait…</button>`;
+  const menuSite = `<button>Sa fiche<small>Citation, biographie, démarche, curriculum, photo</small></button><button>Ses œuvres (53)<small>Titres, descriptions, prix, statuts — ouvre Site web</small></button>`;
+  const entreeArchiver = archive => archive ? '' : `<button>Archiver l'artiste<small>Le retire des listes, sans rien effacer</small></button><div class="sep"></div>`;
+  const entreeSupprimer = `<button class="danger">Supprimer l'artiste…<small>Définitif — refusé s'il a des œuvres</small></button>`;
+
+  const menu = (id, bouton, contenu) => `<div class="menu">${bouton.replace('<button', `<button data-menu="${id}"`)}<div class="pop" ${ouvert === id ? '' : 'hidden'}>${contenu}</div></div>`;
+  const desarchiver = () => (archive ? '<button class="btn">Désarchiver</button>' : '');
+
+  function actions() {
+    if (v === '0') {
+      return menu('docs', '<button class="btn">Documents <span class="chev">▾</span></button>', menuDocs)
+        + '<button class="btn danger">Supprimer</button>'
+        + menu('site', '<button class="btn">Comparer avec le site <span class="chev">▾</span></button>', menuSite)
+        + `<button class="btn">${archive ? 'Désarchiver' : 'Archiver'}</button>`
+        + '<button class="btn principal">Modifier</button>';
+    }
+    if (v === 'a') {
+      return menu('docs', `<button class="btn">${ICO.doc}Documents <span class="chev">▾</span></button>`, menuDocs)
+        + menu('site', `<button class="btn">${ICO.site}Comparer avec le site <span class="chev">▾</span></button>`, menuSite)
+        + desarchiver()
+        + menu('plus', '<button class="btn">Plus <span class="chev">▾</span></button>', entreeArchiver(archive) + entreeSupprimer)
+        + '<button class="btn principal">Modifier</button>';
+    }
+    if (v === 'b') {
+      return menu('docs', `<button class="btn fantome">${ICO.doc}Documents <span class="chev">▾</span></button>`, menuDocs)
+        + menu('site', `<button class="btn fantome">${ICO.site}Comparer avec le site <span class="chev">▾</span></button>`, menuSite)
+        + desarchiver()
+        + menu('plus', `<button class="btn fantome" title="Plus d'actions">${ICO.plus}</button>`, entreeArchiver(archive) + entreeSupprimer)
+        + '<button class="btn principal">Modifier</button>';
+    }
+    // C
+    return desarchiver()
+      + menu('actions', '<button class="btn">Actions <span class="chev">▾</span></button>',
+        menuDocs + '<div class="sep"></div><div class="tit">Comparer avec le site</div>' + menuSite + '<div class="sep"></div>' + entreeArchiver(archive) + entreeSupprimer)
+      + '<button class="btn principal">Modifier</button>';
+  }
+
+  function dessiner() {
+    const hero = document.getElementById('hero');
+    hero.innerHTML = `<div class="photo"></div>
+      <div class="corps"><h2 class="nom">Claire Lavoie${archive ? '<span class="archivee">Archivée</span>' : ''}</h2><p class="meta">Peintre · Préfixe LAV · Prochain certificat n° 001</p></div>
+      <div class="actions">${actions()}</div>
+      <div class="infos">
+        <div class="grp"><p class="grp-tit">À la galerie</p><div class="ligne"><span class="ch gros"><span class="v">30</span><span class="l">disponibles</span></span><span class="ch res"><span class="v">2</span><span class="l">réservées</span></span><span class="ch exp"><span class="v">1</span><span class="l">en exposition</span></span></div><p class="val">Valeur des disponibles ••• ••• $ <span>afficher</span></p></div>
+        <div class="grp"><p class="grp-tit">Historique</p><div><span class="ch h"><span class="v">20</span><span class="l">vendues</span></span> <span style="font-size:13px;color:var(--stone)">· 1 vente saisie dans Galeria</span></div><div><span class="ch h"><span class="v" style="color:var(--stone)">0</span><span class="l" style="color:var(--stone)">retirée du catalogue</span></span></div></div>
+      </div>`;
+    document.getElementById('explication').textContent = EXPLICATIONS[v];
+    document.querySelectorAll('#choix-v button').forEach((b) => b.classList.toggle('actif', b.dataset.v === v));
+    document.querySelectorAll('#choix-e button').forEach((b) => b.classList.toggle('actif', (b.dataset.e === '1') === archive));
+  }
+  document.getElementById('choix-v').addEventListener('click', (e) => { if (e.target.dataset.v) { v = e.target.dataset.v; ouvert = null; dessiner(); } });
+  document.getElementById('choix-e').addEventListener('click', (e) => { if (e.target.dataset.e) { archive = e.target.dataset.e === '1'; ouvert = null; dessiner(); } });
+  document.getElementById('hero').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-menu]');
+    if (b) { ouvert = ouvert === b.dataset.menu ? null : b.dataset.menu; dessiner(); return; }
+    if (!e.target.closest('.pop')) { ouvert = null; dessiner(); }
+  });
+  dessiner();
+</script>
+</body>
+</html>

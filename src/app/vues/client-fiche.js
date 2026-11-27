@@ -5,7 +5,7 @@ import {
   champPays, champSubdivision, brancherChangementPays,
   formaterPrix, formaterDate, formaterTelephone, nomComplet, urlPhoto,
   badgeArchive, boutonArchive, basculerArchive, nettoyerErreur,
-  soumissionUnique,
+  soumissionUnique, menuPlus, entreeMenu, groupeMenus,
 } from '../commun.js';
 import { confirmer } from '../dialogue.js';
 
@@ -175,10 +175,16 @@ export async function rendreClientFiche(contenu, params) {
           <h1>${ech(nomCompletC)}</h1>
           <p class="zone-identite-client-meta">${metaParts.join(' &middot; ')}</p>
         </div>
+        <!-- Même hiérarchie que la fiche d'artiste (commun.js, menuPlus) :
+             Modifier en avant, Archiver et Supprimer dans « ⋯ ». Supprimer
+             reste à portée — c'est le droit à l'effacement de la Loi 25. -->
         <div class="zone-identite-actions">
-          <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
-          ${boutonArchive({ archive: c.archive })}
           <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
+          ${c.archive ? boutonArchive({ archive: true }) : ''}
+          ${menuPlus(
+            (c.archive ? '' : entreeMenu({ id: 'btn-archiver', libelle: 'Archiver le client', aide: 'Le retire des listes ; ses ventes restent consultables' })
+              + '<div class="menu-docs-sep"></div>')
+            + entreeMenu({ id: 'btn-supprimer', libelle: 'Supprimer le client…', aide: "Définitif (Loi 25) — refusé s'il a des ventes", danger: true }))}
         </div>
       </div>
     `;
@@ -323,6 +329,7 @@ export async function rendreClientFiche(contenu, params) {
     `;
 
     contenu.querySelector('#btn-modifier').addEventListener('click', entrerEdition);
+    groupeMenus(contenu)(contenu.querySelector('#btn-menu-plus'), contenu.querySelector('#menu-plus-pop'));
     contenu.querySelector('#btn-supprimer').addEventListener('click', supprimer);
     contenu.querySelector('#btn-archiver').addEventListener('click', async () => {
       await basculerArchive({

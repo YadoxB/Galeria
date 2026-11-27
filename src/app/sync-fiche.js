@@ -1,7 +1,7 @@
 // Comparaison « site web » d'un SEUL élément, depuis sa fiche (œuvre ou artiste).
 // Réutilise les mêmes IPC que l'écran de synchronisation. Lecture seule côté site.
 
-import { ech, formaterPrix, nettoyerErreur, STATUTS, badgeStatut, urlPhoto } from './commun.js';
+import { ech, formaterPrix, nettoyerErreur, STATUTS, badgeStatut, urlPhoto, CONSIGNE_RESERVEE } from './commun.js';
 import { alerter, confirmer, editerTexteImport } from './dialogue.js';
 import { recadrerCarre } from './recadrage.js';
 
@@ -71,13 +71,25 @@ function ouvrirModale({ type, id, titre, diffs, apresMaj }) {
 
   function ligneHtml(c) {
     if (c.champ === 'statut') {
-      const options = Object.entries(STATUTS).map(([k, v]) => `<option value="${k}" ${k === c._statut.suggere ? 'selected' : ''}>${ech(v.libelle)}</option>`).join('');
-      return `<div class="wsync-champ" data-champ="statut">
-        <div class="wsync-lib">Statut</div>
-        <div class="wsync-cols">
+      const cols = `<div class="wsync-cols">
           <div class="wsync-col"><span class="wsync-et">Dans l'app</span><div class="wsync-val">${badgeStatut(c.statutApp)}</div></div>
           <div class="wsync-col site"><span class="wsync-et">Sur le site</span><div class="wsync-val">${ech(c._statut.site_indication)}</div></div>
-        </div>
+        </div>`;
+      // Réservée mais encore en vente : c'est le site qu'il faut corriger.
+      if (c._statut.reservee) {
+        return `<div class="wsync-champ" data-champ="statut">
+          <div class="wsync-lib">Statut</div>
+          ${cols}
+          <p class="wsync-statut-aide consigne">${CONSIGNE_RESERVEE}</p>
+          <div class="wsync-champ-actions"><button type="button" class="btn-lien" data-garder>Garder la version de l'app</button></div>
+        </div>`;
+      }
+      // « Réservée » n'est pas au choix : une réservation demande un client.
+      const options = Object.entries(STATUTS).filter(([k]) => k !== 'reserve')
+        .map(([k, v]) => `<option value="${k}" ${k === c._statut.suggere ? 'selected' : ''}>${ech(v.libelle)}</option>`).join('');
+      return `<div class="wsync-champ" data-champ="statut">
+        <div class="wsync-lib">Statut</div>
+        ${cols}
         <div class="wsync-champ-actions wsync-statut-actions">
           <label class="wsync-statut-choix">Mettre à <select class="sf-statut-select">${options}</select></label>
           <button type="button" class="btn-action btn-secondaire-action" data-statut-ok>Appliquer</button>

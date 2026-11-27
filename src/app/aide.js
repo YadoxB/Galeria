@@ -62,6 +62,11 @@ const ARTICLES = [
   A('artistes', 'Photo de l\'artiste', 'photo portrait image remplacer recadrer retirer pleine résolution',
     `<p>Sur la fiche en édition, la zone photo offre trois actions en survol : <b>Remplacer</b>, <b>Recadrer</b> (carré) et <b>Retirer</b>. Galeria garde aussi l'<b>original pleine résolution</b> pour pouvoir recadrer à nouveau plus tard.</p>
      <div class="astuce">La photo peut être ajoutée dès la création de l'artiste.</div>`),
+  A('artistes', 'Les chiffres sous le nom de l\'artiste', 'chiffres statistiques en-tête disponibles réservées exposition vendues retirées ventes saisies valeur historique galerie',
+    `<p>Sous le nom, deux groupes :</p>
+     <ul><li><b>À la galerie</b> — ce qu'on peut montrer ou vendre en ce moment : les <b>disponibles</b> (en grand), les <b>réservées</b> (en rouge) et celles <b>en exposition</b> (en violet). Dessous, la <b>valeur des disponibles</b>, masquée : un clic l'affiche, elle se cache quand la souris s'en va.</li>
+     <li><b>Historique</b> — les œuvres <b>vendues</b>, et à côté les <b>ventes saisies</b> dans Galeria (les œuvres vendues avant Galeria n'ont pas de vente enregistrée, d'où deux nombres différents), puis les œuvres <b>retirées</b> du catalogue.</li></ul>
+     <p><b>Un clic sur un chiffre</b> ouvre la page Œuvres avec les œuvres de l'artiste dans ce statut. Un chiffre à zéro reste à sa place, en gris.</p>`),
   A('artistes', 'Biographie, démarche, curriculum', 'bio biographie démarche cv curriculum présentation texte onglets',
     `<p>Ces trois textes s'affichent en onglets sur la fiche (bouton <b>⤢</b> pour les voir en grand). Ils alimentent la <b>Présentation PDF</b> de l'artiste et la pochette de vente. Le CV est mis en forme en frise (années à gauche) dans le PDF.</p>`),
   A('artistes', 'Numéros de taxes de l\'artiste (TPS / TVQ)', 'taxes tps tvq numéro percoit fiscalité validation format facture artiste',
@@ -74,7 +79,8 @@ const ARTICLES = [
   A('artistes', 'Aide à la description (ChatGPT)', 'ia chatgpt description copier presse-papier custom gpt consignes prompt',
     `<p>Sur une œuvre, « <b>Copier pour ChatGPT</b> » assemble un texte (consignes générales de la galerie + consignes propres à l'artiste + caractéristiques de l'œuvre) à coller dans ChatGPT, plus l'image. <b>Aucune donnée de client</b> n'est incluse. Les consignes par artiste et le lien vers son Custom GPT se règlent sur sa fiche (section Aide IA) ; les consignes générales dans Réglages.</p>`),
   A('artistes', 'Archiver ou supprimer un artiste', 'archiver supprimer artiste dépendances œuvres refus impossible',
-    `<p><b>Archiver</b> retire l'artiste des listes sans rien perdre (réversible). <b>Supprimer</b> est définitif et <b>refusé</b> s'il a des œuvres : réattribue ou supprime d'abord ses œuvres, ou archive-le.</p>`),
+    `<p>Les deux gestes sont rangés dans le bouton <b>⋯</b>, en haut de la fiche, à côté de <b>Modifier</b>.</p>
+     <p><b>Archiver</b> retire l'artiste des listes sans rien perdre (réversible : une fois archivé, le bouton <b>Désarchiver</b> apparaît en haut de sa fiche). <b>Supprimer</b>, en rouge tout en bas du menu, est définitif et <b>refusé</b> s'il a des œuvres : réattribue ou supprime d'abord ses œuvres, ou archive-le.</p>`),
   A('artistes', 'Documents d\'un artiste (présentation, catalogue, annexe)', 'présentation catalogue annexe pdf artiste imprimer documents',
     `<p>Sur la fiche artiste, le groupe <b>Documents</b> :</p>
      <ul><li><b>Présentation PDF</b> — bio + démarche + CV (réutilisée si le profil n'a pas changé) ;</li>
@@ -112,7 +118,7 @@ const ARTICLES = [
     `<p>Sur une œuvre disponible, le bouton <b>Réserver</b> la met de côté pour un client.</p>
      <ol><li>Choisis le <b>client</b> (ou crée-le), une <b>date d'échéance</b> (optionnelle) et des <b>notes</b>.</li>
      <li>L'œuvre passe <b>« réservée »</b> et apparaît au tableau de bord (« Œuvres réservées »), avec un repère d'échéance (bientôt / dépassée).</li></ol>
-     <p>Sur la <b>fiche de l'artiste</b>, elle quitte les <b>Disponibles</b> pour la case <b>Réservées</b>, et sa photo porte l'étiquette « Réservée » (le fichier, lui, reste dans le dossier <i>disponible</i> : la toile est encore à la galerie).</p>
+     <p>Sur la <b>fiche de l'artiste</b>, elle quitte les <b>disponibles</b> pour les <b>réservées</b> (en rouge, sous le nom), et sa photo porte l'étiquette « Réservée » (le fichier, lui, reste dans le dossier <i>disponible</i> : la toile est encore à la galerie).</p>
      <p>Sur la fiche, la carte <b>Réservation</b> propose ensuite :</p>
      <ul><li><b>Convertir en vente</b> — ouvre le formulaire de vente déjà rempli avec le client ;</li>
      <li><b>Libérer</b> — remet l'œuvre disponible et efface la réservation.</li></ul>
@@ -131,15 +137,15 @@ const ARTICLES = [
     `<p>Le champ <b>URL de la fiche sur le site</b> ajoute un bouton « Voir sur le site › » sous le prix, qui ouvre la page dans le navigateur.</p>`),
   A('oeuvres', 'Retirer une œuvre (la rendre à l\'artiste)', 'retrait retirer rendre extrant sortir catalogue réintégrer lot motif',
     `<p><b>Retirer</b> = sortir une œuvre du catalogue actif (ex. reprise par l'artiste), sans que ce soit une vente.</p>
-     <ol><li>Fiche de l'œuvre → <b>Retirer</b> → date + motif.</li>
-     <li>Badge « Retirée », masquée des listes par défaut. Tu peux la <b>Réintégrer</b>.</li>
+     <ol><li>Fiche de l'œuvre → bouton <b>⋯</b> → <b>Retirer du catalogue…</b> → date + motif.</li>
+     <li>Badge « Retirée », masquée des listes par défaut. Le bouton <b>Réintégrer</b> reste en haut de sa fiche.</li>
      <li>Retrait <b>en lot</b> : sur la liste, active le mode sélection puis « Retirer ».</li></ol>
      <p>Quand tu produis une <b>Annexe A de retrait</b> pour un artiste (fiche artiste → Documents), Galeria propose ensuite de <b>retirer directement ces œuvres</b> du catalogue, avec confirmation.</p>
      <div class="attention">Une œuvre <b>vendue</b> ne peut pas être retirée.</div>`),
   A('oeuvres', 'Trouver une œuvre (recherche, filtres, tri, affichage)', 'recherche filtre tri grille liste vignette taille statut format style',
     `<p>En haut : la <b>recherche</b> (titre, artiste, n° d'inventaire). Le bouton <b>Filtres</b> ouvre statut, artiste, type, format, style, et « Inclure les retirées ». Le <b>Tri</b> et la bascule <b>Grille / Liste</b> (avec taille des vignettes) sont à côté.</p>`),
   A('oeuvres', 'Archiver ou supprimer une œuvre', 'archiver supprimer œuvre vente refus impossible dépendance',
-    `<p><b>Supprimer</b> est définitif et <b>refusé si l'œuvre a une vente</b> (historique comptable). Dans ce cas, <b>retire</b>-la ou archive-la plutôt.</p>`),
+    `<p><b>Supprimer</b> se trouve dans le bouton <b>⋯</b> de la fiche, en rouge tout en bas. C'est définitif et <b>refusé si l'œuvre a une vente</b> (historique comptable). Dans ce cas, <b>retire</b>-la ou archive-la plutôt.</p>`),
 
   // ═══════ COTES & PRIX ═══════
   A('prix', 'Comment Galeria calcule le prix d\'une œuvre', 'prix calcul cote préférentiel courant formule po linéaire carré fixe médium taille format priorité',
@@ -196,11 +202,11 @@ const ARTICLES = [
   A('clients', 'Historique d\'achat d\'un client', 'historique achat ventes client total dépensé',
     `<p>La fiche client montre ses <b>achats</b> (œuvre, date, mode de paiement, n° de facture, total) et des statistiques (nombre d'achats, total dépensé, dernier achat, client depuis). Chaque ligne ouvre la fiche de l'œuvre.</p>`),
   A('clients', 'Supprimer une fiche client (Loi 25)', 'supprimer effacer client loi 25 vie privée refus vente comptable',
-    `<p>Le droit à l'effacement (Loi 25) est respecté : tu peux <b>Supprimer</b> une fiche client. Mais si le client a des <b>ventes</b>, la suppression est <b>refusée</b> (raison comptable) — archive-le alors.</p>`),
+    `<p>Le droit à l'effacement (Loi 25) est respecté : tu peux <b>Supprimer</b> une fiche client (bouton <b>⋯</b> de sa fiche, en rouge). Mais si le client a des <b>ventes</b>, la suppression est <b>refusée</b> (raison comptable) — archive-le alors.</p>`),
 
   // ═══════ VENTES ═══════
   A('ventes', 'Enregistrer une vente', 'vendre vente prix taxes paiement facture client œuvre',
-    `<ol><li>Sur une œuvre disponible : <b>Vendre</b> (ou <b>Ventes → + Ajouter</b>).</li>
+    `<ol><li>Sur une œuvre disponible : le bouton doré <b>Vendre</b> (ou <b>Ventes → + Ajouter</b>). Galeria demande d'abord confirmation, et propose <b>Modifier la fiche</b> si c'était plutôt pour changer un prix ou un titre.</li>
      <li>Choisis l'œuvre et le client (ou « + Nouveau client »).</li>
      <li>Vérifie le prix (pré-rempli), les taxes, les rabais, le mode de paiement.</li>
      <li><b>Enregistrer</b> : l'œuvre passe « vendue » et un numéro de facture est réservé.</li>
@@ -215,11 +221,11 @@ const ARTICLES = [
   A('ventes', 'Mode de paiement', 'paiement comptant chèque carte interac virement mode',
     `<p>Choisis le mode (comptant, chèque, carte, Interac, virement…). Pour le <b>suivi</b> des paiements échelonnés, utilise plutôt le statut de paiement (À faire / Partiel / Reçu) du cycle de vie.</p>`),
   A('ventes', 'Modifier ou annuler une vente', 'modifier supprimer annuler vente erreur corriger pochette dossier',
-    `<p><b>Modifier</b> pour corriger une vente. <b>Supprimer</b> pour l'annuler : l'œuvre redevient disponible, les certificats sont conservés (détachés), et Galeria propose d'<b>effacer le dossier de pochette</b> associé.</p>`),
+    `<p><b>Modifier</b> pour corriger une vente. <b>Supprimer</b> (bouton <b>⋯</b> de la fiche) pour l'annuler : l'œuvre redevient disponible, les certificats sont conservés (détachés), et Galeria propose d'<b>effacer le dossier de pochette</b> associé.</p>`),
   A('ventes', 'Suivre une commande après la vente', 'suivi paiement emballage envoi livraison cycle commande complétée terminée sage inactif google artiste payé galerie',
     `<p>Sur la fiche de vente (et dans la section <b>Suivi</b>), l'avancement se suit en <b>deux groupes</b>, éditables d'un clic.</p>`
     + `<p><b>Pour le client</b> : <b>Paiement</b> (À faire / Partiel / Reçu), <b>Emballage</b>, <b>Envoi</b>, <b>Livraison</b>.</p>`
-    + `<p><b>Côté galerie</b> : rendre l'œuvre <b>inactive dans Sage</b>, la <b>retirer de la synchronisation Google</b> sur le site, et <b>payer l'artiste</b>.</p>`
+    + `<p><b>Côté galerie</b> : rendre l'œuvre <b>inactive dans Sage</b>, <b>mettre sa fiche à jour sur le site</b> (étape « M.A.J. site » : vendue, synchronisation Google retirée), et <b>payer l'artiste</b>.</p>`
     + `<p>Une vente n'est <b>terminée</b> que lorsque les deux groupes sont complets : elle reste dans le Suivi tant que l'artiste n'est pas payé. La tuile <b>Artistes à payer</b> les compte.</p>`),
 
   // ═══════ DOCUMENTS ═══════
@@ -308,6 +314,7 @@ const ARTICLES = [
      <li><b>Garder la version de l'app</b> : la différence est mémorisée et ne revient plus, tant que le site ne change pas cette valeur.</li>
      <li>Les <b>filtres</b> et les cases à cocher permettent de <b>reprendre plusieurs valeurs en lot</b> : cochez (ou <b>Tout cocher</b>), puis <b>Reprendre la sélection</b>, en bas de l'écran.</li></ul>
      <div class="astuce">Les <b>brouillons</b> du site sont ignorés : une fiche que le site n'a pas publiée n'est pas une différence à corriger. La ligne du haut dit combien ont été écartés.</div>
+     <p><b>Une œuvre réservée</b> ne doit plus être en vente sur le site. Si elle y est encore « en stock », la comparaison la signale : marquez-la <b>épuisée</b> sur le site le temps de la réservation. Une réservée déjà épuisée sur le site est considérée en ordre.</p>
      <h4>Se tromper n'est pas grave</h4>
      <p>Avant de remplacer quoi que ce soit, Galeria vous montre <b>ce qui remplace quoi</b> et attend votre accord (pour un titre ou une description, c'est la fenêtre où vous pouvez relire et ajuster le texte).</p>
      <p>Une fois la valeur reprise, un bandeau doré apparaît en haut : « <b>… valeur du site reprise. Annuler</b> ». Un clic sur <b>Annuler</b> remet ce que Galeria avait avant, et la différence revient dans la liste. Le bandeau tient jusqu'à votre geste suivant ou jusqu'à la prochaine comparaison.</p>

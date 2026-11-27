@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Œuvres vendues bien visibles</title>
+<style>
+  :root{--soft-ivory:#FCFAF4;--porcelain:#FFFFFF;--warm-gold:#C99A3D;--gallery-navy:#10263E;
+    --ink:#111827;--slate:#5D6875;--stone:#A79E91;--mist:#D8D2C8;--cloud:#EFE8DE;
+    --font-titre:'Cormorant Garamond',Georgia,serif;--font-ui:'Inter',system-ui,sans-serif;
+    --s2:8px;--s3:16px;--r-carte:14px;--ombre-elevee:0 8px 24px rgba(7,26,47,.10);
+    --badge-disponible-fond:#D5E4D0;--badge-disponible-texte:#3F6E37;
+    /* Variante B retenue par Dave : Réservée rouge clair, Vendue grise */
+    --badge-reservee-fond:#F7C6C3;--badge-reservee-texte:#900001;
+    --badge-vendue-fond:#E7E3DD;--badge-vendue-texte:#6B6258;}
+  *{box-sizing:border-box;} body{margin:0;background:var(--soft-ivory);font-family:var(--font-ui);color:var(--ink);padding:28px;}
+  h1{font-family:var(--font-titre);font-weight:600;font-size:28px;margin:0 0 2px;}
+  .sous-titre{color:var(--slate);font-size:13.5px;margin:4px 0 14px;max-width:820px;}
+  .demo-note{max-width:900px;font-size:13px;color:var(--slate);background:#fff8e8;border:1px solid #e8d9a8;border-radius:10px;padding:10px 13px;margin:0 0 16px;}
+  .demo-note strong{color:var(--ink);}
+
+  .choix{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px;}
+  .choix button{padding:6px 13px;border-radius:999px;border:1px solid var(--mist);background:var(--porcelain);color:var(--slate);font-size:13px;cursor:pointer;font-family:var(--font-ui);}
+  .choix button.actif{background:var(--gallery-navy);color:#fff;border-color:transparent;}
+  .explication{font-size:13px;color:var(--slate);margin:0 0 18px;min-height:20px;max-width:820px;}
+
+  .grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;max-width:1280px;}
+
+  /* ===== Carte telle qu'elle est dans l'app ===== */
+  .oeuvre-carte{background:var(--porcelain);border:1px solid var(--mist);border-radius:var(--r-carte);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s,border-color .15s;}
+  .oeuvre-carte:hover{transform:translateY(-2px);box-shadow:var(--ombre-elevee);border-color:var(--stone);}
+  .oeuvre-carte-image{aspect-ratio:4/3;background:var(--cloud);overflow:hidden;position:relative;}
+  .toile{width:100%;height:100%;}
+  .oeuvre-carte-corps{padding:var(--s3);display:flex;flex-direction:column;gap:4px;flex:1;}
+  .oeuvre-carte-titre{font-family:var(--font-titre);font-size:18px;font-weight:600;margin:0;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .oeuvre-carte-artiste{font-size:13px;color:var(--slate);margin:0;}
+  .oeuvre-carte-inv{font-size:12px;color:var(--stone);margin:0;letter-spacing:.02em;}
+  .oeuvre-carte-prix{font-size:15px;margin:4px 0 0;font-weight:500;}
+  .oeuvre-carte-pied{display:flex;align-items:center;justify-content:space-between;margin-top:var(--s2);}
+  .btn-menu{color:var(--slate);font-size:18px;line-height:1;}
+  .badge-statut{display:inline-block;padding:.18rem .6rem;border-radius:999px;font-size:.8rem;font-weight:600;white-space:nowrap;letter-spacing:.02em;}
+  .statut-disponible{background:var(--badge-disponible-fond);color:var(--badge-disponible-texte);}
+  .statut-reserve{background:var(--badge-reservee-fond);color:var(--badge-reservee-texte);}
+  .statut-vendu{background:var(--badge-vendue-fond);color:var(--badge-vendue-texte);}
+
+  /* Aujourd'hui : couleurs actuelles */
+  .v-0{--badge-reservee-fond:#F1E1B8;--badge-reservee-texte:#735718;--badge-vendue-fond:#F2D5D0;--badge-vendue-texte:#7C2823;}
+
+  /* Pour toutes les nouvelles variantes : la pastille tombe toujours au même
+     endroit, avec ou sans prix — l'œil la retrouve d'une carte à l'autre. */
+  .v-1 .oeuvre-carte-pied,.v-2 .oeuvre-carte-pied,.v-3 .oeuvre-carte-pied{margin-top:auto;padding-top:var(--s2);}
+
+  /* 1 — Bandeau en bas de la photo */
+  .bandeau{display:none;}
+  .v-1 .est-vendue .bandeau{display:flex;position:absolute;left:0;right:0;bottom:0;height:30px;align-items:center;justify-content:center;
+    background:rgba(16,38,62,.82);color:#fff;font-size:13px;font-weight:600;letter-spacing:.06em;}
+
+  /* 2 — Étiquette dans le coin de la photo */
+  .coin{display:none;}
+  .v-2 .est-vendue .coin{display:block;position:absolute;top:10px;left:10px;padding:4px 11px;border-radius:999px;
+    background:#fff;color:var(--ink);font-size:12.5px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+  .v-2 .est-vendue .coin::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--badge-vendue-texte);margin-right:6px;vertical-align:1px;}
+
+  /* 3 — Le bas de la carte se grise, la photo reste intacte */
+  .v-3 .est-vendue .oeuvre-carte-corps{background:#EEEBE6;}
+  .v-3 .est-vendue{border-color:#D3CEC6;}
+  .v-3 .est-vendue .oeuvre-carte-titre{color:var(--slate);}
+  .v-3 .est-vendue .statut-vendu{background:#6B6258;color:#fff;}
+</style>
+</head>
+<body>
+<h1>Repérer les œuvres vendues</h1>
+<p class="sous-titre">Page Œuvres, en grille. « Réservée » est en rouge clair et « Vendue » en gris, comme dans la variante B. Les photos des toiles ne changent jamais de couleur : la page sert à montrer le travail d'un artiste.</p>
+<div class="demo-note"><strong>Dans les trois nouvelles variantes</strong>, la pastille de statut tombe toujours au bas de la carte, même quand il n'y a pas de prix. Aujourd'hui, elle remonte sur les vendues.</div>
+
+<div class="choix" id="choix">
+  <button data-v="0">Aujourd'hui</button>
+  <button data-v="1">1 — Bandeau sur la photo</button>
+  <button data-v="2" class="actif">2 — Étiquette dans le coin</button>
+  <button data-v="3">3 — Bas de carte grisé</button>
+</div>
+<p class="explication" id="explication"></p>
+
+<div class="grille v-2" id="grille"></div>
+
+<script>
+  const EXPLICATIONS = {
+    0: 'Vendue en rosé pâle, Réservée en beige. Les vendues n\'ont pas de prix, donc leur pastille remonte.',
+    1: 'Une bande foncée « Vendue » en bas de la photo. On la voit de loin, mais elle cache une mince bande de la toile.',
+    2: 'Une petite étiquette blanche dans le coin de la photo. Bien visible, et elle cache très peu de la toile.',
+    3: 'La photo reste entière ; c\'est le bas de la carte (le texte) qui se grise. Plus discret de loin.',
+  };
+  // Des « toiles » en dégradés : seules les couleurs comptent ici.
+  const T = [
+    'linear-gradient(180deg,#2b4fb3 0 34%,#e9b23a 34% 52%,#d6521f 52% 70%,#3f7a3a 70%)',
+    'radial-gradient(circle at 30% 70%,#d8261c 0 12%,transparent 13%),radial-gradient(circle at 70% 60%,#e0301e 0 10%,transparent 11%),linear-gradient(180deg,#3352b5 0 30%,#6a9c3b 30%)',
+    'linear-gradient(180deg,#4062c2 0 30%,#e8c46a 30% 48%,#7d5bb0 48% 75%,#e3a83a 75%)',
+    'linear-gradient(90deg,#c9a37a 0 20%,#e9d6b5 20% 40%,#b04a2c 40% 60%,#3b72b8 60% 80%,#e2c08c 80%)',
+    'linear-gradient(180deg,#27409a 0 25%,#f0c23e 25% 45%,#5a4fb0 45% 80%,#2e6b35 80%)',
+    'linear-gradient(160deg,#f2d27a 0 30%,#d18b3a 30% 55%,#6c7fbf 55% 80%,#3d6b2f 80%)',
+    'linear-gradient(180deg,#3159c2 0 28%,#8fb04a 28% 50%,#e5b23c 50% 72%,#c3421f 72%)',
+    'linear-gradient(200deg,#e7cf98 0 35%,#9a6a3c 35% 60%,#4c7a42 60%)',
+  ];
+  const OEUVRES = [
+    ['Retour de pêche', 'ANC1011', '1 180 $', 'disponible'],
+    ['Coquelicots', 'ANC1207', null, 'vendu'],
+    ['Élégante et secrète', 'ANC1208', '2 180 $', 'reserve'],
+    ['Village perché', 'ANC1327', '2 340 $', 'disponible'],
+    ['Toscane', 'ANC1357', '2 720 $', 'disponible'],
+    ['Le vieux mas', 'ANC1610', null, 'vendu'],
+    ['Bon matin provençal', 'ANC1631', null, 'vendu'],
+    ['De la lumière à l\'ombre', 'ANC1549', '2 800 $', 'disponible'],
+  ];
+  const LIB = { disponible: 'Disponible', reserve: 'Réservée', vendu: 'Vendue' };
+  const grille = document.getElementById('grille');
+  grille.innerHTML = OEUVRES.map(([t, inv, prix, st], i) => `
+    <article class="oeuvre-carte ${st === 'vendu' ? 'est-vendue' : ''}">
+      <div class="oeuvre-carte-image">
+        <div class="toile" style="background:${T[i % T.length]}"></div>
+        <span class="bandeau">Vendue</span><span class="coin">Vendue</span>
+      </div>
+      <div class="oeuvre-carte-corps">
+        <h3 class="oeuvre-carte-titre">${t}</h3>
+        <p class="oeuvre-carte-artiste">Artiste de démonstration</p>
+        <p class="oeuvre-carte-inv">Nº ${inv}</p>
+        ${prix ? `<p class="oeuvre-carte-prix">${prix}</p>` : ''}
+        <div class="oeuvre-carte-pied"><span class="badge-statut statut-${st}">${LIB[st]}</span><span class="btn-menu">⋯</span></div>
+      </div>
+    </article>`).join('');
+
+  const expl = document.getElementById('explication');
+  function choisir(v) {
+    grille.className = 'grille v-' + v;
+    document.querySelectorAll('#choix button').forEach((b) => b.classList.toggle('actif', b.dataset.v === v));
+    expl.textContent = EXPLICATIONS[v];
+  }
+  document.getElementById('choix').addEventListener('click', (e) => { if (e.target.dataset.v) choisir(e.target.dataset.v); });
+  choisir('2');
+</script>
+</body>
+</html>

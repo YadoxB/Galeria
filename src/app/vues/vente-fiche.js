@@ -5,6 +5,7 @@ import {
   champPays, champSubdivision, brancherChangementPays,
   formaterPrix, formaterDate, nomComplet, urlPhoto, nettoyerErreur,
   champNombreInvalide, soumissionUnique, ETAPES_GALERIE, venteTerminee,
+  menuPlus, entreeMenu, groupeMenus,
 } from '../commun.js';
 import {
   gabaritOutilsClients, monterOutilsClients, lignesAvecReperes, nomLigneClient, metaLigneClient,
@@ -389,9 +390,11 @@ export async function rendreVenteFiche(contenu, params) {
           <p class="zone-identite-vente-meta">Vente du ${ech(formaterDate(v.date_vente))}</p>
           ${v.mode_paiement ? `<span class="zone-identite-vente-mode">${ech(v.mode_paiement)}</span>` : ''}
         </div>
+        <!-- Même hiérarchie que les autres fiches (commun.js, menuPlus) :
+             annuler une vente est rare et lourd — dans « ⋯ », en rouge. -->
         <div class="zone-identite-actions">
-          <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
           <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
+          ${menuPlus(entreeMenu({ id: 'btn-supprimer', libelle: 'Supprimer la vente…', aide: "L'annule : l'œuvre redevient disponible", danger: true }))}
         </div>
       </div>
     `;
@@ -645,6 +648,7 @@ export async function rendreVenteFiche(contenu, params) {
     `;
 
     contenu.querySelector('#btn-modifier').addEventListener('click', entrerEdition);
+    groupeMenus(contenu)(contenu.querySelector('#btn-menu-plus'), contenu.querySelector('#menu-plus-pop'));
     contenu.querySelector('#btn-supprimer').addEventListener('click', supprimer);
     contenu.querySelector('#aller-oeuvre').addEventListener('click', () =>
       naviguer('oeuvre-fiche', { id: v.oeuvre_id })

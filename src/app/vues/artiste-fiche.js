@@ -8,6 +8,7 @@ import {
   parserNumerosTaxes, urlPhoto, sansAccents, nomComplet,
   badgeArchive, boutonArchive, basculerArchive, nettoyerErreur,
   champNombreInvalide, soumissionUnique,
+  ICO_DOCUMENT, ICO_SITE, menuPlus, entreeMenu, groupeMenus,
 } from '../commun.js';
 import { parserCotes, TAILLES_COTES, formaterMontant } from '../calcul-prix.js';
 import { ouvrirAnnexeModale } from '../annexe.js';
@@ -16,6 +17,15 @@ import { recadrerCarre } from '../recadrage.js';
 import { visionner } from '../visionneuse.js';
 import { confirmer } from '../dialogue.js';
 import { brancherTraduction } from '../traduction.js';
+
+// Un chiffre de l'en-tête : un bouton qui ouvre les œuvres de l'artiste avec
+// ce statut. À zéro, il reste à sa place mais grisé et inerte — une liste
+// vide n'apprendrait rien. Zéro prend le singulier, comme en français.
+function chiffreHero(classe, n, singulier, motPluriel, attrs, titre) {
+  const nb = Number(n) || 0;
+  return `<button type="button" class="hero-chiffre ${classe}${nb ? '' : ' zero'}" ${attrs} ${nb ? `title="${ech(titre)}"` : 'disabled'}>`
+    + `<span class="v">${nb.toLocaleString('fr-CA')}</span><span class="l">${ech(nb > 1 ? motPluriel : singulier)}</span></button>`;
+}
 
 const TYPES_ARTISTE = ['Peintre', 'Sculpteur', 'Photographe', 'Graveur', 'Illustrateur'];
 const LANGUES = ['Français', 'Anglais', 'Bilingue'];
@@ -355,11 +365,12 @@ export async function rendreArtisteFiche(contenu, params) {
         <div class="hero-artiste-photo">${photoHtml}</div>
         <div class="hero-artiste-corps">
           <h1 class="hero-artiste-nom">${ech(nomCompletA)}</h1>
+          <!-- Chaque morceau d'un seul tenant : la ligne peut se couper entre
+               eux, jamais au milieu (« n° » d'un côté, « 001 » de l'autre). -->
           <p class="hero-artiste-meta">
-            ${a.type ? ech(a.type) : '<em>type non précisé</em>'}
-            ${a.prefixe_inventaire ? ` &middot; Préfixe ${ech(a.prefixe_inventaire)}` : ''}
-            &middot; Prochain certificat n° ${String(certifs.prochain || 1).padStart(3, '0')}
-            &middot; ${pluriel(a.nb_oeuvres_dispo || 0, 'œuvre disponible', 'œuvres disponibles')}
+            <span class="insecable">${a.type ? ech(a.type) : '<em>type non précisé</em>'}</span>
+            ${a.prefixe_inventaire ? ` &middot; <span class="insecable">Préfixe ${ech(a.prefixe_inventaire)}</span>` : ''}
+            &middot; <span class="insecable">Prochain certificat n° ${String(certifs.prochain || 1).padStart(3, '0')}</span>
           </p>
           <!-- Lien posé à la main vers la page du site, quand l'artiste n'y
                porte pas le même nom (nom d'artiste). C'est ICI qu'il doit se
@@ -371,45 +382,70 @@ export async function rendreArtisteFiche(contenu, params) {
               Relié au site sous « <strong>${ech(a.nom_site)}</strong> »
               <button type="button" class="btn-lien" id="btn-delier-site">Délier</button>
             </p>` : ''}
-          <div class="hero-artiste-filet"></div>
-          <div class="hero-artiste-stats">
-            <div class="hero-stat"><span class="v">${stats.catalogue}</span><span class="l">Au catalogue</span></div>
-            <div class="hero-stat"><span class="v accent">${stats.disponibles}</span><span class="l">Disponibles</span></div>
-            <!-- Réservées : encore à la galerie, déjà promises. Elles ne sont
-                 PAS dans les disponibles ; sans cette case, réserver une
-                 toile la faisait disparaître de l'en-tête (signalement des
-                 parents, 2026-09-27). Toujours affichée, comme « En
-                 exposition », pour que la rangée ne change pas de forme. -->
-            <div class="hero-stat"><span class="v${stats.reservees ? ' reserve' : ''}">${stats.reservees || 0}</span><span class="l">Réservées</span></div>
-            <!-- Toujours affiché, même à zéro : une rangée dont le nombre de
-                 cases change d'un artiste à l'autre est déroutante. En rouge
-                 quand il y en a — c'est un état temporaire, pas un total. -->
-            <div class="hero-stat"><span class="v${stats.exposees ? ' expo' : ''}">${stats.exposees || 0}</span><span class="l">En exposition</span></div>
-            <!-- Œuvres marquées vendues. À ne PAS confondre avec « Ventes
-                 saisies » plus loin : le catalogue a été importé avec son
-                 historique, si bien qu'une écrasante majorité des œuvres
-                 vendues n'a aucune ligne de vente dans Galeria. Les deux
-                 nombres sont justes ; ils ne mesurent pas la même chose, et
-                 leurs libellés doivent le dire. -->
-            <div class="hero-stat"><span class="v">${stats.vendues || 0}</span><span class="l">Vendues</span></div>
-            <div class="hero-stat"><span class="v">${stats.retirees || 0}</span><span class="l">Retirées</span></div>
-            <div class="hero-stat"><span class="v">${stats.ventes}</span><span class="l">Ventes saisies</span></div>
-            <div class="hero-stat hero-stat-valeur" id="stat-valeur-dispo" data-valeur="${ech(formaterMontant(stats.valeurDispo))}" title="Cliquer pour afficher">
-              <span class="v" id="valeur-dispo-val">••• ••• $</span>
-              <span class="l">Valeur dispo <span class="oeil" id="valeur-dispo-oeil">afficher</span></span>
+        </div>
+        <!-- Chiffres en DEUX GROUPES, sur toute la largeur de la carte (demande
+             de Dave, 2026-11-27, maquette demos/artiste-entete.html, variante
+             A). Avant : huit cases pareilles, tassées en trois rangées par les
+             boutons. « À la galerie » dit ce qu'on peut montrer ou vendre en ce
+             moment ; « Historique », plus discret, ce qui est passé.
+             Chaque catégorie reste à sa place même à zéro (grisée) : un
+             en-tête qui change de forme d'un artiste à l'autre déroute.
+             Un chiffre se clique : il ouvre les œuvres de l'artiste avec ce
+             statut (page Œuvres, paramètre « statut » ou « retirees »). -->
+        <div class="hero-artiste-infos"><div class="hero-infos-grille">
+          <!-- Chaque groupe a TROIS enfants (titre, ligne 1, ligne 2) : la
+               grille les range sur des rangées communes pour aligner les
+               lignes des deux groupes. Garder ce compte en y touchant. -->
+          <div class="hero-groupe">
+            <p class="hero-groupe-titre">À la galerie</p>
+            <div class="hero-groupe-ligne">
+              ${chiffreHero('gros dispo', stats.disponibles, 'disponible', 'disponibles', 'data-statut="disponible"', 'Voir ses œuvres disponibles')}
+              <!-- Réservées : encore à la galerie, déjà promises. Elles ne
+                   sont PAS dans les disponibles ; sans elles, réserver une
+                   toile la faisait disparaître de l'en-tête (signalement des
+                   parents, 2026-09-27). -->
+              ${chiffreHero('reserve', stats.reservees, 'réservée', 'réservées', 'data-statut="reserve"', 'Voir ses œuvres réservées')}
+              ${chiffreHero('expo', stats.exposees, 'en exposition', 'en exposition', 'data-statut="exposee"', 'Voir ses œuvres en exposition')}
+            </div>
+            <p class="hero-valeur" id="stat-valeur-dispo" data-valeur="${ech(formaterMontant(stats.valeurDispo))}" title="Cliquer pour afficher">
+              Valeur des disponibles <span class="hero-valeur-v" id="valeur-dispo-val">••• ••• $</span>
+              <span class="oeil" id="valeur-dispo-oeil">afficher</span>
+            </p>
+          </div>
+          <span class="hero-infos-sep" aria-hidden="true"></span>
+          <div class="hero-groupe hero-groupe-histo">
+            <p class="hero-groupe-titre">Historique</p>
+            <!-- Œuvres marquées vendues, et à côté les ventes SAISIES : le
+                 catalogue a été importé avec son historique, si bien qu'une
+                 écrasante majorité des œuvres vendues n'a aucune ligne de
+                 vente dans Galeria. Les deux nombres sont justes ; ils ne
+                 mesurent pas la même chose, et leurs libellés doivent le dire. -->
+            <div class="hero-histo-ligne">
+              ${chiffreHero('histo', stats.vendues, 'vendue', 'vendues', 'data-statut="vendu"', 'Voir ses œuvres vendues')}
+              <span class="hero-note">· ${stats.ventes || 0} ${stats.ventes > 1 ? 'ventes saisies' : 'vente saisie'} dans Galeria</span>
+            </div>
+            <div class="hero-histo-ligne">
+              ${chiffreHero('histo', stats.retirees, 'retirée du catalogue', 'retirées du catalogue', 'data-retirees="1"', 'Voir ses œuvres retirées')}
             </div>
           </div>
-        </div>
+        </div></div>
         <div class="hero-artiste-actions">
           <!-- Les documents sont rarement produits ici (constat de Dave,
                2026-07-18) : ils tiennent dans un menu plutôt que d'occuper
                trois boutons qui rivalisaient visuellement avec les actions de
                la fiche. Le menu permet aussi de distinguer enfin l'annexe de
                dépôt de celle de retrait. -->
+          <!-- Hiérarchie (demande de Dave, 2026-11-27, maquette
+               demos/artiste-actions.html, variante B) : Modifier seul en
+               avant ; Documents et Comparer en boutons discrets (icône + mot,
+               sans cadre) ; Archiver et Supprimer rangés dans « ⋯ » — avant,
+               Supprimer, encadré de rouge, était le bouton le plus voyant
+               alors que c'est le geste le plus rare. Une fiche archivée
+               garde « Désarchiver » dans la barre : c'est alors le geste utile. -->
           <div class="grp-actions">
             <div class="menu-docs" id="menu-docs">
-              <button class="btn-action" id="btn-menu-docs" aria-haspopup="menu" aria-expanded="false">
-                Documents <span class="menu-docs-chev" aria-hidden="true">▾</span>
+              <button class="btn-action btn-discret" id="btn-menu-docs" aria-haspopup="menu" aria-expanded="false">
+                ${ICO_DOCUMENT} Documents <span class="menu-docs-chev" aria-hidden="true">▾</span>
               </button>
               <div class="menu-docs-pop" id="menu-docs-pop" role="menu" hidden>
                 <!-- La bascule ne vaut QUE pour les deux PDF qui suivent. Les
@@ -431,20 +467,23 @@ export async function rendreArtisteFiche(contenu, params) {
                 <button type="button" role="menuitem" id="btn-annexe-retrait">Annexe A — retrait…</button>
               </div>
             </div>
-            <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
             <!-- Deux comparaisons, deux gestes : la fiche de l'artiste (ses
                  textes, sa photo) se compare ici même ; ses œuvres ouvrent
                  Site web → Œuvres réglé sur lui (demande de Dave, 2026-09-11). -->
             <div class="menu-docs" id="menu-comparer">
-              <button class="btn-action" id="btn-menu-comparer" aria-haspopup="menu" aria-expanded="false">
-                Comparer avec le site <span class="menu-docs-chev" aria-hidden="true">▾</span>
+              <button class="btn-action btn-discret" id="btn-menu-comparer" aria-haspopup="menu" aria-expanded="false">
+                ${ICO_SITE} Comparer avec le site <span class="menu-docs-chev" aria-hidden="true">▾</span>
               </button>
               <div class="menu-docs-pop menu-comparer-pop" id="menu-comparer-pop" role="menu" hidden>
                 <button type="button" role="menuitem" id="btn-sync-site">Sa fiche<small>Citation, biographie, démarche, curriculum, photo</small></button>
                 <button type="button" role="menuitem" id="btn-sync-oeuvres">Ses œuvres (${stats.catalogue})<small>Titres, descriptions, prix, statuts — ouvre Site web</small></button>
               </div>
             </div>
-            ${boutonArchive({ archive: a.archive })}
+            ${a.archive ? boutonArchive({ archive: true }) : ''}
+            ${menuPlus(
+              (a.archive ? '' : entreeMenu({ id: 'btn-archiver', libelle: "Archiver l'artiste", aide: 'Le retire des listes, sans rien effacer' })
+                  + '<div class="menu-docs-sep"></div>')
+              + entreeMenu({ id: 'btn-supprimer', libelle: "Supprimer l'artiste…", aide: "Définitif — refusé s'il a des œuvres", danger: true }))}
             <button class="btn-action btn-principal" id="btn-modifier">Modifier</button>
           </div>
         </div>
@@ -735,6 +774,13 @@ export async function rendreArtisteFiche(contenu, params) {
       statValeur.addEventListener('click', () => majValeur(true));
       statValeur.addEventListener('mouseleave', () => { if (vis) majValeur(false); });
     }
+    // Chiffres de l'en-tête → les œuvres de l'artiste avec ce statut.
+    contenu.querySelectorAll('.hero-chiffre:not([disabled])').forEach((b) => b.addEventListener('click', () => {
+      const p = { artiste_id: a.id, artiste_nom: nomCompletA };
+      if (b.dataset.statut) p.statut = b.dataset.statut;
+      if (b.dataset.retirees) p.retirees = true;
+      naviguer('oeuvres-liste', p);
+    }));
     contenu.querySelector('#btn-archiver').addEventListener('click', async () => {
       const fait = await basculerArchive({
         table: 'artistes',
@@ -869,48 +915,15 @@ export async function rendreArtisteFiche(contenu, params) {
       });
     }
 
-    // --- Menus de l'en-tête (« Documents », « Comparer avec le site ») :
-    //     ouverture, fermeture, accessibilité. Un seul ouvert à la fois. ---
-    const fermeturesMenus = [];
-    function brancherMenu(menuBtn, menuPop, { aLOuverture } = {}) {
-      if (!menuBtn || !menuPop) return;
-      const fermerMenu = () => {
-        menuPop.hidden = true;
-        menuBtn.setAttribute('aria-expanded', 'false');
-      };
-      fermeturesMenus.push(fermerMenu);
-      menuBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const ouvert = !menuPop.hidden;
-        fermeturesMenus.forEach((f) => f());
-        if (ouvert) return;
-        menuPop.hidden = false;
-        menuBtn.setAttribute('aria-expanded', 'true');
-        if (aLOuverture) aLOuverture();
-        // Le premier élément de MENU, pas le premier bouton — la bascule
-        // FR/EN du menu « Documents » est en tête et ne doit pas prendre le focus.
-        const premier = menuPop.querySelector('[role="menuitem"]');
-        if (premier) premier.focus();
-      });
-      // Un clic sur une entrée déclenche son propre handler, puis referme.
-      // La bascule de langue est un réglage, pas une entrée : elle ne ferme
-      // rien, sinon on ne pourrait jamais choisir l'anglais.
-      menuPop.addEventListener('click', (e) => {
-        if (e.target.closest('.bascule-langue')) return;
-        if (e.target.closest('button')) fermerMenu();
-      });
-      // Clic ailleurs, ou Échap : on referme. Écouteurs posés sur le contenu de
-      // la vue, donc retirés avec elle au changement de page.
-      contenu.addEventListener('click', () => { if (!menuPop.hidden) fermerMenu(); });
-      contenu.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !menuPop.hidden) { fermerMenu(); menuBtn.focus(); }
-      });
-    }
+    // --- Menus de l'en-tête (« Documents », « Comparer avec le site », « ⋯ ») :
+    //     un seul ouvert à la fois (groupeMenus, commun.js). ---
+    const brancherMenu = groupeMenus(contenu);
     // La langue revient au français à CHAQUE ouverture : un choix oublié ne
     // doit pas produire un document anglais par surprise trois jours plus tard.
     brancherMenu(contenu.querySelector('#btn-menu-docs'), contenu.querySelector('#menu-docs-pop'),
       { aLOuverture: reinitialiserLangueDocs });
     brancherMenu(contenu.querySelector('#btn-menu-comparer'), contenu.querySelector('#menu-comparer-pop'));
+    brancherMenu(contenu.querySelector('#btn-menu-plus'), contenu.querySelector('#menu-plus-pop'));
 
     const avatarVision = contenu.querySelector('#avatar-vision');
     if (avatarVision && a.photo_path) {

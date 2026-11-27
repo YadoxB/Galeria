@@ -724,10 +724,29 @@ function comparerSiteEtApp(produits, oeuvres, ignores = new Map(), produitsEn = 
     // Réconciliation de statut : le site marque « épuisé » (outofstock) une œuvre
     // vendue. On signale un écart quand l'un dit vendu et pas l'autre, et on
     // suggère un statut — mais l'utilisateur choisira (outofstock est ambigu).
+    //
+    // RÉSERVÉE (demande de Joanne, 2026-11-25) : la toile ne doit plus être en
+    // vente sur le site. Épuisée là-bas = en ordre (avant, Galeria proposait à
+    // tort de la passer à « Vendue ») ; encore en stock = écart, à corriger
+    // SUR LE SITE — rien à changer dans l'app, une réservation se libère par
+    // sa carte. Jeton à part (`reservee-en-vente`) : « garder » cet écart ne
+    // doit pas cacher celui d'une vente plus tard, qui porte le jeton `dispo`.
     const siteVendu = p.stock_status === 'outofstock';
     const appVendu = o.statut === 'vendu';
     let statutReconcilier = null;
-    if (siteVendu !== appVendu) {
+    if (o.statut === 'reserve') {
+      if (!siteVendu) {
+        const site_cle = 'reservee-en-vente';
+        statutReconcilier = {
+          app: 'reserve',
+          site_indication: 'En vente / en stock',
+          suggere: null,
+          reservee: true,
+          site_cle,
+          ignore: ignoreDe('statut') === site_cle,
+        };
+      }
+    } else if (siteVendu !== appVendu) {
       const site_cle = siteVendu ? 'vendu' : 'dispo';
       statutReconcilier = {
         app: o.statut || 'disponible',

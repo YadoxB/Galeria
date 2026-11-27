@@ -1421,12 +1421,28 @@ footer {
   font-weight: 500;
 }
 
+/* Le pied est poussé au BAS de la carte : avec ou sans prix (une vendue n'en
+   a pas), la pastille tombe au même endroit d'une carte à l'autre. */
 .oeuvre-carte-pied {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: var(--s2);
+  margin-top: auto;
+  padding-top: var(--s2);
 }
+
+/* Vendue : le bas de la carte se grise, la PHOTO NE CHANGE PAS — la page sert
+   à montrer le travail d'un artiste (Dave, 2026-11-27, variante 3). La
+   pastille devient pleine pour se lire de loin. Même traitement en liste. */
+.oeuvre-carte.est-vendue { border-color: #D3CEC6; }
+.oeuvre-carte.est-vendue:hover { border-color: var(--stone); }
+.oeuvre-carte.est-vendue .oeuvre-carte-corps { background: #EEEBE6; }
+.oeuvre-carte.est-vendue .oeuvre-carte-titre { color: var(--slate); }
+.oeuvre-carte.est-vendue .statut-vendu,
+.ligne-oeuvre.est-vendue .statut-vendu { background: var(--badge-vendue-texte); color: #fff; }
+.liste .ligne-oeuvre.est-vendue { background: #EEEBE6; border-color: #D3CEC6; }
+.liste .ligne-oeuvre.est-vendue:hover { background: var(--cloud); border-color: var(--stone); }
+.ligne-oeuvre.est-vendue .ligne-titre { color: var(--slate); }
 
 .btn-menu-oeuvre {
   background: transparent;
@@ -2280,7 +2296,7 @@ footer {
 .statut-reserve    { background: var(--badge-reservee-fond);   color: var(--badge-reservee-texte); }
 .statut-vendu      { background: var(--badge-vendue-fond);     color: var(--badge-vendue-texte); }
 .statut-pretee     { background: #dde9f3; color: #2d5a7b; }
-.statut-exposee    { background: #efe3f5; color: #6b3f86; }
+.statut-exposee    { background: var(--badge-exposee-fond); color: var(--badge-exposee-texte); }
 .statut-defaut     { background: var(--mist); color: var(--slate); }
 
 /* ====== Vue : Fiche ====== */
@@ -2353,6 +2369,21 @@ footer {
   opacity: 0.5;
   cursor: not-allowed;
 }
+/* Bouton discret : une icône et un mot, sans cadre. Pour les gestes
+   occasionnels à côté d'un bouton principal (fiche d'artiste, 2026-11-27) :
+   ils restent trouvables sans disputer l'attention à « Modifier ». */
+.btn-action.btn-discret {
+  background: transparent;
+  border-color: transparent;
+  color: var(--slate);
+  padding-left: 11px;
+  padding-right: 11px;
+}
+.btn-action.btn-discret:hover,
+.btn-action.btn-discret[aria-expanded="true"] { background: var(--cloud); border-color: transparent; color: var(--ink); }
+.btn-action.btn-discret:focus-visible { outline: 2px solid var(--warm-gold); outline-offset: 1px; }
+.btn-action .ico-btn { width: 16px; height: 16px; flex-shrink: 0; }
+.btn-action.btn-plus .ico-btn { width: 20px; height: 20px; }
 
 /* Lien — texte doré souligné */
 .btn-lien {
@@ -2590,17 +2621,22 @@ details.bloc.pliable > .bloc-corps {
 
 /* ===== Fiche artiste — hiérarchie en 3 niveaux ===== */
 /* Niveau 1 : en-tête (photo + identité + stats + actions) */
+/* Grille : la photo à gauche sur deux rangées ; en haut, l'identité et les
+   boutons ; en bas, les chiffres sur toute la largeur (avant, les boutons leur
+   prenaient la moitié de la place et les tassaient en trois rangées).
+   `fit-content` laisse les boutons passer à la ligne plutôt qu'écraser le nom. */
 .hero-artiste {
-  display: flex;
-  gap: var(--s4);
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: 150px minmax(240px, 1fr) fit-content(680px);
+  grid-template-rows: auto 1fr;
+  column-gap: var(--s4);
   background: #fff;
   border: 1px solid var(--mist);
   border-radius: 18px;
   padding: var(--s3) var(--s4);
   margin-bottom: var(--s3);
 }
-.hero-artiste-photo { flex: 0 0 auto; width: 150px; }
+.hero-artiste-photo { grid-column: 1; grid-row: 1 / span 2; width: 150px; }
 .hero-artiste-photo .zone-photo {
   width: 150px; height: 150px; margin: 0;
   border-radius: 14px; overflow: hidden;
@@ -2609,9 +2645,10 @@ details.bloc.pliable > .bloc-corps {
 }
 .hero-artiste-photo .zone-photo img { width: 100%; height: 100%; object-fit: cover; }
 .hero-artiste-photo .zone-photo-initiales { font-family: var(--font-titre); font-size: 46px; color: var(--warm-gold); }
-.hero-artiste-corps { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.hero-artiste-corps { grid-column: 2; grid-row: 1; min-width: 0; display: flex; flex-direction: column; }
 .hero-artiste-nom { margin: 0; font-family: var(--font-titre); font-weight: 500; font-size: 38px; line-height: 1.05; color: var(--ink); word-break: break-word; }
 .hero-artiste-meta { margin: 4px 0 0; color: var(--slate); font-size: 14px; }
+.hero-artiste-meta .insecable { white-space: nowrap; }
 
 /* Fiche artiste (modifier) : « Dernier certificat délivré » + la phrase qui
    dit le prochain numéro, alignée sur le champ. */
@@ -2634,13 +2671,70 @@ details.bloc.pliable > .bloc-corps {
 .hero-artiste-stats .hero-stat { display: flex; flex-direction: column; }
 .hero-artiste-stats .v { font-family: var(--font-titre); font-size: 24px; color: var(--gallery-navy); }
 .hero-artiste-stats .v.accent { color: var(--warm-gold); }
-/* Œuvres parties en exposition : un état temporaire, pas un total — d'où le
-   rouge de la galerie plutôt que l'or des disponibles. */
-.hero-artiste-stats .v.expo { color: #900001; }
-/* Réservées : le beige doré des badges « Réservée », pour que la case et la
-   pastille d'une œuvre parlent de la même chose. */
-.hero-artiste-stats .v.reserve { color: var(--badge-reservee-texte); }
 .hero-artiste-stats .l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--stone); }
+
+/* ----- Chiffres de la fiche d'artiste, en deux groupes (2026-11-27) -----
+   Maquette : demos/artiste-entete.html, variante A. Chaque chiffre a la
+   couleur de sa pastille (disponible → or de la galerie, réservée → rouge,
+   en exposition → violet), pour qu'un coup d'œil dise la même chose ici et
+   sur les œuvres. L'historique reste en encre, plus petit. */
+.hero-artiste-infos {
+  grid-column: 2 / -1; grid-row: 2; align-self: end;
+  border-top: 1px solid var(--cloud);
+  padding-top: 12px; margin-top: 14px;
+  container: hero-infos / inline-size;
+}
+/* Les deux groupes partagent les MÊMES RANGÉES (titre, ligne 1, ligne 2) :
+   « 30 disponibles » et « 20 vendues » tombent sur la même ligne de base,
+   « Valeur des disponibles » et « retirées » aussi (Dave, 2026-11-27). Les
+   groupes s'effacent (display: contents) pour que leurs trois enfants
+   soient des cases de cette grille ; le trait vertical est une case à part,
+   sur toute la hauteur. En colonne : galerie, trait, historique. */
+.hero-infos-grille {
+  display: grid;
+  grid-template-columns: auto 1px minmax(0, 1fr);
+  grid-template-rows: repeat(3, auto);
+  grid-auto-flow: column;
+  column-gap: 28px;
+  align-items: baseline;
+}
+.hero-groupe { display: contents; }
+.hero-infos-sep { grid-column: 2; grid-row: 1 / -1; align-self: stretch; background: var(--cloud); }
+/* Pas la place pour deux colonnes (fenêtre étroite, ou boutons qui prennent
+   de la largeur) : l'historique passe dessous, séparé par un trait. */
+@container hero-infos (max-width: 780px) {
+  .hero-infos-grille { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; }
+  .hero-infos-sep { grid-column: auto; grid-row: auto; height: 1px; margin: 10px 0 8px; }
+}
+.hero-groupe-titre { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--stone); }
+.hero-groupe-ligne { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.hero-histo-ligne { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.hero-chiffre {
+  display: inline-flex; align-items: baseline; gap: 6px;
+  padding: 3px 8px; margin-left: -8px;
+  background: none; border: 0; border-radius: 8px;
+  font-family: inherit; color: inherit; cursor: pointer; text-align: left;
+  transition: background 0.12s ease;
+}
+.hero-chiffre + .hero-chiffre { margin-left: 0; }
+.hero-chiffre:hover:not([disabled]) { background: var(--cloud); }
+.hero-chiffre:focus-visible { outline: 2px solid var(--warm-gold); outline-offset: 1px; }
+.hero-chiffre[disabled] { cursor: default; }
+.hero-chiffre .v { font-family: var(--font-titre); font-size: 26px; line-height: 1; color: var(--gallery-navy); }
+.hero-chiffre .l { font-size: 13px; color: var(--slate); }
+.hero-chiffre.gros .v { font-size: 44px; }
+.hero-chiffre.gros .l { font-size: 15px; color: var(--ink); }
+.hero-chiffre.dispo .v { color: var(--warm-gold); }
+.hero-chiffre.reserve .v { color: var(--badge-reservee-texte); }
+.hero-chiffre.expo .v { color: var(--badge-exposee-texte); }
+.hero-chiffre.histo .v { font-size: 21px; }
+.hero-chiffre.zero .v { color: var(--stone); }
+.hero-chiffre.zero .l { color: var(--stone); }
+.hero-note { font-size: 13px; color: var(--stone); }
+.hero-valeur { margin: 2px 0 0; font-size: 12px; color: var(--slate); cursor: pointer; user-select: none; }
+.hero-valeur .hero-valeur-v { color: var(--stone); letter-spacing: 1px; }
+.hero-valeur.visible .hero-valeur-v { color: var(--gallery-navy); letter-spacing: normal; font-weight: 600; }
+.hero-valeur .oeil { color: var(--warm-gold); }
 
 /* ----- Bandeau de statistiques de la liste des œuvres -----
    Même vocabulaire que l'en-tête d'un artiste (mêmes tailles, mêmes
@@ -2658,7 +2752,7 @@ details.bloc.pliable > .bloc-corps {
 .stats-liste .hero-stat { display: flex; flex-direction: column; }
 .stats-liste .v { font-family: var(--font-titre); font-size: 24px; color: var(--gallery-navy); line-height: 1.1; }
 .stats-liste .v.accent { color: var(--warm-gold); }
-.stats-liste .v.expo { color: #900001; }
+.stats-liste .v.expo { color: var(--badge-exposee-texte); }
 .stats-liste .l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--stone); }
 /* Rappel des filtres actifs, poussé à droite : sans lui, un nombre bas
    ressemble à un catalogue qui a fondu plutôt qu'à un filtre resté en place. */
@@ -2671,7 +2765,7 @@ details.bloc.pliable > .bloc-corps {
 .hero-stat-valeur .v { color: var(--stone); letter-spacing: 1px; }
 .hero-stat-valeur.visible .v { color: var(--gallery-navy); letter-spacing: normal; }
 .hero-stat-valeur .oeil { color: var(--warm-gold); text-transform: none; letter-spacing: 0; font-size: 10px; }
-.hero-artiste-actions { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; justify-content: space-between; flex: 0 0 auto; }
+.hero-artiste-actions { grid-column: 3; grid-row: 1; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; min-width: 0; }
 .hero-artiste-actions .grp-actions,
 .hero-artiste-actions .grp-docs { display: flex; gap: var(--s2); flex-wrap: wrap; justify-content: flex-end; }
 .hero-artiste-actions .grp-docs-label { width: 100%; text-align: right; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--stone); margin-bottom: -2px; }
@@ -2697,6 +2791,15 @@ details.bloc.pliable > .bloc-corps {
 .menu-docs-pop button:hover { background: var(--soft-ivory); }
 .menu-docs-pop button:focus-visible { outline: 2px solid var(--warm-gold); outline-offset: -2px; }
 .menu-docs-sep { height: 1px; background: var(--mist); margin: 5px 4px; }
+/* Geste grave rangé dans un menu : en rouge, toujours en dernier. */
+.menu-docs-pop button.menu-danger { color: var(--erreur); }
+.menu-docs-pop button.menu-danger:hover { background: rgba(182, 66, 60, 0.07); }
+#menu-plus-pop { min-width: 260px; }
+/* Fiches client, vente, œuvre : les boutons sont alignés à GAUCHE (principal
+   en premier, « ⋯ » en dernier) ; le menu s'ouvre donc vers la droite, sans
+   passer sous la barre latérale. La fiche d'artiste, alignée à droite, garde
+   l'ouverture vers la gauche. */
+.zone-identite-actions .menu-docs-pop { left: 0; right: auto; }
 /* « Comparer avec le site » : chaque entrée dit ce qu'elle compare. */
 .menu-comparer-pop { min-width: 350px; }
 .menu-docs-pop button small { display: block; margin-top: 2px; font-size: 12px; color: var(--stone); }
@@ -2749,8 +2852,12 @@ details.bloc.pliable > .bloc-corps {
 @media (max-width: 1100px) {
   .contenu-artiste { grid-template-columns: 1fr; }
   .gestion-artiste { grid-template-columns: repeat(2, 1fr); }
-  .hero-artiste { flex-wrap: wrap; }
-  .hero-artiste-actions { align-items: flex-start; }
+  /* Fenêtre étroite : les boutons passent sous le nom, les chiffres dessous,
+     sur toute la largeur. */
+  .hero-artiste { grid-template-columns: 150px minmax(0, 1fr); grid-template-rows: auto auto auto; }
+  .hero-artiste-actions { grid-column: 2; grid-row: 2; align-items: flex-start; margin-top: 10px; }
+  .hero-artiste-actions .grp-actions { justify-content: flex-start; }
+  .hero-artiste-infos { grid-column: 1 / -1; grid-row: 3; }
 }
 
 /* --- Stats (2×2 mini-cartes à droite) --- */
@@ -3117,8 +3224,8 @@ details.bloc.pliable > .bloc-corps {
   color: var(--badge-disponible-texte);
 }
 .pastille-bento-warn {
-  background: var(--badge-reservee-fond);
-  color: var(--badge-reservee-texte);
+  background: var(--avertissement-fond);
+  color: var(--avertissement-texte);
 }
 
 /* Table des cotes — affichage complet dans la sous-section Cotes */
@@ -6127,7 +6234,7 @@ select.lot-in.st-pretee { color: var(--info); }
   flex-wrap: wrap;
   margin: 0 0 var(--s3);
   padding: 8px 14px;
-  border: 1px solid var(--badge-reservee-fond);
+  border: 1px solid var(--avertissement-fond);
   background: rgba(201, 154, 61, 0.09);
   border-radius: var(--r-btn);
   font-size: 13px;
@@ -6230,6 +6337,8 @@ select.lot-in.st-pretee { color: var(--info); }
 .wsync-statut-choix { font-size: 13px; color: var(--slate); display: inline-flex; align-items: center; gap: 8px; }
 .wsync-statut-select { padding: 6px 9px; border: 1px solid var(--mist); border-radius: 8px; font-family: var(--font-ui); font-size: 13.5px; background: var(--porcelain); color: var(--ink); }
 .wsync-statut-aide { font-size: 11.5px; color: var(--stone); margin: 8px 0 0; }
+/* Réservée encore en vente : ce n'est pas une aide, c'est LA chose à faire. */
+.wsync-statut-aide.consigne { font-size: 13px; color: var(--ink); }
 
 .wsync-details { margin: 16px 0 0; max-width: 860px; }
 .wsync-details summary { cursor: pointer; font-size: 13.5px; color: var(--slate); padding: 8px 0; }

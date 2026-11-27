@@ -68,6 +68,11 @@ export const STATUTS = {
   exposee:    { libelle: 'En exposition', classe: 'statut-exposee' },
 };
 
+// Comparaison avec le site : une œuvre réservée encore en vente là-bas. La
+// correction se fait SUR LE SITE (Galeria n'y écrit pas) — même phrase sur la
+// page Site web et dans la comparaison lancée depuis la fiche. HTML constant.
+export const CONSIGNE_RESERVEE = "Réservée dans Galeria, mais encore en vente sur le site : marquez-la <b>épuisée</b> sur le site le temps de la réservation.";
+
 // ===== Le cycle d'une vente, en deux groupes =====
 //
 // POUR LE CLIENT : paiement, emballage, envoi, livraison.
@@ -80,8 +85,11 @@ export const STATUTS = {
 // (sauf le paiement, qui a son propre statut). C'est ce qui permet à la page
 // Suivi de les traiter toutes pareil.
 //
-// Libellés de `google_retire` confirmés par Dave le 2026-09-11 (« c'est
-// correct »). Les changer ici suffit, partout.
+// Libellés de `google_retire` : « Retirée de Google » jusqu'à la 0.31.0, puis
+// « M.A.J. site » à la demande de Joanne (2026-11-25) — la tâche est de mettre
+// la fiche du site à jour, pas seulement la synchronisation Google. La clé
+// (et la colonne `google_retire_date`) ne change pas. Les changer ici suffit,
+// partout dans l'interface (le rapport imprimé a ses propres en-têtes).
 // `lbl` dit l'ÉTAT une fois fait ; `afaire` dit la TÂCHE tant qu'elle ne l'est
 // pas. Les deux sont nécessaires : « Inactive dans Sage » dans une liste de
 // choses à faire se lirait comme déjà fait.
@@ -89,9 +97,9 @@ export const ETAPES_GALERIE = [
   { cle: 'sage_inactif', lbl: 'Inactive dans Sage', attente: 'À désactiver',
     afaire: 'à désactiver dans Sage',
     quoi: "Rendre l'article inactif dans l'inventaire de Sage 50" },
-  { cle: 'google_retire', lbl: 'Retirée de Google', attente: 'À retirer',
-    afaire: 'à retirer de Google',
-    quoi: 'Retirer la synchronisation Google de la fiche, sur le site' },
+  { cle: 'google_retire', lbl: 'M.A.J. site', attente: 'À faire',
+    afaire: 'site à mettre à jour',
+    quoi: 'Mettre la fiche à jour sur le site (vendue, synchronisation Google retirée)' },
   { cle: 'artiste_paye', lbl: 'Artiste payé', attente: 'À payer',
     afaire: 'artiste à payer',
     quoi: "Le versement de sa part lui a été fait" },
@@ -528,6 +536,74 @@ export function badgeArchive() {
 export function boutonArchive({ archive }) {
   const libelle = archive ? 'Désarchiver' : 'Archiver';
   return `<button class="btn-action" id="btn-archiver">${libelle}</button>`;
+}
+
+// ===== Boutons d'en-tête de fiche : hiérarchie (2026-11-27) =====
+//
+// Règle choisie par Dave (demos/artiste-actions.html, variante B) : UN bouton
+// principal ; les gestes occasionnels en boutons discrets (icône + mot) ; les
+// gestes rares et graves (archiver, supprimer) rangés dans « ⋯ », Supprimer en
+// rouge et en dernier. Une fiche archivée garde « Désarchiver » dans la barre.
+
+export const ICO_DOCUMENT = '<svg class="ico-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+export const ICO_SITE = '<svg class="ico-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+export const ICO_MODIFIER = '<svg class="ico-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+export const ICO_RESERVER = '<svg class="ico-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+const ICO_PLUS = '<svg class="ico-btn" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>';
+
+// Une entrée de menu : un libellé, et dessous ce que fait le geste.
+export function entreeMenu({ id, libelle, aide, danger = false }) {
+  return `<button type="button" role="menuitem" id="${id}"${danger ? ' class="menu-danger"' : ''}>${ech(libelle)}${aide ? `<small>${ech(aide)}</small>` : ''}</button>`;
+}
+
+// Le bouton « ⋯ » et son menu. `entrees` : HTML d'entrées (entreeMenu),
+// séparées au besoin par <div class="menu-docs-sep"></div>.
+export function menuPlus(entrees) {
+  return `<div class="menu-docs" id="menu-plus">
+      <button class="btn-action btn-discret btn-plus" id="btn-menu-plus" aria-haspopup="menu" aria-expanded="false" title="Plus d'actions" aria-label="Plus d'actions">${ICO_PLUS}</button>
+      <div class="menu-docs-pop" id="menu-plus-pop" role="menu" hidden>${entrees}</div>
+    </div>`;
+}
+
+// Menus déroulants d'un en-tête : ouverture, fermeture, accessibilité. Un seul
+// ouvert à la fois dans un même groupe. Usage :
+//   const brancherMenu = groupeMenus(contenu);
+//   brancherMenu(bouton, pop, { aLOuverture });
+// Les écouteurs sont posés sur `contenu`, donc retirés avec la vue.
+export function groupeMenus(contenu) {
+  const fermetures = [];
+  return function brancherMenu(menuBtn, menuPop, { aLOuverture } = {}) {
+    if (!menuBtn || !menuPop) return;
+    const fermerMenu = () => {
+      menuPop.hidden = true;
+      menuBtn.setAttribute('aria-expanded', 'false');
+    };
+    fermetures.push(fermerMenu);
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const ouvert = !menuPop.hidden;
+      fermetures.forEach((f) => f());
+      if (ouvert) return;
+      menuPop.hidden = false;
+      menuBtn.setAttribute('aria-expanded', 'true');
+      if (aLOuverture) aLOuverture();
+      // Le premier élément de MENU, pas le premier bouton — une bascule de
+      // réglage en tête de menu (langue des documents) ne prend pas le focus.
+      const premier = menuPop.querySelector('[role="menuitem"]');
+      if (premier) premier.focus();
+    });
+    // Un clic sur une entrée déclenche son propre handler, puis referme. Une
+    // bascule de réglage (.bascule-langue) n'est pas une entrée : elle ne
+    // ferme rien, sinon on ne pourrait jamais la changer.
+    menuPop.addEventListener('click', (e) => {
+      if (e.target.closest('.bascule-langue')) return;
+      if (e.target.closest('button')) fermerMenu();
+    });
+    contenu.addEventListener('click', () => { if (!menuPop.hidden) fermerMenu(); });
+    contenu.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !menuPop.hidden) { fermerMenu(); menuBtn.focus(); }
+    });
+  };
 }
 
 export async function basculerArchive({ table, fiche, libelleFiche, confirmer, surFait }) {

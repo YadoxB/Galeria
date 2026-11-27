@@ -1,7 +1,7 @@
 # État du projet Galeria — Sauvegarde de session
 
 > Document à lire en début de nouvelle conversation, après `CLAUDE.md`, pour reprendre le projet là où il en est.
-> Date de cette sauvegarde : 2026-11-12 (**0.31.0 publiée le 2026-11-12** : la cote « prix fixe » (n° 5) ; le portable (n° 4) est mis de côté par Dave).
+> Date de cette sauvegarde : 2026-11-27 (**0.31.0 publiée le 2026-11-12** ; la demande n° 6 de Joanne — réservée en rouge, « M.A.J. site » — est codée, vérifiée et commitée dans la branche `claude/galeria-nouvelle-demande-294e6c`, **à publier en 0.32.0**).
 >
 > **Tableau de bord du chantier** (signalements des parents + étapes restantes) :
 > <https://claude.ai/artifact/2fBkxU3MEnkZwQHj5Vv2Kz>. Les signalements y arrivent seuls
@@ -17,7 +17,8 @@
 **✅ Dernière version PUBLIÉE : v0.31.0 (2026-11-12).** Tag `v0.31.0` = `20ee907`, suivi du
 seul commit de documentation qui écrit ces lignes. Publiée sur GitHub Releases avec `latest.yml`
 — auto-update actif ; le paquet construit a été comparé au tag (89 fichiers, aucun écart).
-**Rien n'est en attente de publication.** Une diapo attend les parents à l'ouverture, plus
+**En attente de publication : la demande n° 6 (0.32.0)**, dans la branche
+`claude/galeria-nouvelle-demande-294e6c` ; son « Quoi de neuf » est déjà écrit. Une diapo attend les parents à l'ouverture, plus
 celles des versions qu'ils n'ont pas encore ouvertes. Depuis un worktree,
 `npm --prefix F:/Galerie/Automatisation/GalerieApp run release` lance la publication dans le dossier
 principal, le seul qui a `node_modules`, sur `master` déjà avancé et poussé.
@@ -34,6 +35,46 @@ demande a son étape. La n° 5 est publiée dans la 0.31.0 ; la n° 4 est mise d
 | 3 | **Suivi : demander avant de classer** un item terminé (30 oct.) — **publié, 0.30.0** (`demos/suivi-classer.html`) | Claude | Fait |
 | 4 | **Galeria sur plusieurs ordinateurs ?** (8 oct.) — **mise de côté par Dave le 12 nov.** | Dave | Recommandation laissée : Galeria seulement sur le portable |
 | 5 | **Cote « prix fixe »** (1er nov., fiche de Pamela Comeau) — **publiée, 0.31.0** (`demos/cote-fixe.html`) | Claude | Fait |
+| 6 | **Réservée en rouge, vendues repérables, « M.A.J. site »** (Joanne, 25 nov.) — **codée le 27 nov., à publier en 0.32.0** (`demos/pastille-reservee.html`, `demos/oeuvres-vendues.html`) | Dave | Essayer, puis publier |
+
+**6. Réservée en rouge — ce qui est fait (2026-11-27, branche `claude/galeria-nouvelle-demande-294e6c`) :**
+
+- **Pastilles** : variante B de Dave. Réservée en rouge clair (`#F7C6C3` / `#900001`), Vendue en gris
+  chaud. L'ancien beige reste pour ce qui avertit sans parler de réservation (`--avertissement-*` :
+  tâche Sage de la fiche d'œuvre, bandeau « Annuler » du site web).
+- **Vendues sur la page Œuvres** : variante 3 de Dave. Le bas de la carte se grise et la pastille
+  devient pleine, en grille comme en liste. **La photo ne change jamais** : la mère de Dave se sert
+  de la page pour montrer le travail d'un artiste. Le pied de carte est poussé en bas.
+- **Comparaison avec le site** (`comparerSiteEtApp`, `main.js`) : réservée + en stock = écart
+  (jeton `reservee-en-vente`, consigne « marquez-la épuisée sur le site », pas de changement de
+  statut proposé) ; réservée + épuisée = en ordre (avant : on proposait « Vendue »). « Réservée »
+  retirée du choix de statut de la comparaison (une réservation demande un client).
+- **« Retirée de Google » → « M.A.J. site »** (`ETAPES_GALERIE`, tuile du Suivi, rapport, aide,
+  tutoriel). Clé et colonne `google_retire` inchangées.
+- **Vérifié** dans la vraie app isolée (copie de la base de Dave, deux œuvres passées réservées, une
+  vente fictive, faux site local) : grille, liste, Suivi, fiche de vente, accueil, fiche d'artiste,
+  comparaison page et fiche. Fonction de comparaison : 9 contrôles, 0 échec ; l'ancien code en
+  échoue 3. ⚠ **Pas essayé** contre la vraie boutique ni sur la base des parents.
+- **En-tête de la fiche d'artiste refait** dans la foulée (Dave, variante A de
+  `demos/artiste-entete.html`) : deux groupes « À la galerie » / « Historique », chiffres
+  cliquables vers la page Œuvres filtrée (`params.statut`, `params.retirees`), « En exposition » en
+  violet (jetons `--badge-exposee-*`). Vérifié au banc : clics réservées → 2 œuvres « Filtres :
+  Réservée » ; retirée → 1 œuvre, « Retirées seulement » décochable ; zéros grisés et inertes ;
+  quatre largeurs (1024, 1180, 1300, 1600 px), sans débordement de la carte. ⚠ Vu au banc à 1180 px,
+  **sans lien avec ce changement** : le bloc « Aperçu du catalogue » sous l'en-tête dépasse à droite
+  (barre de défilement horizontale).
+- **Boutons de la fiche d'artiste hiérarchisés** (Dave, variante B de `demos/artiste-actions.html` ;
+  ⚠ `demos/artiste-boutons.html` est la démo de JUILLET sur le menu Documents, ne pas l'écraser) :
+  Modifier seul en avant, Documents et Comparer en `.btn-discret`, Archiver/Supprimer dans « ⋯ ».
+  Vérifié au banc : Supprimer refusé avec son message (53 œuvres), Archiver → « Désarchiver » dans
+  la barre et « ⋯ » ne garde que Supprimer, un seul menu ouvert à la fois, Échap referme.
+- **Même règle étendue aux fiches client, vente et œuvre** (Dave ; œuvre = variante 2 de
+  `demos/oeuvre-actions.html`), menu « ⋯ » partagé dans `commun.js`, et **confirmation avant
+  Vendre / Enregistrer la vente** avec la sortie « Modifier la fiche ». Vérifié au banc : les cinq
+  états d'une œuvre (disponible, réservée, vendue à saisir, vendue, retirée), les trois réponses de
+  la confirmation, les refus/confirmations de suppression client et vente, archiver/désarchiver un
+  client. ⚠ Une œuvre retirée n'offre plus « Vendre » (changement de comportement, signalé à Dave).
+  Pas touchée : la fiche d'exposition (« Modifier les informations » + Supprimer rouge).
 
 **1. Cadrage vertical — diagnostic refait au banc le 2026-10-30** (le précédent, tiré de la
 seule lecture du code, passait à côté de l'essentiel) :

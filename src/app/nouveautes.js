@@ -17,6 +17,27 @@
 // La plus récente EN PREMIER.
 export const VERSIONS = [
   {
+    version: '0.32.0',
+    diapos: [
+      {
+        titre: 'Réservée en rouge, vendue d’un coup d’œil',
+        texte: "La pastille <b>Réservée</b> est maintenant <b>rouge</b>&nbsp;: une œuvre mise de côté saute aux yeux. <b>Vendue</b> passe au gris, et sur la page Œuvres, le bas de la carte d'une œuvre vendue est grisé. La photo, elle, ne change pas&nbsp;: les toiles gardent leurs couleurs pour les montrer.",
+      },
+      {
+        titre: 'La fiche d’un artiste, plus claire',
+        texte: "Sous le nom de l'artiste, les chiffres sont rangés en deux groupes&nbsp;: <b>À la galerie</b> (les disponibles en grand, les réservées, celles en exposition) et <b>Historique</b> (vendues, retirées). <b>Cliquez un chiffre</b>&nbsp;: Galeria ouvre les œuvres de l'artiste dans ce statut.",
+      },
+      {
+        titre: 'Des boutons plus calmes sur les fiches',
+        texte: "Sur les fiches d'artiste, d'œuvre, de client et de vente, <b>un seul bouton est en or</b>&nbsp;: Modifier, ou <b>Vendre</b> sur une œuvre à vendre. Les autres sont plus discrets, et <b>Archiver, Retirer et Supprimer</b> sont rangés dans le bouton <b>⋯</b>. Avant d'ouvrir une vente, Galeria demande confirmation et vous propose <b>Modifier la fiche</b> si c'était plutôt pour changer un prix ou un titre.",
+      },
+      {
+        titre: 'Les réservées dans la comparaison avec le site',
+        texte: "Une œuvre <b>réservée</b> encore en vente sur le site ressort maintenant dans <b>Site web → Comparer</b>&nbsp;: marquez-la <b>épuisée</b> sur le site le temps de la réservation. Et dans le Suivi, l'étape «&nbsp;Retirée de Google&nbsp;» s'appelle maintenant <b>M.A.J. site</b>.",
+      },
+    ],
+  },
+  {
     version: '0.31.0',
     diapos: [
       {

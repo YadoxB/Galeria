@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — Pastille « Réservée » en rouge</title>
+<style>
+  :root{--soft-ivory:#FCFAF4;--porcelain:#FFFFFF;--warm-gold:#C99A3D;--deep-navy:#1f2d3d;
+    --ink:#111827;--slate:#5D6875;--stone:#A79E91;--mist:#D8D2C8;--cloud:#EFE8DE;--succes:#4F8A5B;--erreur:#B6423C;
+    --font-titre:'Cormorant Garamond',Georgia,serif;--font-ui:'Inter',system-ui,sans-serif;--ombre-carte:0 4px 14px rgba(7,26,47,.06);
+    --badge-disponible-fond:#D5E4D0;--badge-disponible-texte:#3F6E37;
+    --badge-reservee-fond:#F1E1B8;--badge-reservee-texte:#735718;
+    --badge-vendue-fond:#F2D5D0;--badge-vendue-texte:#7C2823;}
+  *{box-sizing:border-box;} body{margin:0;background:var(--soft-ivory);font-family:var(--font-ui);color:var(--ink);padding:28px;}
+  h1{font-family:var(--font-titre);font-weight:600;font-size:28px;margin:0 0 2px;}
+  h2{font-family:var(--font-titre);font-weight:600;font-size:22px;margin:34px 0 4px;}
+  .sous-titre{color:var(--slate);font-size:13.5px;margin:4px 0 16px;max-width:760px;}
+  .demo-note{max-width:900px;font-size:13px;color:var(--slate);background:#fff8e8;border:1px solid #e8d9a8;border-radius:10px;padding:10px 13px;margin:0 0 18px;}
+  .demo-note strong{color:var(--ink);}
+
+  .variantes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;max-width:1100px;}
+  .variante{background:var(--porcelain);border:1px solid var(--mist);border-radius:14px;padding:14px 16px;box-shadow:var(--ombre-carte);}
+  .variante.choisie{outline:2px solid var(--warm-gold);}
+  .variante h3{margin:0 0 2px;font-size:14px;}
+  .variante .exp{margin:0 0 12px;font-size:12.5px;color:var(--slate);min-height:34px;}
+  .rangee-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+
+  .badge-statut{display:inline-block;padding:.18rem .6rem;border-radius:999px;font-size:.8rem;font-weight:600;white-space:nowrap;letter-spacing:.02em;}
+  .statut-disponible{background:var(--badge-disponible-fond);color:var(--badge-disponible-texte);}
+  .statut-reserve{background:var(--badge-reservee-fond);color:var(--badge-reservee-texte);}
+  .statut-vendu{background:var(--badge-vendue-fond);color:var(--badge-vendue-texte);}
+  /* Variante A : rouge plein de la galerie, Vendue inchangée */
+  .v-a .statut-reserve{background:#900001;color:#fff;}
+  /* Variante B : rouge clair ; Vendue passe au gris pour ne pas se confondre */
+  .v-b .statut-reserve{background:#F7C6C3;color:#900001;}
+  .v-b .statut-vendu{background:#E7E3DD;color:#6B6258;}
+
+  .liste{border-top:1px solid var(--mist);}
+  .ligne{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--cloud);}
+  .vign{width:38px;height:38px;border-radius:6px;flex-shrink:0;}
+  .ligne .t{flex:1;min-width:0;}
+  .ligne .t b{display:block;font-family:var(--font-titre);font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ligne .t span{font-size:11.5px;color:var(--slate);}
+
+  /* Comparaison avec le site */
+  .wsync-carte{background:var(--porcelain);border:1px solid var(--mist);border-radius:14px;padding:14px 16px;box-shadow:var(--ombre-carte);max-width:760px;}
+  .wsync-tete{padding-bottom:10px;border-bottom:1px solid var(--mist);margin-bottom:12px;}
+  .wsync-sku{font-size:12px;font-weight:700;color:var(--warm-gold);letter-spacing:.03em;margin-right:8px;}
+  .wsync-titre{font-family:var(--font-titre);font-size:18px;}
+  .wsync-artiste{font-size:12.5px;color:var(--slate);margin-left:8px;}
+  .wsync-lib{font-size:12px;font-weight:600;color:var(--slate);margin-bottom:6px;}
+  .wsync-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .wsync-col{background:var(--soft-ivory);border:1px solid var(--cloud);border-radius:10px;padding:8px 10px;}
+  .wsync-col.site{background:#f6f8fb;}
+  .wsync-et{display:block;font-size:11px;color:var(--slate);margin-bottom:4px;}
+  .wsync-actions{display:flex;align-items:center;gap:14px;margin-top:10px;flex-wrap:wrap;}
+  .wsync-consigne{font-size:13px;color:var(--ink);margin:10px 0 0;}
+  .btn-lien{background:none;border:none;color:var(--warm-gold);cursor:pointer;font-size:13px;font-family:var(--font-ui);padding:0;}
+
+  /* Suivi : tâches côté galerie */
+  .suivi-carte{background:var(--porcelain);border:1px solid var(--mist);border-radius:14px;padding:14px 16px;box-shadow:var(--ombre-carte);max-width:760px;}
+  .etapes{display:flex;gap:8px;flex-wrap:wrap;}
+  .etape{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px solid var(--mist);font-size:12.5px;color:var(--slate);background:var(--porcelain);}
+  .etape.fait{background:var(--badge-disponible-fond);color:var(--badge-disponible-texte);border-color:transparent;}
+  .etape.nouveau{outline:2px dashed var(--warm-gold);outline-offset:2px;}
+  .avant{text-decoration:line-through;color:var(--stone);font-size:12px;margin-left:10px;}
+</style>
+</head>
+<body>
+<h1>Pastille « Réservée » en rouge</h1>
+<p class="sous-titre">Demande de Joanne (25 novembre, Galeria 0.31.0) : une œuvre réservée doit sauter aux yeux, ressortir dans la comparaison avec le site, et la pastille « Retirée de Google » du suivi devient « M.A.J. site ».</p>
+<div class="demo-note"><strong>À choisir :</strong> « Vendue » est déjà rosée. Si « Réservée » devient rouge, il faut qu'elles ne se confondent pas. <strong>A</strong> garde Vendue telle quelle et met Réservée en rouge plein ; <strong>B</strong> met Réservée en rouge clair et fait passer Vendue au gris.</div>
+
+<div class="variantes">
+  <div class="variante">
+    <h3>Aujourd'hui</h3>
+    <p class="exp">Réservée en beige doré : discrète, presque comme un fond.</p>
+    <div class="rangee-badges"><span class="badge-statut statut-disponible">Disponible</span><span class="badge-statut statut-reserve">Réservée</span><span class="badge-statut statut-vendu">Vendue</span></div>
+    <div class="liste" data-liste></div>
+  </div>
+  <div class="variante v-a choisie">
+    <h3>A — Rouge plein (recommandé)</h3>
+    <p class="exp">Le rouge de la galerie, lettres blanches. Vendue ne bouge pas : les habitudes restent.</p>
+    <div class="rangee-badges"><span class="badge-statut statut-disponible">Disponible</span><span class="badge-statut statut-reserve">Réservée</span><span class="badge-statut statut-vendu">Vendue</span></div>
+    <div class="liste" data-liste></div>
+  </div>
+  <div class="variante v-b">
+    <h3>B — Rouge clair, Vendue en gris</h3>
+    <p class="exp">Plus doux, mais Vendue change de couleur partout dans l'app.</p>
+    <div class="rangee-badges"><span class="badge-statut statut-disponible">Disponible</span><span class="badge-statut statut-reserve">Réservée</span><span class="badge-statut statut-vendu">Vendue</span></div>
+    <div class="liste" data-liste></div>
+  </div>
+</div>
+
+<h2>Dans la comparaison avec le site</h2>
+<p class="sous-titre">Une œuvre réservée dans Galeria mais encore « en vente » sur le site ressort maintenant comme un écart. La correction se fait sur le site : Galeria ne propose pas de changer le statut (une réservation se libère par sa carte, sur la fiche).</p>
+<div class="wsync-carte v-a">
+  <div class="wsync-tete"><span class="wsync-sku">LAV-042</span><span class="wsync-titre">Lumière d'octobre</span><span class="wsync-artiste">Claire Lavoie</span></div>
+  <div class="wsync-lib">Statut</div>
+  <div class="wsync-cols">
+    <div class="wsync-col"><span class="wsync-et">Dans l'app</span><span class="badge-statut statut-reserve">Réservée</span></div>
+    <div class="wsync-col site"><span class="wsync-et">Sur le site</span>En vente / en stock</div>
+  </div>
+  <p class="wsync-consigne">À faire sur le site : la marquer <b>épuisée</b> le temps de la réservation.</p>
+  <div class="wsync-actions"><button class="btn-lien">Garder la version de l'app</button></div>
+</div>
+<p class="sous-titre" style="margin-top:10px">Et l'inverse : une œuvre réservée déjà marquée « épuisée » sur le site n'est plus signalée (aujourd'hui, Galeria proposait à tort de la passer à « Vendue »).</p>
+
+<h2>Dans le suivi des ventes</h2>
+<div class="suivi-carte">
+  <div class="wsync-lib">Côté galerie</div>
+  <div class="etapes">
+    <span class="etape fait">Inactive dans Sage</span>
+    <span class="etape nouveau">M.A.J. site</span><span class="avant">Retirée de Google</span>
+    <span class="etape">Artiste payé</span>
+  </div>
+  <p class="sous-titre" style="margin:10px 0 0">La tuile du haut suit : « Site à mettre à jour » au lieu de « À retirer de Google ». Même chose dans le rapport imprimé (colonne « Site »).</p>
+</div>
+
+<script>
+  const oeuvres = [
+    ['Lumière d\'octobre', 'Claire Lavoie · LAV-042', 'reserve', 'Réservée', '#c9b48a'],
+    ['Le quai au matin', 'Marc Dubé · DUB-017', 'disponible', 'Disponible', '#8aa3b8'],
+    ['Rivière Richelieu', 'Marc Dubé · DUB-009', 'vendu', 'Vendue', '#a8957a'],
+    ['Champs d\'hiver', 'Claire Lavoie · LAV-038', 'disponible', 'Disponible', '#b9c2c9'],
+    ['Nocturne', 'Claire Lavoie · LAV-040', 'reserve', 'Réservée', '#545a6b'],
+  ];
+  document.querySelectorAll('[data-liste]').forEach((el) => {
+    el.innerHTML = oeuvres.map(([t, s, k, l, c]) =>
+      `<div class="ligne"><div class="vign" style="background:${c}"></div><div class="t"><b>${t}</b><span>${s}</span></div><span class="badge-statut statut-${k}">${l}</span></div>`).join('');
+  });
+</script>
+</body>
+</html>

@@ -11,6 +11,56 @@
 
 ---
 
+## Réservée en rouge, vendue d'un coup d'œil
+
+- La pastille **Réservée** est maintenant **rouge** : une œuvre mise de côté saute aux yeux.
+- **Vendue** passe au gris. Sur la page **Œuvres**, le bas de la carte d'une œuvre vendue est
+  grisé, et sa pastille est foncée. La **photo ne change pas** : les toiles gardent leurs
+  couleurs quand vous les montrez.
+- La pastille tombe toujours au bas de la carte, même quand il n'y a pas de prix : on la
+  retrouve au même endroit d'une œuvre à l'autre.
+
+## La fiche d'un artiste, plus claire
+
+Les chiffres sous le nom de l'artiste formaient un gros bloc de cases toutes pareilles. Ils sont
+maintenant rangés en deux groupes :
+
+- **À la galerie** : les **disponibles** en grand, les **réservées** en rouge, celles **en
+  exposition** en violet. Dessous, la valeur des disponibles, toujours cachée jusqu'au clic.
+- **Historique**, plus discret : les œuvres **vendues** (avec le nombre de ventes saisies dans
+  Galeria) et celles **retirées** du catalogue.
+- **Cliquez un chiffre** : Galeria ouvre la page Œuvres avec les œuvres de l'artiste dans ce
+  statut. Un chiffre à zéro reste à sa place, en gris.
+## Des boutons plus calmes sur les fiches
+
+Sur les fiches d'**artiste**, d'**œuvre**, de **client** et de **vente**, les boutons du haut
+avaient tous le même poids — et c'était **Supprimer**, encadré de rouge, qui attirait l'œil.
+
+- **Un seul bouton en or** : **Modifier**, ou sur une œuvre, **Vendre** quand elle est à vendre
+  (**Enregistrer la vente** quand elle est marquée vendue sans vente saisie).
+- Les autres gestes (Documents, Comparer avec le site, Réserver…) deviennent plus discrets : une
+  petite icône et un mot.
+- **Archiver**, **Retirer du catalogue** et **Supprimer** sont rangés dans le bouton **⋯**.
+  Supprimer, en rouge tout en bas, demande toujours confirmation.
+- Une fiche archivée ou une œuvre retirée garde **Désarchiver** / **Réintégrer** bien en vue.
+- **Pas de vente par erreur** : en cliquant **Vendre**, Galeria demande d'abord « Vendre cette
+  œuvre ? » et propose **Modifier la fiche** si c'était plutôt pour changer un prix ou un titre.
+
+## Les réservées dans la comparaison avec le site
+
+- Une œuvre **réservée** encore en vente sur le site ressort maintenant dans **Site web →
+  Comparer**. Marquez-la **épuisée** sur le site le temps de la réservation.
+- Une réservée déjà épuisée sur le site est en ordre : Galeria ne propose plus, par erreur,
+  de la passer à « Vendue ».
+
+## « M.A.J. site » dans le Suivi
+
+L'étape « Retirée de Google » du suivi des ventes s'appelle maintenant **M.A.J. site** :
+mettre la fiche à jour sur le site une fois l'œuvre vendue. La tuile du haut dit « Site à
+mettre à jour ».
+
+---
+
 ## Une cote « Prix fixe » pour les artistes qui donnent leur prix
 
 Certains artistes vous donnent leur prix œuvre par œuvre, sans tarif au pouce. Leur fiche peut

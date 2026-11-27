@@ -102,7 +102,13 @@ function choisirArtiste(listeArtistes) {
 }
 
 export async function rendreOeuvresListe(contenu, params = {}) {
-  let inclureArchives = lirePref(CLE_PREF_ARCHIVES, '0') === '1';
+  // `params.statut` / `params.retirees` : arrivée depuis un chiffre de la
+  // fiche d'artiste (« 2 réservées », « 3 retirées du catalogue »…). Le
+  // filtre est posé comme si on l'avait coché, et s'enlève de la même façon.
+  // « Retirées seulement » montre les retirées sans changer la préférence
+  // « Inclure les retirées » de la page.
+  let seulementRetirees = !!params.retirees;
+  let inclureArchives = seulementRetirees || lirePref(CLE_PREF_ARCHIVES, '0') === '1';
   const filtres = { inclureArchives };
   if (params.artiste_id != null) filtres.artiste_id = params.artiste_id;
 
@@ -204,7 +210,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
   `;
 
   // État des filtres
-  let statutsActifs = [];
+  let statutsActifs = params.statut && STATUTS[params.statut] ? [params.statut] : [];
   let artisteIdFiltre = '';
   let typeFiltre = '';
   let formatsActifs = [];
@@ -319,6 +325,11 @@ export async function rendreOeuvresListe(contenu, params = {}) {
           <input type="checkbox" id="panneau-case-archives" ${inclureArchives ? 'checked' : ''}>
           <span>Inclure les retirées</span>
         </label>
+        ${seulementRetirees ? `
+          <label class="case-archives" id="ligne-seulement-retirees">
+            <input type="checkbox" id="panneau-case-seulement-retirees" checked>
+            <span>Retirées seulement</span>
+          </label>` : ''}
       </div>
     `;
     contenu.querySelector('.controles-vue-droite').appendChild(panneauFiltres);
@@ -349,9 +360,29 @@ export async function rendreOeuvresListe(contenu, params = {}) {
     if (panneauArchives) panneauArchives.addEventListener('change', async () => {
       inclureArchives = panneauArchives.checked;
       ecrirePref(CLE_PREF_ARCHIVES, inclureArchives ? '1' : '0');
+      // Sans les retirées, « retirées seulement » ne laisserait rien.
+      if (!inclureArchives && seulementRetirees) {
+        seulementRetirees = false;
+        panneauFiltres.querySelector('#ligne-seulement-retirees')?.remove();
+      }
       const filtresMaj = { inclureArchives };
       if (params.artiste_id != null) filtresMaj.artiste_id = params.artiste_id;
       oeuvres = await window.api.oeuvresListe(filtresMaj);
+      dessiner();
+    });
+    const caseSeulement = panneauFiltres.querySelector('#panneau-case-seulement-retirees');
+    if (caseSeulement) caseSeulement.addEventListener('change', async () => {
+      // Décoché : on revient à la page telle que la préférence la règle.
+      seulementRetirees = false;
+      panneauFiltres.querySelector('#ligne-seulement-retirees')?.remove();
+      const pref = lirePref(CLE_PREF_ARCHIVES, '0') === '1';
+      if (pref !== inclureArchives) {
+        inclureArchives = pref;
+        if (panneauArchives) panneauArchives.checked = pref;
+        const filtresMaj = { inclureArchives };
+        if (params.artiste_id != null) filtresMaj.artiste_id = params.artiste_id;
+        oeuvres = await window.api.oeuvresListe(filtresMaj);
+      }
       dessiner();
     });
 
@@ -468,7 +499,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
 
   function carteGrille(o) {
     return `
-      <article class="oeuvre-carte${o.archive ? ' carte-archivee' : ''}" data-id="${o.id}">
+      <article class="oeuvre-carte${o.archive ? ' carte-archivee' : ''}${o.statut === 'vendu' ? ' est-vendue' : ''}" data-id="${o.id}">
         <div class="oeuvre-carte-image">
           ${o.image_path
             ? `<img src="${urlPhoto(o.image_path)}" loading="lazy" alt="">`
@@ -493,7 +524,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
 
   function ligneListe(o) {
     return `
-      <button class="ligne-liste ligne-oeuvre${o.archive ? ' ligne-archivee' : ''}" data-id="${o.id}">
+      <button class="ligne-liste ligne-oeuvre${o.archive ? ' ligne-archivee' : ''}${o.statut === 'vendu' ? ' est-vendue' : ''}" data-id="${o.id}">
         ${o.image_path
           ? `<div class="vignette avec-photo"><img src="${urlPhoto(o.image_path)}" loading="lazy" alt=""></div>`
           : `<div class="vignette"><span>&#9635;</span></div>`}
@@ -651,7 +682,8 @@ export async function rendreOeuvresListe(contenu, params = {}) {
     if (formatsActifs.length) bouts.push(formatsActifs.join(', '));
     if (stylesActifs.length) bouts.push(stylesActifs.join(', '));
     if (motRecherche) bouts.push('recherche en cours');
-    if (inclureArchives) bouts.push('retirées incluses');
+    if (seulementRetirees) bouts.push('retirées seulement');
+    else if (inclureArchives) bouts.push('retirées incluses');
     return bouts.length ? `Filtres : ${bouts.join(' · ')}` : '';
   }
 
@@ -659,8 +691,8 @@ export async function rendreOeuvresListe(contenu, params = {}) {
     const compte = (statut) => liste.filter((o) => o.statut === statut && !o.archive).length;
     elStatAffichees.textContent = liste.length;
     elStatDispo.textContent = compte('disponible');
-    // Rouge seulement quand il y en a : c'est un état temporaire, pas un total
-    // — même convention que sur la fiche d'un artiste.
+    // En couleur (violet, celui de sa pastille) seulement quand il y en a :
+    // c'est un état temporaire, pas un total.
     const nbExpo = compte('exposee');
     elStatExpo.textContent = nbExpo;
     elStatExpo.classList.toggle('expo', nbExpo > 0);
@@ -677,6 +709,7 @@ export async function rendreOeuvresListe(contenu, params = {}) {
 
     const filtres = oeuvres.filter((o) => {
       if (statutsActifs.length > 0 && !statutsActifs.includes(o.statut)) return false;
+      if (seulementRetirees && !o.archive) return false;
       if (artisteIdFiltre && String(o.artiste_id) !== artisteIdFiltre) return false;
       if (typeFiltre && o.type !== typeFiltre) return false;
       if (formatsActifs.length > 0 && !formatsActifs.includes(o.format)) return false;

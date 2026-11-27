@@ -334,7 +334,7 @@ export async function rendreSuivi(contenu) {
         <p class="titre-g">Côté galerie</p>
         <div class="suivi-files">
           ${tuile('sage', ICO.sageInactif, cs.filter((v) => !v.sage_inactif_date).length, 'À désactiver dans Sage')}
-          ${tuile('site', ICO.google, cs.filter((v) => !v.google_retire_date).length, 'À retirer de Google')}
+          ${tuile('site', ICO.google, cs.filter((v) => !v.google_retire_date).length, 'Site à mettre à jour')}
           ${tuile('artistes', ICO.artiste, cs.filter((v) => !v.artiste_paye_date).length, 'Artistes à payer')}
         </div>
       </div>`;

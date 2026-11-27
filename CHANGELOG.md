@@ -10,6 +10,67 @@ identifiants.
 
 ## [Non publié]
 
+### Modifié
+
+- **Pastille « Réservée » en rouge, « Vendue » en gris** (signalement de Joanne du 2026-11-25,
+  variante B choisie par Dave). Les jetons `--badge-reservee-*` passent au rouge clair / rouge de
+  la galerie, `--badge-vendue-*` au gris chaud. L'ancien beige, qui servait aussi à avertir sans
+  parler de réservation (tâche Sage de la fiche d'œuvre, bandeau « Annuler » du site web), vit
+  désormais dans `--avertissement-*`. Maquette : `demos/pastille-reservee.html`.
+- **Les œuvres vendues se repèrent sur la page Œuvres** (demande de Dave, variante 3) : le bas de
+  la carte se grise et sa pastille devient pleine, en grille comme en liste. La photo ne change
+  jamais : la page sert à montrer le travail d'un artiste. Le pied de carte est poussé en bas,
+  pour que la pastille tombe au même endroit avec ou sans prix. Maquette :
+  `demos/oeuvres-vendues.html`.
+- **En-tête de la fiche d'artiste en deux groupes** (demande de Dave, variante A de
+  `demos/artiste-entete.html`). Les huit cases pareilles, tassées en trois rangées par les boutons,
+  deviennent « À la galerie » (disponibles en grand, réservées en rouge, en exposition en violet,
+  valeur masquée dessous) et « Historique » (vendues + ventes saisies, retirées), sur toute la
+  largeur de la carte (`.hero-artiste` passe en grille). Chaque chiffre est un bouton qui ouvre la
+  page Œuvres de l'artiste filtrée sur ce statut ; à zéro, il reste en place, grisé et inerte. La
+  page Œuvres accepte donc `statut` et `retirees` en paramètres (« Retirées seulement », décochable
+  dans Filtres, sans toucher la préférence « Inclure les retirées »). « Au catalogue » et la
+  mention « N œuvres disponibles » de la ligne sous le nom disparaissent (doublons). Quand la place
+  manque, l'historique passe sous « À la galerie » (requête de conteneur). Les deux groupes
+  partagent les mêmes rangées (`.hero-infos-grille`, groupes en `display: contents`, alignement
+  sur la ligne de base) : « 30 disponibles » et « 20 vendues », puis la valeur et « retirées »,
+  tombent sur la même ligne.
+- **Boutons de la fiche d'artiste hiérarchisés** (demande de Dave, variante B de
+  `demos/artiste-actions.html`). Modifier seul en avant ; Documents et Comparer avec le site en
+  boutons discrets (`.btn-discret` : icône + mot, sans cadre) ; Archiver et Supprimer rangés dans
+  un menu « ⋯ » (`#menu-plus-pop`), Supprimer en rouge et en dernier (`.menu-danger`), avec une
+  ligne qui dit ce que fait chaque geste. Supprimer, encadré de rouge, était le bouton le plus
+  voyant. Une fiche archivée garde « Désarchiver » dans la barre. Les identifiants `#btn-archiver`
+  et `#btn-supprimer` ne changent pas : leurs écouteurs sont les mêmes.
+- **Même règle sur les fiches client, vente et œuvre.** Le menu « ⋯ » est partagé
+  (`menuPlus`, `entreeMenu`, `groupeMenus` dans `commun.js` ; la fiche d'artiste l'utilise aussi).
+  Sur ces fiches, alignées à gauche, le bouton principal vient en premier et le menu s'ouvre vers
+  la droite (il passait sous la barre latérale). Fiche d'œuvre (variante 2 de
+  `demos/oeuvre-actions.html`) : un seul bouton en or selon l'état — Vendre, Enregistrer la vente
+  ou Modifier — ; Réserver, Modifier et Comparer en boutons discrets ; Retirer et Supprimer dans
+  « ⋯ » ; Réintégrer reste dans la barre d'une œuvre retirée.
+- **Confirmation avant Vendre / Enregistrer la vente** (demande de Dave) : le bouton en or est
+  maintenant en tête de rangée ; une question « Vendre cette œuvre ? » offre « Commencer la
+  vente », « Modifier la fiche » (ouvre l'édition) ou « Annuler ».
+- ⚠ **Une œuvre retirée n'offre plus « Vendre »** sur sa fiche (on la réintègre d'abord) ; avant,
+  le bouton y restait, sans doute par oubli. Réserver l'excluait déjà.
+- **« En exposition » en violet** partout où c'était un chiffre rouge (fiche d'artiste, bandeau de
+  la page Œuvres) : le rouge dit maintenant « réservée ». Nouveaux jetons `--badge-exposee-*`,
+  repris par la pastille.
+- **« Retirée de Google » devient « M.A.J. site »** dans les tâches côté galerie (suivi, fiche de
+  vente, accueil, rapport imprimé, aide, tutoriel). La clé `google_retire` et sa colonne ne
+  changent pas.
+
+### Corrigé
+
+- **Comparaison avec le site : les œuvres réservées.** Réservée dans Galeria et encore en stock sur
+  le site → écart signalé, avec la consigne de la marquer épuisée sur le site (jeton
+  `reservee-en-vente`, distinct de `dispo` pour qu'un écart gardé ne masque pas une vente plus
+  tard). Réservée et épuisée sur le site → en ordre ; avant, Galeria proposait de la passer à
+  « Vendue ». Dans la page Site web comme depuis la fiche.
+- **« Réservée » n'est plus proposée** dans le choix de statut de la comparaison : une réservation
+  demande un client et passe par le bouton Réserver.
+
 ## [0.31.0] — 2026-11-12
 
 ### Ajouté

@@ -7,6 +7,7 @@ import {
   formaterDate, nomComplet, sansAccents, nettoyerErreur,
   badgeArchive, boutonArchive, basculerArchive,
   champNombreInvalide, soumissionUnique,
+  ICO_SITE, ICO_MODIFIER, ICO_RESERVER, menuPlus, entreeMenu, groupeMenus,
 } from '../commun.js';
 import {
   calculerPrixSuggere, formaterMontant,
@@ -535,6 +536,46 @@ export async function rendreOeuvreFiche(contenu, params) {
     const venteLiee = (o.statut === 'vendu' || o.statut === 'vendue') && ventes.length > 0 ? ventes[0] : null;
     const clientNom = venteLiee ? [venteLiee.client_prenom, venteLiee.client_nom].filter(Boolean).join(' ') : '';
 
+    // === Boutons de la fiche (2026-11-27, demos/oeuvre-actions.html, variante
+    //     2 choisie par Dave) ===
+    // UN bouton en or, qui suit l'état de l'œuvre : Vendre quand elle est à
+    // vendre ; Enregistrer la vente quand elle est marquée vendue sans vente
+    // saisie (parents, 2026-10-12 — « Voir la vente » prend le relais dès que
+    // la vente existe) ; sinon Modifier. Le reste en boutons discrets (icône +
+    // mot), Retirer et Supprimer dans « ⋯ ». Une œuvre retirée garde
+    // « Réintégrer » dans la barre — et n'offre plus « Vendre » : on la
+    // réintègre d'abord. Une œuvre réservée se convertit en vente par sa carte
+    // Réservation.
+    function boutonsIdentite() {
+      const vendue = o.statut === 'vendu' || o.statut === 'vendue';
+      const aVendre = !vendue && o.statut !== 'reserve' && !o.archive;
+      const venteASaisir = vendue && !venteLiee && !o.archive;
+      const discret = (id, ico, libelle, titre = '') =>
+        `<button class="btn-action btn-discret" id="${id}"${titre ? ` title="${ech(titre)}"` : ''}>${ico} ${libelle}</button>`;
+      const modifier = (aVendre || venteASaisir)
+        ? discret('btn-modifier', ICO_MODIFIER, 'Modifier')
+        : '<button class="btn-action btn-principal" id="btn-modifier">Modifier</button>';
+      const principal = aVendre
+        ? '<button class="btn-action btn-principal" id="btn-vendre">Vendre</button>'
+        : (venteASaisir ? '<button class="btn-action btn-principal" id="btn-enregistrer-vente">Enregistrer la vente</button>' : '');
+      const plus = menuPlus(
+        (!o.archive && !vendue
+          ? entreeMenu({ id: 'btn-retirer', libelle: 'Retirer du catalogue…', aide: "Rendue à l'artiste, sans vente ; rien n'est effacé" })
+            + '<div class="menu-docs-sep"></div>'
+          : '')
+        + entreeMenu({ id: 'btn-supprimer', libelle: "Supprimer l'œuvre…", aide: 'Définitif — refusé si une vente ou un certificat y est lié', danger: true }));
+      // Sans Vendre ni Enregistrer la vente, c'est Modifier qui est en or, et
+      // il arrive donc en premier.
+      return `<div class="zone-identite-actions">
+          ${principal}
+          ${aVendre ? discret('btn-reserver', ICO_RESERVER, 'Réserver') : ''}
+          ${modifier}
+          ${o.archive ? '<button class="btn-action" id="btn-reintegrer">Réintégrer</button>' : ''}
+          ${discret('btn-sync-site', ICO_SITE, 'Comparer avec le site', 'Comparer cette œuvre avec le site web')}
+          ${plus}
+        </div>`;
+    }
+
     const zoneIdentite = `
       <div class="carte zone-identite-bento">
         <div>
@@ -552,28 +593,7 @@ export async function rendreOeuvreFiche(contenu, params) {
           ${o.url_site ? `<p class="zone-identite-lien"><button type="button" class="btn-lien" id="btn-voir-sur-site">Voir sur le site &rsaquo;</button></p>` : ''}
           ${venteLiee ? `<p class="zone-identite-lien"><button type="button" class="btn-lien" id="btn-voir-vente">Voir la vente ${venteLiee.numero_facture ? ech(venteLiee.numero_facture) + ' ' : ''}${clientNom ? '(' + ech(clientNom) + ') ' : ''}&rsaquo;</button></p>` : ''}
         </div>
-        <div class="zone-identite-actions">
-          <button class="btn-action btn-danger" id="btn-supprimer">Supprimer</button>
-          ${o.archive
-            ? `<button class="btn-action" id="btn-reintegrer">Réintégrer</button>`
-            : (o.statut !== 'vendu' && o.statut !== 'vendue'
-                ? `<button class="btn-action" id="btn-retirer">Retirer</button>`
-                : '')}
-          <button class="btn-action" id="btn-sync-site" title="Comparer cette œuvre avec le site web">Comparer avec le site</button>
-          <button class="btn-action" id="btn-modifier">Modifier</button>
-          ${o.statut !== 'vendu' && o.statut !== 'vendue' && o.statut !== 'reserve' && !o.archive
-            ? `<button class="btn-action" id="btn-reserver">Réserver</button>`
-            : ''}
-          ${o.statut !== 'vendu' && o.statut !== 'vendue' && o.statut !== 'reserve'
-            ? `<button class="btn-action btn-principal" id="btn-vendre">Vendre</button>`
-            : ''}
-          <!-- Marquée vendue mais aucune vente saisie : c'est ici qu'on la
-               rattrape (parents, 2026-10-12). Le bouton disparaît dès que la
-               vente existe — « Voir la vente » prend alors le relais. -->
-          ${(o.statut === 'vendu' || o.statut === 'vendue') && !venteLiee && !o.archive
-            ? `<button class="btn-action btn-principal" id="btn-enregistrer-vente">Enregistrer la vente</button>`
-            : ''}
-        </div>
+        ${boutonsIdentite()}
       </div>
     `;
 
@@ -811,6 +831,7 @@ export async function rendreOeuvreFiche(contenu, params) {
         if (lancer) lancer.click();
       });
     }
+    groupeMenus(contenu)(contenu.querySelector('#btn-menu-plus'), contenu.querySelector('#menu-plus-pop'));
     contenu.querySelector('#btn-supprimer').addEventListener('click', supprimer);
     const btnRetirer = contenu.querySelector('#btn-retirer');
     if (btnRetirer) {
@@ -888,19 +909,31 @@ export async function rendreOeuvreFiche(contenu, params) {
     if (btnVoirSite && o.url_site) {
       btnVoirSite.addEventListener('click', () => window.api.ouvrirUrl(o.url_site));
     }
+    // Le bouton en or est maintenant Vendre (ou Enregistrer la vente), en
+    // tête de rangée, là où la main allait chercher autre chose : une question
+    // avant d'ouvrir la vente, avec la sortie « Modifier la fiche » si c'était
+    // ça qu'on voulait (demande de Dave, 2026-11-27).
+    async function confirmerVente(titre, message) {
+      const r = await confirmer({
+        type: 'question', title: titre, message,
+        detail: 'Pour changer le prix, le titre ou une autre information de l\'œuvre, choisissez plutôt « Modifier la fiche ».',
+        buttons: ['Commencer la vente', 'Modifier la fiche', 'Annuler'],
+        defaultId: 0, cancelId: 2,
+      });
+      if (r === 0) naviguer('vente-fiche', { nouveau: true, oeuvre_id: o.id });
+      else if (r === 1) entrerEdition();
+    }
     const btnVendre = contenu.querySelector('#btn-vendre');
     if (btnVendre) {
       btnVendre.addEventListener('click', () =>
-        naviguer('vente-fiche', { nouveau: true, oeuvre_id: o.id })
-      );
+        confirmerVente('Vendre cette œuvre ?', `Vous allez enregistrer la vente de « ${o.titre} ».`));
     }
     brancherPastilleStatut();
 
     const btnEnregistrerVente = contenu.querySelector('#btn-enregistrer-vente');
     if (btnEnregistrerVente) {
       btnEnregistrerVente.addEventListener('click', () =>
-        naviguer('vente-fiche', { nouveau: true, oeuvre_id: o.id })
-      );
+        confirmerVente('Enregistrer la vente ?', `« ${o.titre} » est marquée vendue : vous allez saisir sa vente (client, prix, paiement).`));
     }
     const btnVoirVente = contenu.querySelector('#btn-voir-vente');
     if (btnVoirVente) {

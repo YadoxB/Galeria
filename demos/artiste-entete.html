@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Démo — En-tête de la fiche d'artiste</title>
+<style>
+  :root{--soft-ivory:#FCFAF4;--porcelain:#FFFFFF;--warm-gold:#C99A3D;--gallery-navy:#10263E;
+    --ink:#111827;--slate:#5D6875;--stone:#A79E91;--mist:#D8D2C8;--cloud:#EFE8DE;
+    --font-titre:'Cormorant Garamond',Georgia,serif;--font-ui:'Inter',system-ui,sans-serif;
+    --s2:8px;--s3:16px;--s4:24px;
+    --dispo:#3F6E37;--dispo-fond:#D5E4D0;
+    --reserve:#900001;--reserve-fond:#F7C6C3;
+    --expo:#6b3f86;--expo-fond:#efe3f5;
+    --vendue:#6B6258;--vendue-fond:#E7E3DD;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--soft-ivory);font-family:var(--font-ui);color:var(--ink);padding:28px;}
+  h1.demo{font-family:var(--font-titre);font-weight:600;font-size:28px;margin:0 0 2px;}
+  .sous-titre{color:var(--slate);font-size:13.5px;margin:4px 0 14px;max-width:880px;}
+  .demo-note{max-width:1222px;font-size:13px;color:var(--slate);background:#fff8e8;border:1px solid #e8d9a8;border-radius:10px;padding:10px 13px;margin:0 0 16px;}
+  .demo-note strong{color:var(--ink);}
+  .barre-choix{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin:0 0 8px;}
+  .choix{display:flex;gap:6px;flex-wrap:wrap;}
+  .choix-lib{font-size:12px;color:var(--slate);margin-right:2px;}
+  .choix button{padding:6px 13px;border-radius:999px;border:1px solid var(--mist);background:var(--porcelain);color:var(--slate);font-size:13px;cursor:pointer;font-family:var(--font-ui);}
+  .choix button.actif{background:var(--gallery-navy);color:#fff;border-color:transparent;}
+  .explication{font-size:13px;color:var(--slate);margin:6px 0 18px;max-width:1000px;min-height:20px;}
+
+  /* ===== Carte d'en-tête (mêmes mesures que l'app) ===== */
+  .hero{max-width:1222px;background:#fff;border:1px solid var(--mist);border-radius:18px;padding:16px 24px;
+    display:grid;grid-template-columns:150px minmax(0,1fr) auto;grid-template-rows:auto 1fr;column-gap:24px;}
+  .photo{grid-row:1 / span 2;width:150px;height:150px;border-radius:14px;
+    background:linear-gradient(135deg,#c94a2a 0 30%,#e9b23a 30% 55%,#3a62b8 55%);}
+  .corps{grid-column:2;grid-row:1;min-width:0;}
+  .nom{margin:0;font-family:var(--font-titre);font-weight:500;font-size:38px;line-height:1.05;}
+  .meta{margin:4px 0 0;color:var(--slate);font-size:14px;}
+  .filet{width:60px;height:3px;background:var(--warm-gold);border-radius:2px;margin:12px 0 16px;}
+  .actions{grid-column:3;grid-row:1;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:flex-start;max-width:660px;}
+  .btn{padding:8px 15px;border-radius:10px;font-size:14px;border:1px solid var(--mist);background:#fff;color:var(--ink);white-space:nowrap;font-family:var(--font-ui);}
+  .btn.danger{border-color:#c98a87;color:#900001;}
+  .btn.principal{background:var(--warm-gold);border-color:var(--warm-gold);color:#fff;font-weight:600;}
+  .infos{grid-column:2 / span 2;grid-row:2;align-self:end;}
+
+  /* Chiffres cliquables (nouvelles variantes) */
+  .lien-stat{cursor:pointer;border-radius:8px;transition:background .12s;}
+  .lien-stat:hover{background:var(--cloud);}
+  .zero{color:var(--stone)!important;}
+
+  /* ---------- Aujourd'hui ---------- */
+  .v0 .infos{grid-column:2;}
+  .v0 .stats{display:flex;gap:28px;flex-wrap:wrap;}
+  .v0 .st{display:flex;flex-direction:column;}
+  .v0 .st .v{font-family:var(--font-titre);font-size:24px;color:var(--gallery-navy);}
+  .v0 .st .l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--stone);}
+
+  /* ---------- A : deux groupes ---------- */
+  .ga{display:flex;align-items:stretch;gap:0;border-top:1px solid var(--cloud);padding-top:12px;margin-top:14px;}
+  .grp{padding-right:28px;}
+  .grp + .grp{border-left:1px solid var(--cloud);padding-left:28px;}
+  .grp-tit{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);margin:0 0 6px;}
+  .grp-ligne{display:flex;align-items:baseline;gap:10px;}
+  .gros{display:flex;align-items:baseline;gap:7px;padding:2px 8px;margin-left:-8px;}
+  .gros .v{font-family:var(--font-titre);font-size:44px;line-height:1;color:var(--warm-gold);}
+  .gros .l{font-size:15px;color:var(--ink);}
+  .val{font-size:12px;color:var(--slate);margin:2px 0 0;}
+  .val .oeil{color:var(--warm-gold);cursor:pointer;}
+  .moy{display:flex;align-items:baseline;gap:6px;padding:4px 8px;}
+  .moy .v{font-family:var(--font-titre);font-size:26px;line-height:1;}
+  .moy .l{font-size:13px;color:var(--slate);}
+  .moy.reserve .v{color:var(--reserve);} .moy.expo .v{color:var(--expo);}
+  .pastille-pt{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:2px;transform:translateY(-3px);}
+  .hist{display:flex;flex-direction:column;gap:2px;font-size:13.5px;color:var(--slate);}
+  .hist b{font-family:var(--font-titre);font-size:21px;font-weight:500;color:var(--gallery-navy);margin-right:4px;}
+  .hist .ligne{padding:1px 6px;}
+
+  /* ---------- B : barre de répartition ---------- */
+  .gb{border-top:1px solid var(--cloud);padding-top:14px;margin-top:14px;}
+  .gb-tete{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;}
+  .gb-tete .v{font-family:var(--font-titre);font-size:26px;color:var(--gallery-navy);line-height:1;}
+  .gb-tete .l{font-size:13px;color:var(--slate);}
+  .barre{display:flex;height:12px;border-radius:999px;overflow:hidden;background:var(--cloud);gap:2px;}
+  .seg{height:100%;min-width:6px;}
+  .seg.dispo{background:#7FA874;} .seg.reserve{background:var(--reserve);} .seg.expo{background:#9a6fb6;} .seg.vendue{background:#B9B2A8;}
+  .legende{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:10px;}
+  .leg{display:flex;align-items:baseline;gap:6px;padding:3px 9px;font-size:13.5px;color:var(--slate);}
+  .leg b{font-family:var(--font-titre);font-size:22px;font-weight:600;color:var(--ink);}
+  .leg i{width:9px;height:9px;border-radius:50%;display:inline-block;transform:translateY(-2px);}
+  .leg.dispo b{color:var(--dispo);} .leg.reserve b{color:var(--reserve);} .leg.expo b{color:var(--expo);}
+  .gb-pied{font-size:12.5px;color:var(--slate);margin-top:8px;padding-left:9px;}
+  .gb-pied .oeil{color:var(--warm-gold);cursor:pointer;}
+
+  /* ---------- C : en phrases ---------- */
+  .gc{border-top:1px solid var(--cloud);padding-top:12px;margin-top:14px;}
+  .phrase{font-family:var(--font-titre);font-size:23px;line-height:1.45;margin:0;color:var(--ink);}
+  .phrase .lien-stat{padding:0 3px;margin:0 -3px;}
+  .phrase b{font-weight:600;}
+  .phrase .dispo{color:var(--dispo);} .phrase .reserve{color:var(--reserve);} .phrase .expo{color:var(--expo);}
+  .phrase-2{font-size:13px;color:var(--slate);margin:4px 0 0 3px;}
+  .phrase-2 .oeil{color:var(--warm-gold);cursor:pointer;}
+
+  .astuce-clic{font-size:12px;color:var(--stone);margin:12px 0 0;max-width:1222px;}
+</style>
+</head>
+<body>
+<h1 class="demo">En-tête de la fiche d'artiste</h1>
+<p class="sous-titre">Huit chiffres de même taille, de même couleur, en trois rangées : on ne sait pas où regarder. Les nouvelles variantes séparent <b>ce qui est à la galerie en ce moment</b> de <b>l'historique</b>, et donnent toute la largeur de la carte aux chiffres.</p>
+<div class="demo-note"><strong>Dans les trois nouvelles variantes :</strong> les chiffres passent sous le nom, sur toute la largeur de la carte (aujourd'hui, les boutons leur prennent la moitié de la place). Un chiffre se clique : il ouvre les œuvres de l'artiste avec ce statut. « 30 œuvres disponibles », répété dans la ligne sous le nom, disparaît. Réservée en rouge, En exposition en violet, comme leurs pastilles.</div>
+
+<div class="barre-choix">
+  <div class="choix" id="choix-v"><span class="choix-lib">Variante</span>
+    <button data-v="0">Aujourd'hui</button>
+    <button data-v="a" class="actif">A — Deux groupes</button>
+    <button data-v="b">B — Barre de répartition</button>
+    <button data-v="c">C — En phrases</button>
+  </div>
+  <div class="choix" id="choix-p"><span class="choix-lib">Artiste</span>
+    <button data-p="0" class="actif">Bien établi</button>
+    <button data-p="1">Nouveau</button>
+    <button data-p="2">Presque tout vendu</button>
+  </div>
+</div>
+<p class="explication" id="explication"></p>
+
+<div class="hero" id="hero"></div>
+<p class="astuce-clic" id="astuce"></p>
+
+<script>
+  const PROFILS = [
+    { nom: 'Claire Lavoie', type: 'Peintre', prefixe: 'LAV', certif: '001', dispo: 30, reservees: 2, expo: 1, vendues: 20, retirees: 0, ventes: 1 },
+    { nom: 'Élise Ménard', type: 'Peintre', prefixe: 'MEN', certif: '001', dispo: 6, reservees: 0, expo: 0, vendues: 0, retirees: 0, ventes: 0 },
+    { nom: 'Marc Dubé', type: 'Sculpteur', prefixe: 'DUB', certif: '014', dispo: 2, reservees: 0, expo: 4, vendues: 35, retirees: 3, ventes: 9 },
+  ];
+  const EXPLICATIONS = {
+    0: "Aujourd'hui : huit cases pareilles. Les boutons à droite les tassent sur trois rangées.",
+    a: "À gauche, ce qui est à la galerie en ce moment, avec les disponibles en grand. À droite, plus discret, l'historique. Une catégorie à zéro reste à sa place, en gris.",
+    b: "Une barre montre d'un coup d'œil la part du travail encore disponible. Les chiffres exacts sont dessous ; une catégorie à zéro n'est pas listée.",
+    c: "Les chiffres se lisent comme une phrase, à voix haute, devant un client. Le reste tient sur une petite ligne.",
+  };
+  let v = 'a', p = 0;
+  const plur = (n, s, pl) => `${n} ${n > 1 ? (pl || s + 's') : s}`;
+  const cl = (n) => (n ? '' : ' zero');
+
+  function meta(d, avecDispo) {
+    return `${d.type} · Préfixe ${d.prefixe} · Prochain certificat n° ${d.certif}${avecDispo ? ` · ${plur(d.dispo, 'œuvre disponible', 'œuvres disponibles')}` : ''}`;
+  }
+  const ACTIONS = `<div class="actions"><span class="btn">Documents ▾</span><span class="btn danger">Supprimer</span><span class="btn">Comparer avec le site ▾</span><span class="btn">Archiver</span><span class="btn principal">Modifier</span></div>`;
+
+  function infos(d) {
+    const cat = d.dispo + d.reservees + d.expo + d.vendues;
+    if (v === '0') {
+      const st = (n, l, c = '') => `<div class="st"><span class="v" ${c}>${n}</span><span class="l">${l}</span></div>`;
+      return `<div class="filet"></div><div class="stats">
+        ${st(cat, 'Au catalogue')}${st(d.dispo, 'Disponibles', 'style="color:var(--warm-gold)"')}
+        ${st(d.reservees, 'Réservées', d.reservees ? 'style="color:var(--reserve)"' : '')}${st(d.expo, 'En exposition', d.expo ? 'style="color:var(--reserve)"' : '')}
+        ${st(d.vendues, 'Vendues')}${st(d.retirees, 'Retirées')}${st(d.ventes, 'Ventes saisies')}
+        ${st('••• ••• $', 'Valeur dispo <span style="color:var(--warm-gold);text-transform:none">afficher</span>', 'style="color:var(--stone)"')}</div>`;
+    }
+    if (v === 'a') {
+      return `<div class="ga">
+        <div class="grp">
+          <p class="grp-tit">À la galerie</p>
+          <div class="grp-ligne">
+            <div class="gros lien-stat" title="Voir les disponibles"><span class="v${cl(d.dispo)}">${d.dispo}</span><span class="l">${d.dispo > 1 ? 'disponibles' : 'disponible'}</span></div>
+            <div class="moy reserve lien-stat" title="Voir les réservées"><span class="v${cl(d.reservees)}">${d.reservees}</span><span class="l">${d.reservees > 1 ? 'réservées' : 'réservée'}</span></div>
+            <div class="moy expo lien-stat" title="Voir celles en exposition"><span class="v${cl(d.expo)}">${d.expo}</span><span class="l">en exposition</span></div>
+          </div>
+          <p class="val">Valeur des disponibles ••• ••• $ <span class="oeil">afficher</span></p>
+        </div>
+        <div class="grp">
+          <p class="grp-tit">Historique</p>
+          <div class="hist">
+            <span class="ligne lien-stat"><b>${d.vendues}</b>${d.vendues > 1 ? 'vendues' : 'vendue'} <span style="color:var(--stone)">· ${plur(d.ventes, 'vente saisie', 'ventes saisies')} dans Galeria</span></span>
+            <span class="ligne lien-stat${cl(d.retirees)}"><b class="${cl(d.retirees)}">${d.retirees}</b>${d.retirees > 1 ? 'retirées' : 'retirée'} du catalogue</span>
+          </div>
+        </div>
+      </div>`;
+    }
+    if (v === 'b') {
+      const parts = [['dispo', d.dispo, 'disponible', 'disponibles'], ['reserve', d.reservees, 'réservée', 'réservées'], ['expo', d.expo, 'en exposition', 'en exposition'], ['vendue', d.vendues, 'vendue', 'vendues']];
+      const total = Math.max(cat, 1);
+      return `<div class="gb">
+        <div class="gb-tete"><span class="v">${cat}</span><span class="l">${cat > 1 ? 'œuvres au catalogue' : 'œuvre au catalogue'}</span></div>
+        <div class="barre">${parts.filter(([, n]) => n).map(([k, n]) => `<div class="seg ${k}" style="flex:${n / total}"></div>`).join('')}</div>
+        <div class="legende">${parts.filter(([, n]) => n).map(([k, n, s, pl]) => `<span class="leg ${k} lien-stat"><i class="seg ${k}"></i><b>${n}</b>${n > 1 ? pl : s}</span>`).join('')}</div>
+        <div class="gb-pied">Valeur des disponibles ••• ••• $ <span class="oeil">afficher</span> · ${plur(d.ventes, 'vente saisie', 'ventes saisies')} dans Galeria${d.retirees ? ` · ${plur(d.retirees, 'œuvre retirée', 'œuvres retirées')}` : ''}</div>
+      </div>`;
+    }
+    // C
+    const morceaux = [];
+    morceaux.push(`<span class="lien-stat"><b class="dispo${cl(d.dispo)}">${d.dispo}</b> ${d.dispo > 1 ? 'œuvres disponibles' : 'œuvre disponible'}</span>`);
+    if (d.reservees) morceaux.push(`<span class="lien-stat"><b class="reserve">${d.reservees}</b> ${d.reservees > 1 ? 'réservées' : 'réservée'}</span>`);
+    if (d.expo) morceaux.push(`<span class="lien-stat"><b class="expo">${d.expo}</b> en exposition</span>`);
+    const debut = morceaux.length > 1 ? morceaux.slice(0, -1).join(', ') + ' et ' + morceaux[morceaux.length - 1] : morceaux[0];
+    const vendu = d.vendues ? ` — <span class="lien-stat"><b>${d.vendues}</b> ${d.vendues > 1 ? 'vendues' : 'vendue'}</span> depuis le début.` : '.';
+    return `<div class="gc">
+      <p class="phrase">${debut}${vendu}</p>
+      <p class="phrase-2">${plur(cat, 'œuvre', 'œuvres')} au catalogue · ${plur(d.ventes, 'vente saisie', 'ventes saisies')} dans Galeria${d.retirees ? ` · ${plur(d.retirees, 'retirée', 'retirées')}` : ''} · valeur des disponibles ••• ••• $ <span class="oeil">afficher</span></p>
+    </div>`;
+  }
+
+  function dessiner() {
+    const d = PROFILS[p];
+    const hero = document.getElementById('hero');
+    hero.className = 'hero v' + v;
+    hero.innerHTML = `<div class="photo"></div>
+      <div class="corps"><h2 class="nom">${d.nom}</h2><p class="meta">${meta(d, v === '0')}</p></div>
+      ${ACTIONS}
+      <div class="infos">${infos(d)}</div>`;
+    document.getElementById('explication').textContent = EXPLICATIONS[v];
+    document.getElementById('astuce').textContent = v === '0' ? '' : 'Survolez un chiffre : il se cliquerait pour ouvrir les œuvres de l\'artiste avec ce statut.';
+    document.querySelectorAll('#choix-v button').forEach((b) => b.classList.toggle('actif', b.dataset.v === v));
+    document.querySelectorAll('#choix-p button').forEach((b) => b.classList.toggle('actif', Number(b.dataset.p) === p));
+  }
+  document.getElementById('choix-v').addEventListener('click', (e) => { if (e.target.dataset.v) { v = e.target.dataset.v; dessiner(); } });
+  document.getElementById('choix-p').addEventListener('click', (e) => { if (e.target.dataset.p) { p = Number(e.target.dataset.p); dessiner(); } });
+  dessiner();
+</script>
+</body>
+</html>

@@ -170,12 +170,24 @@
   /* ===== Badges de statut (fond + texte) — réglés sur le mockup ===== */
   --badge-disponible-fond:  #D5E4D0;   /* vert mint léger */
   --badge-disponible-texte: #3F6E37;
-  --badge-reservee-fond:    #F1E1B8;   /* beige doré */
-  --badge-reservee-texte:   #735718;
-  --badge-vendue-fond:      #F2D5D0;   /* rosé doux */
-  --badge-vendue-texte:     #7C2823;
+  /* Réservée en rouge clair, Vendue en gris : demande de Joanne (25 novembre
+     2026) pour qu'une réservation saute aux yeux, variante B choisie par Dave.
+     Avant : réservée beige doré, vendue rosée — les deux rouges se seraient
+     confondus. Une vendue se repère aussi au bas de sa carte, grisé. */
+  --badge-reservee-fond:    #F7C6C3;   /* rouge clair */
+  --badge-reservee-texte:   #900001;   /* rouge de la galerie */
+  --badge-vendue-fond:      #E7E3DD;   /* gris chaud */
+  --badge-vendue-texte:     #6B6258;
   --badge-archivee-fond:    #E7E3DD;
   --badge-archivee-texte:   #6B6258;
+  /* En exposition : violet. Sert aussi aux chiffres « En exposition » (fiche
+     d'artiste, page Œuvres), qui étaient rouges — le rouge dit « réservée ». */
+  --badge-exposee-fond:     #EFE3F5;
+  --badge-exposee-texte:    #6B3F86;
+  /* L'ancien beige des réservées, gardé pour ce qui avertit sans parler de
+     réservation (tâche Sage à faire, bandeau « Annuler » du site web). */
+  --avertissement-fond:     #F1E1B8;
+  --avertissement-texte:    #735718;
 
   /* ===== Typographie ===== */
   --font-titre:    'Cormorant Garamond', 'Playfair Display', Georgia, 'Times New Roman', serif;
