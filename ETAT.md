@@ -18,9 +18,9 @@
 seul commit de documentation qui écrit ces lignes. Publiée sur GitHub Releases avec `latest.yml`
 — auto-update actif ; le paquet construit a été comparé au tag (108 fichiers, aucun écart).
 ⚠ Le paquet contient aussi `gabarits/actifs/splash-galeria BU.png`, une copie de secours **non
-suivie** par git qui traîne dans le dossier principal : `gabarits/**/*` l'a ramassée. Sans effet
-sur l'app, mais à supprimer ou déplacer hors de `gabarits/` (décision de Dave) avant la prochaine
-version. **Rien n'est en attente de publication.** Quatre diapos attendent les parents à
+suivie** par git qui traînait dans le dossier principal : `gabarits/**/*` l'a ramassée. Sans effet
+sur l'app ; déplacée le 2026-11-27, à la demande de Dave, dans `F:\Galerie\Automatisation\Anciens docs\`,
+donc absente de la prochaine version. **Rien n'est en attente de publication.** Quatre diapos attendent les parents à
 l'ouverture, plus celles des versions qu'ils n'ont pas encore ouvertes. Depuis un worktree,
 `npm --prefix F:/Galerie/Automatisation/GalerieApp run release` lance la publication dans le dossier
 principal, le seul qui a `node_modules`, sur `master` déjà avancé et poussé.
